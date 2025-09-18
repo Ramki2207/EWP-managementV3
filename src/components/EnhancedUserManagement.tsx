@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Plus, Edit, Trash2, Save, X, Eye, EyeOff, 
   Shield, UserPlus, Search, Filter, Crown, Calendar,
-  Package, Truck, Wrench, DollarSign, CheckSquare, Headphones
+  Package, Truck, Wrench, DollarSign, CheckSquare, Headphones, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import bcrypt from 'bcryptjs';
@@ -181,6 +181,7 @@ const EnhancedUserManagement = () => {
           assignedLocations: formData.assignedLocations,
           profilePicture: formData.profilePicture,
           notes: formData.notes,
+          isActive: editingUser.isActive, // Preserve the isActive status from the form
           lastModifiedAt: new Date().toISOString(),
           lastModifiedBy: getCurrentUserId()
         };
@@ -321,6 +322,63 @@ const EnhancedUserManagement = () => {
     }
   };
 
+  const handleBlockUser = async (userId: string) => {
+    const userToBlock = users.find(u => u.id === userId);
+    if (!userToBlock) return;
+
+    if (window.confirm(`Weet je zeker dat je gebruiker "${userToBlock.username}" wilt blokkeren? Deze gebruiker kan dan niet meer inloggen.`)) {
+      try {
+        const updatedUser = { ...userToBlock, isActive: false };
+        
+        // Update in database
+        try {
+          await dataService.updateUser(userId, updatedUser);
+          console.log('User blocked in database');
+        } catch (dbError) {
+          console.log('Database update failed, updating localStorage only:', dbError);
+        }
+
+        // Update localStorage
+        const updatedUsers = users.map(u => u.id === userId ? updatedUser : u);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        setUsers(updatedUsers);
+
+        toast.success(`Gebruiker "${userToBlock.username}" is geblokkeerd!`);
+      } catch (error) {
+        console.error('Error blocking user:', error);
+        toast.error('Er is een fout opgetreden bij het blokkeren van de gebruiker');
+      }
+    }
+  };
+
+  const handleUnblockUser = async (userId: string) => {
+    const userToUnblock = users.find(u => u.id === userId);
+    if (!userToUnblock) return;
+
+    if (window.confirm(`Weet je zeker dat je gebruiker "${userToUnblock.username}" wilt deblokkeren? Deze gebruiker kan dan weer inloggen.`)) {
+      try {
+        const updatedUser = { ...userToUnblock, isActive: true };
+        
+        // Update in database
+        try {
+          await dataService.updateUser(userId, updatedUser);
+          console.log('User unblocked in database');
+        } catch (dbError) {
+          console.log('Database update failed, updating localStorage only:', dbError);
+        }
+
+        // Update localStorage
+        const updatedUsers = users.map(u => u.id === userId ? updatedUser : u);
+        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        setUsers(updatedUsers);
+
+        toast.success(`Gebruiker "${userToUnblock.username}" is gedeblokkeerd!`);
+      } catch (error) {
+        console.error('Error unblocking user:', error);
+        toast.error('Er is een fout opgetreden bij het deblokkeren van de gebruiker');
+      }
+    }
+  };
   const handleCancelForm = () => {
     setShowUserForm(false);
     setEditingUser(null);
@@ -574,6 +632,23 @@ const EnhancedUserManagement = () => {
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
+                        {user.isActive ? (
+                          <button
+                            onClick={() => handleBlockUser(user.id)}
+                            className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
+                            title="Gebruiker blokkeren"
+                          >
+                            <X size={16} className="text-gray-400 group-hover:text-red-400" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUnblockUser(user.id)}
+                            className="p-2 bg-[#2A303C] hover:bg-green-500/20 rounded-lg transition-colors group"
+                            title="Gebruiker deblokkeren"
+                          >
+                            <CheckCircle size={16} className="text-gray-400 group-hover:text-green-400" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEditUser(user)}
                           className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
@@ -704,6 +779,37 @@ const EnhancedUserManagement = () => {
                         placeholder="Optionele opmerkingen over deze gebruiker..."
                       />
                     </div>
+
+                    {editingUser && (
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Account Status</label>
+                        <div className="flex items-center space-x-4">
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="userStatus"
+                              checked={editingUser.isActive === true}
+                              onChange={() => setEditingUser({ ...editingUser, isActive: true })}
+                              className="form-radio text-green-500"
+                            />
+                            <span className="text-green-400">Actief</span>
+                          </label>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="radio"
+                              name="userStatus"
+                              checked={editingUser.isActive === false}
+                              onChange={() => setEditingUser({ ...editingUser, isActive: false })}
+                              className="form-radio text-red-500"
+                            />
+                            <span className="text-red-400">Geblokkeerd</span>
+                          </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Geblokkeerde gebruikers kunnen niet inloggen
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -137,6 +137,13 @@ const Login: React.FC = () => {
         return;
       }
 
+      // Check if user is blocked
+      if (user.isActive === false) {
+        setError(true);
+        setErrorMessage('Je account is geblokkeerd. Neem contact op met de beheerder.');
+        return;
+      }
+
       if (!bcrypt.compareSync(password, user.password)) {
         setError(true);
         setErrorMessage('Verkeerd wachtwoord. Probeer het opnieuw.');
