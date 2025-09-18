@@ -428,6 +428,7 @@ const Insights = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white mb-2">📊 Business Inzichten</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">📊 EWP Inzichten</h1>
             <p className="text-gray-400">Krijg inzicht in je bedrijfsprestaties en trends</p>
           </div>
           <div className="flex items-center space-x-4">
