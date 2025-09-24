@@ -809,34 +809,99 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           </div>
         )}
 
-        {/* Navigation Buttons */}
-        {!hideNavigation && (
-          <div className="flex justify-between pt-6 border-t border-gray-700">
-            {onBack && (
-              <button
-                onClick={onBack}
-                className="btn-secondary"
-              >
-                Terug
-              </button>
-            )}
-            {onNext && (
-              <button
-                onClick={onNext}
-                className="btn-primary"
-              >
-                Volgende stap
-              </button>
-            )}
-          </div>
-        )}
-                    </div>
+        {/* Access Code Form Modal */}
+        {showAccessCodeForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Toegangscode aanmaken</h2>
+                <button
+                  onClick={() => setShowAccessCodeForm(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Verdeler</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={`${selectedVerdelerForCode?.distributor_id || selectedVerdelerForCode?.distributorId} - ${selectedVerdelerForCode?.kast_naam || selectedVerdelerForCode?.kastNaam}`}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Toegangscode (5 cijfers)</label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      className="input-field flex-1"
+                      value={newAccessCode.code}
+                      onChange={(e) => setNewAccessCode({ ...newAccessCode, code: e.target.value.replace(/\D/g, '').slice(0, 5) })}
+                      placeholder="12345"
+                      maxLength={5}
+                    />
+                    <button
+                      onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
+                      className="btn-secondary px-3"
+                      title="Genereer nieuwe code"
+                    >
+                      🎲
+                    </button>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Vervaldatum</label>
+                  <input
+                    type="datetime-local"
+                    className="input-field"
+                    value={newAccessCode.expiresAt}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Max aantal keer gebruiken (optioneel)</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={newAccessCode.maxUses}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
+                    placeholder="Onbeperkt"
+                    min="1"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={newAccessCode.isActive}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
+                    className="rounded"
+                  />
+                  <label htmlFor="isActive" className="text-sm text-gray-400">Actief</label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => setShowAccessCodeForm(false)}
+                  className="btn-secondary"
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={handleCreateAccessCode}
+                  disabled={generatingCode}
+                  className="btn-primary"
+                >
+                  {generatingCode ? 'Aanmaken...' : 'Aanmaken'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )}
       </div>
     </>
