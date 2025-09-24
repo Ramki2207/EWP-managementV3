@@ -395,10 +395,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <td className="p-4">
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                          <span className="font-medium text-green-400">{verdeler.distributorId}</span>
+                          <span className="font-medium text-green-400">{verdeler.distributor_id || verdeler.distributorId || '-'}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-white">{verdeler.kastNaam || '-'}</td>
+                      <td className="p-4 text-white">{verdeler.kast_naam || verdeler.kastNaam || '-'}</td>
                       <td className="p-4 text-gray-300">{verdeler.systeem || '-'}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-sm ${
@@ -445,7 +445,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
                   <div>
                     <h2 className="text-xl font-semibold text-blue-400">
-                      {selectedVerdeler.distributorId} - {selectedVerdeler.kastNaam || 'Naamloos'}
+                      {selectedVerdeler.distributor_id || selectedVerdeler.distributorId || '-'} - {selectedVerdeler.kast_naam || selectedVerdeler.kastNaam || 'Naamloos'}
                     </h2>
                     <p className="text-sm text-gray-400">Verdeler details en acties</p>
                   </div>
@@ -464,11 +464,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Verdeler ID:</span>
-                        <span className="text-white font-medium">{selectedVerdeler.distributorId}</span>
+                        <span className="text-white font-medium">{selectedVerdeler.distributor_id || selectedVerdeler.distributorId || '-'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Kastnaam:</span>
-                        <span className="text-white font-medium">{selectedVerdeler.kastNaam || '-'}</span>
+                        <span className="text-white font-medium">{selectedVerdeler.kast_naam || selectedVerdeler.kastNaam || '-'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Systeem:</span>
@@ -848,8 +848,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   <input
                     type="text"
                     className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={verdelerData.distributorId}
-                    onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
+                    value={verdelerData.distributor_id || verdelerData.distributorId || ''}
+                    onChange={(e) => setVerdelerData({ ...verdelerData, distributor_id: e.target.value, distributorId: e.target.value })}
                     required
                     placeholder="VD1234"
                   />
@@ -861,8 +861,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   <input
                     type="text"
                     className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={verdelerData.kastNaam}
-                    onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
+                    value={verdelerData.kast_naam || verdelerData.kastNaam || ''}
+                    onChange={(e) => setVerdelerData({ ...verdelerData, kast_naam: e.target.value, kastNaam: e.target.value })}
                     required
                     placeholder="Hoofdverdeler A"
                   />
