@@ -276,6 +276,10 @@ export const dataService = {
   async createDistributor(distributor: any) {
     try {
       console.log('createDistributor called with:', distributor);
+      console.log('🔍 DISTRIBUTOR SAVE: Checking key fields:');
+      console.log('  - distributorId:', distributor.distributorId);
+      console.log('  - kastNaam:', distributor.kastNaam);
+      console.log('  - projectId:', distributor.projectId);
       
       let profilePhotoUrl = '';
       
@@ -307,6 +311,19 @@ export const dataService = {
       };
       
       console.log('Database data being inserted:', dbData);
+      console.log('🔍 DB DATA: Key fields check:');
+      console.log('  - distributor_id:', dbData.distributor_id);
+      console.log('  - kast_naam:', dbData.kast_naam);
+      console.log('  - project_id:', dbData.project_id);
+      
+      // Validate required fields before database insert
+      if (!dbData.distributor_id) {
+        throw new Error('distributor_id is required but missing');
+      }
+      
+      if (!dbData.project_id) {
+        throw new Error('project_id is required but missing');
+      }
 
       const { data, error } = await supabase
         .from('distributors')
@@ -316,9 +333,11 @@ export const dataService = {
       
       if (error) {
         console.error('Database error in createDistributor:', error);
+        console.error('Failed to insert data:', dbData);
         throw error;
       }
       console.log('Distributor created successfully in database:', data);
+      console.log('✅ SAVED: distributor_id =', data.distributor_id, 'kast_naam =', data.kast_naam);
       return data;
     } catch (err) {
       console.error('Network error in createDistributor:', err);

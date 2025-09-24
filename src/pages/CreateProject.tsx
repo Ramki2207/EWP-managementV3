@@ -77,6 +77,26 @@ const CreateProject = () => {
           };
 
           console.log('Distributor data being sent to database:', distributorData);
+          console.log('Key fields check:', {
+            distributorId: verdeler.distributorId,
+            kastNaam: verdeler.kastNaam,
+            systeem: verdeler.systeem,
+            voeding: verdeler.voeding
+          });
+          
+          // Verify the data has the required fields
+          if (!distributorData.distributorId) {
+            console.error('❌ Missing distributorId for verdeler:', verdeler);
+            toast.error(`Verdeler ID ontbreekt voor verdeler ${verdeler.kastNaam || 'onbekend'}`);
+            continue;
+          }
+          
+          if (!distributorData.kastNaam) {
+            console.error('❌ Missing kastNaam for verdeler:', verdeler);
+            toast.error(`Kastnaam ontbreekt voor verdeler ${verdeler.distributorId}`);
+            continue;
+          }
+          
           await dataService.createDistributor(distributorData);
         }
       }
