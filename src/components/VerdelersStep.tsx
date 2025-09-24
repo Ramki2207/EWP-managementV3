@@ -569,124 +569,255 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
         {/* Verdeler Form Modal */}
         {showVerdelerForm && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-start justify-center overflow-y-auto">
-            <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full m-4 mt-8 mb-8 shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-blue-400">
-                    {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
-                  </h2>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-5xl my-8 shadow-2xl">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
+                  <div>
+                    <h2 className="text-xl font-semibold text-blue-400">
+                      {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-1">Vul de technische specificaties in</p>
+                  </div>
                   <button
                     onClick={() => {
                       setShowVerdelerForm(false);
                       setEditingVerdeler(null);
                     }}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
                   >
-                    <X size={24} />
+                    <X size={20} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { label: "Verdeler ID", name: "distributorId", required: true },
-                    { label: "Kastnaam", name: "kastNaam", required: true },
-                    { label: "Systeem", name: "systeem" },
-                    { label: "Voeding", name: "voeding" },
-                    { label: "Bouwjaar", name: "bouwjaar" },
-                    { label: "Keuring datum", name: "keuringDatum", type: "date" },
-                    { label: "Getest door", name: "getestDoor" },
-                    { label: "Un in V", name: "unInV" },
-                    { label: "In in A", name: "inInA" },
-                    { label: "Ik Th in KA 1s", name: "ikThInKA1s" },
-                    { label: "Ik Dyn in KA", name: "ikDynInKA" },
-                    { label: "Freq. in Hz", name: "freqInHz" },
-                    { label: "Type nr. HS", name: "typeNrHs" },
-                    { 
-                      label: "Fabrikant", 
-                      name: "fabrikant",
-                      type: "select",
-                      options: ["", "Schneider Electric", "ABB", "Siemens", "Eaton", "Legrand", "Hager", "Rittal", "Phoenix Contact", "Weidmüller"]
-                    },
-                    { 
-                      label: "Status", 
-                      name: "status",
-                      type: "select",
-                      options: ["In productie", "Testen", "Gereed", "Opgeleverd"]
-                    },
-                  ].map((field) => (
-                    <div key={field.name}>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        {field.label}
-                        {field.required && <span className="text-red-400 ml-1">*</span>}
-                      </label>
-                      {field.type === "select" ? (
+                {/* Form Content */}
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">
+                          Verdeler ID <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.distributorId}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
+                          required
+                          placeholder="VD1234"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">
+                          Kastnaam <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.kastNaam}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
+                          required
+                          placeholder="Hoofdverdeler A"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.systeem}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
+                          placeholder="400V TN-S"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.voeding}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
+                          placeholder="3x400V + N + PE"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Technical Specifications */}
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.unInV}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
+                          placeholder="400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.inInA}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
+                          placeholder="400"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.freqInHz}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
+                          placeholder="50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.ikThInKA1s}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
+                          placeholder="25"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.ikDynInKA}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
+                          placeholder="65"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.typeNrHs}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
+                          placeholder="NS400N"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Manufacturing Details */}
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-orange-400 mb-4">Productie Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.bouwjaar}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
+                          placeholder="2025"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                        <input
+                          type="date"
+                          className="input-field"
+                          value={verdelerData.keuringDatum}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.getestDoor}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
+                          placeholder="Jan Technicus"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
                         <select
                           className="input-field"
-                          value={(verdelerData as any)[field.name]}
-                          onChange={(e) =>
-                            setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
-                          }
+                          value={verdelerData.fabrikant}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
                         >
-                          {field.options?.map(option => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
+                          <option value="">Selecteer fabrikant</option>
+                          <option value="Schneider Electric">Schneider Electric</option>
+                          <option value="ABB">ABB</option>
+                          <option value="Siemens">Siemens</option>
+                          <option value="Eaton">Eaton</option>
+                          <option value="Legrand">Legrand</option>
+                          <option value="Hager">Hager</option>
+                          <option value="Rittal">Rittal</option>
+                          <option value="Phoenix Contact">Phoenix Contact</option>
+                          <option value="Weidmüller">Weidmüller</option>
                         </select>
-                      ) : (
-                        <input
-                          type={field.type || "text"}
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Status</label>
+                        <select
                           className="input-field"
-                          value={(verdelerData as any)[field.name]}
-                          onChange={(e) =>
-                            setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
-                          }
-                          required={field.required}
-                           placeholder={
-                             field.name === 'systeem' ? 'Bijv. 400V TN-S' :
-                             field.name === 'voeding' ? 'Bijv. 3x400V + N + PE' :
-                             field.name === 'fabrikant' ? 'Fabrikant naam' :
-                             ''
-                           }
+                          value={verdelerData.status}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
+                        >
+                          <option value="In productie">In productie</option>
+                          <option value="Testen">Testen</option>
+                          <option value="Gereed">Gereed</option>
+                          <option value="Opgeleverd">Opgeleverd</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setVerdelerData({
+                                ...verdelerData,
+                                profilePhoto: e.target.files[0]
+                              });
+                            }
+                          }}
+                          className="input-field"
                         />
-                      )}
+                      </div>
                     </div>
-                  ))}
-
-                  <div className="md:col-span-3">
-                    <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setVerdelerData({
-                            ...verdelerData,
-                            profilePhoto: e.target.files[0]
-                          });
-                        }
-                      }}
-                      className="input-field"
-                    />
                   </div>
                 </div>
 
-                <div className="flex justify-end space-x-4 mt-8">
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4 mt-6 pt-4 border-t border-gray-700">
                   <button
                     onClick={() => {
                       setShowVerdelerForm(false);
                       setEditingVerdeler(null);
                     }}
-                    className="btn-secondary"
+                    className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
                   >
                     Annuleren
                   </button>
                   <button
                     onClick={handleSaveVerdeler}
-                    className="btn-primary flex items-center space-x-2"
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-2"
                   >
                     <Save size={20} />
                     <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
                   </button>
                 </div>
+              </div>
             </div>
           </div>
         )}
