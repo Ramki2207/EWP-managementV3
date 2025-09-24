@@ -396,6 +396,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     <th className="text-left p-4 text-gray-400 font-medium">Kastnaam</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Systeem</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Status</th>
+                    <th className="text-left p-4 text-gray-400 font-medium">Toegangscodes</th>
                     <th className="text-right p-4 text-gray-400 font-medium">Acties</th>
                   </tr>
                 </thead>
@@ -419,6 +420,43 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         }`}>
                           {verdeler.status}
                         </span>
+                      </td>
+                      <td className="p-4">
+                        {(() => {
+                          const codes = getVerdelerAccessCodes(verdeler.distributor_id || verdeler.distributorId);
+                          return codes.length > 0 ? (
+                            <div className="space-y-1">
+                              {codes.slice(0, 2).map((code) => (
+                                <div key={code.id} className="flex items-center space-x-2">
+                                  <span className={`font-mono text-sm px-2 py-1 rounded ${
+                                    isAccessCodeExpired(code.expires_at) 
+                                      ? 'bg-red-500/20 text-red-400' 
+                                      : 'bg-green-500/20 text-green-400'
+                                  }`}>
+                                    {code.code}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCopyCode(code.code);
+                                    }}
+                                    className="p-1 hover:bg-gray-700 rounded transition-colors"
+                                    title="Kopieer code"
+                                  >
+                                    <Copy size={12} className="text-gray-400 hover:text-white" />
+                                  </button>
+                                </div>
+                              ))}
+                              {codes.length > 2 && (
+                                <div className="text-xs text-gray-400">
+                                  +{codes.length - 2} meer...
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500 text-sm">Geen codes</span>
+                          );
+                        })()}
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
