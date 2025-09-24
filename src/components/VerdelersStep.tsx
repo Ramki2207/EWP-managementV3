@@ -667,11 +667,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     {verdeler.kastNaam || verdeler.kast_naam || '-'}
                   </td>
                   <td className="py-3 text-gray-300">{verdeler.systeem || '-'}</td>
-                            💡 Codes werken voor onderhoudsmelding via QR-code scan
-                          </p>
-                        </div>
-                      </div>
-                    );
                   }
                   return null;
                 })()}
