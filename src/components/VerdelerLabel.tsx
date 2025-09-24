@@ -10,7 +10,7 @@ interface VerdelerLabelProps {
 
 const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }) => {
   // Create URL for maintenance report
-  const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributorId || verdeler.distributor_id)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kastNaam || verdeler.kast_naam || '')}`;
+  const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
 
   return (
     <div className="w-[125mm] h-[95mm] bg-black p-4 relative" style={{ color: '#FFFFFF' }}>
@@ -46,7 +46,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
       <div className="mt-4 text-[10pt] grid grid-cols-2 gap-x-4 gap-y-1">
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Verdeler ID:</span>
-          <span style={{ color: '#FFFFFF' }}>{verdeler.distributorId}</span>
+          <span style={{ color: '#FFFFFF' }}>{verdeler.distributor_id || verdeler.distributorId}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Project:</span>
@@ -54,7 +54,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Kastnaam:</span>
-          <span style={{ color: '#FFFFFF' }}>{verdeler.kastNaam || '-'}</span>
+          <span style={{ color: '#FFFFFF' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Systeem:</span>
@@ -66,15 +66,15 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Un in V:</span>
-          <span style={{ color: '#FFFFFF' }}>{verdeler.unInV || '-'}</span>
+          <span style={{ color: '#FFFFFF' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>In in A:</span>
-          <span style={{ color: '#FFFFFF' }}>{verdeler.inInA || '-'}</span>
+          <span style={{ color: '#FFFFFF' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#FFFFFF' }}>Freq. in Hz:</span>
-          <span style={{ color: '#FFFFFF' }}>{verdeler.freqInHz || '-'}</span>
+          <span style={{ color: '#FFFFFF' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
         </div>
       </div>
 
