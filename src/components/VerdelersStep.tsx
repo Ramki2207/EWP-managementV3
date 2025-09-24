@@ -341,6 +341,26 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           </button>
         </div>
 
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between pt-6 border-t border-gray-700">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="btn-secondary"
+          >
+            Terug
+          </button>
+        )}
+        {onNext && (
+          <button
+            onClick={onNext}
+            className="btn-primary"
+          >
+            Volgende stap
+          </button>
+        )}
+      </div>
         {/* Verdelers List */}
         {verdelers.length > 0 && (
           <div className="bg-[#2A303C] rounded-lg overflow-hidden">
