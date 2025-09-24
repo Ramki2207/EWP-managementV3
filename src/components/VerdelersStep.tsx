@@ -403,127 +403,129 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
         {/* Verdeler Details Modal */}
         {selectedVerdeler && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
-                <div>
-                  <h2 className="text-xl font-semibold text-blue-400">
-                    {selectedVerdeler.distributorId} - {selectedVerdeler.kastNaam || 'Naamloos'}
-                  </h2>
-                  <p className="text-sm text-gray-400 mt-1">Verdeler details en acties</p>
-                </div>
-                <button
-                  onClick={() => setSelectedVerdeler(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              {/* Verdeler Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="bg-[#2A303C] rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Verdeler ID:</span>
-                      <span className="text-white font-medium">{selectedVerdeler.distributorId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Kastnaam:</span>
-                      <span className="text-white font-medium">{selectedVerdeler.kastNaam || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Systeem:</span>
-                      <span className="text-white">{selectedVerdeler.systeem || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Voeding:</span>
-                      <span className="text-white">{selectedVerdeler.voeding || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Status:</span>
-                      <span className={`px-2 py-1 rounded-full text-sm ${
-                        selectedVerdeler.status === 'Opgeleverd' ? 'bg-green-500/20 text-green-400' :
-                        selectedVerdeler.status === 'Gereed' ? 'bg-blue-500/20 text-blue-400' :
-                        selectedVerdeler.status === 'Testen' ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        {selectedVerdeler.status}
-                      </span>
-                    </div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="flex min-h-full items-start justify-center p-4 pt-8 pb-8">
+              <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-4xl shadow-2xl">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
+                  <div>
+                    <h2 className="text-xl font-semibold text-blue-400">
+                      {selectedVerdeler.distributorId} - {selectedVerdeler.kastNaam || 'Naamloos'}
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-1">Verdeler details en acties</p>
                   </div>
-                </div>
-
-                <div className="bg-[#2A303C] rounded-lg p-4">
-                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Un in V:</span>
-                      <span className="text-white">{selectedVerdeler.unInV || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">In in A:</span>
-                      <span className="text-white">{selectedVerdeler.inInA || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Freq. in Hz:</span>
-                      <span className="text-white">{selectedVerdeler.freqInHz || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Fabrikant:</span>
-                      <span className="text-white">{selectedVerdeler.fabrikant || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Bouwjaar:</span>
-                      <span className="text-white">{selectedVerdeler.bouwjaar || '-'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="bg-[#2A303C] rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <VerdelerTesting
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData?.projectNumber || ''}
-                    onComplete={() => {}}
-                  />
-                  <FATTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData?.projectNumber || ''}
-                    onComplete={() => {}}
-                  />
-                  <HighVoltageTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData?.projectNumber || ''}
-                    onComplete={() => {}}
-                  />
-                  <OnSiteTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData?.projectNumber || ''}
-                    onComplete={() => {}}
-                  />
-                  <PrintLabel
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData?.projectNumber || ''}
-                    logo={ewpLogo}
-                  />
                   <button
-                    onClick={() => {
-                      setEditingVerdeler(selectedVerdeler);
-                      setVerdelerData(selectedVerdeler);
-                      setSelectedVerdeler(null);
-                      setShowVerdelerForm(true);
-                    }}
-                    className="btn-secondary flex items-center space-x-2"
+                    onClick={() => setSelectedVerdeler(null)}
+                    className="text-gray-400 hover:text-white transition-colors"
                   >
-                    <Edit size={16} />
-                    <span>Bewerken</span>
+                    <X size={20} />
                   </button>
+                </div>
+
+                {/* Verdeler Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Verdeler ID:</span>
+                        <span className="text-white font-medium">{selectedVerdeler.distributorId}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Kastnaam:</span>
+                        <span className="text-white font-medium">{selectedVerdeler.kastNaam || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Systeem:</span>
+                        <span className="text-white">{selectedVerdeler.systeem || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Voeding:</span>
+                        <span className="text-white">{selectedVerdeler.voeding || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Status:</span>
+                        <span className={`px-2 py-1 rounded-full text-sm ${
+                          selectedVerdeler.status === 'Opgeleverd' ? 'bg-green-500/20 text-green-400' :
+                          selectedVerdeler.status === 'Gereed' ? 'bg-blue-500/20 text-blue-400' :
+                          selectedVerdeler.status === 'Testen' ? 'bg-yellow-500/20 text-yellow-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {selectedVerdeler.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Un in V:</span>
+                        <span className="text-white">{selectedVerdeler.unInV || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">In in A:</span>
+                        <span className="text-white">{selectedVerdeler.inInA || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Freq. in Hz:</span>
+                        <span className="text-white">{selectedVerdeler.freqInHz || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Fabrikant:</span>
+                        <span className="text-white">{selectedVerdeler.fabrikant || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Bouwjaar:</span>
+                        <span className="text-white">{selectedVerdeler.bouwjaar || '-'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="bg-[#2A303C] rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <VerdelerTesting
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData?.projectNumber || ''}
+                      onComplete={() => {}}
+                    />
+                    <FATTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData?.projectNumber || ''}
+                      onComplete={() => {}}
+                    />
+                    <HighVoltageTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData?.projectNumber || ''}
+                      onComplete={() => {}}
+                    />
+                    <OnSiteTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData?.projectNumber || ''}
+                      onComplete={() => {}}
+                    />
+                    <PrintLabel
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData?.projectNumber || ''}
+                      logo={ewpLogo}
+                    />
+                    <button
+                      onClick={() => {
+                        setEditingVerdeler(selectedVerdeler);
+                        setVerdelerData(selectedVerdeler);
+                        setSelectedVerdeler(null);
+                        setShowVerdelerForm(true);
+                      }}
+                      className="btn-secondary flex items-center space-x-2"
+                    >
+                      <Edit size={16} />
+                      <span>Bewerken</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
