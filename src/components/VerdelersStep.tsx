@@ -572,124 +572,123 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full my-8 shadow-2xl">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-blue-400">
-                  {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowVerdelerForm(false);
-                    setEditingVerdeler(null);
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { label: "Verdeler ID", name: "distributorId", required: true },
-                  { label: "Kastnaam", name: "kastNaam", required: true },
-                  { label: "Systeem", name: "systeem" },
-                  { label: "Voeding", name: "voeding" },
-                  { label: "Bouwjaar", name: "bouwjaar" },
-                  { label: "Keuring datum", name: "keuringDatum", type: "date" },
-                  { label: "Getest door", name: "getestDoor" },
-                  { label: "Un in V", name: "unInV" },
-                  { label: "In in A", name: "inInA" },
-                  { label: "Ik Th in KA 1s", name: "ikThInKA1s" },
-                  { label: "Ik Dyn in KA", name: "ikDynInKA" },
-                  { label: "Freq. in Hz", name: "freqInHz" },
-                  { label: "Type nr. HS", name: "typeNrHs" },
-                  { 
-                    label: "Fabrikant", 
-                    name: "fabrikant",
-                    type: "select",
-                    options: ["", "Schneider Electric", "ABB", "Siemens", "Eaton", "Legrand", "Hager", "Rittal", "Phoenix Contact", "Weidmüller"]
-                  },
-                  { 
-                    label: "Status", 
-                    name: "status",
-                    type: "select",
-                    options: ["In productie", "Testen", "Gereed", "Opgeleverd"]
-                  },
-                ].map((field) => (
-                  <div key={field.name}>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      {field.label}
-                      {field.required && <span className="text-red-400 ml-1">*</span>}
-                    </label>
-                    {field.type === "select" ? (
-                      <select
-                        className="input-field"
-                        value={(verdelerData as any)[field.name]}
-                        onChange={(e) =>
-                          setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
-                        }
-                      >
-                        {field.options?.map(option => (
-                          <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type={field.type || "text"}
-                        className="input-field"
-                        value={(verdelerData as any)[field.name]}
-                        onChange={(e) =>
-                          setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
-                        }
-                        required={field.required}
-                         placeholder={
-                           field.name === 'systeem' ? 'Bijv. 400V TN-S' :
-                           field.name === 'voeding' ? 'Bijv. 3x400V + N + PE' :
-                           field.name === 'fabrikant' ? 'Fabrikant naam' :
-                           ''
-                         }
-                      />
-                    )}
-                  </div>
-                ))}
-
-                <div className="md:col-span-3">
-                  <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setVerdelerData({
-                          ...verdelerData,
-                          profilePhoto: e.target.files[0]
-                        });
-                      }
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-blue-400">
+                    {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
+                  </h2>
+                  <button
+                    onClick={() => {
+                      setShowVerdelerForm(false);
+                      setEditingVerdeler(null);
                     }}
-                    className="input-field"
-                  />
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Verdeler ID", name: "distributorId", required: true },
+                    { label: "Kastnaam", name: "kastNaam", required: true },
+                    { label: "Systeem", name: "systeem" },
+                    { label: "Voeding", name: "voeding" },
+                    { label: "Bouwjaar", name: "bouwjaar" },
+                    { label: "Keuring datum", name: "keuringDatum", type: "date" },
+                    { label: "Getest door", name: "getestDoor" },
+                    { label: "Un in V", name: "unInV" },
+                    { label: "In in A", name: "inInA" },
+                    { label: "Ik Th in KA 1s", name: "ikThInKA1s" },
+                    { label: "Ik Dyn in KA", name: "ikDynInKA" },
+                    { label: "Freq. in Hz", name: "freqInHz" },
+                    { label: "Type nr. HS", name: "typeNrHs" },
+                    { 
+                      label: "Fabrikant", 
+                      name: "fabrikant",
+                      type: "select",
+                      options: ["", "Schneider Electric", "ABB", "Siemens", "Eaton", "Legrand", "Hager", "Rittal", "Phoenix Contact", "Weidmüller"]
+                    },
+                    { 
+                      label: "Status", 
+                      name: "status",
+                      type: "select",
+                      options: ["In productie", "Testen", "Gereed", "Opgeleverd"]
+                    },
+                  ].map((field) => (
+                    <div key={field.name}>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        {field.label}
+                        {field.required && <span className="text-red-400 ml-1">*</span>}
+                      </label>
+                      {field.type === "select" ? (
+                        <select
+                          className="input-field"
+                          value={(verdelerData as any)[field.name]}
+                          onChange={(e) =>
+                            setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
+                          }
+                        >
+                          {field.options?.map(option => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={field.type || "text"}
+                          className="input-field"
+                          value={(verdelerData as any)[field.name]}
+                          onChange={(e) =>
+                            setVerdelerData({ ...verdelerData, [field.name]: e.target.value })
+                          }
+                          required={field.required}
+                           placeholder={
+                             field.name === 'systeem' ? 'Bijv. 400V TN-S' :
+                             field.name === 'voeding' ? 'Bijv. 3x400V + N + PE' :
+                             field.name === 'fabrikant' ? 'Fabrikant naam' :
+                             ''
+                           }
+                        />
+                      )}
+                    </div>
+                  ))}
+
+                  <div className="md:col-span-3">
+                    <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setVerdelerData({
+                            ...verdelerData,
+                            profilePhoto: e.target.files[0]
+                          });
+                        }
+                      }}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4 mt-8">
+                  <button
+                    onClick={() => {
+                      setShowVerdelerForm(false);
+                      setEditingVerdeler(null);
+                    }}
+                    className="btn-secondary"
+                  >
+                    Annuleren
+                  </button>
+                  <button
+                    onClick={handleSaveVerdeler}
+                    className="btn-primary flex items-center space-x-2"
+                  >
+                    <Save size={20} />
+                    <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
+                  </button>
                 </div>
               </div>
-
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={() => {
-                    setShowVerdelerForm(false);
-                    setEditingVerdeler(null);
-                  }}
-                  className="btn-secondary"
-                >
-                  Annuleren
-                </button>
-                <button
-                  onClick={handleSaveVerdeler}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <Save size={20} />
-                  <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
-                </button>
-              </div>
-              </div>
-            </div>
             </div>
           </div>
         )}
