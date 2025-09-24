@@ -11,6 +11,10 @@ interface ProjectStepProps {
 
 const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange, onNext }) => {
   const [clients, setClients] = useState<any[]>([]);
+  const [existingProjects, setExistingProjects] = useState<any[]>([]);
+  const [projectNumberSuffix, setProjectNumberSuffix] = useState('');
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [duplicateError, setDuplicateError] = useState('');
   const [showClientForm, setShowClientForm] = useState(false);
   const [newClientData, setNewClientData] = useState({
     name: '',
@@ -82,6 +86,15 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
 
   useEffect(() => {
     loadClients();
+    loadExistingProjects();
+    
+    // Extract suffix from existing project number if editing
+    if (projectData.projectNumber) {
+      const match = projectData.projectNumber.match(/^P[MDR]\d{2}-(\d{3})$/);
+      if (match) {
+        setProjectNumberSuffix(match[1]);
+      }
+    }
   }, []);
 
   const loadClients = async () => {
@@ -96,9 +109,20 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     }
   };
 
-  const generateProjectNumber = (location: string) => {
+  const loadExistingProjects = async () => {
+    try {
+      const data = await dataService.getProjects();
+      setExistingProjects(data || []);
+    } catch (error) {
+      console.error('Error loading existing projects:', error);
+      // Fallback to localStorage
+      const storedProjects = JSON.parse(localStorage.getItem('projects') || '[]');
+      setExistingProjects(storedProjects);
+    }
+  };
+
+  const generateProjectNumber = (location: string, suffix: string) => {
     const currentYear = new Date().getFullYear().toString().slice(-2); // Get last 2 digits of year
-    const randomNumbers = Math.floor(Math.random() * 900) + 100; // Generate 3 random digits (100-999)
     
     let prefix = '';
     switch (location) {
@@ -115,16 +139,82 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
         prefix = 'PM'; // Default to PM if no location selected
     }
     
-    return `${prefix}${currentYear}-${randomNumbers}`;
+    return `${prefix}${currentYear}-${suffix}`;
+  };
+
+  const checkProjectNumberExists = (projectNumber: string) => {
+    return existingProjects.some(project => 
+      project.project_number === projectNumber || project.projectNumber === projectNumber
+    );
+  };
+
+  const validateProjectNumberSuffix = async (suffix: string, location: string) => {
+    if (!suffix || !location) {
+      setDuplicateError('');
+      return;
+    }
+
+    // Validate format (exactly 3 digits)
+    if (!/^\d{3}$/.test(suffix)) {
+      setDuplicateError('Projectnummer moet precies 3 cijfers bevatten (001-999)');
+      return;
+    }
+
+    setIsCheckingDuplicate(true);
+    
+    // Generate full project number and check for duplicates
+    const fullProjectNumber = generateProjectNumber(location, suffix);
+    
+    // Check against existing projects
+    const exists = checkProjectNumberExists(fullProjectNumber);
+    
+    if (exists) {
+      setDuplicateError(`Projectnummer ${fullProjectNumber} bestaat al. Kies een ander nummer.`);
+    } else {
+      setDuplicateError('');
+      
+      // Update project data with new number
+      const updatedData = {
+        ...projectData,
+        projectNumber: fullProjectNumber
+      };
+      onProjectChange(updatedData);
+    }
+    
+    setIsCheckingDuplicate(false);
+  };
+
+  const handleProjectNumberSuffixChange = (suffix: string) => {
+    // Only allow digits and limit to 3 characters
+    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 3);
+    setProjectNumberSuffix(cleanSuffix);
+    
+    // Validate if we have location and 3 digits
+    if (cleanSuffix.length === 3 && projectData.location) {
+      validateProjectNumberSuffix(cleanSuffix, projectData.location);
+    } else {
+      setDuplicateError('');
+    }
   };
 
   const handleLocationChange = (location: string) => {
-    const generatedProjectNumber = generateProjectNumber(location);
+    // When location changes, validate current suffix if we have one
+    if (projectNumberSuffix.length === 3) {
+      validateProjectNumberSuffix(projectNumberSuffix, location);
+    } else {
+      // Clear project number if no valid suffix
+      const updatedData = {
+        ...projectData,
+        location: location,
+        projectNumber: ''
+      };
+      onProjectChange(updatedData);
+    }
     
+    // Always update location
     const updatedData = {
       ...projectData,
-      location: location,
-      projectNumber: generatedProjectNumber
+      location: location
     };
     
     onProjectChange(updatedData);
@@ -216,8 +306,13 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   };
 
   const handleNext = () => {
-    if (!projectData.projectNumber || !projectData.date || !projectData.location) {
-      alert('Vul alle verplichte velden in!');
+    if (!projectData.projectNumber || !projectData.date || !projectData.location || !projectNumberSuffix) {
+      toast.error('Vul alle verplichte velden in!');
+      return;
+    }
+
+    if (duplicateError) {
+      toast.error('Los eerst de projectnummer fout op voordat je verder gaat');
       return;
     }
 
@@ -239,21 +334,67 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm text-gray-400 mb-2">
             Projectnummer <span className="text-red-400">*</span>
           </label>
-          <div className="relative">
-            <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              className="input-field pl-10 bg-gray-700 cursor-not-allowed"
-              value={projectData.projectNumber}
-              readOnly
-              placeholder="Wordt automatisch gegenereerd op basis van locatie en jaar"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Locatie selecteren voor prefix</label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <select
+                  className="input-field pl-10"
+                  value={projectData.location}
+                  onChange={(e) => handleLocationChange(e.target.value)}
+                >
+                  <option value="">Selecteer locatie</option>
+                  <option value="Leerdam">Leerdam (PM)</option>
+                  <option value="Naaldwijk">Naaldwijk (PD)</option>
+                  <option value="Rotterdam">Rotterdam (PR)</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">3-cijferig projectnummer</label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  className={`input-field pl-10 ${duplicateError ? 'border-red-500' : ''}`}
+                  value={projectNumberSuffix}
+                  onChange={(e) => handleProjectNumberSuffixChange(e.target.value)}
+                  placeholder="001-999"
+                  maxLength={3}
+                  pattern="\d{3}"
+                />
+                {isCheckingDuplicate && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+              </div>
+              {duplicateError && (
+                <p className="text-red-400 text-xs mt-1">{duplicateError}</p>
+              )}
+            </div>
           </div>
-          <p className="text-xs text-gray-500 mt-1">Wordt automatisch gegenereerd op basis van locatie en jaar</p>
+          
+          {/* Project Number Preview */}
+          {projectData.location && projectNumberSuffix.length === 3 && !duplicateError && (
+            <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Briefcase size={16} className="text-green-400" />
+                <span className="text-sm text-green-400">
+                  Projectnummer: <strong>{projectData.projectNumber}</strong>
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <p className="text-xs text-gray-500 mt-2">
+            Format: [Locatie Prefix][Jaar]-[3 cijfers] (bijv. PM25-001, PD25-123, PR25-456)
+          </p>
         </div>
 
         <div>
@@ -268,25 +409,6 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               value={projectData.date}
               onChange={(e) => handleInputChange('date', e.target.value)}
             />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm text-gray-400 mb-2">
-            Locatie <span className="text-red-400">*</span>
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <select
-              className="input-field pl-10"
-              value={projectData.location}
-              onChange={(e) => handleLocationChange(e.target.value)}
-            >
-              <option value="">Selecteer locatie</option>
-              <option value="Leerdam">Leerdam</option>
-              <option value="Naaldwijk">Naaldwijk</option>
-              <option value="Rotterdam">Rotterdam</option>
-            </select>
           </div>
         </div>
 
