@@ -53,8 +53,14 @@ const CreateProject = () => {
 
       // Create distributors if any
       if (projectData.verdelers && projectData.verdelers.length > 0) {
+        console.log('🚀 SAVE: Starting to save verdelers...');
+        console.log('🚀 SAVE: Number of verdelers to save:', projectData.verdelers.length);
+        
         for (const verdeler of projectData.verdelers) {
-          console.log('Saving verdeler with data:', verdeler);
+          console.log('🔍 SAVE: Processing verdeler:', verdeler);
+          console.log('🔍 SAVE: Verdeler distributorId:', verdeler.distributorId);
+          console.log('🔍 SAVE: Verdeler kastNaam:', verdeler.kastNaam);
+          console.log('🔍 SAVE: Full verdeler object:', JSON.stringify(verdeler, null, 2));
           
           const distributorData = {
             distributorId: verdeler.distributorId,
@@ -76,29 +82,35 @@ const CreateProject = () => {
             status: verdeler.status
           };
 
-          console.log('Distributor data being sent to database:', distributorData);
-          console.log('Key fields check:', {
-            distributorId: verdeler.distributorId,
-            kastNaam: verdeler.kastNaam,
-            systeem: verdeler.systeem,
-            voeding: verdeler.voeding
-          });
+          console.log('🔍 SAVE: Mapped distributor data:', distributorData);
+          console.log('🔍 SAVE: Critical field check:');
+          console.log('  - distributorId (mapped):', distributorData.distributorId);
+          console.log('  - kastNaam (mapped):', distributorData.kastNaam);
+          console.log('  - projectId (mapped):', distributorData.projectId);
           
           // Verify the data has the required fields
           if (!distributorData.distributorId) {
-            console.error('❌ Missing distributorId for verdeler:', verdeler);
+            console.error('❌ CRITICAL: Missing distributorId for verdeler:', verdeler);
+            console.error('❌ Original verdeler data:', JSON.stringify(verdeler, null, 2));
+            console.error('❌ Mapped distributorData:', JSON.stringify(distributorData, null, 2));
             toast.error(`Verdeler ID ontbreekt voor verdeler ${verdeler.kastNaam || 'onbekend'}`);
             continue;
           }
           
           if (!distributorData.kastNaam) {
-            console.error('❌ Missing kastNaam for verdeler:', verdeler);
+            console.error('❌ CRITICAL: Missing kastNaam for verdeler:', verdeler);
+            console.error('❌ Original verdeler data:', JSON.stringify(verdeler, null, 2));
+            console.error('❌ Mapped distributorData:', JSON.stringify(distributorData, null, 2));
             toast.error(`Kastnaam ontbreekt voor verdeler ${verdeler.distributorId}`);
             continue;
           }
           
+          console.log('✅ SAVE: Validation passed, calling createDistributor...');
           await dataService.createDistributor(distributorData);
+          console.log('✅ SAVE: Distributor saved successfully');
         }
+        
+        console.log('🎉 SAVE: All verdelers processed');
       }
 
       // Save documents after project and distributors are created
