@@ -519,4 +519,4 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Ik Th in KA 1s:</span>
-                        <span className="text-white">{selectedVerdeler.ikThInKA1s || '-
+                        <span className="text-white">{selectedVerdeler.ik_th_in_ka1s || selectedVerdeler.ikThInKA1s || '-'}</span>
