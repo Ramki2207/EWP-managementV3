@@ -457,132 +457,13 @@ const ProjectDetails = () => {
         )}
 
         {activeTab === 'verdelers' && (
-          <div>
-            <h2 className="text-lg text-gradient mb-6">Project Verdelers</h2>
-            
-            {project.distributors && project.distributors.length > 0 ? (
-              <div className="space-y-4">
-                {project.distributors.map((verdeler: any) => (
-                  <div key={verdeler.id} className="bg-[#2A303C] rounded-lg p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-                        {/* Basis Informatie */}
-                        <div>
-                          <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Verdeler ID:</span>
-                              <span className="text-white font-medium">{verdeler.distributor_id}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Kastnaam:</span>
-                              <span className="text-white font-medium">{verdeler.kast_naam || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Systeem:</span>
-                              <span className="text-white">{verdeler.systeem || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Voeding:</span>
-                              <span className="text-white">{verdeler.voeding || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Bouwjaar:</span>
-                              <span className="text-white">{verdeler.bouwjaar || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Status:</span>
-                              <span className={`px-3 py-1 rounded-full text-sm ${
-                                verdeler.status === 'Opgeleverd' ? 'bg-green-500/20 text-green-400' :
-                                verdeler.status === 'Gereed' ? 'bg-blue-500/20 text-blue-400' :
-                                verdeler.status === 'Testen' ? 'bg-yellow-500/20 text-yellow-400' :
-                                'bg-gray-500/20 text-gray-400'
-                              }`}>
-                                {verdeler.status || 'Onbekend'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Technische Specs */}
-                        <div>
-                          <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
-                          <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Un in V:</span>
-                              <span className="text-white">{verdeler.un_in_v || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">In in A:</span>
-                              <span className="text-white">{verdeler.in_in_a || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Ik Th in KA 1s:</span>
-                              <span className="text-white">{verdeler.ik_th_in_ka1s || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Ik Dyn in KA:</span>
-                              <span className="text-white">{verdeler.ik_dyn_in_ka || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Freq. in Hz:</span>
-                              <span className="text-white">{verdeler.freq_in_hz || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Type nr. HS:</span>
-                              <span className="text-white">{verdeler.type_nr_hs || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Fabrikant:</span>
-                              <span className="text-white">{verdeler.fabrikant || '-'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Keuring datum:</span>
-                              <span className="text-white">
-                                {verdeler.keuring_datum ? new Date(verdeler.keuring_datum).toLocaleDateString('nl-NL') : '-'}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Getest door:</span>
-                              <span className="text-white">{verdeler.getest_door || '-'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <div className="ml-6">
-                        <button
-                          onClick={() => handleVerdelerClick(verdeler)}
-                          className="btn-primary flex items-center space-x-2"
-                        >
-                          <Eye size={20} />
-                          <span>Details</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-[#2A303C] p-8 rounded-lg text-center">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
-                    <Server size={32} className="text-gray-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-300 mb-2">Geen Verdelers</h3>
-                    <p className="text-gray-400 mb-4">
-                      Er zijn nog geen verdelers toegevoegd aan dit project.
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Verdelers worden toegevoegd tijdens het project aanmaak proces.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <VerdelersStep
+            projectData={project}
+            onVerdelersChange={handleVerdelersChange}
+            onNext={() => {}} // No next step in project details
+            onBack={() => {}} // No back step in project details
+            hideNavigation={true} // Hide navigation buttons in project details
+          />
         )}
 
         {activeTab === 'documents' && (
