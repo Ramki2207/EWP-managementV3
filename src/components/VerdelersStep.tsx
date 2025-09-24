@@ -430,6 +430,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             <Eye size={16} className="text-blue-400" />
                           </button>
                           <button
+                            onClick={() => handleGenerateAccessCode(verdeler)}
+                            className="p-2 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors group"
+                            title="Toegangscode genereren"
+                          >
+                            <Key size={16} className="text-green-400" />
+                          </button>
+                          <button
                             onClick={() => handleDeleteVerdeler(index)}
                             className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition-colors group"
                             title="Verwijderen"
