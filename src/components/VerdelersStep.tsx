@@ -568,9 +568,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Verdeler Form Modal */}
       {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-6xl w-full my-8 max-h-[calc(100vh-4rem)]">
-            <div className="max-h-full overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
@@ -686,7 +685,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 <Save size={20} />
                 <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
               </button>
-            </div>
             </div>
           </div>
         </div>
