@@ -403,9 +403,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
         {/* Verdeler Details Modal */}
         {selectedVerdeler && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 p-8 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center">
-              <div className="bg-[#1E2530] rounded-xl p-4 w-full max-w-4xl my-8 shadow-2xl">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="min-h-screen py-8 px-4 flex items-start justify-center">
+              <div className="bg-[#1E2530] rounded-xl p-4 w-full max-w-4xl shadow-2xl">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-700">
                   <div>
