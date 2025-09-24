@@ -61,6 +61,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     if (projectData?.distributors) {
       setVerdelers(projectData.distributors);
       console.log('Distributor data structure:', projectData.distributors[0]);
+      // Debug each distributor's field structure
+      projectData.distributors.forEach((dist, index) => {
+        console.log(`Distributor ${index}:`, {
+          distributorId: dist.distributorId,
+          distributor_id: dist.distributor_id,
+          kastNaam: dist.kastNaam,
+          kast_naam: dist.kast_naam,
+          allFields: Object.keys(dist)
+        });
+      });
     } else if (projectData?.id) {
       loadVerdelers();
     }
