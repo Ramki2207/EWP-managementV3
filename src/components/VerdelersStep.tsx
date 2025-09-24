@@ -403,31 +403,31 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         )}
 
         {/* Verdeler Details Modal */}
-        {selectedVerdeler && (
+        {selectedVerdeler && createPortal(
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
-            <div className="min-h-screen py-8 px-4 flex items-start justify-center">
-              <div className="bg-[#1E2530] rounded-xl p-4 w-full max-w-4xl shadow-2xl">
+            <div className="min-h-screen py-4 px-4 flex items-center justify-center">
+              <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl">
                 {/* Header */}
-                <div className="flex justify-between items-center mb-4 pb-3 border-b border-gray-700">
+                <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-700">
                   <div>
-                    <h2 className="text-lg font-semibold text-blue-400">
+                    <h2 className="text-xl font-semibold text-blue-400">
                       {selectedVerdeler.distributorId} - {selectedVerdeler.kastNaam || 'Naamloos'}
                     </h2>
-                    <p className="text-xs text-gray-400">Verdeler details en acties</p>
+                    <p className="text-sm text-gray-400">Verdeler details en acties</p>
                   </div>
                   <button
                     onClick={() => setSelectedVerdeler(null)}
                     className="text-gray-400 hover:text-white transition-colors"
                   >
-                    <X size={18} />
+                    <X size={24} />
                   </button>
                 </div>
 
                 {/* Verdeler Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-[#2A303C] rounded-lg p-3">
-                    <h3 className="text-sm font-semibold text-green-400 mb-3">Basis Informatie</h3>
-                    <div className="space-y-2 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                    <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Verdeler ID:</span>
                         <span className="text-white font-medium">{selectedVerdeler.distributorId}</span>
@@ -446,7 +446,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Status:</span>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
+                        <span className={`px-3 py-1 rounded-full text-sm ${
                           selectedVerdeler.status === 'Opgeleverd' ? 'bg-green-500/20 text-green-400' :
                           selectedVerdeler.status === 'Gereed' ? 'bg-blue-500/20 text-blue-400' :
                           selectedVerdeler.status === 'Testen' ? 'bg-yellow-500/20 text-yellow-400' :
@@ -458,9 +458,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </div>
                   </div>
 
-                  <div className="bg-[#2A303C] rounded-lg p-3">
-                    <h3 className="text-sm font-semibold text-purple-400 mb-3">Technische Specs</h3>
-                    <div className="space-y-2 text-sm">
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
+                    <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Un in V:</span>
                         <span className="text-white">{selectedVerdeler.unInV || '-'}</span>
@@ -474,6 +474,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <span className="text-white">{selectedVerdeler.freqInHz || '-'}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-gray-400">Ik Th in KA 1s:</span>
+                        <span className="text-white">{selectedVerdeler.ikThInKA1s || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Ik Dyn in KA:</span>
+                        <span className="text-white">{selectedVerdeler.ikDynInKA || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Type nr. HS:</span>
+                        <span className="text-white">{selectedVerdeler.typeNrHs || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-400">Fabrikant:</span>
                         <span className="text-white">{selectedVerdeler.fabrikant || '-'}</span>
                       </div>
@@ -481,14 +493,24 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <span className="text-gray-400">Bouwjaar:</span>
                         <span className="text-white">{selectedVerdeler.bouwjaar || '-'}</span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Getest door:</span>
+                        <span className="text-white">{selectedVerdeler.getestDoor || '-'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Keuring datum:</span>
+                        <span className="text-white">
+                          {selectedVerdeler.keuringDatum ? new Date(selectedVerdeler.keuringDatum).toLocaleDateString('nl-NL') : '-'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="bg-[#2A303C] rounded-lg p-3">
-                  <h3 className="text-sm font-semibold text-orange-400 mb-3">Acties</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div className="bg-[#2A303C] rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <VerdelerTesting
                       verdeler={selectedVerdeler}
                       projectNumber={projectData?.projectNumber || ''}
@@ -521,16 +543,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         setSelectedVerdeler(null);
                         setShowVerdelerForm(true);
                       }}
-                      className="btn-secondary flex items-center space-x-2 text-sm"
+                      className="btn-secondary flex items-center space-x-2"
                     >
-                      <Edit size={14} />
+                      <Edit size={16} />
                       <span>Bewerken</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Old verdeler cards - remove this section */}
