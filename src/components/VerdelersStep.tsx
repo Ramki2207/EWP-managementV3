@@ -1412,7 +1412,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
         {/* Access Code Form Modal */}
         {showAccessCodeForm && selectedVerdelerForCode && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
             <div className="card p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-semibold">Toegangscode genereren</h2>
