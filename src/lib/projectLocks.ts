@@ -305,7 +305,8 @@ class ProjectLockManager {
         .eq('user_id', userId);
 
       if (error) {
-        console.error('Database error unlocking:', error);
+        const errorMessage = getErrorMessage(error);
+        console.error('Database error unlocking:', errorMessage);
       } else {
         console.log('✅ Database lock removed');
       }
@@ -325,7 +326,8 @@ class ProjectLockManager {
       }, 500);
 
     } catch (error) {
-      console.error('Error unlocking project:', error);
+      const errorMessage = getErrorMessage(error);
+      console.error('Error unlocking project:', errorMessage);
     }
   }
 
