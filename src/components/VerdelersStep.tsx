@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy } from 'lucide-react';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
 import { dataService } from '../lib/supabase';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -24,6 +25,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   onNext, 
   onBack 
 }) => {
+  const { hasPermission } = useEnhancedPermissions();
   const [verdelers, setVerdelers] = useState<any[]>([]);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
@@ -32,6 +34,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [isAccessCodeModalOpen, setIsAccessCodeModalOpen] = useState(false);
   const [selectedVerdelerForAccessCode, setSelectedVerdelerForAccessCode] = useState<any>(null);
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
+  const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [selectedVerdelerForCode, setSelectedVerdelerForCode] = useState<any>(null);
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -260,7 +265,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         
         const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
         setVerdelers(updatedVerdelers);
-      console.log('New verdeler being added:', newVerdeler);
         if (onVerdelersChange) {
           onVerdelersChange(updatedVerdelers);
         }
@@ -278,14 +282,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   const handleGenerateAccessCode = (verdeler: any) => {
-    setIsAccessCodeModalOpen(true);
-    setSelectedVerdelerForAccessCode(verdeler);
+    if (!hasPermission('access_codes', 'create')) {
+      toast.error('Je hebt geen toestemming om toegangscodes aan te maken');
+      return;
+    }
+    setSelectedVerdelerForCode(verdeler);
     setNewAccessCode({
       code: generateRandomCode(),
       expiresAt: getDefaultExpiryDate(),
       maxUses: '',
       isActive: true
     });
+    setShowAccessCodeForm(true);
   };
 
   const handleCreateAccessCode = async () => {
@@ -300,14 +308,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
 
     try {
+      setGeneratingCode(true);
       const currentUserId = localStorage.getItem('currentUserId');
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const currentUser = users.find((u: any) => u.id === currentUserId);
-
-      if (!currentUser) {
-        toast.error('Geen gebruiker gevonden. Log opnieuw in.');
-        return;
-      }
 
       const accessCodeData = {
         code: newAccessCode.code.toUpperCase(),
@@ -315,15 +319,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         expiresAt: newAccessCode.expiresAt,
         isActive: newAccessCode.isActive,
         maxUses: newAccessCode.maxUses ? parseInt(newAccessCode.maxUses) : null,
-        verdeler_id: selectedVerdelerForAccessCode.distributor_id || selectedVerdelerForAccessCode.distributorId,
-        project_number: projectData.project_number || projectData.project?.project_number || 'Unknown'
+        verdeler_id: selectedVerdelerForCode.distributor_id || selectedVerdelerForCode.distributorId,
+        project_number: projectData.project_number || ''
       };
 
       await dataService.createAccessCode(accessCodeData);
-      await loadAccessCodes(); // Refresh access codes
       
-      setIsAccessCodeModalOpen(false);
-      setSelectedVerdelerForAccessCode(null);
+      setShowAccessCodeForm(false);
+      setSelectedVerdelerForCode(null);
       setNewAccessCode({
         code: '',
         expiresAt: '',
@@ -331,11 +334,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         isActive: true
       });
       
-      toast.success(`Toegangscode ${newAccessCode.code} aangemaakt voor verdeler ${selectedVerdelerForAccessCode.distributor_id}!`);
+      toast.success('Toegangscode succesvol aangemaakt!');
     } catch (error) {
       console.error('Error creating access code:', error);
       toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
+    } finally {
+      setGeneratingCode(false);
     }
+  };
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success('Code gekopieerd naar klembord!');
   };
 
   return (
@@ -565,6 +575,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectNumber={projectData?.projectNumber || ''}
                       onComplete={() => {}}
                     />
+                    <button
+                      onClick={() => handleGenerateAccessCode(selectedVerdeler)}
+                      className="btn-secondary flex items-center space-x-2"
+                      title="Genereer toegangscode voor deze verdeler"
+                    >
+                      <Key size={16} />
+                      <span>Toegangscode</span>
+                    </button>
                     <PrintLabel
                       verdeler={selectedVerdeler}
                       projectNumber={projectData?.projectNumber || ''}
@@ -1386,6 +1404,139 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 >
                   <Key size={16} />
                   <span>Aanmaken</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Access Code Form Modal */}
+        {showAccessCodeForm && selectedVerdelerForCode && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="card p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-semibold">Toegangscode genereren</h2>
+                <button
+                  onClick={() => {
+                    setShowAccessCodeForm(false);
+                    setSelectedVerdelerForCode(null);
+                  }}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-[#2A303C] p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-blue-400 mb-2">Voor verdeler</h3>
+                  <p className="text-white">
+                    {selectedVerdelerForCode.distributor_id || selectedVerdelerForCode.distributorId} - {selectedVerdelerForCode.kast_naam || selectedVerdelerForCode.kastNaam || 'Naamloos'}
+                  </p>
+                  <p className="text-sm text-gray-400">Project: {projectData.project_number || 'Onbekend'}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Toegangscode <span className="text-red-400">*</span>
+                  </label>
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      className="input-field flex-1"
+                      value={newAccessCode.code}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                        setNewAccessCode({ ...newAccessCode, code: value });
+                      }}
+                      placeholder="12345"
+                      maxLength={5}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
+                      className="btn-secondary flex items-center space-x-2"
+                    >
+                      <Key size={16} />
+                      <span>Nieuw</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCode(newAccessCode.code)}
+                      className="btn-secondary p-2"
+                      disabled={!newAccessCode.code}
+                    >
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Precies 5 cijfers (0-9)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">
+                    Vervaldatum <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input-field"
+                    value={newAccessCode.expiresAt}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
+                    min={new Date().toISOString().slice(0, 16)}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-1">Maximum aantal keer gebruiken</label>
+                  <input
+                    type="number"
+                    className="input-field"
+                    value={newAccessCode.maxUses}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
+                    placeholder="Onbeperkt (laat leeg)"
+                    min="1"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Laat leeg voor onbeperkt gebruik</p>
+                </div>
+
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={newAccessCode.isActive}
+                      onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
+                      className="form-checkbox"
+                    />
+                    <span className="text-gray-400">Direct activeren</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4 mt-6">
+                <button
+                  onClick={() => {
+                    setShowAccessCodeForm(false);
+                    setSelectedVerdelerForCode(null);
+                  }}
+                  className="btn-secondary"
+                  disabled={generatingCode}
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={handleCreateAccessCode}
+                  className={`btn-primary ${generatingCode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={generatingCode || !newAccessCode.code || !newAccessCode.expiresAt || !/^\d{5}$/.test(newAccessCode.code)}
+                >
+                  {generatingCode ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      <span>Aanmaken...</span>
+                    </div>
+                  ) : (
+                    'Code aanmaken'
+                  )}
                 </button>
               </div>
             </div>
