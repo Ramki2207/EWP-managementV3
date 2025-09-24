@@ -275,6 +275,8 @@ export const dataService = {
 
   async createDistributor(distributor: any) {
     try {
+      console.log('createDistributor called with:', distributor);
+      
       let profilePhotoUrl = '';
       
       // Handle file upload if profilePhoto is a File object
@@ -284,27 +286,31 @@ export const dataService = {
         profilePhotoUrl = distributor.profilePhoto;
       }
 
+      const dbData = {
+        distributor_id: distributor.distributorId,
+        project_id: distributor.projectId,
+        kast_naam: distributor.kastNaam,
+        systeem: distributor.systeem,
+        voeding: distributor.voeding,
+        bouwjaar: distributor.bouwjaar,
+        keuring_datum: distributor.keuringDatum,
+        getest_door: distributor.getestDoor,
+        un_in_v: distributor.unInV,
+        in_in_a: distributor.inInA,
+        ik_th_in_ka1s: distributor.ikThInKA1s,
+        ik_dyn_in_ka: distributor.ikDynInKA,
+        freq_in_hz: distributor.freqInHz,
+        type_nr_hs: distributor.typeNrHs,
+        fabrikant: distributor.fabrikant,
+        profile_photo: profilePhotoUrl,
+        status: distributor.status
+      };
+      
+      console.log('Database data being inserted:', dbData);
+
       const { data, error } = await supabase
         .from('distributors')
-        .insert([{
-          distributor_id: distributor.distributorId,
-          project_id: distributor.projectId,
-          kast_naam: distributor.kastNaam,
-          systeem: distributor.systeem,
-          voeding: distributor.voeding,
-          bouwjaar: distributor.bouwjaar,
-          keuring_datum: distributor.keuringDatum,
-          getest_door: distributor.getestDoor,
-          un_in_v: distributor.unInV,
-          in_in_a: distributor.inInA,
-          ik_th_in_ka1s: distributor.ikThInKA1s,
-          ik_dyn_in_ka: distributor.ikDynInKA,
-          freq_in_hz: distributor.freqInHz,
-          type_nr_hs: distributor.typeNrHs,
-          fabrikant: distributor.fabrikant,
-          profile_photo: profilePhotoUrl,
-          status: distributor.status
-        }])
+        .insert([dbData])
         .select()
         .single();
       
@@ -312,6 +318,7 @@ export const dataService = {
         console.error('Database error in createDistributor:', error);
         throw error;
       }
+      console.log('Distributor created successfully in database:', data);
       return data;
     } catch (err) {
       console.error('Network error in createDistributor:', err);

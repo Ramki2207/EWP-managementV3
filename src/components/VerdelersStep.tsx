@@ -170,6 +170,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       return;
     }
 
+    console.log('Saving verdeler data:', verdelerData);
+    
     try {
       const verdelerToSave = {
         distributorId: verdelerData.distributorId,
@@ -248,6 +250,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         
         const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
         setVerdelers(updatedVerdelers);
+      console.log('New verdeler being added:', newVerdeler);
         if (onVerdelersChange) {
           onVerdelersChange(updatedVerdelers);
         }

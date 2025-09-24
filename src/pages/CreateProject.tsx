@@ -54,6 +54,8 @@ const CreateProject = () => {
       // Create distributors if any
       if (projectData.verdelers && projectData.verdelers.length > 0) {
         for (const verdeler of projectData.verdelers) {
+          console.log('Saving verdeler with data:', verdeler);
+          
           const distributorData = {
             distributorId: verdeler.distributorId,
             projectId: savedProject.id,
@@ -74,6 +76,7 @@ const CreateProject = () => {
             status: verdeler.status
           };
 
+          console.log('Distributor data being sent to database:', distributorData);
           await dataService.createDistributor(distributorData);
         }
       }
