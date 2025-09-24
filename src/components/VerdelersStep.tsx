@@ -60,6 +60,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   useEffect(() => {
     if (projectData?.distributors) {
       setVerdelers(projectData.distributors);
+      console.log('Distributor data structure:', projectData.distributors[0]);
     } else if (projectData?.id) {
       loadVerdelers();
     }
@@ -657,11 +658,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             ))}
                             {activeCodes.length > 3 && (
                               <div className="flex items-center px-3 py-2 bg-gray-500/10 border border-gray-500/20 rounded-lg">
-                                <span className="text-xs text-gray-400">+{activeCodes.length - 3} meer</span>
+                      <span className="font-medium text-green-400">
+                        {verdeler.distributorId || verdeler.distributor_id || '-'}
+                      </span>
                               </div>
                             )}
-                          </div>
-                          <p className="text-xs text-gray-500">
+                  <td className="py-3 text-gray-300">
+                    {verdeler.kastNaam || verdeler.kast_naam || '-'}
+                  </td>
+                  <td className="py-3 text-gray-300">{verdeler.systeem || '-'}</td>
                             💡 Codes werken voor onderhoudsmelding via QR-code scan
                           </p>
                         </div>
@@ -1119,11 +1124,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <span className="text-gray-400">Un in V:</span>
                       <span className="font-medium text-white">{showVerdelerInfo.un_in_v || '-'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-700">
+                    <span className="text-white font-medium">
+                      {selectedVerdeler.distributorId || selectedVerdeler.distributor_id}
+                    </span>
                       <span className="text-gray-400">In in A:</span>
                       <span className="font-medium text-white">{showVerdelerInfo.in_in_a || '-'}</span>
                     </div>
-                    <div className="flex justify-between items-center py-2 border-b border-gray-700">
+                    <span className="text-white font-medium">
+                      {selectedVerdeler.kastNaam || selectedVerdeler.kast_naam || '-'}
+                    </span>
                       <span className="text-gray-400">Ik Th in KA 1s:</span>
                       <span className="font-medium text-white">{showVerdelerInfo.ik_th_in_ka1s || '-'}</span>
                     </div>
@@ -1140,15 +1149,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <span className="font-medium text-white">{showVerdelerInfo.type_nr_hs || '-'}</span>
                     </div>
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-gray-400">Fabrikant:</span>
+                    <span className="text-white">{selectedVerdeler.unInV || selectedVerdeler.un_in_v || '-'}</span>
                       <span className="font-medium text-white">{showVerdelerInfo.fabrikant || '-'}</span>
                     </div>
                   </div>
-                </div>
+                    <span className="text-white">{selectedVerdeler.inInA || selectedVerdeler.in_in_a || '-'}</span>
               </div>
 
               {/* Photo Section */}
-              {showVerdelerInfo.profile_photo && (
+                    <span className="text-white">{selectedVerdeler.freqInHz || selectedVerdeler.freq_in_hz || '-'}</span>
                 <div className="mt-6 pt-6 border-t border-gray-700">
                   <h3 className="text-lg font-semibold text-orange-400 mb-4">Verdeler Foto</h3>
                   <div className="flex justify-center">
@@ -1157,6 +1166,29 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       alt={showVerdelerInfo.distributor_id}
                       className="max-w-md max-h-64 object-contain rounded-lg border border-gray-600"
                     />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Ik Th in KA 1s:</span>
+                    <span className="text-white">{selectedVerdeler.ikThInKA1s || selectedVerdeler.ik_th_in_ka1s || '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Ik Dyn in KA:</span>
+                    <span className="text-white">{selectedVerdeler.ikDynInKA || selectedVerdeler.ik_dyn_in_ka || '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Type nr. HS:</span>
+                    <span className="text-white">{selectedVerdeler.typeNrHs || selectedVerdeler.type_nr_hs || '-'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Keuring datum:</span>
+                    <span className="text-white">
+                      {selectedVerdeler.keuringDatum || selectedVerdeler.keuring_datum ? 
+                        new Date(selectedVerdeler.keuringDatum || selectedVerdeler.keuring_datum).toLocaleDateString('nl-NL') : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Getest door:</span>
+                    <span className="text-white">{selectedVerdeler.getestDoor || selectedVerdeler.getest_door || '-'}</span>
                   </div>
                 </div>
               )}
