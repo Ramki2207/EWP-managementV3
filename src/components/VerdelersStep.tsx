@@ -579,8 +579,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </div>
                 </div>
               </div>
-            </div>
-
             {/* Actions Section */}
             <div className="mt-8 pt-6 border-t border-gray-700">
               <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
