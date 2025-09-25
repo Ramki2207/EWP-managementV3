@@ -10,6 +10,7 @@ import PrintLabel from './PrintLabel';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ewpLogo from '../assets/ewp-logo.png';
 
 interface VerdelersStepProps {
@@ -28,6 +29,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const { hasPermission } = useEnhancedPermissions();
   const [verdelers, setVerdelers] = useState<any[]>([]);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
   const [showVerdelerInfo, setShowVerdelerInfo] = useState<any>(null);
   const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
@@ -65,6 +67,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
   useEffect(() => {
     if (projectData?.distributors) {
+    loadUsers();
       setVerdelers(projectData.distributors);
       console.log('Distributor data structure:', projectData.distributors[0]);
       // Debug each distributor's field structure
@@ -103,6 +106,53 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     } catch (error) {
       console.error('Error loading access codes:', error);
     }
+  };
+
+  const loadUsers = async () => {
+    try {
+      // Load users from localStorage (primary source)
+      const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      setUsers(localUsers);
+      
+      // Try to sync with database in background
+      try {
+        const dbUsers = await dataService.getUsers();
+        setUsers(dbUsers || localUsers);
+      } catch (dbError) {
+        console.log('Database sync failed, using localStorage only:', dbError);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const getMontageUsersByLocation = (projectLocation?: string) => {
+    // Filter users with 'montage' role
+    const montageUsers = users.filter(user => user.role === 'montage');
+    
+    if (!projectLocation) {
+      return {
+        primary: [],
+        other: montageUsers
+      };
+    }
+    
+    // Separate users by location
+    const primaryUsers = montageUsers.filter(user => 
+      user.assignedLocations && user.assignedLocations.includes(projectLocation)
+    );
+    
+    const otherUsers = montageUsers.filter(user => 
+      !user.assignedLocations || 
+      user.assignedLocations.length === 0 || 
+      user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
+      !user.assignedLocations.includes(projectLocation)
+    );
+    
+    return {
+      primary: primaryUsers,
+      other: otherUsers
+    };
   };
 
   const generateVerdelerID = () => {
