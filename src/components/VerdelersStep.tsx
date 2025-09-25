@@ -1030,57 +1030,102 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <h3 className="text-lg font-semibold text-orange-400">Aanvullende Informatie</h3>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                        <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
+                        <select
+                          className="input-field"
+                          value={verdelerData.toegewezenMonteur}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, toegewezenMonteur: e.target.value })}
+                        >
+                          <option value="">Nader te bepalen</option>
+                          {(() => {
+                            const montageUsersByLocation = getMontageUsersByLocation();
+                            const projectLocation = projectData.location;
+                            
+                            // Show users for the project's location first, then others
+                            const relevantUsers = projectLocation && montageUsersByLocation[projectLocation] 
+                              ? montageUsersByLocation[projectLocation]
+                              : [];
+                            
+                            const otherUsers = Object.entries(montageUsersByLocation)
+                              .filter(([location]) => location !== projectLocation)
+                              .flatMap(([, users]) => users);
+                            
+                            return (
+                              <>
+                                {projectLocation && relevantUsers.length > 0 && (
+                                  <optgroup label={`${projectLocation} (Primair)`}>
+                                    {relevantUsers.map(user => (
+                                      <option key={user.id} value={user.id}>
+                                        {user.username}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                )}
+                                {otherUsers.length > 0 && (
+                                  <optgroup label="Andere locaties">
+                                    {Object.entries(montageUsersByLocation)
+                                      .filter(([location]) => location !== projectLocation)
+                                      .map(([location, locationUsers]) => (
+                                        <optgroup key={location} label={location}>
+                                          {locationUsers.map(user => (
+                                            <option key={user.id} value={user.id}>
+                                              {user.username}
+                                            </option>
+                                          ))}
+                                        </optgroup>
+                                      ))
+                                    }
+                                  </optgroup>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
                         <input
                           type="date"
                           className="input-field"
-                          value={verdelerData.keuringDatum}
-                          onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
+                          value={verdelerData.gewensteLeverDatum}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, gewensteLeverDatum: e.target.value })}
+                          min={new Date().toISOString().split('T')[0]}
                         />
                       </div>
-
+                      
                       <div>
-                        <label className="block text-sm text-gray-400 mb-2">Getest door</label>
-                        <input
-                          type="text"
-                          className="input-field"
-                          value={verdelerData.getestDoor}
-                          onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
-                          placeholder="Naam tester"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
                         <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
-                        <div className="flex items-center space-x-4">
+                        <div className="space-y-2">
                           <input
                             type="file"
                             accept="image/*"
                             onChange={handleProfilePhotoChange}
                             className="hidden"
-                            id="profile-photo"
+                            id="profile-photo-upload"
                           />
                           <label
-                            htmlFor="profile-photo"
-                            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center space-x-2 cursor-pointer transform hover:scale-105"
+                            htmlFor="profile-photo-upload"
+                            className="btn-secondary flex items-center space-x-2 cursor-pointer w-full justify-center"
                           >
                             <Camera size={20} />
                             <span>Bestand kiezen</span>
                           </label>
-                          <span className="text-sm text-gray-400">Ondersteunde formaten: JPG, PNG, GIF (max. 5MB)</span>
+                          <p className="text-xs text-gray-500">Ondersteunde formaten: JPG, PNG, GIF (max. 5MB)</p>
                         </div>
-                        {verdelerData.profilePhoto && (
-                          <div className="mt-4">
-                            <img
-                              src={typeof verdelerData.profilePhoto === 'string' ? verdelerData.profilePhoto : URL.createObjectURL(verdelerData.profilePhoto)}
-                              alt="Profile preview"
-                              className="w-32 h-32 object-cover rounded-lg border-2 border-orange-400"
-                            />
-                          </div>
-                        )}
                       </div>
+
+                      {verdelerData.profilePhoto && (
+                        <div className="md:col-span-3 mt-4">
+                          <img
+                            src={typeof verdelerData.profilePhoto === 'string' ? verdelerData.profilePhoto : URL.createObjectURL(verdelerData.profilePhoto)}
+                            alt="Profile preview"
+                            className="w-32 h-32 object-cover rounded-lg border-2 border-orange-400"
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
