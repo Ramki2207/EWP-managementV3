@@ -7,7 +7,6 @@ import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
-import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
