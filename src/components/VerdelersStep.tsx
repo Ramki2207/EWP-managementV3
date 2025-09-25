@@ -350,7 +350,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {verdelers.map((verdeler) => (
+                {verdelers.filter(Boolean).map((verdeler) => (
                   <tr 
                     key={verdeler.id || verdeler.distributorId} 
                     className="table-row cursor-pointer"
