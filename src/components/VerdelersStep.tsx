@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { createPortal } from 'react-dom';
-import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy, Building, Zap, Calendar, Camera } from 'lucide-react';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
@@ -347,6 +347,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     toast.success('Code gekopieerd naar klembord!');
+  };
+
+  const handleCancelForm = () => {
+    setShowVerdelerForm(false);
+    setEditingVerdeler(null);
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVerdelerData({ ...verdelerData, profilePhoto: file });
+    }
   };
 
   return (
@@ -742,6 +754,23 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         </div>
                         <div>
                           <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                          <input
+                            type="text"
+                            className="input-field"
+                            value={verdelerData.voeding}
+                            onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
+                            placeholder="3x400V + N + PE"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       {showVerdelerForm && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] overflow-y-auto">
           <div className="min-h-screen flex items-center justify-center p-4">
@@ -1077,6 +1106,123 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </div>,
         document.body
       )}
+
+        {/* Access Code Form Modal */}
+        {showAccessCodeForm && createPortal(
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] overflow-y-auto">
+            <div className="min-h-screen flex items-center justify-center p-4">
+              <div className="bg-[#1E2530] rounded-2xl shadow-2xl border border-white/10 w-full max-w-md">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-green-400">Toegangscode genereren</h2>
+                    <button
+                      onClick={() => setShowAccessCodeForm(false)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Verdeler
+                      </label>
+                      <div className="bg-[#2A303C] rounded-lg p-3">
+                        <span className="text-white font-medium">
+                          {selectedVerdelerForCode?.distributor_id || selectedVerdelerForCode?.distributorId} - {selectedVerdelerForCode?.kast_naam || selectedVerdelerForCode?.kastNaam}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Toegangscode <span className="text-red-400">*</span>
+                      </label>
+                      <div className="flex space-x-2">
+                        <input
+                          type="text"
+                          className="input-field flex-1"
+                          value={newAccessCode.code}
+                          onChange={(e) => setNewAccessCode({ ...newAccessCode, code: e.target.value })}
+                          placeholder="12345"
+                          maxLength={5}
+                          pattern="[0-9]{5}"
+                        />
+                        <button
+                          onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
+                          className="btn-secondary px-3"
+                          title="Nieuwe code genereren"
+                        >
+                          🎲
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">Precies 5 cijfers</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Vervaldatum <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        className="input-field"
+                        value={newAccessCode.expiresAt}
+                        onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
+                        min={new Date().toISOString().slice(0, 16)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Maximum aantal keer gebruiken (optioneel)
+                      </label>
+                      <input
+                        type="number"
+                        className="input-field"
+                        value={newAccessCode.maxUses}
+                        onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
+                        placeholder="Onbeperkt"
+                        min="1"
+                      />
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="isActive"
+                        checked={newAccessCode.isActive}
+                        onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
+                        className="rounded border-gray-600 bg-[#2A303C] text-green-500 focus:ring-green-500"
+                      />
+                      <label htmlFor="isActive" className="text-sm text-gray-300">
+                        Code is actief
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-4 mt-6">
+                    <button
+                      onClick={() => setShowAccessCodeForm(false)}
+                      className="btn-secondary"
+                    >
+                      Annuleren
+                    </button>
+                    <button
+                      onClick={handleCreateAccessCode}
+                      className="btn-primary"
+                      disabled={generatingCode || !newAccessCode.code || !newAccessCode.expiresAt}
+                    >
+                      {generatingCode ? 'Genereren...' : 'Code aanmaken'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+      </div>
     </>
   );
 };
