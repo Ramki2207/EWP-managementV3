@@ -307,7 +307,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   return (
-    <>
+    <React.Fragment>
       <div className="space-y-6">
       {!hideNavigation && (
         <div className="text-center mb-8">
@@ -938,7 +938,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </div>
       )}
       </div>
-    </>
+    </React.Fragment>
   );
 };
 
