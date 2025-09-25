@@ -7,6 +7,7 @@ import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 const VerdelerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const VerdelerDetails = () => {
   const [editedDistributor, setEditedDistributor] = useState<any>(null);
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -32,6 +34,7 @@ const VerdelerDetails = () => {
   useEffect(() => {
     if (id) {
       loadDistributor();
+      loadUsers();
     }
   }, [id]);
 
@@ -40,6 +43,69 @@ const VerdelerDetails = () => {
       loadTestData();
     }
   }, [distributor]);
+
+  const loadUsers = async () => {
+    try {
+      // Load from localStorage first (primary source)
+      const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      setUsers(localUsers);
+      
+      // Try to sync with database in background
+      try {
+        const dbUsers = await dataService.getUsers();
+        setUsers(dbUsers);
+      } catch (dbError) {
+        console.log('Database sync failed, using localStorage only:', dbError);
+      }
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const getMontageUsersByLocation = (projectLocation?: string) => {
+    console.log('🔍 VERDELER DETAILS: Getting montage users for location:', projectLocation);
+    console.log('🔍 VERDELER DETAILS: Total users loaded:', users.length);
+    
+    if (!users || users.length === 0) {
+      console.log('❌ VERDELER DETAILS: No users loaded yet');
+      return { primary: [], other: [] };
+    }
+    
+    // Filter users with 'montage' role
+    const montageUsers = users.filter(user => {
+      const isMontage = user.role === 'montage';
+      console.log(`🔍 VERDELER DETAILS: User ${user.username} - role: ${user.role}, isMontage: ${isMontage}`);
+      return isMontage;
+    });
+    
+    console.log('🔍 VERDELER DETAILS: Found montage users:', montageUsers.length);
+    
+    if (!projectLocation) {
+      return { primary: montageUsers, other: [] };
+    }
+    
+    // Separate users by location
+    const primary = montageUsers.filter(user => {
+      const hasLocationAccess = !user.assignedLocations || 
+                               user.assignedLocations.length === 0 || 
+                               user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
+                               user.assignedLocations.includes(projectLocation);
+      console.log(`🔍 VERDELER DETAILS: User ${user.username} location access for ${projectLocation}:`, hasLocationAccess);
+      return hasLocationAccess;
+    });
+    
+    const other = montageUsers.filter(user => {
+      const hasOtherLocationAccess = user.assignedLocations && 
+                                    user.assignedLocations.length > 0 && 
+                                    user.assignedLocations.length < AVAILABLE_LOCATIONS.length &&
+                                    !user.assignedLocations.includes(projectLocation);
+      return hasOtherLocationAccess;
+    });
+    
+    console.log('🔍 VERDELER DETAILS: Primary users:', primary.length, 'Other users:', other.length);
+    
+    return { primary, other };
+  };
   const loadDistributor = async () => {
     try {
       setLoading(true);
@@ -210,6 +276,8 @@ const VerdelerDetails = () => {
         bouwjaar: editedDistributor.bouwjaar,
         keuringDatum: editedDistributor.keuring_datum,
         getestDoor: editedDistributor.getest_door,
+        toegewezenMonteur: editedDistributor.toegewezen_monteur,
+        gewensteLeverDatum: editedDistributor.gewenste_lever_datum,
         unInV: editedDistributor.un_in_v,
         inInA: editedDistributor.in_in_a,
         ikThInKA1s: editedDistributor.ik_th_in_ka1s,
@@ -511,73 +579,302 @@ const VerdelerDetails = () => {
       <div className="card p-6">
         {activeTab === 'details' && (
           <div>
-            <h2 className="text-lg text-gradient mb-6">Verdeler gegevens</h2>
-
-            <div className="grid grid-cols-2 gap-6">
-              {[
-                { label: "Verdeler ID", field: "distributor_id", readOnly: true },
-                { label: "Kastnaam", field: "kast_naam" },
-                { label: "Projectnummer", field: "project_number", readOnly: true, value: distributor.projects?.project_number },
-                { label: "Datum", field: "keuring_datum", type: "date" },
-                { label: "Systeem", field: "systeem" },
-                { label: "Voeding", field: "voeding" },
-                { label: "Bouwjaar", field: "bouwjaar" },
-                { label: "Toegewezen monteur", field: "toegewezen_monteur" },
-                { label: "Gewenste lever datum", field: "gewenste_lever_datum", type: "date" },
-                { label: "Un in V", field: "un_in_v" },
-                { label: "In in A", field: "in_in_a" },
-                { label: "Ik Th in KA 1s", field: "ik_th_in_ka1s" },
-                { label: "Ik Dyn in KA", field: "ik_dyn_in_ka" },
-                { label: "Freq. in Hz", field: "freq_in_hz" },
-                { label: "Type nr. HS", field: "type_nr_hs" },
-                { label: "Fabrikant", field: "fabrikant" },
-                { 
-                  label: "Status", 
-                  field: "status",
-                  type: "select",
-                  options: ["", "Levering", "Opgeleverd"]
-                },
-              ].map((field) => {
-                // Get the current value for display
-                const currentValue = field.value || 
-                  (isEditing ? editedDistributor?.[field.field] : distributor?.[field.field]);
-                
-                return (
-                  <div key={field.field}>
-                    <label className="block text-sm text-gray-400 mb-1">{field.label}</label>
-                    {isEditing && !field.readOnly ? (
-                      field.type === "select" ? (
-                        <select
-                          className="input-field"
-                          value={editedDistributor?.[field.field] || ''}
-                          onChange={(e) => handleInputChange(field.field, e.target.value)}
-                        >
-                          {field.options?.map(option => (
-                            <option key={option} value={option}>
-                              {option || 'Selecteer status'}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type={field.type || "text"}
-                          className="input-field"
-                          value={field.type === "date" && editedDistributor?.[field.field] 
-                            ? editedDistributor[field.field].split('T')[0] // Handle both date strings and ISO strings
-                            : editedDistributor?.[field.field] || ''}
-                          onChange={(e) => handleInputChange(field.field, e.target.value)}
-                        />
-                      )
+            <div className="space-y-8">
+              {/* Basis Informatie */}
+              <div>
+                <h3 className="text-lg font-semibold text-blue-400 mb-4">Basis Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Verdeler ID</label>
+                    <div className="input-field bg-[#2A303C]/50 cursor-not-allowed">
+                      {distributor.distributor_id}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Verdeler ID kan niet worden gewijzigd</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Kastnaam</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.kast_naam || ''}
+                        onChange={(e) => handleInputChange('kast_naam', e.target.value)}
+                        placeholder="Voer kastnaam in"
+                      />
                     ) : (
-                      <p className="input-field">
-                        {field.type === "date" && currentValue 
-                          ? new Date(currentValue).toLocaleDateString('nl-NL')
-                          : currentValue || "-"}
-                      </p>
+                      <div className="input-field">
+                        {distributor.kast_naam || "-"}
+                      </div>
                     )}
                   </div>
-                );
-              })}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Projectnummer</label>
+                    <div className="input-field bg-[#2A303C]/50 cursor-not-allowed">
+                      {distributor.projects?.project_number || "-"}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Gekoppeld aan project</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Status</label>
+                    {isEditing ? (
+                      <select
+                        className="input-field"
+                        value={editedDistributor?.status || ''}
+                        onChange={(e) => handleInputChange('status', e.target.value)}
+                      >
+                        <option value="">Selecteer status</option>
+                        <option value="In productie">In productie</option>
+                        <option value="Testen">Testen</option>
+                        <option value="Gereed">Gereed</option>
+                        <option value="Opgeleverd">Opgeleverd</option>
+                      </select>
+                    ) : (
+                      <div className="input-field">
+                        {distributor.status || "-"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Technische Specificaties */}
+              <div>
+                <h3 className="text-lg font-semibold text-green-400 mb-4">Technische Specificaties</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.systeem || ''}
+                        onChange={(e) => handleInputChange('systeem', e.target.value)}
+                        placeholder="Bijv. 400V TN-S"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.systeem || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.voeding || ''}
+                        onChange={(e) => handleInputChange('voeding', e.target.value)}
+                        placeholder="Bijv. 3x400V + N + PE"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.voeding || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.bouwjaar || ''}
+                        onChange={(e) => handleInputChange('bouwjaar', e.target.value)}
+                        placeholder="Bijv. 2025"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.bouwjaar || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.un_in_v || ''}
+                        onChange={(e) => handleInputChange('un_in_v', e.target.value)}
+                        placeholder="Bijv. 400"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.un_in_v || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.in_in_a || ''}
+                        onChange={(e) => handleInputChange('in_in_a', e.target.value)}
+                        placeholder="Bijv. 400"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.in_in_a || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.ik_th_in_ka1s || ''}
+                        onChange={(e) => handleInputChange('ik_th_in_ka1s', e.target.value)}
+                        placeholder="Bijv. 25"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.ik_th_in_ka1s || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.ik_dyn_in_ka || ''}
+                        onChange={(e) => handleInputChange('ik_dyn_in_ka', e.target.value)}
+                        placeholder="Bijv. 65"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.ik_dyn_in_ka || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.freq_in_hz || ''}
+                        onChange={(e) => handleInputChange('freq_in_hz', e.target.value)}
+                        placeholder="Bijv. 50"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.freq_in_hz || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.type_nr_hs || ''}
+                        onChange={(e) => handleInputChange('type_nr_hs', e.target.value)}
+                        placeholder="Bijv. NS400N"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.type_nr_hs || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.fabrikant || ''}
+                        onChange={(e) => handleInputChange('fabrikant', e.target.value)}
+                        placeholder="Bijv. Schneider Electric"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.fabrikant || "-"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Aanvullende Informatie */}
+              <div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-4">Aanvullende Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
+                    {isEditing ? (
+                      <select
+                        className="input-field"
+                        value={editedDistributor?.toegewezen_monteur || ''}
+                        onChange={(e) => handleInputChange('toegewezen_monteur', e.target.value)}
+                      >
+                        <option value="">Nader te bepalen</option>
+                        {(() => {
+                          const { primary, other } = getMontageUsersByLocation(distributor.projects?.location);
+                          
+                          return (
+                            <>
+                              {primary.length > 0 && (
+                                <>
+                                  <optgroup label={`Primair - ${distributor.projects?.location || 'Onbekend'}`}>
+                                    {primary.map(user => (
+                                      <option key={user.id} value={user.username}>
+                                        {user.username}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                </>
+                              )}
+                              {other.length > 0 && (
+                                <optgroup label="Andere locaties">
+                                  {other.map(user => (
+                                    <option key={user.id} value={user.username}>
+                                      {user.username} ({user.assignedLocations?.join(', ') || 'Alle locaties'})
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )}
+                              {primary.length === 0 && other.length === 0 && (
+                                <option disabled>Geen montage medewerkers beschikbaar</option>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </select>
+                    ) : (
+                      <div className="input-field">
+                        {distributor.toegewezen_monteur || "Nader te bepalen"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        className="input-field"
+                        value={editedDistributor?.gewenste_lever_datum ? editedDistributor.gewenste_lever_datum.split('T')[0] : ''}
+                        onChange={(e) => handleInputChange('gewenste_lever_datum', e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.gewenste_lever_datum 
+                          ? new Date(distributor.gewenste_lever_datum).toLocaleDateString('nl-NL')
+                          : "Niet ingesteld"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
