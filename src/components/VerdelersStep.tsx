@@ -350,9 +350,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {verdelers.filter(Boolean).map((verdeler) => (
+                {verdelers.filter(Boolean).map((verdeler) => {
+                  // Skip if verdeler is still null/undefined after filtering
+                  if (!verdeler) return null;
+                  
+                  return (
                   <tr 
-                    key={verdeler.id || verdeler.distributorId} 
+                    key={verdeler.id || verdeler.distributorId || Math.random().toString()} 
                     className="table-row cursor-pointer"
                     onClick={() => handleVerdelerClick(verdeler)}
                   >
@@ -413,7 +417,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
