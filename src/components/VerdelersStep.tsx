@@ -640,7 +640,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       {/* Add/Edit Verdeler Form Modal */}
       {showVerdelerForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[65vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
