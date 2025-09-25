@@ -125,37 +125,33 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
-  const getMontageUsersByLocation = (projectLocation: string) => {
+  const getMontageUsersByLocation = (projectLocation?: string) => {
+    // Filter users with 'montage' role
     const montageUsers = users.filter(user => user.role === 'montage');
     
-    console.log('🔍 MONTAGE FILTER: All users:', users.length);
-    console.log('🔍 MONTAGE FILTER: Montage users found:', montageUsers.length);
-    console.log('🔍 MONTAGE FILTER: Project location:', projectLocation);
+    if (!projectLocation) {
+      return {
+        primary: [],
+        other: montageUsers
+      };
+    }
     
-    const primary = montageUsers.filter(user => {
-      // If user has no assigned locations or has access to all locations, include them
-      if (!user.assignedLocations || user.assignedLocations.length === 0 || 
-          user.assignedLocations.length === AVAILABLE_LOCATIONS.length) {
-        return true;
-      }
-      // Otherwise, check if user has access to the project location
-      return user.assignedLocations.includes(projectLocation);
-    });
+    // Separate users by location
+    const primaryUsers = montageUsers.filter(user => 
+      user.assignedLocations && user.assignedLocations.includes(projectLocation)
+    );
     
-    const other = montageUsers.filter(user => {
-      // If user has no assigned locations or has access to all locations, don't include in "other"
-      if (!user.assignedLocations || user.assignedLocations.length === 0 || 
-          user.assignedLocations.length === AVAILABLE_LOCATIONS.length) {
-        return false;
-      }
-      // Include users who don't have access to the project location
-      return !user.assignedLocations.includes(projectLocation);
-    });
+    const otherUsers = montageUsers.filter(user => 
+      !user.assignedLocations || 
+      user.assignedLocations.length === 0 || 
+      user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
+      !user.assignedLocations.includes(projectLocation)
+    );
     
-    console.log('🔍 MONTAGE FILTER: Primary users:', primary.length, primary.map(u => u.username));
-    console.log('🔍 MONTAGE FILTER: Other users:', other.length, other.map(u => u.username));
-    
-    return { primary, other };
+    return {
+      primary: primaryUsers,
+      other: otherUsers
+    };
   };
 
   const generateVerdelerID = () => {
@@ -1091,36 +1087,33 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           onChange={(e) => setVerdelerData({ ...verdelerData, toegewezenMonteur: e.target.value })}
                         >
                           <option value="">Nader te bepalen</option>
-                          {(() => {
-                            const montageUsersByLocation = getMontageUsersByLocation(projectData.location);
-                            const projectLocation = projectData.location;
-                            
-                            // Show users for the project's location first, then others
-                            const relevantUsers = projectLocation && montageUsersByLocation.primary 
-                              ? montageUsersByLocation.primary
-                              : [];
-                            
-                            const otherUsers = montageUsersByLocation.other || [];
+                          {users.length > 0 && (() => {
+                            const { primary, other } = getMontageUsersByLocation(projectData.location || '');
+                            console.log('🔍 DROPDOWN RENDER: Primary users for dropdown:', primary.length);
+                            console.log('🔍 DROPDOWN RENDER: Other users for dropdown:', other.length);
                             
                             return (
                               <>
-                                {projectLocation && relevantUsers.length > 0 && (
-                                  <optgroup label={`${projectLocation} (Primair)`}>
-                                    {relevantUsers.map(user => (
-                                      <option key={user.id} value={user.id}>
+                                {primary.length > 0 && (
+                                  <optgroup label={`Primair - ${projectData.location || 'Onbekend'}`}>
+                                    {primary.map(user => (
+                                      <option key={user.id} value={user.username}>
                                         {user.username}
                                       </option>
                                     ))}
                                   </optgroup>
                                 )}
-                                {otherUsers.length > 0 && (
+                                {other.length > 0 && (
                                   <optgroup label="Andere locaties">
-                                    {otherUsers.map(user => (
-                                      <option key={user.id} value={user.id}>
-                                        {user.username}
+                                    {other.map(user => (
+                                      <option key={user.id} value={user.username}>
+                                        {user.username} ({user.assignedLocations?.join(', ') || 'Alle locaties'})
                                       </option>
                                     ))}
                                   </optgroup>
+                                )}
+                                {primary.length === 0 && other.length === 0 && (
+                                  <option disabled>Geen montage medewerkers gevonden</option>
                                 )}
                               </>
                             );
