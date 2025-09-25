@@ -399,7 +399,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             // Handle toegangscode generation for this verdeler
-                            toast.info('Toegangscode functionaliteit beschikbaar na project opslaan');
+                            toast('Toegangscode functionaliteit beschikbaar na project opslaan');
                           }}
                           className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
                           title="Toegangscode"
