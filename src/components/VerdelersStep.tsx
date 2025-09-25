@@ -560,28 +560,28 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             <div className="mt-8 pt-6 border-t border-gray-700">
               <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {projectData?.id && (
+                {projectData && projectData.id && (
                   <>
                     <VerdelerTesting
                       verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number}
+                      projectNumber={projectData.project_number || ''}
                       onComplete={(testData) => handleTestComplete(0, testData)}
                       projectId={projectData.id}
                       distributorId={showVerdelerDetails.id}
                     />
                     <FATTest
                       verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number}
+                      projectNumber={projectData.project_number || ''}
                       onComplete={(testData) => handleTestComplete(0, testData)}
                     />
                     <HighVoltageTest
                       verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number}
+                      projectNumber={projectData.project_number || ''}
                       onComplete={(testData) => handleTestComplete(0, testData)}
                     />
                     <OnSiteTest
                       verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number}
+                      projectNumber={projectData.project_number || ''}
                       onComplete={(testData) => handleTestComplete(0, testData)}
                     />
                     <button
@@ -593,7 +593,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </button>
                     <PrintLabel
                       verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number}
+                      projectNumber={projectData.project_number || ''}
                       logo={ewpLogo}
                     />
                   </>
