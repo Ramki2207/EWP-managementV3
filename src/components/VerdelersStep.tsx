@@ -37,17 +37,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     systeem: '',
     voeding: '',
     bouwjaar: '',
-    keuringDatum: new Date().toISOString().split('T')[0],
-    getestDoor: '',
+    fabrikant: '',
+    status: 'In productie',
     unInV: '',
     inInA: '',
     ikThInKA1s: '',
     ikDynInKA: '',
     freqInHz: '',
     typeNrHs: '',
-    fabrikant: '',
+    toegewezenMonteur: '',
+    gewensteLeverDatum: '',
     profilePhoto: null as File | null,
-    status: 'In productie'
   });
 
   useEffect(() => {
@@ -98,17 +98,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeem: '',
       voeding: '',
       bouwjaar: new Date().getFullYear().toString(),
-      keuringDatum: new Date().toISOString().split('T')[0],
-      getestDoor: '',
+      fabrikant: '',
+      status: 'In productie',
       unInV: '',
       inInA: '',
       ikThInKA1s: '',
       ikDynInKA: '',
       freqInHz: '',
       typeNrHs: '',
-      fabrikant: '',
+      toegewezenMonteur: '',
+      gewensteLeverDatum: '',
       profilePhoto: null,
-      status: 'In productie'
     });
     setEditingVerdeler(null);
     setShowVerdelerForm(true);
@@ -126,17 +126,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeem: verdeler.systeem || '',
       voeding: verdeler.voeding || '',
       bouwjaar: verdeler.bouwjaar || '',
-      keuringDatum: verdeler.keuringDatum || verdeler.keuring_datum || new Date().toISOString().split('T')[0],
-      getestDoor: verdeler.getestDoor || verdeler.getest_door || '',
+      fabrikant: verdeler.fabrikant || '',
+      status: verdeler.status || 'In productie',
       unInV: verdeler.unInV || verdeler.un_in_v || '',
       inInA: verdeler.inInA || verdeler.in_in_a || '',
       ikThInKA1s: verdeler.ikThInKA1s || verdeler.ik_th_in_ka1s || '',
       ikDynInKA: verdeler.ikDynInKA || verdeler.ik_dyn_in_ka || '',
       freqInHz: verdeler.freqInHz || verdeler.freq_in_hz || '',
       typeNrHs: verdeler.typeNrHs || verdeler.type_nr_hs || '',
-      fabrikant: verdeler.fabrikant || '',
+      toegewezenMonteur: verdeler.toegewezenMonteur || verdeler.toegewezen_monteur || '',
+      gewensteLeverDatum: verdeler.gewensteLeverDatum || verdeler.gewenste_lever_datum || '',
       profilePhoto: null,
-      status: verdeler.status || 'In productie'
     });
     setEditingVerdeler(verdeler);
     setShowVerdelerForm(true);
@@ -176,17 +176,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeem: verdelerData.systeem,
       voeding: verdelerData.voeding,
       bouwjaar: verdelerData.bouwjaar,
-      keuringDatum: verdelerData.keuringDatum,
-      getestDoor: verdelerData.getestDoor,
+      fabrikant: verdelerData.fabrikant,
+      status: verdelerData.status,
       unInV: verdelerData.unInV,
       inInA: verdelerData.inInA,
       ikThInKA1s: verdelerData.ikThInKA1s,
       ikDynInKA: verdelerData.ikDynInKA,
       freqInHz: verdelerData.freqInHz,
       typeNrHs: verdelerData.typeNrHs,
-      fabrikant: verdelerData.fabrikant,
+      toegewezenMonteur: verdelerData.toegewezenMonteur,
+      gewensteLeverDatum: verdelerData.gewensteLeverDatum,
       profilePhoto: profilePhotoUrl || editingVerdeler?.profilePhoto || editingVerdeler?.profile_photo || '',
-      status: verdelerData.status,
       projectId: projectData?.id,
       projectnummer: projectData?.project_number || projectData?.projectNumber,
       createdAt: editingVerdeler?.createdAt || editingVerdeler?.created_at || new Date().toISOString()
@@ -268,17 +268,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeem: '',
       voeding: '',
       bouwjaar: '',
-      keuringDatum: new Date().toISOString().split('T')[0],
-      getestDoor: '',
+      fabrikant: '',
+      status: 'In productie',
       unInV: '',
       inInA: '',
       ikThInKA1s: '',
       ikDynInKA: '',
       freqInHz: '',
       typeNrHs: '',
-      fabrikant: '',
+      toegewezenMonteur: '',
+      gewensteLeverDatum: '',
       profilePhoto: null,
-      status: 'In productie'
     });
   };
 
@@ -619,269 +619,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </div>
       )}
 
-      {/* Verdeler Form Modal */}
-      {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-blue-400">
-                {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
-              </h2>
-              <button
-                onClick={handleCancelForm}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Basic Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Verdeler ID <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.distributorId}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
-                      placeholder="VD1234"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Kastnaam <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.kastNaam}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
-                      placeholder="Hoofdverdeler A"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.systeem}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
-                      placeholder="400V TN-S"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.voeding}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
-                      placeholder="3x400V + N + PE"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.bouwjaar}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
-                      placeholder="2025"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Status</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.status}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
-                    >
-                      <option value="In productie">In productie</option>
-                      <option value="Testen">Testen</option>
-                      <option value="Gereed">Gereed</option>
-                      <option value="Opgeleverd">Opgeleverd</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical Specifications */}
-              <div>
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
-                    <input
-                      type="date"
-                      className="input-field"
-                      value={verdelerData.keuringDatum}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.getestDoor}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
-                      placeholder="Naam tester"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.unInV}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
-                      placeholder="400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.inInA}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
-                      placeholder="400"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.ikThInKA1s}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
-                      placeholder="25"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.ikDynInKA}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
-                      placeholder="65"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.freqInHz}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
-                      placeholder="50"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.typeNrHs}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
-                      placeholder="NS400N"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.fabrikant}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
-                      placeholder="Schneider Electric"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Profielfoto</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
-                        }
-                      }}
-                      className="input-field"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Actions Section */}
-            {projectData?.id && (
-              <div className="mt-8 pt-6 border-t border-gray-700">
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <VerdelerTesting
-                    verdeler={showVerdelerDetails}
-                    projectNumber={projectData.project_number}
-                    onComplete={(testData) => handleTestComplete(0, testData)}
-                    projectId={projectData.id}
-                    distributorId={showVerdelerDetails.id}
-                  />
-                  <FATTest
-                    verdeler={showVerdelerDetails}
-                    projectNumber={projectData.project_number}
-                    onComplete={(testData) => handleTestComplete(0, testData)}
-                  />
-                  <HighVoltageTest
-                    verdeler={showVerdelerDetails}
-                    projectNumber={projectData.project_number}
-                    onComplete={(testData) => handleTestComplete(0, testData)}
-                  />
-                  <OnSiteTest
-                    verdeler={showVerdelerDetails}
-                    projectNumber={projectData.project_number}
-                    onComplete={(testData) => handleTestComplete(0, testData)}
-                  />
-                  <button
-                    className="btn-secondary flex items-center space-x-2"
-                    title="Toegangscode"
-                  >
-                    <Key size={16} />
-                    <span>Toegangscode</span>
-                  </button>
-                  <PrintLabel
-                    verdeler={showVerdelerDetails}
-                    projectNumber={projectData.project_number}
-                    logo={ewpLogo}
-                  />
-                  <button
-                    onClick={() => {
-                      setShowVerdelerDetails(null);
-                      handleEditVerdeler(showVerdelerDetails);
-                    }}
-                    className="btn-secondary flex items-center space-x-2"
-                  >
-                    <Edit size={16} />
-                    <span>Bewerken</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Add/Edit Verdeler Form Modal */}
       {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
@@ -898,7 +639,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               {/* Basic Information */}
               <div>
                 <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">
                       Verdeler ID <span className="text-red-400">*</span>
@@ -958,14 +699,43 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Status</label>
                     <select
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.status}
                       onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
+                      disabled={projectData?.status === 'Offerte'}
                     >
                       <option value="In productie">In productie</option>
                       <option value="Testen">Testen</option>
                       <option value="Gereed">Gereed</option>
                       <option value="Opgeleverd">Opgeleverd</option>
+                    </select>
+                    {projectData?.status === 'Offerte' && (
+                      <p className="text-xs text-yellow-400 mt-1">
+                        Status kan alleen worden gewijzigd wanneer project status "Productie" is
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                    <select
+                      className="input-field"
+                      value={verdelerData.fabrikant}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
+                    >
+                      <option value="">Selecteer fabrikant</option>
+                      <option value="Schneider Electric">Schneider Electric</option>
+                      <option value="ABB">ABB</option>
+                      <option value="Siemens">Siemens</option>
+                      <option value="Eaton">Eaton</option>
+                      <option value="Legrand">Legrand</option>
+                      <option value="Phoenix Contact">Phoenix Contact</option>
+                      <option value="Weidmüller">Weidmüller</option>
+                      <option value="Rittal">Rittal</option>
+                      <option value="Hager">Hager</option>
+                      <option value="Moeller">Moeller</option>
+                      <option value="Anders">Anders</option>
                     </select>
                   </div>
                 </div>
@@ -974,107 +744,133 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               {/* Technical Specifications */}
               <div>
                 <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
-                    <input
-                      type="date"
-                      className="input-field"
-                      value={verdelerData.keuringDatum}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
-                    />
+                {projectData?.status === 'Offerte' && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
+                        <span className="text-xs text-black font-bold">!</span>
+                      </div>
+                      <p className="text-yellow-300 text-sm">
+                        Technische specificaties kunnen alleen worden ingevuld wanneer project status "Productie" is
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.getestDoor}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
-                      placeholder="Naam tester"
-                    />
-                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Un in V</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.unInV}
                       onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
                       placeholder="400"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">In in A</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.inInA}
                       onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
                       placeholder="400"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.ikThInKA1s}
                       onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
                       placeholder="25"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.ikDynInKA}
                       onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
                       placeholder="65"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.freqInHz}
                       onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
                       placeholder="50"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
                     <input
                       type="text"
-                      className="input-field"
+                      className={`input-field ${
+                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
+                      }`}
                       value={verdelerData.typeNrHs}
                       onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
                       placeholder="NS400N"
+                      disabled={projectData?.status === 'Offerte'}
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Aanvullende Informatie */}
+              <div>
+                <h3 className="text-lg font-semibold text-orange-400 mb-4">Aanvullende Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
+                    <select
                       className="input-field"
-                      value={verdelerData.fabrikant}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
-                      placeholder="Schneider Electric"
-                    />
+                      value={verdelerData.toegewezenMonteur || ''}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, toegewezenMonteur: e.target.value })}
+                    >
+                      <option value="">Nader te bepalen</option>
+                      {(() => {
+                        // Get users from localStorage
+                        const users = JSON.parse(localStorage.getItem('users') || '[]');
+                        const montageUsers = users.filter((user: any) => user.role === 'montage');
+                        
+                        return montageUsers.map((user: any) => (
+                          <option key={user.id} value={user.username}>
+                            {user.username}
+                          </option>
+                        ));
+                      })()}
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Profielfoto</label>
+                    <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
-                        }
-                      }}
+                      type="date"
                       className="input-field"
+                      value={verdelerData.gewensteLeverDatum || ''}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, gewensteLeverDatum: e.target.value })}
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                 </div>
