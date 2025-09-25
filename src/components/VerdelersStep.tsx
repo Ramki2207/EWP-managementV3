@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy } from 'lucide-react';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
@@ -741,338 +742,341 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         </div>
                         <div>
                           <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                          <input
-                            type="text"
-                            className="input-field"
-                            value={verdelerData.voeding}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
-                            placeholder="3x400V + N + PE"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
-                          <input
-                            type="text"
-                            className="input-field"
-                            value={verdelerData.bouwjaar}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
-                            placeholder="2025"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Status</label>
-                          <select
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.status}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
-                            disabled={projectData?.status !== 'Productie'}
-                          >
-                            <option value="Offerte">Offerte</option>
-                            {projectData?.status === 'Productie' && (
-                              <>
-                                <option value="In productie">In productie</option>
-                                <option value="Testen">Testen</option>
-                                <option value="Gereed">Gereed</option>
-                                <option value="Opgeleverd">Opgeleverd</option>
-                              </>
-                            )}
-                          </select>
-                          {projectData?.status !== 'Productie' && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Status kan alleen worden gewijzigd wanneer project status "Productie" is
-                            </p>
-                          )}
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                          <select
-                            className="input-field"
-                            value={verdelerData.fabrikant}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
-                          >
-                            <option value="">Selecteer fabrikant</option>
-                            <option value="Schneider Electric">Schneider Electric</option>
-                            <option value="ABB">ABB</option>
-                            <option value="Siemens">Siemens</option>
-                            <option value="Eaton">Eaton</option>
-                            <option value="Legrand">Legrand</option>
-                            <option value="Hager">Hager</option>
-                            <option value="Rittal">Rittal</option>
-                            <option value="Phoenix Contact">Phoenix Contact</option>
-                            <option value="Weidmüller">Weidmüller</option>
-                            <option value="Anders">Anders</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Technische Specs Section */}
-                    <div className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-purple-500/20 rounded-lg">
-                            <div className="w-5 h-5 text-purple-400">⚡</div>
-                          </div>
-                          <h3 className="text-lg font-semibold text-purple-400">Technische Specs</h3>
-                        </div>
-                        {projectData?.status !== 'Productie' && (
-                          <div className="flex items-center space-x-2 text-yellow-400">
-                            <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                            <span className="text-sm">Alleen beschikbaar bij status "Productie"</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Un in V</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.unInV}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
-                            placeholder="400"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">In in A</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.inInA}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
-                            placeholder="400"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.ikThInKA1s}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
-                            placeholder="25"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.ikDynInKA}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
-                            placeholder="65"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.freqInHz}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
-                            placeholder="50"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
-                          <input
-                            type="text"
-                            className={`input-field ${projectData?.status !== 'Productie' ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            value={verdelerData.typeNrHs}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
-                            placeholder="NS400N"
-                            disabled={projectData?.status !== 'Productie'}
-                          />
-                        </div>
-                      </div>
-                      
-                      {projectData?.status !== 'Productie' && (
-                        <div className="mt-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                          <div className="flex items-start space-x-2">
-                            <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-xs text-black font-bold">!</span>
-                            </div>
-                            <div className="text-sm text-yellow-300">
-                              <p className="font-medium mb-1">Technische specificaties vergrendeld</p>
-                              <p className="text-xs text-yellow-200">
-                                Deze velden kunnen alleen worden ingevuld wanneer de project status is ingesteld op "Productie".
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Aanvullende Informatie Section */}
-                    <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-6">
-                      <div className="flex items-center space-x-3 mb-6">
-                        <div className="p-2 bg-orange-500/20 rounded-lg">
-                          <Info size={20} className="text-orange-400" />
-                        </div>
-                        <h3 className="text-lg font-semibold text-orange-400">Aanvullende Informatie</h3>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
-                          <input
-                            type="date"
-                            className="input-field"
-                            value={verdelerData.keuringDatum}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Getest door</label>
-                          <input
-                            type="text"
-                            className="input-field"
-                            value={verdelerData.getestDoor}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
-                            placeholder="Naam tester"
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="input-field"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
-                              }
-                            }}
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Ondersteunde formaten: JPG, PNG, GIF (max. 5MB)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Modal Footer - Fixed at bottom */}
-                <div className="flex justify-end space-x-4 p-6 border-t border-gray-700 bg-[#1E2530] rounded-b-2xl flex-shrink-0">
-                  <button
-                    onClick={() => setShowVerdelerForm(false)}
-                    className="btn-secondary"
-                  >
-                    Annuleren
-                  </button>
-                  <button
-                    onClick={handleSaveVerdeler}
-                    className="btn-primary flex items-center space-x-2"
-                  >
-                    <Save size={20} />
-                    <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Access Code Form Modal */}
-        {showAccessCodeForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-[#1E2530] rounded-xl p-6 w-full max-w-md">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Toegangscode aanmaken</h2>
+      {showVerdelerForm && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] overflow-y-auto">
+          <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-[#1E2530] rounded-2xl shadow-2xl border border-white/10 w-full max-w-6xl max-h-[90vh] flex flex-col">
+              {/* Modal Header */}
+              <div className="flex justify-between items-center p-6 border-b border-gray-700 flex-shrink-0">
+                <h2 className="text-xl font-semibold text-blue-400">
+                  {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
+                </h2>
                 <button
-                  onClick={() => setShowAccessCodeForm(false)}
-                  className="text-gray-400 hover:text-white"
+                  onClick={handleCancelForm}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
                   <X size={24} />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Verdeler</label>
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={`${selectedVerdelerForCode?.distributor_id || selectedVerdelerForCode?.distributorId} - ${selectedVerdelerForCode?.kast_naam || selectedVerdelerForCode?.kastNaam}`}
-                    disabled
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Toegangscode (5 cijfers)</label>
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      className="input-field flex-1"
-                      value={newAccessCode.code}
-                      onChange={(e) => setNewAccessCode({ ...newAccessCode, code: e.target.value.replace(/\D/g, '').slice(0, 5) })}
-                      placeholder="12345"
-                      maxLength={5}
-                    />
-                    <button
-                      onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
-                      className="btn-secondary px-3"
-                      title="Genereer nieuwe code"
-                    >
-                      🎲
-                    </button>
+              {/* Modal Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-8">
+                  {/* Basis Informatie Section */}
+                  <div className="bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/20 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-2 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+                        <Building size={20} className="text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-green-400">Basis Informatie</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">
+                          Verdeler ID <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.distributorId}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
+                          placeholder="VD1234"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">
+                          Kastnaam <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.kastNaam}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
+                          placeholder="Hoofdverdeler A"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.systeem}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
+                          placeholder="400V TN-S"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.voeding}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
+                          placeholder="3x400V + N + PE"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.bouwjaar}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
+                          placeholder="2025"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Status</label>
+                        <select
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.status}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
+                          disabled={projectData?.status !== 'Productie'}
+                        >
+                          <option value="Offerte">Offerte</option>
+                          <option value="In productie">In productie</option>
+                          <option value="Testen">Testen</option>
+                          <option value="Gereed">Gereed</option>
+                          <option value="Opgeleverd">Opgeleverd</option>
+                        </select>
+                        {projectData?.status !== 'Productie' && (
+                          <p className="text-xs text-yellow-400 mt-1">
+                            Status kan alleen worden gewijzigd wanneer project status is ingesteld op "Productie".
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                        <select
+                          className="input-field"
+                          value={verdelerData.fabrikant}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
+                        >
+                          <option value="">Selecteer fabrikant</option>
+                          <option value="Schneider Electric">Schneider Electric</option>
+                          <option value="ABB">ABB</option>
+                          <option value="Siemens">Siemens</option>
+                          <option value="Eaton">Eaton</option>
+                          <option value="Legrand">Legrand</option>
+                          <option value="Hager">Hager</option>
+                          <option value="Rittal">Rittal</option>
+                          <option value="Phoenix Contact">Phoenix Contact</option>
+                          <option value="Weidmüller">Weidmüller</option>
+                          <option value="Anders">Anders</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Vervaldatum</label>
-                  <input
-                    type="datetime-local"
-                    className="input-field"
-                    value={newAccessCode.expiresAt}
-                    onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Max aantal keer gebruiken (optioneel)</label>
-                  <input
-                    type="number"
-                    className="input-field"
-                    value={newAccessCode.maxUses}
-                    onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
-                    placeholder="Onbeperkt"
-                    min="1"
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={newAccessCode.isActive}
-                    onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
-                    className="rounded"
-                  />
-                  <label htmlFor="isActive" className="text-sm text-gray-400">Actief</label>
+
+                  {/* Technische Specs Section */}
+                  <div className="bg-gradient-to-r from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-2 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg">
+                        <Zap size={20} className="text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-purple-400">Technische Specs</h3>
+                    </div>
+                    
+                    {projectData?.status !== 'Productie' && (
+                      <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs text-black font-bold">!</span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-yellow-400">Technische specificaties vergrendeld</p>
+                            <p className="text-sm text-yellow-300">
+                              Deze velden kunnen alleen worden ingevuld wanneer de project status is ingesteld op "Productie".
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.unInV}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
+                          placeholder="400"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.inInA}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
+                          placeholder="400"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.ikThInKA1s}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
+                          placeholder="25"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.ikDynInKA}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
+                          placeholder="65"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.freqInHz}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
+                          placeholder="50"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                        <input
+                          type="text"
+                          className={`input-field ${
+                            projectData?.status !== 'Productie' ? 'opacity-60 cursor-not-allowed' : ''
+                          }`}
+                          value={verdelerData.typeNrHs}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
+                          placeholder="NS400N"
+                          disabled={projectData?.status !== 'Productie'}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Aanvullende Informatie Section */}
+                  <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
+                        <Calendar size={20} className="text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-orange-400">Aanvullende Informatie</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                        <input
+                          type="date"
+                          className="input-field"
+                          value={verdelerData.keuringDatum}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.getestDoor}
+                          onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
+                          placeholder="Naam tester"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
+                        <div className="flex items-center space-x-4">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleProfilePhotoChange}
+                            className="hidden"
+                            id="profile-photo"
+                          />
+                          <label
+                            htmlFor="profile-photo"
+                            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 flex items-center space-x-2 cursor-pointer transform hover:scale-105"
+                          >
+                            <Camera size={20} />
+                            <span>Bestand kiezen</span>
+                          </label>
+                          <span className="text-sm text-gray-400">Ondersteunde formaten: JPG, PNG, GIF (max. 5MB)</span>
+                        </div>
+                        {verdelerData.profilePhoto && (
+                          <div className="mt-4">
+                            <img
+                              src={typeof verdelerData.profilePhoto === 'string' ? verdelerData.profilePhoto : URL.createObjectURL(verdelerData.profilePhoto)}
+                              alt="Profile preview"
+                              className="w-32 h-32 object-cover rounded-lg border-2 border-orange-400"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end space-x-4 mt-6">
+              {/* Modal Footer */}
+              <div className="flex justify-end space-x-4 p-6 border-t border-gray-700 flex-shrink-0">
                 <button
-                  onClick={() => setShowAccessCodeForm(false)}
+                  onClick={handleCancelForm}
                   className="btn-secondary"
                 >
                   Annuleren
                 </button>
                 <button
-                  onClick={handleCreateAccessCode}
-                  disabled={generatingCode}
+                  onClick={handleSaveVerdeler}
                   className="btn-primary"
+                  disabled={!verdelerData.distributorId || !verdelerData.kastNaam}
                 >
-                  {generatingCode ? 'Aanmaken...' : 'Aanmaken'}
+                  {editingVerdeler ? 'Bijwerken' : 'Opslaan'}
                 </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 };
