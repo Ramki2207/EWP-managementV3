@@ -387,11 +387,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       </div>
         {/* Verdelers List */}
         {verdelers.length > 0 && (
-          <div className="bg-[#2A303C] rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="bg-[#2A303C] rounded-lg overflow-hidden min-h-[400px]">
+            <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
+                  <tr className="border-b border-gray-700 sticky top-0 bg-[#2A303C] z-10">
                     <th className="text-left p-4 text-gray-400 font-medium">Verdeler ID</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Kastnaam</th>
                     <th className="text-left p-4 text-gray-400 font-medium">Systeem</th>
@@ -409,7 +409,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           <span className="font-medium text-green-400">{verdeler.distributor_id || verdeler.distributorId || '-'}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-white">{verdeler.kast_naam || verdeler.kastNaam || '-'}</td>
+                      <td className="p-4 text-white max-w-xs">
+                        <div className="truncate" title={verdeler.kast_naam || verdeler.kastNaam || '-'}>
+                          {verdeler.kast_naam || verdeler.kastNaam || '-'}
+                        </div>
+                      </td>
                       <td className="p-4 text-gray-300">{verdeler.systeem || '-'}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-sm ${
@@ -488,6 +492,23 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {verdelers.length === 0 && (
+          <div className="bg-[#2A303C] rounded-lg p-12 text-center min-h-[300px] flex flex-col items-center justify-center">
+            <Server size={64} className="mx-auto text-gray-600 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-300 mb-2">Nog geen verdelers toegevoegd</h3>
+            <p className="text-gray-400 mb-6">
+              Klik op "Verdeler toevoegen" om je eerste verdeler aan dit project toe te voegen
+            </p>
+            <button
+              onClick={handleAddVerdeler}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus size={20} />
+              <span>Eerste verdeler toevoegen</span>
+            </button>
           </div>
         )}
 
