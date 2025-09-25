@@ -433,12 +433,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Verdeler Details Modal */}
       {showVerdelerDetails && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id} - {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam}
               </h2>
+              <div className="text-sm text-gray-400">Verdeler details en acties</div>
               <button
                 onClick={() => setShowVerdelerDetails(null)}
                 className="text-gray-400 hover:text-white transition-colors"
@@ -447,116 +448,135 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </button>
             </div>
 
-            <div className="text-sm text-gray-400 mb-6">Verdeler details en acties</div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Basic Info */}
-              <div className="space-y-6">
-                <div className="bg-[#2A303C] rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Verdeler ID:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id}
-                      </span>
+            <div className="space-y-8">
+              {/* Basis Informatie */}
+              <div className="bg-[#2A303C] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Verdeler ID</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Kastnaam:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam || '-'}
-                      </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Kastnaam</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam || '-'}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Systeem:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.systeem || '-'}
-                      </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.systeem || '-'}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Voeding:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.voeding || '-'}
-                      </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.voeding || '-'}
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Status:</span>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.bouwjaar || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Status</label>
+                    <div className="input-field bg-[#1E2530]">
                       <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(showVerdelerDetails.status)}`}>
                         {showVerdelerDetails.status || 'In productie'}
                       </span>
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.fabrikant || '-'}
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Column - Technical Specs */}
-              <div className="space-y-6">
-                <div className="bg-[#2A303C] rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Un in V:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.unInV || showVerdelerDetails.un_in_v || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">In in A:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.inInA || showVerdelerDetails.in_in_a || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Freq. in Hz:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.freqInHz || showVerdelerDetails.freq_in_hz || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Ik Th in KA 1s:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.ikThInKA1s || showVerdelerDetails.ik_th_in_ka1s || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Ik Dyn in KA:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.ikDynInKA || showVerdelerDetails.ik_dyn_in_ka || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Type nr. HS:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.typeNrHs || showVerdelerDetails.type_nr_hs || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Fabrikant:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.fabrikant || 'Phoenix Contact'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Bouwjaar:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.bouwjaar || '2025'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Getest door:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.getestDoor || showVerdelerDetails.getest_door || '-'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Keuring datum:</span>
-                      <span className="text-white font-medium">
-                        {showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum 
-                          ? new Date(showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum).toLocaleDateString('nl-NL')
-                          : '-'}
-                      </span>
+              {/* Technische Specificaties */}
+              <div className="bg-[#2A303C] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.unInV || showVerdelerDetails.un_in_v || '-'}
                     </div>
                   </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.inInA || showVerdelerDetails.in_in_a || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.ikThInKA1s || showVerdelerDetails.ik_th_in_ka1s || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.ikDynInKA || showVerdelerDetails.ik_dyn_in_ka || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.freqInHz || showVerdelerDetails.freq_in_hz || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.typeNrHs || showVerdelerDetails.type_nr_hs || '-'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Aanvullende Informatie */}
+              <div className="bg-[#2A303C] rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-orange-400 mb-4">Aanvullende Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.toegewezenMonteur || showVerdelerDetails.toegewezen_monteur || 'Nader te bepalen'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.gewensteLeverDatum || showVerdelerDetails.gewenste_lever_datum 
+                        ? new Date(showVerdelerDetails.gewensteLeverDatum || showVerdelerDetails.gewenste_lever_datum).toLocaleDateString('nl-NL')
+                        : 'Niet ingesteld'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.getestDoor || showVerdelerDetails.getest_door || '-'}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                    <div className="input-field bg-[#1E2530]">
+                      {showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum 
+                        ? new Date(showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum).toLocaleDateString('nl-NL')
+                        : '-'}
+                    </div>
+                  </div>
+                </div>
+              </div>
                 </div>
               </div>
             </div>
