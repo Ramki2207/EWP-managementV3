@@ -627,7 +627,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   }}
                   className="btn-secondary flex items-center space-x-2"
                 >
-                  <Edit size={16} />
+                  <Edit size={26} />
                   <span>Bewerken</span>
                 </button>
               </div>
