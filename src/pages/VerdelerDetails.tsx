@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Edit, Save, X, Key, Copy, Clock, Upload } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
@@ -775,6 +775,72 @@ const VerdelerDetails = () => {
                       <input
                         type="text"
                         className="input-field"
+                        value={editedDistributor?.type_nr_hs || ''}
+                        onChange={(e) => handleInputChange('type_nr_hs', e.target.value)}
+                        placeholder="Bijv. HS-400"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.type_nr_hs || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.fabrikant || ''}
+                        onChange={(e) => handleInputChange('fabrikant', e.target.value)}
+                        placeholder="Bijv. Schneider Electric"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.fabrikant || "-"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Planning en Toewijzing */}
+              <div>
+                <h3 className="text-lg font-semibold text-orange-400 mb-4">Planning en Toewijzing</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        className="input-field"
+                        value={editedDistributor?.keuring_datum ? editedDistributor.keuring_datum.split('T')[0] : ''}
+                        onChange={(e) => handleInputChange('keuring_datum', e.target.value)}
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.keuring_datum 
+                          ? new Date(distributor.keuring_datum).toLocaleDateString('nl-NL')
+                          : "Niet ingesteld"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.getest_door || ''}
+                        onChange={(e) => handleInputChange('getest_door', e.target.value)}
+                        placeholder="Naam van tester"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.getest_door || "Niet ingesteld"}
+                      </div>
+                    )}
+                  </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
                     {isEditing ? (
