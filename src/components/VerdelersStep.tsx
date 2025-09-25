@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, FileEdit as Edit, Save, X, Upload, Server, Eye, CheckSquare, Printer, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
-import { useNavigate } from 'react-router-dom';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
@@ -28,11 +27,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   hideNavigation = false 
 }) => {
   const { hasPermission } = useEnhancedPermissions();
-  const navigate = useNavigate();
   const [verdelers, setVerdelers] = useState<any[]>([]);
+  const [accessCodes, setAccessCodes] = useState<any[]>([]);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
+  const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
+  const [selectedVerdelerForCode, setSelectedVerdelerForCode] = useState<any>(null);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState<any>(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [newAccessCode, setNewAccessCode] = useState({
+    code: '',
+    expiresAt: '',
+    maxUses: '',
+    isActive: true
+  });
   const [verdelerData, setVerdelerData] = useState({
     distributorId: '',
     kastNaam: '',
@@ -59,7 +67,28 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       // Load distributors for existing project
       loadDistributors();
     }
+    
+    // Load access codes for existing project
+    if (projectData?.id) {
+      loadAccessCodes();
+    }
   }, [projectData]);
+
+  const loadAccessCodes = async () => {
+    if (!projectData?.id) return;
+    
+    try {
+      const data = await dataService.getAccessCodes();
+      // Filter codes for this project's verdelers
+      const projectVerdelerIds = verdelers.map(v => v.distributorId || v.distributor_id);
+      const projectCodes = data.filter((code: any) => 
+        projectVerdelerIds.includes(code.verdeler_id)
+      );
+      setAccessCodes(projectCodes);
+    } catch (error) {
+      console.error('Error loading access codes:', error);
+    }
+  };
 
   const loadDistributors = async () => {
     if (!projectData?.id) return;
@@ -72,6 +101,97 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       console.error('Error loading distributors:', error);
       toast.error('Er is een fout opgetreden bij het laden van de verdelers');
     }
+  };
+
+  const generateRandomCode = () => {
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+      result += Math.floor(Math.random() * 10).toString();
+    }
+    return result;
+  };
+
+  const getDefaultExpiryDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().slice(0, 16);
+  };
+
+  const handleGenerateAccessCode = (verdeler: any) => {
+    if (!hasPermission('access_codes', 'create')) {
+      toast.error('Je hebt geen toestemming om toegangscodes aan te maken');
+      return;
+    }
+    
+    if (!projectData?.id) {
+      toast('Toegangscode functionaliteit beschikbaar na project opslaan');
+      return;
+    }
+    
+    setSelectedVerdelerForCode(verdeler);
+    setNewAccessCode({
+      code: generateRandomCode(),
+      expiresAt: getDefaultExpiryDate(),
+      maxUses: '',
+      isActive: true
+    });
+    setShowAccessCodeForm(true);
+  };
+
+  const handleCreateAccessCode = async () => {
+    if (!newAccessCode.code || !newAccessCode.expiresAt || !selectedVerdelerForCode) {
+      toast.error('Vul alle verplichte velden in!');
+      return;
+    }
+
+    if (!/^\d{5}$/.test(newAccessCode.code)) {
+      toast.error('Toegangscode moet precies 5 cijfers bevatten!');
+      return;
+    }
+
+    try {
+      setGeneratingCode(true);
+      const currentUserId = localStorage.getItem('currentUserId');
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const currentUser = users.find((u: any) => u.id === currentUserId);
+
+      const accessCodeData = {
+        code: newAccessCode.code.toUpperCase(),
+        createdBy: currentUser?.username || 'Unknown',
+        expiresAt: newAccessCode.expiresAt,
+        isActive: newAccessCode.isActive,
+        maxUses: newAccessCode.maxUses ? parseInt(newAccessCode.maxUses) : null,
+        verdeler_id: selectedVerdelerForCode.distributorId || selectedVerdelerForCode.distributor_id,
+        project_number: projectData.project_number
+      };
+
+      await dataService.createAccessCode(accessCodeData);
+      await loadAccessCodes(); // Reload to show new code
+      
+      setShowAccessCodeForm(false);
+      setSelectedVerdelerForCode(null);
+      setNewAccessCode({
+        code: '',
+        expiresAt: '',
+        maxUses: '',
+        isActive: true
+      });
+      
+      toast.success('Toegangscode succesvol aangemaakt!');
+    } catch (error) {
+      console.error('Error creating access code:', error);
+      toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  const getVerdelerAccessCodes = (verdelerId: string) => {
+    return accessCodes.filter(code => code.verdeler_id === verdelerId && code.is_active);
+  };
+
+  const isCodeExpired = (expiresAt: string) => {
+    return new Date() > new Date(expiresAt);
   };
 
   const generateDistributorId = () => {
@@ -308,10 +428,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     setShowVerdelerDetails(verdeler);
   };
 
-  const handleToegangscodePage = () => {
-    navigate('/access-codes');
-  };
-
   return (
     <React.Fragment>
       <div className="space-y-6">
@@ -387,7 +503,27 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </span>
                     </td>
                     <td className="py-4 text-gray-300">
-                      <span className="text-sm">Geen codes</span>
+                      {(() => {
+                        const codes = getVerdelerAccessCodes(verdeler.distributorId || verdeler.distributor_id);
+                        const activeCodes = codes.filter(code => !isCodeExpired(code.expires_at));
+                        
+                        if (activeCodes.length === 0) {
+                          return <span className="text-sm text-gray-500">Geen codes</span>;
+                        }
+                        
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {activeCodes.slice(0, 2).map(code => (
+                              <span key={code.id} className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-mono">
+                                {code.code}
+                              </span>
+                            ))}
+                            {activeCodes.length > 2 && (
+                              <span className="text-xs text-gray-400">+{activeCodes.length - 2}</span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex items-center justify-end space-x-2">
@@ -404,11 +540,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (!projectData?.id) {
-                              toast('Toegangscode functionaliteit beschikbaar na project opslaan');
-                            } else {
-                              handleToegangscodePage();
-                            }
+                            handleGenerateAccessCode(verdeler);
                           }}
                           className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
                           title="Toegangscode"
@@ -652,6 +784,131 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 </button>
               </div>
             </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Access Code Form Modal */}
+      {showAccessCodeForm && selectedVerdelerForCode && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-semibold text-yellow-400">Toegangscode genereren</h2>
+              <button
+                onClick={() => {
+                  setShowAccessCodeForm(false);
+                  setSelectedVerdelerForCode(null);
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-[#2A303C] p-4 rounded-lg">
+                <h3 className="text-sm font-medium text-blue-400 mb-2">Voor verdeler</h3>
+                <p className="text-white">
+                  {selectedVerdelerForCode.distributorId || selectedVerdelerForCode.distributor_id} - {selectedVerdelerForCode.kastNaam || selectedVerdelerForCode.kast_naam || 'Naamloos'}
+                </p>
+                <p className="text-sm text-gray-400">Project: {projectData.project_number}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Toegangscode <span className="text-red-400">*</span>
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    className="input-field flex-1"
+                    value={newAccessCode.code}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                      setNewAccessCode({ ...newAccessCode, code: value });
+                    }}
+                    placeholder="12345"
+                    maxLength={5}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
+                    className="btn-secondary flex items-center space-x-2"
+                  >
+                    <Key size={16} />
+                    <span>Nieuw</span>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Precies 5 cijfers (0-9)</p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  Vervaldatum <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  className="input-field"
+                  value={newAccessCode.expiresAt}
+                  onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
+                  min={new Date().toISOString().slice(0, 16)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Maximum aantal keer gebruiken</label>
+                <input
+                  type="number"
+                  className="input-field"
+                  value={newAccessCode.maxUses}
+                  onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
+                  placeholder="Onbeperkt (laat leeg)"
+                  min="1"
+                />
+                <p className="text-xs text-gray-500 mt-1">Laat leeg voor onbeperkt gebruik</p>
+              </div>
+
+              <div className="flex items-center">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={newAccessCode.isActive}
+                    onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
+                    className="form-checkbox"
+                  />
+                  <span className="text-gray-400">Direct activeren</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 mt-6">
+              <button
+                onClick={() => {
+                  setShowAccessCodeForm(false);
+                  setSelectedVerdelerForCode(null);
+                }}
+                className="btn-secondary"
+                disabled={generatingCode}
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleCreateAccessCode}
+                className={`btn-primary ${generatingCode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={generatingCode || !newAccessCode.code || !newAccessCode.expiresAt || !/^\d{5}$/.test(newAccessCode.code)}
+              >
+                {generatingCode ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    <span>Aanmaken...</span>
+                  </div>
+                ) : (
+                  'Code aanmaken'
+                )}
+              </button>
             </div>
           </div>
         </div>
