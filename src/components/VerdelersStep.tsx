@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, FileEdit as Edit, Save, X, Upload, Server, Eye, CheckSquare, Printer, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
@@ -27,6 +28,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   hideNavigation = false 
 }) => {
   const { hasPermission } = useEnhancedPermissions();
+  const navigate = useNavigate();
   const [verdelers, setVerdelers] = useState<any[]>([]);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
@@ -306,6 +308,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     setShowVerdelerDetails(verdeler);
   };
 
+  const handleToegangscodePage = () => {
+    navigate('/access-codes');
+  };
+
   return (
     <React.Fragment>
       <div className="space-y-6">
@@ -398,12 +404,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Handle toegangscode generation for this verdeler
-                            toast('Toegangscode functionaliteit beschikbaar na project opslaan');
+                            if (!projectData?.id) {
+                              toast('Toegangscode functionaliteit beschikbaar na project opslaan');
+                            } else {
+                              handleToegangscodePage();
+                            }
                           }}
                           className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
                           title="Toegangscode"
-                          disabled={!projectData?.id}
                         >
                           <Key size={16} className="text-gray-400 group-hover:text-yellow-400" />
                         </button>
