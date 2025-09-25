@@ -775,39 +775,6 @@ const VerdelerDetails = () => {
                       <input
                         type="text"
                         className="input-field"
-                        value={editedDistributor?.type_nr_hs || ''}
-                        onChange={(e) => handleInputChange('type_nr_hs', e.target.value)}
-                        placeholder="Bijv. NS400N"
-                      />
-                    ) : (
-                      <div className="input-field">
-                        {distributor.type_nr_hs || "-"}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        className="input-field"
-                        value={editedDistributor?.fabrikant || ''}
-                        onChange={(e) => handleInputChange('fabrikant', e.target.value)}
-                        placeholder="Bijv. Schneider Electric"
-                      />
-                    ) : (
-                      <div className="input-field">
-                        {distributor.fabrikant || "-"}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Aanvullende Informatie */}
-              <div>
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Aanvullende Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
                     {isEditing ? (
