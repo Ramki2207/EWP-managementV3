@@ -535,7 +535,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
                           title="Info"
                         >
-                          <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
+                          <div className="flex items-center space-x-1">
+                            <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
+                            <span className="text-xs text-gray-400 group-hover:text-blue-400">Info</span>
+                          </div>
                         </button>
                         <button
                           onClick={(e) => {
@@ -545,7 +548,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
                           title="Toegangscode"
                         >
-                          <Key size={16} className="text-gray-400 group-hover:text-yellow-400" />
+                          <div className="flex items-center space-x-1">
+                            <Key size={16} className="text-gray-400 group-hover:text-yellow-400" />
+                            <span className="text-xs text-gray-400 group-hover:text-yellow-400">Code</span>
+                          </div>
                         </button>
                         <button
                           onClick={(e) => {
@@ -555,7 +561,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           className="p-2 bg-[#2A303C] hover:bg-green-500/20 rounded-lg transition-colors group"
                           title="Bewerken"
                         >
-                          <Edit size={16} className="text-gray-400 group-hover:text-green-400" />
+                          <div className="flex items-center space-x-1">
+                            <Edit size={16} className="text-gray-400 group-hover:text-green-400" />
+                            <span className="text-xs text-gray-400 group-hover:text-green-400">Bewerken</span>
+                          </div>
                         </button>
                         <button
                           onClick={(e) => {
@@ -565,7 +574,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
                           title="Verwijderen"
                         >
-                          <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
+                          <div className="flex items-center space-x-1">
+                            <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
+                            <span className="text-xs text-gray-400 group-hover:text-red-400">Verwijderen</span>
+                          </div>
                         </button>
                       </div>
                     </td>
