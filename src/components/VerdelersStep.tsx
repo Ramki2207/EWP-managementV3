@@ -33,7 +33,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
   const [showVerdelerInfo, setShowVerdelerInfo] = useState<any>(null);
   const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
-  const [users, setUsers] = useState<any[]>([]);
   const [isAccessCodeModalOpen, setIsAccessCodeModalOpen] = useState(false);
   const [selectedVerdelerForAccessCode, setSelectedVerdelerForAccessCode] = useState<any>(null);
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
