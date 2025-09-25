@@ -398,6 +398,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
+                            // Handle toegangscode generation for this verdeler
+                            toast.info('Toegangscode functionaliteit beschikbaar na project opslaan');
+                          }}
+                          className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
+                          title="Toegangscode"
+                          disabled={!projectData?.id}
+                        >
+                          <Key size={16} className="text-gray-400 group-hover:text-yellow-400" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
                             handleEditVerdeler(verdeler);
                           }}
                           className="p-2 bg-[#2A303C] hover:bg-green-500/20 rounded-lg transition-colors group"
