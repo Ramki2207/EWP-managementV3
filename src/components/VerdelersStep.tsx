@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy, Building, Zap, Calendar, Camera } from 'lucide-react';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
