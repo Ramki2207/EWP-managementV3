@@ -674,10 +674,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <span className="text-white">
                           {selectedVerdeler.keuring_datum || selectedVerdeler.keuringDatum 
                             ? new Date(selectedVerdeler.keuring_datum || selectedVerdeler.keuringDatum).toLocaleDateString('nl-NL')
+                   <div>
+                     <label className="block text-sm text-gray-400 mb-1">Bouwjaar:</label>
+                     <p className="text-white font-medium">{showVerdelerInfo.bouwjaar || '-'}</p>
+                   </div>
                             : '-'}
                         </span>
                       </div>
                     </div>
+                   <div>
+                     <label className="block text-sm text-gray-400 mb-1">Fabrikant:</label>
+                     <p className="text-white font-medium">{showVerdelerInfo.fabrikant || '-'}</p>
+                   </div>
                   </div>
                 </div>
 
@@ -777,10 +785,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             placeholder="VD1234"
                             required
                           />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">
-                            Kastnaam <span className="text-red-400">*</span>
                           </label>
                           <input
                             type="text"
@@ -789,32 +793,35 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
                             placeholder="Hoofdverdeler A"
                             required
+                   <div>
+                     <label className="block text-sm text-gray-400 mb-1">Freq. in Hz:</label>
+                     <p className="text-white font-medium">{showVerdelerInfo.freqInHz || '-'}</p>
+                   </div>
                           />
                         </div>
                         <div>
                           <label className="block text-sm text-gray-400 mb-2">Systeem</label>
-                          <input
-                            type="text"
-                            className="input-field"
-                            value={verdelerData.systeem}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
-                            placeholder="400V TN-S"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                          <input
-                            type="text"
-                            className="input-field"
-                            value={verdelerData.voeding}
-                            onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
-                            placeholder="3x400V + N + PE"
-                          />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
+
+               {/* Aanvullende Informatie */}
+               <div className="bg-[#2A303C] p-6 rounded-lg">
+                 <h3 className="text-lg font-semibold text-purple-400 mb-4">Aanvullende Informatie</h3>
+                 <div className="grid grid-cols-2 gap-6">
+                   <div>
+                     <label className="block text-sm text-gray-400 mb-1">Toegewezen monteur:</label>
+                     <p className="text-white font-medium">{showVerdelerInfo.toegewezenMonteur || 'Nader te bepalen'}</p>
+                   </div>
+                   <div>
+                     <label className="block text-sm text-gray-400 mb-1">Gewenste lever datum:</label>
+                     <p className="text-white font-medium">
+                       {showVerdelerInfo.gewensteLeverDatum 
+                         ? new Date(showVerdelerInfo.gewensteLeverDatum).toLocaleDateString('nl-NL')
+                         : 'Niet ingesteld'}
+                     </p>
+                   </div>
+                 </div>
+               </div>
               </div>
             </div>
           </div>
