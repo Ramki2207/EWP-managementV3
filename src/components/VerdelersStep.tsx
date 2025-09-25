@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, FileEdit as Edit, Save, X, Upload, Server, Eye, CheckSquare, Printer, Key } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Upload, Server, Eye, CheckSquare, Printer, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 import VerdelerTesting from './VerdelerTesting';
@@ -30,6 +30,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [verdelers, setVerdelers] = useState<any[]>([]);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
+  const [showVerdelerDetails, setShowVerdelerDetails] = useState<any>(null);
   const [verdelerData, setVerdelerData] = useState({
     distributorId: '',
     kastNaam: '',
@@ -301,16 +302,29 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
+  const handleVerdelerClick = (verdeler: any) => {
+    setShowVerdelerDetails(verdeler);
+  };
+
   return (
     <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
-        <p className="text-gray-400">Voeg verdelers toe aan dit project</p>
-      </div>
+      {!hideNavigation && (
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
+          <p className="text-gray-400">Beheer de verdelers voor dit project</p>
+        </div>
+      )}
 
-      {/* Add Verdeler Button */}
+      {/* Header with Add Button */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-blue-400">Project Verdelers</h3>
+        <div>
+          <h3 className="text-lg font-semibold text-blue-400">
+            {hideNavigation ? 'Verdelers' : 'Project Verdelers'}
+          </h3>
+          <p className="text-gray-400 text-sm">
+            {hideNavigation ? 'Beheer de verdelers voor dit project' : 'Voeg verdelers toe aan dit project'}
+          </p>
+        </div>
         <button
           onClick={handleAddVerdeler}
           className="btn-primary flex items-center space-x-2"
@@ -320,135 +334,89 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </button>
       </div>
 
-      {/* Verdelers List */}
+      {/* Verdelers Table */}
       {verdelers.length > 0 ? (
-        <div className="space-y-4">
-          {verdelers.map((verdeler, index) => (
-            <div key={verdeler.id || verdeler.distributorId || index} className="card p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4 flex-1">
-                  {/* Profile Photo */}
-                  <div className="flex-shrink-0">
-                    {verdeler.profilePhoto || verdeler.profile_photo ? (
-                      <img
-                        src={verdeler.profilePhoto || verdeler.profile_photo}
-                        alt={verdeler.kastNaam || verdeler.kast_naam}
-                        className="w-16 h-16 rounded-lg object-cover border-2 border-gray-700"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                        <Server size={24} className="text-white" />
+        <div className="card p-6">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="table-header text-left">Verdeler ID</th>
+                  <th className="table-header text-left">Kastnaam</th>
+                  <th className="table-header text-left">Systeem</th>
+                  <th className="table-header text-left">Status</th>
+                  <th className="table-header text-left">Toegangscodes</th>
+                  <th className="table-header text-right">Acties</th>
+                </tr>
+              </thead>
+              <tbody>
+                {verdelers.map((verdeler) => (
+                  <tr 
+                    key={verdeler.id || verdeler.distributorId} 
+                    className="table-row cursor-pointer"
+                    onClick={() => handleVerdelerClick(verdeler)}
+                  >
+                    <td className="py-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="font-medium text-green-400">
+                          {verdeler.distributorId || verdeler.distributor_id}
+                        </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Verdeler Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-green-400">
-                        {verdeler.distributorId || verdeler.distributor_id}
-                      </h4>
+                    </td>
+                    <td className="py-4 text-gray-300">
+                      {verdeler.kastNaam || verdeler.kast_naam || '-'}
+                    </td>
+                    <td className="py-4 text-gray-300">
+                      {verdeler.systeem || '-'}
+                    </td>
+                    <td className="py-4">
                       <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(verdeler.status)}`}>
                         {verdeler.status || 'In productie'}
                       </span>
-                    </div>
-                    
-                    <p className="text-white font-medium mb-3">
-                      {verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'}
-                    </p>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-400">Systeem:</span>
-                        <p className="text-white">{verdeler.systeem || '-'}</p>
+                    </td>
+                    <td className="py-4 text-gray-300">
+                      <span className="text-sm">Geen codes</span>
+                    </td>
+                    <td className="py-4 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleVerdelerClick(verdeler);
+                          }}
+                          className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
+                          title="Info"
+                        >
+                          <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditVerdeler(verdeler);
+                          }}
+                          className="p-2 bg-[#2A303C] hover:bg-green-500/20 rounded-lg transition-colors group"
+                          title="Bewerken"
+                        >
+                          <Edit size={16} className="text-gray-400 group-hover:text-green-400" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteVerdeler(verdeler);
+                          }}
+                          className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
+                          title="Verwijderen"
+                        >
+                          <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
+                        </button>
                       </div>
-                      <div>
-                        <span className="text-gray-400">Voeding:</span>
-                        <p className="text-white">{verdeler.voeding || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Un in V:</span>
-                        <p className="text-white">{verdeler.unInV || verdeler.un_in_v || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">In in A:</span>
-                        <p className="text-white">{verdeler.inInA || verdeler.in_in_a || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Fabrikant:</span>
-                        <p className="text-white">{verdeler.fabrikant || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Bouwjaar:</span>
-                        <p className="text-white">{verdeler.bouwjaar || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Freq. in Hz:</span>
-                        <p className="text-white">{verdeler.freqInHz || verdeler.freq_in_hz || '-'}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Type nr. HS:</span>
-                        <p className="text-white">{verdeler.typeNrHs || verdeler.type_nr_hs || '-'}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex flex-col space-y-2 ml-4">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditVerdeler(verdeler)}
-                      className="btn-secondary p-2"
-                      title="Bewerken"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteVerdeler(verdeler)}
-                      className="btn-secondary p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400"
-                      title="Verwijderen"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-
-                  {/* Testing Buttons - Only show for existing projects */}
-                  {projectData?.id && (
-                    <div className="flex flex-wrap gap-2">
-                      <VerdelerTesting
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number}
-                        onComplete={(testData) => handleTestComplete(index, testData)}
-                        projectId={projectData.id}
-                        distributorId={verdeler.id}
-                      />
-                      <FATTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number}
-                        onComplete={(testData) => handleTestComplete(index, testData)}
-                      />
-                      <HighVoltageTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number}
-                        onComplete={(testData) => handleTestComplete(index, testData)}
-                      />
-                      <OnSiteTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number}
-                        onComplete={(testData) => handleTestComplete(index, testData)}
-                      />
-                      <PrintLabel
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number}
-                        logo={ewpLogo}
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="card p-8 text-center">
@@ -458,10 +426,198 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </div>
       )}
 
+      {/* Verdeler Details Modal */}
+      {showVerdelerDetails && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-blue-400">
+                {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id} - {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam}
+              </h2>
+              <button
+                onClick={() => setShowVerdelerDetails(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="text-sm text-gray-400 mb-6">Verdeler details en acties</div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column - Basic Info */}
+              <div className="space-y-6">
+                <div className="bg-[#2A303C] rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Verdeler ID:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Kastnaam:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Systeem:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.systeem || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Voeding:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.voeding || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Status:</span>
+                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(showVerdelerDetails.status)}`}>
+                        {showVerdelerDetails.status || 'In productie'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Technical Specs */}
+              <div className="space-y-6">
+                <div className="bg-[#2A303C] rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specs</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Un in V:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.unInV || showVerdelerDetails.un_in_v || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">In in A:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.inInA || showVerdelerDetails.in_in_a || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Freq. in Hz:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.freqInHz || showVerdelerDetails.freq_in_hz || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Ik Th in KA 1s:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.ikThInKA1s || showVerdelerDetails.ik_th_in_ka1s || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Ik Dyn in KA:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.ikDynInKA || showVerdelerDetails.ik_dyn_in_ka || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Type nr. HS:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.typeNrHs || showVerdelerDetails.type_nr_hs || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Fabrikant:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.fabrikant || 'Phoenix Contact'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Bouwjaar:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.bouwjaar || '2025'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Getest door:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.getestDoor || showVerdelerDetails.getest_door || '-'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Keuring datum:</span>
+                      <span className="text-white font-medium">
+                        {showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum 
+                          ? new Date(showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum).toLocaleDateString('nl-NL')
+                          : '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Section */}
+            <div className="mt-8 pt-6 border-t border-gray-700">
+              <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {projectData?.id && (
+                  <>
+                    <VerdelerTesting
+                      verdeler={showVerdelerDetails}
+                      projectNumber={projectData.project_number}
+                      onComplete={(testData) => handleTestComplete(0, testData)}
+                      projectId={projectData.id}
+                      distributorId={showVerdelerDetails.id}
+                    />
+                    <FATTest
+                      verdeler={showVerdelerDetails}
+                      projectNumber={projectData.project_number}
+                      onComplete={(testData) => handleTestComplete(0, testData)}
+                    />
+                    <HighVoltageTest
+                      verdeler={showVerdelerDetails}
+                      projectNumber={projectData.project_number}
+                      onComplete={(testData) => handleTestComplete(0, testData)}
+                    />
+                    <OnSiteTest
+                      verdeler={showVerdelerDetails}
+                      projectNumber={projectData.project_number}
+                      onComplete={(testData) => handleTestComplete(0, testData)}
+                    />
+                    <button
+                      className="btn-secondary flex items-center space-x-2"
+                      title="Toegangscode"
+                    >
+                      <Key size={16} />
+                      <span>Toegangscode</span>
+                    </button>
+                    <PrintLabel
+                      verdeler={showVerdelerDetails}
+                      projectNumber={projectData.project_number}
+                      logo={ewpLogo}
+                    />
+                  </>
+                )}
+                <button
+                  onClick={() => {
+                    setShowVerdelerDetails(null);
+                    handleEditVerdeler(showVerdelerDetails);
+                  }}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <Edit size={16} />
+                  <span>Bewerken</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Verdeler Form Modal */}
       {showVerdelerForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
@@ -476,7 +632,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
             <div className="space-y-6">
               {/* Basic Information */}
-              <div className="bg-[#2A303C] rounded-lg p-6">
+              <div>
                 <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -505,39 +661,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Status</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.status}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
-                    >
-                      <option value="In productie">In productie</option>
-                      <option value="Testen">Testen</option>
-                      <option value="Gereed">Gereed</option>
-                      <option value="Opgeleverd">Opgeleverd</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Profielfoto</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
-                        }
-                      }}
-                      className="input-field"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Technical Specifications */}
-              <div className="bg-[#2A303C] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Systeem</label>
                     <input
@@ -568,6 +691,26 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       placeholder="2025"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Status</label>
+                    <select
+                      className="input-field"
+                      value={verdelerData.status}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
+                    >
+                      <option value="In productie">In productie</option>
+                      <option value="Testen">Testen</option>
+                      <option value="Gereed">Gereed</option>
+                      <option value="Opgeleverd">Opgeleverd</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Specifications */}
+              <div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
                     <input
@@ -657,11 +800,283 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       placeholder="Schneider Electric"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Profielfoto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
+                        }
+                      }}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions Section */}
+            {projectData?.id && (
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <VerdelerTesting
+                    verdeler={showVerdelerDetails}
+                    projectNumber={projectData.project_number}
+                    onComplete={(testData) => handleTestComplete(0, testData)}
+                    projectId={projectData.id}
+                    distributorId={showVerdelerDetails.id}
+                  />
+                  <FATTest
+                    verdeler={showVerdelerDetails}
+                    projectNumber={projectData.project_number}
+                    onComplete={(testData) => handleTestComplete(0, testData)}
+                  />
+                  <HighVoltageTest
+                    verdeler={showVerdelerDetails}
+                    projectNumber={projectData.project_number}
+                    onComplete={(testData) => handleTestComplete(0, testData)}
+                  />
+                  <OnSiteTest
+                    verdeler={showVerdelerDetails}
+                    projectNumber={projectData.project_number}
+                    onComplete={(testData) => handleTestComplete(0, testData)}
+                  />
+                  <button
+                    className="btn-secondary flex items-center space-x-2"
+                    title="Toegangscode"
+                  >
+                    <Key size={16} />
+                    <span>Toegangscode</span>
+                  </button>
+                  <PrintLabel
+                    verdeler={showVerdelerDetails}
+                    projectNumber={projectData.project_number}
+                    logo={ewpLogo}
+                  />
+                  <button
+                    onClick={() => {
+                      setShowVerdelerDetails(null);
+                      handleEditVerdeler(showVerdelerDetails);
+                    }}
+                    className="btn-secondary flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Bewerken</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Verdeler Form Modal */}
+      {showVerdelerForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-blue-400">
+                {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
+              </h2>
+              <button
+                onClick={handleCancelForm}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Basic Information */}
+              <div>
+                <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Verdeler ID <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.distributorId}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
+                      placeholder="VD1234"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Kastnaam <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.kastNaam}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
+                      placeholder="Hoofdverdeler A"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.systeem}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
+                      placeholder="400V TN-S"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.voeding}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
+                      placeholder="3x400V + N + PE"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.bouwjaar}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
+                      placeholder="2025"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Status</label>
+                    <select
+                      className="input-field"
+                      value={verdelerData.status}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
+                    >
+                      <option value="In productie">In productie</option>
+                      <option value="Testen">Testen</option>
+                      <option value="Gereed">Gereed</option>
+                      <option value="Opgeleverd">Opgeleverd</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Technical Specifications */}
+              <div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                    <input
+                      type="date"
+                      className="input-field"
+                      value={verdelerData.keuringDatum}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, keuringDatum: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.getestDoor}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, getestDoor: e.target.value })}
+                      placeholder="Naam tester"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.unInV}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
+                      placeholder="400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.inInA}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
+                      placeholder="400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.ikThInKA1s}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
+                      placeholder="25"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.ikDynInKA}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
+                      placeholder="65"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.freqInHz}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
+                      placeholder="50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.typeNrHs}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
+                      placeholder="NS400N"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.fabrikant}
+                      onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
+                      placeholder="Schneider Electric"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Profielfoto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
+                        }
+                      }}
+                      className="input-field"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 mt-6">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
                 <button
                   onClick={handleCancelForm}
                   className="btn-secondary"
