@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit, Save, X, Upload, Key, Printer, CheckSquare, Server, Eye, Info, Download, Copy, Building, Zap, Calendar, Camera } from 'lucide-react';
+import { dataService } from '../lib/supabase';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
@@ -31,6 +32,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
   const [showVerdelerInfo, setShowVerdelerInfo] = useState<any>(null);
   const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
   const [isAccessCodeModalOpen, setIsAccessCodeModalOpen] = useState(false);
   const [selectedVerdelerForAccessCode, setSelectedVerdelerForAccessCode] = useState<any>(null);
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
@@ -49,8 +51,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     systeem: '',
     voeding: '',
     bouwjaar: '',
-    keuringDatum: new Date().toISOString().split('T')[0],
-    getestDoor: '',
+    toegewezenMonteur: '',
+    gewensteLeverDatum: '',
     unInV: '',
     inInA: '',
     ikThInKA1s: '',
