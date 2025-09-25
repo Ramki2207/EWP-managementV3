@@ -307,7 +307,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
       {!hideNavigation && (
         <div className="text-center mb-8">
           <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
@@ -936,7 +937,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           )}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
