@@ -434,13 +434,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Verdeler Details Modal */}
       {showVerdelerDetails && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id} - {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam}
               </h2>
-              <div className="text-sm text-gray-400">Verdeler details en acties</div>
               <button
                 onClick={() => setShowVerdelerDetails(null)}
                 className="text-gray-400 hover:text-white transition-colors"
