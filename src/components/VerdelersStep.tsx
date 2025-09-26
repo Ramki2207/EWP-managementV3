@@ -328,196 +328,100 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </div>
       )}
 
-      {/* Add Verdeler Button */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-blue-400">
-          Project Verdelers ({verdelers.length})
-        </h3>
-        <button
-          onClick={() => setShowVerdelerForm(true)}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Verdeler toevoegen</span>
-        </button>
+      {/* Header */}
+      <div className="card p-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-semibold text-white mb-2">Project Verdelers</h1>
+            <p className="text-gray-400">Beheer alle verdelers voor dit project</p>
+          </div>
+          <button
+            onClick={() => setShowVerdelerForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>Verdeler toevoegen</span>
+          </button>
+        </div>
       </div>
 
-      {/* Verdelers List */}
+      {/* Verdelers Table */}
       {verdelers.length > 0 ? (
-        <div className="space-y-4">
-          {verdelers.map((verdeler) => {
-            const testStatus = getTestStatus(verdeler);
-            const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
-            const activeCodes = verdelerCodes.filter(isCodeValid);
-            
-            return (
-              <div key={verdeler.id} className="card p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4 flex-1">
-                    {/* Profile Photo */}
-                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#2A303C] flex items-center justify-center flex-shrink-0">
-                      {verdeler.profilePhoto ? (
-                        <img
-                          src={verdeler.profilePhoto}
-                          alt={verdeler.kastNaam}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="text-gray-400 text-xs text-center">
-                          Geen<br />foto
+        <div className="card p-6">
+          <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="table-header text-left">Verdeler ID</th>
+                  <th className="table-header text-left">Kastnaam</th>
+                  <th className="table-header text-left">Status</th>
+                  <th className="table-header text-left">Test Status</th>
+                  <th className="table-header text-left">Systeem</th>
+                  <th className="table-header text-left">Spanning</th>
+                  <th className="table-header text-right">Acties</th>
+                </tr>
+              </thead>
+              <tbody>
+                {verdelers.map((verdeler) => {
+                  const testStatus = getTestStatus(verdeler);
+                  const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
+                  const activeCodes = verdelerCodes.filter(isCodeValid);
+                  
+                  return (
+                    <tr 
+                      key={verdeler.id} 
+                      className="table-row cursor-pointer"
+                      onClick={() => handleEditVerdeler(verdeler)}
+                    >
+                      <td className="py-4">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="font-medium text-green-400">{verdeler.distributorId}</span>
                         </div>
-                      )}
-                    </div>
-
-                    {/* Verdeler Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="text-lg font-semibold text-green-400">
-                          {verdeler.distributorId}
-                        </h4>
+                      </td>
+                      <td className="py-4 text-gray-300">{verdeler.kastNaam || "Naamloos"}</td>
+                      <td className="py-4">
+                        <span className="px-3 py-1 rounded-full text-sm bg-blue-500/20 text-blue-400">
+                          {verdeler.status || 'In productie'}
+                        </span>
+                      </td>
+                      <td className="py-4">
                         <span className={`px-3 py-1 rounded-full text-sm ${testStatus.color}`}>
                           {testStatus.status}
                         </span>
-                        {activeCodes.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <Key size={14} className="text-blue-400" />
-                            <span className="text-xs text-blue-400">
-                              {activeCodes.length} actieve code{activeCodes.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <p className="text-white font-medium mb-2">
-                        {verdeler.kastNaam || 'Naamloos'}
-                      </p>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-400">Systeem:</span>
-                          <p className="text-white">{verdeler.systeem || '-'}</p>
+                      </td>
+                      <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
+                      <td className="py-4 text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</td>
+                      <td className="py-4 text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditVerdeler(verdeler);
+                            }}
+                            className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
+                            title="Bewerken"
+                          >
+                            <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteVerdeler(verdeler.id);
+                            }}
+                            className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
+                            title="Verwijderen"
+                          >
+                            <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
+                          </button>
                         </div>
-                        <div>
-                          <span className="text-gray-400">Voeding:</span>
-                          <p className="text-white">{verdeler.voeding || '-'}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Spanning:</span>
-                          <p className="text-white">{verdeler.unInV ? `${verdeler.unInV}V` : '-'}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-400">Stroom:</span>
-                          <p className="text-white">{verdeler.inInA ? `${verdeler.inInA}A` : '-'}</p>
-                        </div>
-                      </div>
-
-                      {/* Access Codes Display */}
-                      {verdelerCodes.length > 0 && (
-                        <div className="mt-4 p-3 bg-[#2A303C]/50 rounded-lg">
-                          <h5 className="text-sm font-medium text-blue-400 mb-2">Toegangscodes</h5>
-                          <div className="space-y-2">
-                            {verdelerCodes.slice(0, 3).map((code) => (
-                              <div key={code.id} className="flex items-center justify-between text-xs">
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-mono">{code.code}</span>
-                                  <div className="flex items-center space-x-1">
-                                    {isCodeValid(code) ? (
-                                      <CheckCircle size={12} className="text-green-400" />
-                                    ) : (
-                                      <XCircle size={12} className="text-red-400" />
-                                    )}
-                                    <span className={isCodeValid(code) ? 'text-green-400' : 'text-red-400'}>
-                                      {isCodeValid(code) ? 'Actief' : 'Inactief'}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Clock size={12} className="text-gray-400" />
-                                  <span className="text-gray-400">
-                                    {new Date(code.expires_at).toLocaleDateString('nl-NL')}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                            {verdelerCodes.length > 3 && (
-                              <p className="text-xs text-gray-400">
-                                +{verdelerCodes.length - 3} meer...
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col space-y-2 ml-4">
-                    <button
-                      onClick={() => handleEditVerdeler(verdeler)}
-                      className="btn-secondary flex items-center space-x-2 text-sm"
-                      title="Bewerken"
-                    >
-                      <Eye size={16} />
-                      <span>Info</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => handleEditVerdeler(verdeler)}
-                      className="btn-secondary flex items-center space-x-2 text-sm"
-                      title="Bewerken"
-                    >
-                      <Eye size={16} />
-                      <span>Bewerken</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeleteVerdeler(verdeler.id)}
-                      className="btn-secondary flex items-center space-x-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400"
-                      title="Verwijderen"
-                    >
-                      <Trash2 size={16} />
-                      <span>Verwijderen</span>
-                    </button>
-
-                    {/* Testing Buttons */}
-                    <div className="pt-2 border-t border-gray-700 space-y-2">
-                      <VerdelerTesting
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
-                        projectId={projectData.id}
-                        distributorId={verdeler.id}
-                      />
-                      
-                      <FATTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
-                      />
-                      
-                      <HighVoltageTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
-                      />
-                      
-                      <OnSiteTest
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
-                      />
-                      
-                      <PrintLabel
-                        verdeler={verdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        logo={ewpLogo}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         <div className="card p-8 text-center">
@@ -557,6 +461,240 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </button>
             </div>
 
+            {/* Verdeler Details Modal */}
+            {editingVerdeler && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-[#1E2530] rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center space-x-4">
+                      {/* Profile Photo */}
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#2A303C] flex items-center justify-center flex-shrink-0">
+                        {editingVerdeler.profilePhoto ? (
+                          <img
+                            src={editingVerdeler.profilePhoto}
+                            alt={editingVerdeler.kastNaam}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-gray-400 text-xs text-center">
+                            Geen<br />foto
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-semibold text-green-400">
+                          {editingVerdeler.distributorId}
+                        </h2>
+                        <p className="text-gray-400">{editingVerdeler.kastNaam || 'Naamloos'}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setEditingVerdeler(null)}
+                      className="text-gray-400 hover:text-white transition-colors"
+                    >
+                      <X size={24} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Verdeler Information */}
+                    <div className="lg:col-span-2 space-y-6">
+                      {/* Basic Info */}
+                      <div className="bg-[#2A303C] p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-blue-400 mb-4">Basis Informatie</h3>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-400">Verdeler ID:</span>
+                            <p className="text-white font-medium">{editingVerdeler.distributorId}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Status:</span>
+                            <p className="text-white font-medium">{editingVerdeler.status || 'In productie'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Systeem:</span>
+                            <p className="text-white">{editingVerdeler.systeem || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Voeding:</span>
+                            <p className="text-white">{editingVerdeler.voeding || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Spanning:</span>
+                            <p className="text-white">{editingVerdeler.unInV ? `${editingVerdeler.unInV}V` : '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Stroom:</span>
+                            <p className="text-white">{editingVerdeler.inInA ? `${editingVerdeler.inInA}A` : '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Fabrikant:</span>
+                            <p className="text-white">{editingVerdeler.fabrikant || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Bouwjaar:</span>
+                            <p className="text-white">{editingVerdeler.bouwjaar || '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Technical Specifications */}
+                      <div className="bg-[#2A303C] p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-400">Ik Th in KA 1s:</span>
+                            <p className="text-white">{editingVerdeler.ikThInKA1s || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Ik Dyn in KA:</span>
+                            <p className="text-white">{editingVerdeler.ikDynInKA || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Freq. in Hz:</span>
+                            <p className="text-white">{editingVerdeler.freqInHz || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Type nr. HS:</span>
+                            <p className="text-white">{editingVerdeler.typeNrHs || '-'}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Keuring datum:</span>
+                            <p className="text-white">
+                              {editingVerdeler.keuringDatum 
+                                ? new Date(editingVerdeler.keuringDatum).toLocaleDateString('nl-NL')
+                                : '-'}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-400">Getest door:</span>
+                            <p className="text-white">{editingVerdeler.getestDoor || '-'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Access Codes Display */}
+                      {(() => {
+                        const verdelerCodes = getVerdelerAccessCodes(editingVerdeler.distributorId);
+                        const activeCodes = verdelerCodes.filter(isCodeValid);
+                        
+                        return verdelerCodes.length > 0 ? (
+                          <div className="bg-[#2A303C] p-6 rounded-lg">
+                            <h3 className="text-lg font-semibold text-orange-400 mb-4">Toegangscodes</h3>
+                            <div className="space-y-3">
+                              {verdelerCodes.map((code) => (
+                                <div key={code.id} className="flex items-center justify-between p-3 bg-[#1E2530] rounded-lg">
+                                  <div className="flex items-center space-x-3">
+                                    <span className="font-mono text-lg">{code.code}</span>
+                                    <div className="flex items-center space-x-1">
+                                      {isCodeValid(code) ? (
+                                        <CheckCircle size={16} className="text-green-400" />
+                                      ) : (
+                                        <XCircle size={16} className="text-red-400" />
+                                      )}
+                                      <span className={isCodeValid(code) ? 'text-green-400' : 'text-red-400'}>
+                                        {isCodeValid(code) ? 'Actief' : 'Inactief'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2 text-sm text-gray-400">
+                                    <Clock size={14} />
+                                    <span>{new Date(code.expires_at).toLocaleDateString('nl-NL')}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+                    </div>
+
+                    {/* Action Buttons Sidebar */}
+                    <div className="space-y-4">
+                      <div className="bg-[#2A303C] p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-gray-400 mb-4">Acties</h3>
+                        <div className="space-y-3">
+                          <button
+                            onClick={() => {
+                              setEditingVerdeler(null);
+                              handleEditVerdeler(editingVerdeler);
+                            }}
+                            className="btn-secondary w-full flex items-center space-x-2"
+                          >
+                            <Eye size={16} />
+                            <span>Bewerken</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              setEditingVerdeler(null);
+                              handleDeleteVerdeler(editingVerdeler.id);
+                            }}
+                            className="btn-secondary w-full flex items-center space-x-2 bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                          >
+                            <Trash2 size={16} />
+                            <span>Verwijderen</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Testing Actions */}
+                      <div className="bg-[#2A303C] p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
+                        <div className="space-y-3">
+                          <VerdelerTesting
+                            verdeler={editingVerdeler}
+                            projectNumber={projectData.project_number || projectData.projectNumber}
+                            onComplete={(testData) => handleTestComplete(editingVerdeler, testData)}
+                            projectId={projectData.id}
+                            distributorId={editingVerdeler.id}
+                          />
+                          
+                          <FATTest
+                            verdeler={editingVerdeler}
+                            projectNumber={projectData.project_number || projectData.projectNumber}
+                            onComplete={(testData) => handleTestComplete(editingVerdeler, testData)}
+                          />
+                          
+                          <HighVoltageTest
+                            verdeler={editingVerdeler}
+                            projectNumber={projectData.project_number || projectData.projectNumber}
+                            onComplete={(testData) => handleTestComplete(editingVerdeler, testData)}
+                          />
+                          
+                          <OnSiteTest
+                            verdeler={editingVerdeler}
+                            projectNumber={projectData.project_number || projectData.projectNumber}
+                            onComplete={(testData) => handleTestComplete(editingVerdeler, testData)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Additional Actions */}
+                      <div className="bg-[#2A303C] p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-blue-400 mb-4">Extra</h3>
+                        <div className="space-y-3">
+                          <PrintLabel
+                            verdeler={editingVerdeler}
+                            projectNumber={projectData.project_number || projectData.projectNumber}
+                            logo={ewpLogo}
+                          />
+                          
+                          <button
+                            className="btn-secondary w-full flex items-center space-x-2"
+                          >
+                            <Key size={16} />
+                            <span>Toegangscode</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Add/Edit Form Content */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Basic Information */}
               <div className="space-y-6">
