@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
