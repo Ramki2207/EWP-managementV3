@@ -11,6 +11,7 @@ import ProjectDocumentManager from '../components/ProjectDocumentManager';
 import DeliveryNotificationManager from '../components/DeliveryNotificationManager';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import ProductionTracking from '../components/ProductionTracking';
+import PreTestingApproval from '../components/PreTestingApproval';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -25,6 +26,8 @@ const ProjectDetails = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [lockId, setLockId] = useState<string | null>(null);
+  const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<string | null>(null);
 
   useEffect(() => {
     // Get current user info
@@ -188,10 +191,53 @@ const ProjectDetails = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    // Special handling for status change from Productie to Testen
+    if (field === 'status' && value === 'Testen' && editedProject?.status === 'Productie') {
+      setPendingStatusChange(value);
+      setShowPreTestingApproval(true);
+      return;
+    }
+    
     setEditedProject({
       ...editedProject,
       [field]: value
     });
+  };
+  const handlePreTestingApprove = async () => {
+    try {
+      // Update project status to Testen
+      const updatedProject = {
+        ...editedProject,
+        status: 'Testen'
+      };
+      
+      setEditedProject(updatedProject);
+      setShowPreTestingApproval(false);
+      setPendingStatusChange(null);
+      
+      toast.success('Project goedgekeurd voor testfase!');
+    } catch (error) {
+      console.error('Error approving for testing:', error);
+      toast.error('Er is een fout opgetreden bij het goedkeuren voor testfase');
+    }
+  };
+
+  const handlePreTestingDecline = async () => {
+    try {
+      // Keep project status as Productie
+      setShowPreTestingApproval(false);
+      setPendingStatusChange(null);
+      
+      toast.success('Project afgekeurd - blijft in productie voor aanpassingen');
+    } catch (error) {
+      console.error('Error declining for testing:', error);
+      toast.error('Er is een fout opgetreden bij het afkeuren voor testfase');
+    }
+  };
+
+  const handlePreTestingCancel = () => {
+    setShowPreTestingApproval(false);
+    setPendingStatusChange(null);
   };
 
   const handleVerdelersChange = (verdelers: any[]) => {
@@ -702,6 +748,17 @@ const ProjectDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Pre-Testing Approval Modal */}
+      {showPreTestingApproval && (
+        <PreTestingApproval
+          project={project}
+          onApprove={handlePreTestingApprove}
+          onDecline={handlePreTestingDecline}
+          onCancel={handlePreTestingCancel}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 };
