@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, X, Eye, Upload, Key, Copy, Clock, Users, CheckSquare, Printer } from 'lucide-react';
+import { Plus, FileEdit as Edit, Trash2, Save, X, Eye, Upload, Key, Copy, Clock, Users, CheckSquare, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 import VerdelerTesting from './VerdelerTesting';
