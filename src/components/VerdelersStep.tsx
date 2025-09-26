@@ -316,7 +316,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           distributorId: verdelerData.distributorId,
           projectId: projectData.id,
           kastNaam: verdelerData.kastNaam,
-          toegewezenMonteur: verdelerData.toegewezenMonteur,
           systeem: verdelerData.systeem,
           voeding: verdelerData.voeding,
           bouwjaar: verdelerData.bouwjaar,
@@ -328,7 +327,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           ikDynInKA: verdelerData.ikDynInKA,
           freqInHz: verdelerData.freqInHz,
           typeNrHs: verdelerData.typeNrHs,
-          profilePhoto: profilePhotoUrl
+          profilePhoto: profilePhotoUrl,
+          // Only include new columns if they exist in database
+          toegewezenMonteur: verdelerData.toegewezenMonteur,
+          gewensteLeverDatum: null // Will be added later when column exists
         };
         
         await dataService.updateDistributor(editingVerdeler.id, updateData);

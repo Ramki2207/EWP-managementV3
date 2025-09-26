@@ -404,8 +404,8 @@ export const dataService = {
           systeem: updates.systeem,
           voeding: updates.voeding,
           bouwjaar: updates.bouwjaar,
-          toegewezen_monteur: updates.toegewezenMonteur,
-          gewenste_lever_datum: updates.gewensteLeverDatum,
+          keuring_datum: updates.keuringDatum,
+          getest_door: updates.getestDoor,
           un_in_v: updates.unInV,
           in_in_a: updates.inInA,
           ik_th_in_ka1s: updates.ikThInKA1s,
@@ -414,7 +414,10 @@ export const dataService = {
           type_nr_hs: updates.typeNrHs,
           fabrikant: updates.fabrikant,
           profile_photo: profilePhotoUrl,
-          status: updates.status
+          status: updates.status,
+          // Add new columns conditionally to handle migration
+          ...(updates.toegewezenMonteur !== undefined && { toegewezen_monteur: updates.toegewezenMonteur }),
+          ...(updates.gewensteLeverDatum !== undefined && { gewenste_lever_datum: updates.gewensteLeverDatum })
         })
         .eq('id', id)
         .select()

@@ -276,8 +276,6 @@ const VerdelerDetails = () => {
         bouwjaar: editedDistributor.bouwjaar,
         keuringDatum: editedDistributor.keuring_datum,
         getestDoor: editedDistributor.getest_door,
-        toegewezenMonteur: editedDistributor.toegewezen_monteur,
-        gewensteLeverDatum: editedDistributor.gewenste_lever_datum,
         unInV: editedDistributor.un_in_v,
         inInA: editedDistributor.in_in_a,
         ikThInKA1s: editedDistributor.ik_th_in_ka1s,
@@ -286,7 +284,14 @@ const VerdelerDetails = () => {
         typeNrHs: editedDistributor.type_nr_hs,
         fabrikant: editedDistributor.fabrikant,
         profilePhoto: editedDistributor.profile_photo,
-        status: editedDistributor.status
+        status: editedDistributor.status,
+        // Only include new columns if they exist in database
+        ...(editedDistributor.toegewezen_monteur !== undefined && { 
+          toegewezenMonteur: editedDistributor.toegewezen_monteur 
+        }),
+        ...(editedDistributor.gewenste_lever_datum !== undefined && { 
+          gewensteLeverDatum: editedDistributor.gewenste_lever_datum 
+        })
       };
 
       console.log('Update data being sent:', updateData);
