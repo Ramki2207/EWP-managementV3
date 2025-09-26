@@ -258,8 +258,13 @@ const Projects = () => {
       console.log('🌍 FILTER: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
       
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
-        // If user doesn't have access to all locations, filter by assigned locations
-        if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
+        // Check if user has access to all locations
+        const hasAllLocations = currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+                               AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+        
+        if (hasAllLocations) {
+          console.log(`🌍 LOCATION FILTER: User ${currentUser.username} has access to all locations - showing all projects`);
+        } else {
           // If project has a location, user must have access to that specific location
           // If project has no location, allow access (legacy projects)
           const hasLocationAccess = project.location ? currentUser.assignedLocations.includes(project.location) : true;
@@ -269,8 +274,6 @@ const Projects = () => {
             console.log(`🌍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) from user ${currentUser.username} (assigned: ${currentUser.assignedLocations.join(', ')}) - NO ACCESS`);
             return false;
           }
-        } else {
-          console.log(`🌍 LOCATION FILTER: User ${currentUser.username} has access to all locations - showing all projects`);
         }
       } else {
         console.log(`🌍 LOCATION FILTER: User ${currentUser?.username} has no location restrictions - showing all projects`);
