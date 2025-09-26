@@ -495,7 +495,36 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         </span>
                       </td>
                       <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
-                      <td className="py-4 text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</td>
+                        {(() => {
+                          const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
+                          if (verdelerCodes.length === 0) {
+                            return <span className="text-gray-400 text-sm">Geen codes</span>;
+                          }
+                          
+                          const activeCodes = verdelerCodes.filter(code => isCodeValid(code));
+                          const expiredCodes = verdelerCodes.filter(code => !isCodeValid(code));
+                          
+                          return (
+                            <div className="space-y-1">
+                              {activeCodes.map(code => (
+                                <div key={code.id} className="flex items-center space-x-2">
+                                  <CheckCircle size={12} className="text-green-400" />
+                                  <span className="text-green-400 font-mono text-sm">{code.code}</span>
+                                </div>
+                              ))}
+                              {expiredCodes.map(code => (
+                                <div key={code.id} className="flex items-center space-x-2">
+                                  <XCircle size={12} className="text-red-400" />
+                                  <span className="text-red-400 font-mono text-sm line-through">{code.code}</span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </td>
+                      <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
+                      <td className="py-4">
+                        <span className="text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</span>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
