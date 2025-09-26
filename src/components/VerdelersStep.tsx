@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, FileEdit as Edit, Trash2, Save, X, Eye, Upload, Key, Copy, Clock, Users, CheckSquare, Printer } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
+import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
-import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ewpLogo from '../assets/ewp-logo.png';
 
 interface VerdelersStepProps {
@@ -27,7 +25,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   onBack, 
   hideNavigation = false 
 }) => {
-  const { hasPermission, currentUser } = useEnhancedPermissions();
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState(false);
@@ -117,6 +114,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   }, [projectData]);
 
+  useEffect(() => {
+    // Generate unique distributor ID when form opens for new verdeler
+    if (showVerdelerForm && !editingVerdeler) {
+      generateDistributorId();
+    }
+  }, [showVerdelerForm, editingVerdeler]);
+
   const loadUsers = async () => {
     try {
       const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
@@ -127,101 +131,58 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   const loadAccessCodes = async () => {
+    if (!projectData?.id) return;
+    
     try {
       const codes = await dataService.getAccessCodes();
-      setAccessCodes(codes || []);
+      const projectCodes = codes.filter((code: any) => 
+        code.project_number === projectData.project_number
+      );
+      setAccessCodes(projectCodes);
     } catch (error) {
       console.error('Error loading access codes:', error);
     }
   };
 
-  const getMontageUsersByLocation = (projectLocation?: string) => {
-    console.log('🔍 VERDELERS: Getting montage users for location:', projectLocation);
-    console.log('🔍 VERDELERS: Total users loaded:', users.length);
+  const generateDistributorId = () => {
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const newId = `VD${randomNum}`;
     
-    if (!users || users.length === 0) {
-      console.log('❌ VERDELERS: No users loaded yet');
-      return { primary: [], other: [] };
+    const exists = verdelers.some(v => v.distributorId === newId);
+    if (exists) {
+      generateDistributorId();
+    } else {
+      setVerdelerData(prev => ({ ...prev, distributorId: newId }));
     }
-    
-    // Filter users with 'montage' role
-    const montageUsers = users.filter(user => {
-      const isMontage = user.role === 'montage';
-      console.log(`🔍 VERDELERS: User ${user.username} - role: ${user.role}, isMontage: ${isMontage}`);
-      return isMontage;
-    });
-    
-    console.log('🔍 VERDELERS: Found montage users:', montageUsers.length);
-    
-    if (!projectLocation) {
-      return { primary: montageUsers, other: [] };
-    }
-    
-    // Separate users by location
-    const primary = montageUsers.filter(user => {
-      const hasLocationAccess = !user.assignedLocations || 
-                               user.assignedLocations.length === 0 || 
-                               user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
-                               user.assignedLocations.includes(projectLocation);
-      console.log(`🔍 VERDELERS: User ${user.username} location access for ${projectLocation}:`, hasLocationAccess);
-      return hasLocationAccess;
-    });
-    
-    const other = montageUsers.filter(user => {
-      const hasOtherLocationAccess = user.assignedLocations && 
-                                    user.assignedLocations.length > 0 && 
-                                    user.assignedLocations.length < AVAILABLE_LOCATIONS.length &&
-                                    !user.assignedLocations.includes(projectLocation);
-      return hasOtherLocationAccess;
-    });
-    
-    console.log('🔍 VERDELERS: Primary users:', primary.length, 'Other users:', other.length);
-    
-    return { primary, other };
   };
 
-  const generateVerdelerID = () => {
-    const existingIds = verdelers.map(v => v.distributorId);
-    let newId;
-    do {
-      const randomNum = Math.floor(Math.random() * 9000) + 1000;
-      newId = `VD${randomNum}`;
-    } while (existingIds.includes(newId));
-    
-    return newId;
+  const generateRandomCode = () => {
+    let result = '';
+    for (let i = 0; i < 5; i++) {
+      result += Math.floor(Math.random() * 10).toString();
+    }
+    return result;
   };
 
-  const handleAddVerdeler = () => {
-    if (!hasPermission('verdelers', 'create')) {
-      toast.error('Je hebt geen toestemming om verdelers aan te maken');
-      return;
-    }
-    setVerdelerData({
-      distributorId: generateVerdelerID(),
-      kastNaam: '',
-      toegewezenMonteur: 'Vrij',
-      systeem: '',
-      voeding: '',
-      bouwjaar: '',
-      status: 'Offerte',
-      fabrikant: '',
-      unInV: '',
-      inInA: '',
-      ikThInKA1s: '',
-      ikDynInKA: '',
-      freqInHz: '',
-      typeNrHs: '',
-      profilePhoto: null,
-    });
-    setEditingVerdeler(null);
-    setShowVerdelerForm(true);
+  const getDefaultExpiryDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().slice(0, 16);
+  };
+
+  const handleVerdelerClick = (verdeler: any) => {
+    setSelectedVerdeler(verdeler);
+    setShowVerdelerDetails(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowVerdelerDetails(false);
+    setSelectedVerdeler(null);
   };
 
   const handleEditVerdeler = (verdeler: any) => {
-    if (!hasPermission('verdelers', 'update')) {
-      toast.error('Je hebt geen toestemming om verdelers te bewerken');
-      return;
-    }
+    console.log('🔧 EDIT: Starting edit for verdeler:', verdeler);
+    setEditingVerdeler(verdeler);
     setVerdelerData({
       distributorId: verdeler.distributorId,
       kastNaam: verdeler.kastNaam,
@@ -237,42 +198,80 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       ikDynInKA: verdeler.ikDynInKA,
       freqInHz: verdeler.freqInHz,
       typeNrHs: verdeler.typeNrHs,
-      profilePhoto: verdeler.profilePhoto,
+      profilePhoto: null,
     });
-    setEditingVerdeler(verdeler);
+    setShowVerdelerDetails(false);
     setShowVerdelerForm(true);
+    console.log('🔧 EDIT: Form data set:', verdelerData);
   };
 
-  const handleDeleteVerdeler = async (verdelerId: string) => {
-    if (!hasPermission('verdelers', 'delete')) {
-      toast.error('Je hebt geen toestemming om verdelers te verwijderen');
+  const handleGenerateAccessCode = (verdeler: any) => {
+    setSelectedVerdeler(verdeler);
+    setNewAccessCode({
+      code: generateRandomCode(),
+      expiresAt: getDefaultExpiryDate(),
+      maxUses: '',
+      isActive: true
+    });
+    setShowAccessCodeForm(true);
+  };
+
+  const handleCreateAccessCode = async () => {
+    if (!newAccessCode.code || !newAccessCode.expiresAt || !selectedVerdeler) {
+      toast.error('Vul alle verplichte velden in!');
       return;
     }
 
-    const verdelerToDelete = verdelers.find(v => v.id === verdelerId || v.distributorId === verdelerId);
-    if (!verdelerToDelete) return;
+    if (!/^\d{5}$/.test(newAccessCode.code)) {
+      toast.error('Toegangscode moet precies 5 cijfers bevatten!');
+      return;
+    }
 
-    if (window.confirm(`Weet je zeker dat je verdeler ${verdelerToDelete.distributorId} wilt verwijderen?`)) {
-      try {
-        // If we have a database ID, delete from database
-        if (verdelerToDelete.id && projectData.id) {
-          await dataService.deleteDistributor(verdelerToDelete.id);
-          console.log('✅ DELETE: Verdeler deleted from database');
-          toast.success('Verdeler verwijderd!');
-          
-          // Reload from database
-          await loadVerdelersFromDatabase();
-        } else {
-          // For project creation (no database ID yet), remove from local state
-          const updatedVerdelers = verdelers.filter(v => v.distributorId !== verdelerToDelete.distributorId);
-          setVerdelers(updatedVerdelers);
-          onVerdelersChange(updatedVerdelers);
-          toast.success('Verdeler verwijderd!');
-        }
-      } catch (error) {
-        console.error('Error deleting verdeler:', error);
-        toast.error('Er is een fout opgetreden bij het verwijderen van de verdeler');
-      }
+    try {
+      setGeneratingCode(true);
+      const currentUserId = localStorage.getItem('currentUserId');
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const currentUser = users.find((u: any) => u.id === currentUserId);
+
+      const accessCodeData = {
+        code: newAccessCode.code.toUpperCase(),
+        createdBy: currentUser?.username || 'Unknown',
+        expiresAt: newAccessCode.expiresAt,
+        isActive: newAccessCode.isActive,
+        maxUses: newAccessCode.maxUses ? parseInt(newAccessCode.maxUses) : null,
+        verdeler_id: selectedVerdeler.distributorId,
+        project_number: projectData.project_number || projectData.projectNumber
+      };
+
+      console.log('🔑 ACCESS CODE: Creating with data:', accessCodeData);
+      await dataService.createAccessCode(accessCodeData);
+      await loadAccessCodes();
+      
+      setShowAccessCodeForm(false);
+      setSelectedVerdeler(null);
+      setNewAccessCode({
+        code: '',
+        expiresAt: '',
+        maxUses: '',
+        isActive: true
+      });
+      
+      toast.success('Toegangscode succesvol aangemaakt!');
+    } catch (error) {
+      console.error('Error creating access code:', error);
+      toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
+    } finally {
+      setGeneratingCode(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setVerdelerData({ ...verdelerData, [field]: value });
+  };
+
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
     }
   };
 
@@ -328,13 +327,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           ikDynInKA: verdelerData.ikDynInKA,
           freqInHz: verdelerData.freqInHz,
           typeNrHs: verdelerData.typeNrHs,
-          profilePhoto: profilePhotoUrl
+          profilePhoto: profilePhotoUrl,
+          // Only include new columns if they exist in database
+          toegewezenMonteur: verdelerData.toegewezenMonteur,
+          gewensteLeverDatum: null // Will be added later when column exists
         };
-        
-        // Only include new columns if they have values
-        if (verdelerData.toegewezenMonteur && verdelerData.toegewezenMonteur !== 'Vrij') {
-          updateData.toegewezenMonteur = verdelerData.toegewezenMonteur;
-        }
         
         await dataService.updateDistributor(editingVerdeler.id, updateData);
         console.log('✅ SAVE: Verdeler updated in database');
@@ -348,6 +345,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             distributorId: verdelerData.distributorId,
             projectId: projectData.id,
             kastNaam: verdelerData.kastNaam,
+            toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: verdelerData.systeem,
             voeding: verdelerData.voeding,
             bouwjaar: verdelerData.bouwjaar,
@@ -361,11 +359,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             typeNrHs: verdelerData.typeNrHs,
             profilePhoto: profilePhotoUrl
           };
-          
-          // Only include new columns if they have values
-          if (verdelerData.toegewezenMonteur && verdelerData.toegewezenMonteur !== 'Vrij') {
-            newVerdelerData.toegewezenMonteur = verdelerData.toegewezenMonteur;
-          }
           
           await dataService.createDistributor(newVerdelerData);
           console.log('✅ SAVE: New verdeler created in database');
@@ -413,17 +406,26 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
+  const handleDeleteVerdeler = (verdelerId: string) => {
+    if (window.confirm('Weet je zeker dat je deze verdeler wilt verwijderen?')) {
+      const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
+      setVerdelers(updatedVerdelers);
+      onVerdelersChange(updatedVerdelers);
+      toast.success('Verdeler verwijderd!');
+    }
+  };
+
   const handleCancelForm = () => {
     setShowVerdelerForm(false);
     setEditingVerdeler(null);
     setVerdelerData({
-      distributorId: generateVerdelerID(),
+      distributorId: '',
       kastNaam: '',
       toegewezenMonteur: 'Vrij',
       systeem: '',
       voeding: '',
       bouwjaar: '',
-      status: 'Offerte',
+      status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'In productie',
       fabrikant: '',
       unInV: '',
       inInA: '',
@@ -435,256 +437,209 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     });
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setVerdelerData({
-      ...verdelerData,
-      [field]: value
-    });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setVerdelerData({
-        ...verdelerData,
-        profilePhoto: e.target.files[0]
-      });
-    }
-  };
-
-  const handleVerdelerClick = (verdeler: any) => {
-    setSelectedVerdeler(verdeler);
-    setShowVerdelerDetails(true);
-  };
-
   const handleTestComplete = (verdeler: any, testData: any) => {
-    console.log('Test completed for verdeler:', verdeler.distributorId, testData);
-    // Test data is automatically saved to localStorage by the test components
+    console.log('Test completed for verdeler:', verdeler.distributorId, 'with data:', testData);
   };
 
-  const generateRandomCode = () => {
-    let result = '';
-    for (let i = 0; i < 5; i++) {
-      result += Math.floor(Math.random() * 10).toString();
-    }
-    return result;
-  };
-
-  const getDefaultExpiryDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().slice(0, 16);
-  };
-
-  const handleGenerateAccessCode = (verdeler: any) => {
-    if (!hasPermission('access_codes', 'create')) {
-      toast.error('Je hebt geen toestemming om toegangscodes aan te maken');
-      return;
-    }
-    setSelectedVerdeler(verdeler);
-    setNewAccessCode({
-      code: generateRandomCode(),
-      expiresAt: getDefaultExpiryDate(),
-      maxUses: '',
-      isActive: true
-    });
-    setShowAccessCodeForm(true);
-  };
-
-  const handleCreateAccessCode = async () => {
-    if (!newAccessCode.code || !newAccessCode.expiresAt || !selectedVerdeler) {
-      toast.error('Vul alle verplichte velden in!');
-      return;
-    }
-
-    if (!/^\d{5}$/.test(newAccessCode.code)) {
-      toast.error('Toegangscode moet precies 5 cijfers bevatten!');
-      return;
-    }
-
+  const getTestStatus = (verdeler: any) => {
+    const verdelerTestData = localStorage.getItem(`verdeler_test_${verdeler.distributorId}`);
+    const fatTestData = localStorage.getItem(`fat_test_${verdeler.distributorId}`);
+    const hvTestData = localStorage.getItem(`hv_test_${verdeler.distributorId}`);
+    
+    let status = 'Niet getest';
+    let color = 'bg-gray-500/20 text-gray-400';
+    
     try {
-      setGeneratingCode(true);
-      const currentUserId = localStorage.getItem('currentUserId');
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const currentUser = users.find((u: any) => u.id === currentUserId);
-
-      const accessCodeData = {
-        code: newAccessCode.code.toUpperCase(),
-        createdBy: currentUser?.username || 'Unknown',
-        expiresAt: newAccessCode.expiresAt,
-        isActive: newAccessCode.isActive,
-        maxUses: newAccessCode.maxUses ? parseInt(newAccessCode.maxUses) : null,
-        verdeler_id: selectedVerdeler.distributorId,
-        project_number: projectData.project_number || projectData.projectNumber
-      };
-
-      await dataService.createAccessCode(accessCodeData);
-      await loadAccessCodes();
+      if (verdelerTestData) {
+        const testData = JSON.parse(verdelerTestData);
+        if (testData.inspectionReport?.completed) {
+          if (testData.inspectionReport.result === 'approved') {
+            status = 'Goedgekeurd';
+            color = 'bg-green-500/20 text-green-400';
+          } else if (testData.inspectionReport.result === 'conditionallyApproved') {
+            status = 'Voorwaardelijk';
+            color = 'bg-yellow-500/20 text-yellow-400';
+          } else if (testData.inspectionReport.result === 'rejected') {
+            status = 'Afgekeurd';
+            color = 'bg-red-500/20 text-red-400';
+          }
+        } else if (testData.workshopChecklist?.completed) {
+          status = 'Checklist Voltooid';
+          color = 'bg-blue-500/20 text-blue-400';
+        }
+      }
       
-      setShowAccessCodeForm(false);
-      setNewAccessCode({
-        code: '',
-        expiresAt: '',
-        maxUses: '',
-        isActive: true
-      });
+      if (fatTestData) {
+        const fatData = JSON.parse(fatTestData);
+        if (fatData.factoryTest?.completed) {
+          status = 'FAT Voltooid';
+          color = 'bg-yellow-500/20 text-yellow-400';
+        }
+      }
       
-      toast.success('Toegangscode succesvol aangemaakt!');
+      if (hvTestData) {
+        const hvData = JSON.parse(hvTestData);
+        if (hvData.highVoltageTest?.completed) {
+          status = 'HV Test Voltooid';
+          color = 'bg-orange-500/20 text-orange-400';
+        }
+      }
     } catch (error) {
-      console.error('Error creating access code:', error);
-      toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
-    } finally {
-      setGeneratingCode(false);
+      console.error('Error parsing test data:', error);
     }
+    
+    return { status, color };
   };
 
-  const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(code);
-    toast.success('Code gekopieerd naar klembord!');
-  };
-
-  const getVerdelerAccessCodes = (verdelerDistributorId: string) => {
-    return accessCodes.filter(code => 
-      code.verdeler_id === verdelerDistributorId && code.is_active
-    );
+  const getVerdelerAccessCodes = (verdelerId: string) => {
+    return accessCodes.filter(code => code.verdeler_id === verdelerId);
   };
 
   const isExpired = (expiresAt: string) => {
     return new Date() > new Date(expiresAt);
   };
 
-  const getStatusColor = (status: string | undefined) => {
-    if (!status) return 'bg-gray-500/20 text-gray-400';
-    
-    switch (status.toLowerCase()) {
-      case 'offerte':
-        return 'bg-yellow-500/20 text-yellow-400';
-      case 'in productie':
-        return 'bg-blue-500/20 text-blue-400';
-      case 'testen':
-        return 'bg-purple-500/20 text-purple-400';
-      case 'gereed':
-        return 'bg-green-500/20 text-green-400';
-      case 'opgeleverd':
-        return 'bg-green-600/20 text-green-300';
-      default:
-        return 'bg-gray-500/20 text-gray-400';
-    }
+  const isCodeValid = (code: any) => {
+    return code.is_active && !isExpired(code.expires_at);
   };
 
-  const canEditTechnicalSpecs = () => {
-    const projectStatus = projectData?.status?.toLowerCase();
-    return projectStatus === 'productie' || projectStatus === 'testen' || !projectStatus;
+  const handleNext = () => {
+    if (verdelers.length === 0) {
+      toast.error('Voeg tenminste één verdeler toe voordat je verder gaat!');
+      return;
+    }
+    if (onNext) onNext();
+  };
+
+  const isProjectOfferte = projectData?.status?.toLowerCase() === 'offerte';
+  const canEditTechnicalSpecs = !isProjectOfferte;
+
+  const getMontageUsers = () => {
+    return users.filter(user => user.role === 'montage');
   };
 
   return (
     <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
-        <p className="text-gray-400">Voeg verdelers toe aan dit project</p>
-      </div>
+      {!hideNavigation && (
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
+          <p className="text-gray-400">Voeg verdelers toe aan dit project</p>
+        </div>
+      )}
 
-      {/* Add Verdeler Button */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-green-400">Project Verdelers ({verdelers.length})</h3>
-        <button
-          onClick={handleAddVerdeler}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Verdeler toevoegen</span>
-        </button>
+      {/* Header */}
+      <div className="card p-6 mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-semibold text-white mb-2">Project Verdelers</h1>
+            <p className="text-gray-400">Beheer alle verdelers voor dit project</p>
+          </div>
+          <button
+            onClick={() => setShowVerdelerForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>Verdeler toevoegen</span>
+          </button>
+        </div>
       </div>
 
       {/* Verdelers Table */}
       {verdelers.length > 0 ? (
-        <div className="bg-[#2A303C] rounded-xl p-6">
-          <div className="overflow-x-auto">
+        <div className="card p-6">
+          <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-700">
                   <th className="table-header text-left">Verdeler ID</th>
                   <th className="table-header text-left">Kastnaam</th>
-                  <th className="table-header text-left">Toegewezen</th>
+                  <th className="table-header text-left">Monteur</th>
                   <th className="table-header text-left">Status</th>
-                  <th className="table-header text-left">Systeem</th>
+                  <th className="table-header text-left">Test Status</th>
                   <th className="table-header text-left">Toegangscodes</th>
+                  <th className="table-header text-left">Systeem</th>
+                  <th className="table-header text-left">Spanning</th>
                   <th className="table-header text-right">Acties</th>
                 </tr>
               </thead>
               <tbody>
                 {verdelers.map((verdeler) => {
-                  const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
-                  const activeCodes = verdelerCodes.filter(code => !isExpired(code.expires_at));
+                  const testStatus = getTestStatus(verdeler);
                   
                   return (
-                    <tr key={verdeler.id || verdeler.distributorId} className="table-row">
+                    <tr 
+                      key={verdeler.id} 
+                      className="table-row cursor-pointer"
+                      onClick={() => handleVerdelerClick(verdeler)}
+                    >
                       <td className="py-4">
                         <div className="flex items-center space-x-2">
                           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                           <span className="font-medium text-green-400">{verdeler.distributorId}</span>
                         </div>
                       </td>
-                      <td className="py-4 text-gray-300">{verdeler.kastNaam || '-'}</td>
+                      <td className="py-4 text-gray-300">{verdeler.kastNaam || "Naamloos"}</td>
+                      <td className="py-4 text-gray-300">{verdeler.toegewezenMonteur || "Vrij"}</td>
                       <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          verdeler.toegewezenMonteur && verdeler.toegewezenMonteur !== 'Vrij'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {verdeler.toegewezenMonteur || 'Vrij'}
+                        <span className="px-3 py-1 rounded-full text-sm bg-blue-500/20 text-blue-400">
+                          {verdeler.status || 'In productie'}
                         </span>
                       </td>
                       <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(verdeler.status)}`}>
-                          {verdeler.status || 'Onbekend'}
+                        <span className={`px-3 py-1 rounded-full text-sm ${testStatus.color}`}>
+                          {testStatus.status}
                         </span>
                       </td>
-                      <td className="py-4 text-gray-300">{verdeler.systeem || '-'}</td>
                       <td className="py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center space-x-1">
-                            <Key size={14} className="text-gray-400" />
-                            <span className="text-sm text-gray-400">{activeCodes.length}</span>
-                          </div>
-                          {activeCodes.length > 0 && (
-                            <div className="flex space-x-1">
-                              {activeCodes.slice(0, 2).map((code) => (
-                                <div key={code.id} className="group relative">
-                                  <span 
-                                    className="text-xs font-mono bg-blue-500/20 text-blue-400 px-2 py-1 rounded cursor-pointer hover:bg-blue-500/30"
-                                    onClick={() => handleCopyCode(code.code)}
-                                    title="Klik om te kopiëren"
-                                  >
-                                    {code.code}
-                                  </span>
+                        {(() => {
+                          const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
+                          if (verdelerCodes.length === 0) {
+                            return <span className="text-gray-400 text-sm">Geen codes</span>;
+                          }
+                          
+                          const activeCodes = verdelerCodes.filter(code => isCodeValid(code));
+                          const expiredCodes = verdelerCodes.filter(code => !isCodeValid(code));
+                          
+                          return (
+                            <div className="space-y-1">
+                              {activeCodes.map(code => (
+                                <div key={code.id} className="flex items-center space-x-2">
+                                  <CheckCircle size={12} className="text-green-400" />
+                                  <span className="text-green-400 font-mono text-sm">{code.code}</span>
                                 </div>
                               ))}
-                              {activeCodes.length > 2 && (
-                                <span className="text-xs text-gray-400">+{activeCodes.length - 2}</span>
-                              )}
+                              {expiredCodes.map(code => (
+                                <div key={code.id} className="flex items-center space-x-2">
+                                  <XCircle size={12} className="text-red-400" />
+                                  <span className="text-red-400 font-mono text-sm line-through">{code.code}</span>
+                                </div>
+                              ))}
                             </div>
-                          )}
-                        </div>
+                          );
+                        })()}
+                      </td>
+                      <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
+                      <td className="py-4">
+                        <span className="text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</span>
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
-                            onClick={() => handleVerdelerClick(verdeler)}
-                            className="p-2 bg-[#1E2530] hover:bg-blue-500/20 rounded-lg transition-colors group"
-                            title="Info"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleVerdelerClick(verdeler);
+                            }}
+                            className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
+                            title="Details"
                           >
                             <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
                           </button>
                           <button
-                            onClick={() => handleEditVerdeler(verdeler)}
-                            className="p-2 bg-[#1E2530] hover:bg-green-500/20 rounded-lg transition-colors group"
-                            title="Bewerken"
-                          >
-                            <Edit size={16} className="text-gray-400 group-hover:text-green-400" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteVerdeler(verdeler.id || verdeler.distributorId)}
-                            className="p-2 bg-[#1E2530] hover:bg-red-500/20 rounded-lg transition-colors group"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteVerdeler(verdeler.id);
+                            }}
+                            className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
                             title="Verwijderen"
                           >
                             <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
@@ -699,7 +654,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           </div>
         </div>
       ) : (
-        <div className="bg-[#2A303C] rounded-xl p-8 text-center">
+        <div className="card p-8 text-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
               <Plus size={32} className="text-gray-400" />
@@ -710,24 +665,245 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 Voeg verdelers toe om dit project te voltooien
               </p>
               <button
-                onClick={handleAddVerdeler}
-                className="btn-primary flex items-center space-x-2"
+                onClick={() => setShowVerdelerForm(true)}
+                className="btn-primary"
               >
-                <Plus size={20} />
-                <span>Eerste verdeler toevoegen</span>
+                Eerste verdeler toevoegen
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Verdeler Form Modal */}
+      {/* Verdeler Details Modal */}
+      {showVerdelerDetails && selectedVerdeler && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#2A303C] flex items-center justify-center flex-shrink-0">
+                  {selectedVerdeler.profilePhoto ? (
+                    <img
+                      src={selectedVerdeler.profilePhoto}
+                      alt={selectedVerdeler.kastNaam}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-gray-400 text-xs text-center">
+                      Geen<br />foto
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-green-400">
+                    {selectedVerdeler.distributorId}
+                  </h2>
+                  <p className="text-gray-400">{selectedVerdeler.kastNaam || 'Naamloos'}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleCloseDetails}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Verdeler Information */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Basis Informatie */}
+                <div className="bg-[#2A303C] p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">Basis Informatie</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Verdeler ID:</span>
+                      <p className="text-white font-medium">{selectedVerdeler.distributorId}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Kastnaam:</span>
+                      <p className="text-white font-medium">{selectedVerdeler.kastNaam || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Toegewezen monteur:</span>
+                      <p className="text-white">{selectedVerdeler.toegewezenMonteur || 'Vrij'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Status:</span>
+                      <p className="text-white">{selectedVerdeler.status || 'In productie'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Systeem:</span>
+                      <p className="text-white">{selectedVerdeler.systeem || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Voeding:</span>
+                      <p className="text-white">{selectedVerdeler.voeding || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Bouwjaar:</span>
+                      <p className="text-white">{selectedVerdeler.bouwjaar || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Fabrikant:</span>
+                      <p className="text-white">{selectedVerdeler.fabrikant || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technische Specificaties */}
+                <div className="bg-[#2A303C] p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Un in V:</span>
+                      <p className="text-white">{selectedVerdeler.unInV || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">In in A:</span>
+                      <p className="text-white">{selectedVerdeler.inInA || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Ik Th in KA 1s:</span>
+                      <p className="text-white">{selectedVerdeler.ikThInKA1s || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Ik Dyn in KA:</span>
+                      <p className="text-white">{selectedVerdeler.ikDynInKA || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Freq. in Hz:</span>
+                      <p className="text-white">{selectedVerdeler.freqInHz || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Type nr. HS:</span>
+                      <p className="text-white">{selectedVerdeler.typeNrHs || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Access Codes Display */}
+                {(() => {
+                  const verdelerCodes = getVerdelerAccessCodes(selectedVerdeler.distributorId);
+                  
+                  return verdelerCodes.length > 0 ? (
+                    <div className="bg-[#2A303C] p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-orange-400 mb-4">Actieve Toegangscodes</h3>
+                      <div className="space-y-3">
+                        {verdelerCodes.map((code) => (
+                          <div key={code.id} className="flex items-center justify-between p-3 bg-[#1E2530] rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <span className="font-mono text-lg">{code.code}</span>
+                              <div className="flex items-center space-x-1">
+                                {isCodeValid(code) ? (
+                                  <CheckCircle size={16} className="text-green-400" />
+                                ) : (
+                                  <XCircle size={16} className="text-red-400" />
+                                )}
+                                <span className={isCodeValid(code) ? 'text-green-400' : 'text-red-400'}>
+                                  {isCodeValid(code) ? 'Actief' : 'Verlopen'}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2 text-sm text-gray-400">
+                              <Clock size={14} />
+                              <span>{new Date(code.expires_at).toLocaleDateString('nl-NL')}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+              </div>
+
+              {/* Action Buttons Sidebar */}
+              <div className="space-y-4">
+                <div className="bg-[#2A303C] p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-400 mb-4">Acties</h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handleEditVerdeler(selectedVerdeler)}
+                      className="btn-secondary w-full flex items-center space-x-2"
+                    >
+                      <Edit size={16} />
+                      <span>Bewerken</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleGenerateAccessCode(selectedVerdeler)}
+                      className="btn-secondary w-full flex items-center space-x-2"
+                    >
+                      <Key size={16} />
+                      <span>Toegangscode</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        setShowVerdelerDetails(false);
+                        handleDeleteVerdeler(selectedVerdeler.id);
+                      }}
+                      className="btn-secondary w-full flex items-center space-x-2 bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                    >
+                      <Trash2 size={16} />
+                      <span>Verwijderen</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Testing Actions */}
+                <div className="bg-[#2A303C] p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
+                  <div className="space-y-3">
+                    <VerdelerTesting
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                      projectId={projectData.id}
+                      distributorId={selectedVerdeler.id}
+                    />
+                    
+                    <FATTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                    />
+                    
+                    <HighVoltageTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                    />
+                    
+                    <OnSiteTest
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                    />
+                  </div>
+                </div>
+
+                {/* Additional Actions */}
+                <div className="bg-[#2A303C] p-6 rounded-lg">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">Extra</h3>
+                  <div className="space-y-3">
+                    <PrintLabel
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
+                      logo={ewpLogo}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verdeler Form Modal (Add/Edit) */}
       {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
-          <div 
-            className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto my-8"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
@@ -741,7 +917,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             </div>
 
             <div className="space-y-8">
-              {/* Basic Information */}
+              {/* Basis Informatie */}
               <div>
                 <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -758,6 +934,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       required
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">
                       Kastnaam <span className="text-red-400">*</span>
@@ -771,6 +948,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       required
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
                     <select
@@ -778,103 +956,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.toegewezenMonteur}
                       onChange={(e) => handleInputChange('toegewezenMonteur', e.target.value)}
                     >
-                      <option value="Vrij">Nader te bepalen</option>
-                      {(() => {
-                        const { primary, other } = getMontageUsersByLocation(projectData?.location);
-                        
-                        return (
-                          <>
-                            {primary.length > 0 && (
-                              <>
-                                <optgroup label={`Primair - ${projectData?.location || 'Onbekend'}`}>
-                                  {primary.map(user => (
-                                    <option key={user.id} value={user.username}>
-                                      {user.username}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                              </>
-                            )}
-                            {other.length > 0 && (
-                              <optgroup label="Andere locaties">
-                                {other.map(user => (
-                                  <option key={user.id} value={user.username}>
-                                    {user.username} ({user.assignedLocations?.join(', ') || 'Alle locaties'})
-                                  </option>
-                                ))}
-                              </optgroup>
-                            )}
-                            {primary.length === 0 && other.length === 0 && (
-                              <option disabled>Geen montage medewerkers beschikbaar</option>
-                            )}
-                          </>
-                        );
-                      })()}
+                      <option value="Vrij">Vrij</option>
+                      {getMontageUsers().map(user => (
+                        <option key={user.id} value={user.username}>
+                          {user.username}
+                        </option>
+                      ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Status</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.status}
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                    >
-                      <option value="Offerte">Offerte</option>
-                      <option value="In productie">In productie</option>
-                      <option value="Testen">Testen</option>
-                      <option value="Gereed">Gereed</option>
-                      <option value="Opgeleverd">Opgeleverd</option>
-                    </select>
-                    {projectData?.status?.toLowerCase() === 'offerte' && (
-                      <p className="text-xs text-yellow-400 mt-1">
-                        Status is vergrendeld omdat project status "Offerte" is
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
 
-              {/* Profile Photo */}
-              <div>
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Profiel Foto</h3>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    id="profile-photo"
-                  />
-                  <label
-                    htmlFor="profile-photo"
-                    className="btn-secondary flex items-center space-x-2 cursor-pointer"
-                  >
-                    <Upload size={20} />
-                    <span>Foto uploaden</span>
-                  </label>
-                  {verdelerData.profilePhoto && (
-                    <span className="text-sm text-green-400">✓ Foto geselecteerd</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Technical Specifications */}
-              <div>
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Technische Specificaties</h3>
-                {!canEditTechnicalSpecs() && (
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs text-black font-bold">!</span>
-                      </div>
-                      <p className="text-yellow-300 text-sm">
-                        Technische specificaties kunnen alleen worden ingevuld wanneer project status "Productie" of hoger is
-                      </p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Systeem</label>
                     <input
@@ -883,9 +973,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.systeem}
                       onChange={(e) => handleInputChange('systeem', e.target.value)}
                       placeholder="400V TN-S"
-                      disabled={!canEditTechnicalSpecs()}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Voeding</label>
                     <input
@@ -894,9 +984,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.voeding}
                       onChange={(e) => handleInputChange('voeding', e.target.value)}
                       placeholder="3x400V + N + PE"
-                      disabled={!canEditTechnicalSpecs()}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
                     <input
@@ -905,16 +995,40 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.bouwjaar}
                       onChange={(e) => handleInputChange('bouwjaar', e.target.value)}
                       placeholder="2025"
-                      disabled={!canEditTechnicalSpecs()}
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Status</label>
+                    <select
+                      className="input-field"
+                      value={verdelerData.status}
+                      onChange={(e) => handleInputChange('status', e.target.value)}
+                      disabled={isProjectOfferte}
+                    >
+                      <option value="Offerte">Offerte</option>
+                      {!isProjectOfferte && (
+                        <>
+                          <option value="In productie">In productie</option>
+                          <option value="Testen">Testen</option>
+                          <option value="Gereed">Gereed</option>
+                          <option value="Opgeleverd">Opgeleverd</option>
+                        </>
+                      )}
+                    </select>
+                    {isProjectOfferte && (
+                      <p className="text-xs text-yellow-400 mt-1">
+                        Status is vergrendeld omdat project status "Offerte" is
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
                     <select
                       className="input-field"
                       value={verdelerData.fabrikant}
                       onChange={(e) => handleInputChange('fabrikant', e.target.value)}
-                      disabled={!canEditTechnicalSpecs()}
                     >
                       <option value="">Selecteer fabrikant</option>
                       <option value="Schneider Electric">Schneider Electric</option>
@@ -923,9 +1037,40 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <option value="Eaton">Eaton</option>
                       <option value="Legrand">Legrand</option>
                       <option value="Hager">Hager</option>
+                      <option value="Rittal">Rittal</option>
+                      <option value="Phoenix Contact">Phoenix Contact</option>
+                      <option value="Weidmüller">Weidmüller</option>
                       <option value="Anders">Anders</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfilePhotoChange}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Technische Specificaties */}
+              <div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                {!canEditTechnicalSpecs && (
+                  <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <AlertTriangle size={16} className="text-yellow-400" />
+                      <span className="text-yellow-400 text-sm">
+                        Technische specificaties kunnen alleen worden ingevuld wanneer project status "Productie" of hoger is
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Un in V</label>
                     <input
@@ -934,9 +1079,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.unInV}
                       onChange={(e) => handleInputChange('unInV', e.target.value)}
                       placeholder="400"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">In in A</label>
                     <input
@@ -945,9 +1091,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.inInA}
                       onChange={(e) => handleInputChange('inInA', e.target.value)}
                       placeholder="400"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
                     <input
@@ -956,9 +1103,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.ikThInKA1s}
                       onChange={(e) => handleInputChange('ikThInKA1s', e.target.value)}
                       placeholder="25"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
                     <input
@@ -967,9 +1115,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.ikDynInKA}
                       onChange={(e) => handleInputChange('ikDynInKA', e.target.value)}
                       placeholder="65"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
                     <input
@@ -978,9 +1127,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.freqInHz}
                       onChange={(e) => handleInputChange('freqInHz', e.target.value)}
                       placeholder="50"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
+
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
                     <input
@@ -989,7 +1139,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       value={verdelerData.typeNrHs}
                       onChange={(e) => handleInputChange('typeNrHs', e.target.value)}
                       placeholder="HS-400"
-                      disabled={!canEditTechnicalSpecs()}
+                      disabled={!canEditTechnicalSpecs}
                     />
                   </div>
                 </div>
@@ -1006,200 +1156,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </button>
               <button
                 onClick={handleSaveVerdeler}
-                className="btn-primary flex items-center space-x-2"
+                className="btn-primary"
               >
-                <Save size={20} />
-                <span>{editingVerdeler ? 'Bijwerken' : 'Opslaan'}</span>
+                {editingVerdeler ? 'Verdeler bijwerken' : 'Verdeler toevoegen'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Verdeler Details Modal */}
-      {showVerdelerDetails && selectedVerdeler && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
-          <div 
-            className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto my-8"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-green-400">
-                Verdeler Details: {selectedVerdeler.distributorId}
-              </h2>
-              <button
-                onClick={() => setShowVerdelerDetails(false)}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Verdeler ID</label>
-                  <p className="input-field">{selectedVerdeler.distributorId}</p>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Kastnaam</label>
-                  <p className="input-field">{selectedVerdeler.kastNaam || '-'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Toegewezen monteur</label>
-                  <p className="input-field">{selectedVerdeler.toegewezenMonteur || 'Vrij'}</p>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Status</label>
-                  <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(selectedVerdeler.status)}`}>
-                    {selectedVerdeler.status || 'Onbekend'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Technical Specs */}
-              <div>
-                <h3 className="text-lg font-semibold text-blue-400 mb-4">Technische Specificaties</h3>
-                <div className="grid grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Systeem</label>
-                    <p className="input-field">{selectedVerdeler.systeem || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Voeding</label>
-                    <p className="input-field">{selectedVerdeler.voeding || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Bouwjaar</label>
-                    <p className="input-field">{selectedVerdeler.bouwjaar || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Un in V</label>
-                    <p className="input-field">{selectedVerdeler.unInV || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">In in A</label>
-                    <p className="input-field">{selectedVerdeler.inInA || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Ik Th in KA 1s</label>
-                    <p className="input-field">{selectedVerdeler.ikThInKA1s || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Ik Dyn in KA</label>
-                    <p className="input-field">{selectedVerdeler.ikDynInKA || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Freq. in Hz</label>
-                    <p className="input-field">{selectedVerdeler.freqInHz || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Type nr. HS</label>
-                    <p className="input-field">{selectedVerdeler.typeNrHs || '-'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">Fabrikant</label>
-                    <p className="input-field">{selectedVerdeler.fabrikant || '-'}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Testing Actions */}
-              <div>
-                <h3 className="text-lg font-semibold text-red-400 mb-4">Testing & Kwaliteitscontrole</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <VerdelerTesting
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData.project_number || projectData.projectNumber}
-                    onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                    projectId={projectData.id}
-                    distributorId={selectedVerdeler.id}
-                  />
-                  <FATTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData.project_number || projectData.projectNumber}
-                    onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                  />
-                  <HighVoltageTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData.project_number || projectData.projectNumber}
-                    onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                  />
-                  <OnSiteTest
-                    verdeler={selectedVerdeler}
-                    projectNumber={projectData.project_number || projectData.projectNumber}
-                    onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                  />
-                </div>
-              </div>
-
-              {/* Access Codes */}
-              <div>
-                <h3 className="text-lg font-semibold text-yellow-400 mb-4">Toegangscodes & QR Labels</h3>
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-gray-400">Actieve toegangscodes voor deze verdeler</p>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleGenerateAccessCode(selectedVerdeler)}
-                      className="btn-secondary flex items-center space-x-2"
-                    >
-                      <Key size={16} />
-                      <span>Toegangscode</span>
-                    </button>
-                    <PrintLabel
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || projectData.projectNumber}
-                      logo={ewpLogo}
-                    />
-                  </div>
-                </div>
-                
-                {(() => {
-                  const verdelerCodes = getVerdelerAccessCodes(selectedVerdeler.distributorId);
-                  return verdelerCodes.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {verdelerCodes.map((code) => (
-                        <div key={code.id} className="bg-[#2A303C] p-4 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center space-x-2">
-                              <span className="font-mono text-lg">{code.code}</span>
-                              <button
-                                onClick={() => handleCopyCode(code.code)}
-                                className="text-gray-400 hover:text-white"
-                                title="Kopieer code"
-                              >
-                                <Copy size={16} />
-                              </button>
-                            </div>
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              isExpired(code.expires_at)
-                                ? 'bg-red-500/20 text-red-400'
-                                : 'bg-green-500/20 text-green-400'
-                            }`}>
-                              {isExpired(code.expires_at) ? 'Verlopen' : 'Actief'}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-4 text-sm text-gray-400">
-                            <div className="flex items-center space-x-1">
-                              <Clock size={14} />
-                              <span>{new Date(code.expires_at).toLocaleDateString('nl-NL')}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Users size={14} />
-                              <span>{code.usage_count || 0}{code.max_uses ? `/${code.max_uses}` : ''}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      Geen actieve toegangscodes voor deze verdeler
-                    </div>
-                  );
-                })()}
-              </div>
             </div>
           </div>
         </div>
@@ -1207,16 +1167,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Access Code Form Modal */}
       {showAccessCodeForm && selectedVerdeler && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16 overflow-y-auto">
-          <div 
-            className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full my-8"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="card p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-blue-400">Toegangscode genereren</h2>
+              <h2 className="text-lg font-semibold">Toegangscode genereren</h2>
               <button
                 onClick={() => setShowAccessCodeForm(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white"
               >
                 <X size={24} />
               </button>
@@ -1256,7 +1213,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleCopyCode(newAccessCode.code)}
+                    onClick={() => {
+                      navigator.clipboard.writeText(newAccessCode.code);
+                      toast.success('Code gekopieerd!');
+                    }}
                     className="btn-secondary p-2"
                     disabled={!newAccessCode.code}
                   >
@@ -1343,7 +1303,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             Terug
           </button>
           <button
-            onClick={onNext}
+            onClick={handleNext}
             className="btn-primary"
           >
             Volgende stap
