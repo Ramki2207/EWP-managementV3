@@ -8,6 +8,7 @@ import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import PreTestingApproval from '../components/PreTestingApproval';
 
 interface Project {
   id: string;
@@ -34,6 +35,8 @@ const Projects = () => {
   const [projectLocks, setProjectLocks] = useState<ProjectLock[]>([]);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
+  const [selectedProjectForApproval, setSelectedProjectForApproval] = useState<Project | null>(null);
 
   useEffect(() => {
     console.log('🚀 PROJECTS: Component mounting, setting up subscriptions...');
@@ -148,6 +151,75 @@ const Projects = () => {
       toast.error('Er is een fout opgetreden');
     }
   };
+
+  const handleProjectClick = async (project: Project) => {
+    // Check if this is a tester/admin accessing a project in Productie status
+    if ((currentUser?.role === 'tester' || currentUser?.role === 'admin') && 
+        project.status?.toLowerCase() === 'productie') {
+      
+      // Check if there's a pending pre-testing approval
+      try {
+        const testData = await dataService.getTestData(project.id);
+        const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+        
+        if (approvalRecord && !approvalRecord.data.approvalData?.reviewedAt) {
+          // There's a pending approval - show review interface
+          setSelectedProjectForApproval(project);
+          setShowPreTestingApproval(true);
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking approval status:', error);
+      }
+    }
+    
+    // Normal project navigation
+    handleProjectNavigation(project.id);
+  };
+
+  const handlePreTestingApprove = async () => {
+    if (!selectedProjectForApproval) return;
+    
+    try {
+      // Update project status to Testen
+      await dataService.updateProject(selectedProjectForApproval.id, {
+        ...selectedProjectForApproval,
+        status: 'Testen'
+      });
+      
+      setShowPreTestingApproval(false);
+      setSelectedProjectForApproval(null);
+      
+      // Reload projects to show updated status
+      await loadProjects();
+      
+      toast.success('Project goedgekeurd voor testfase!');
+    } catch (error) {
+      console.error('Error approving project for testing:', error);
+      toast.error('Er is een fout opgetreden bij het goedkeuren voor testfase');
+    }
+  };
+
+  const handlePreTestingDecline = async () => {
+    if (!selectedProjectForApproval) return;
+    
+    try {
+      // Project stays in Productie status - no change needed
+      setShowPreTestingApproval(false);
+      setSelectedProjectForApproval(null);
+      
+      toast.success('Project afgekeurd - blijft in productie voor aanpassingen');
+    } catch (error) {
+      console.error('Error declining project for testing:', error);
+      toast.error('Er is een fout opgetreden bij het afkeuren voor testfase');
+    }
+  };
+
+  const handlePreTestingCancel = () => {
+    setShowPreTestingApproval(false);
+    setSelectedProjectForApproval(null);
+  };
+
   const getDateRange = (filter: string) => {
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -542,7 +614,7 @@ const Projects = () => {
                   }`}
                   onClick={() => {
                     if (!isProjectLocked(project.id)) {
-                      handleProjectNavigation(project.id);
+                      handleProjectClick(project);
                     } else {
                       const lock = projectLocks.find(l => l.project_id === project.id && l.is_active);
                       toast.error(`Project wordt bewerkt door ${lock?.username}`);
@@ -616,7 +688,7 @@ const Projects = () => {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!isProjectLocked(project.id)) {
-                            handleProjectNavigation(project.id);
+                            handleProjectClick(project);
                           } else {
                             const lock = projectLocks.find(l => l.project_id === project.id && l.is_active);
                             toast.error(`Project wordt bewerkt door ${lock?.username}`);
@@ -667,6 +739,17 @@ const Projects = () => {
           onConfirm={handleConfirmDelete}
           onCancel={handleCancelDelete}
           isDeleting={isDeleting}
+        />
+      )}
+
+      {/* Pre-Testing Approval Modal */}
+      {showPreTestingApproval && selectedProjectForApproval && (
+        <PreTestingApproval
+          project={selectedProjectForApproval}
+          onApprove={handlePreTestingApprove}
+          onDecline={handlePreTestingDecline}
+          onCancel={handlePreTestingCancel}
+          currentUser={currentUser}
         />
       )}
     </div>
