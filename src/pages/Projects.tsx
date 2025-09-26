@@ -178,23 +178,13 @@ const Projects = () => {
 
   const handleProjectClick = async (project: Project) => {
     // Check if this is a tester/admin accessing a project in Productie status
-    if ((currentUser?.role === 'tester' || currentUser?.role === 'admin') && 
-        project.status?.toLowerCase() === 'productie') {
-      
-      // Check if there's a pending pre-testing approval
-      try {
-        const testData = await dataService.getTestData(project.id);
-        const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
-        
-        if (approvalRecord && !approvalRecord.data.approvalData?.reviewedAt) {
-          // There's a pending approval - show review interface
-          setSelectedProjectForApproval(project);
-          setShowPreTestingApproval(true);
-          return;
-        }
-      } catch (error) {
-        console.error('Error checking approval status:', error);
-      }
+    if (currentUser?.role === 'tester' && 
+        project.status?.toLowerCase() === 'productie' &&
+        pendingApprovalProjects.has(project.id)) {
+      // There's a pending approval - show review interface
+      setSelectedProjectForApproval(project);
+      setShowPreTestingApproval(true);
+      return;
     }
     
     // Normal project navigation
@@ -792,7 +782,7 @@ const Projects = () => {
             </tbody>
           </table>
 
-          {displayProjects.length === 0 && (
+          {filteredProjects.length === 0 && (
             <div className="text-center py-12">
               <FolderOpen size={48} className="mx-auto text-gray-600 mb-4" />
               <p className="text-gray-400 text-lg">Geen projecten gevonden</p>
