@@ -63,6 +63,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   useEffect(() => {
     if (projectData?.distributors) {
       setVerdelers(projectData.distributors);
+      // Load access codes whenever verdelers change
+      loadAccessCodes();
       // Load access codes whenever verdelers are loaded
       loadAccessCodes();
     } else if (projectData?.id) {
@@ -73,7 +75,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     // Load access codes for existing project
     if (projectData?.id) {
       loadAccessCodes();
-    }
   }, [projectData]);
 
   const loadAccessCodes = async () => {
