@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, X, AlertTriangle, User, Calendar, MessageSquare, Save, Eye } from 'lucide-react';
+import { CheckSquare, X, AlertTriangle, User, Calendar, MessageSquare, Save, Eye, Clock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 
@@ -220,10 +220,7 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
         data: reviewData
       });
 
-      if (appro
-    }
-  }
-}valData.overallApproval) {
+      if (approvalData.overallApproval) {
         toast.success('Project goedgekeurd voor testfase!');
         onApprove();
       } else {
@@ -732,7 +729,8 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                   </button>
                 </div>
               </div>
-            ) : approvalData.status === 'submitted' && currentUser?.role === 'montage' ? (
+            )}
+            {approvalData.status === 'submitted' && currentUser?.role === 'montage' ? (
               /* Show waiting status for montage users */
               <div className="space-y-6">
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
@@ -776,6 +774,8 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
               </div>
             ) : currentUser?.role === 'tester' && approvalData.status === 'submitted' && !approvalData.reviewedAt ? (
               /* Active tester review mode - this is the existing tester interface */
+              <div></div>
+            ) : null}
           </div>
         )}
       </div>
