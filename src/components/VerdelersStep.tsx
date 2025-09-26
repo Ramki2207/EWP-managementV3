@@ -137,6 +137,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   const handleEditVerdeler = (verdeler: any) => {
+    console.log('🔧 EDIT: Starting edit for verdeler:', verdeler);
     setEditingVerdeler(verdeler);
     setVerdelerData({
       distributorId: verdeler.distributorId,
@@ -157,6 +158,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     });
     setShowVerdelerDetails(false);
     setShowVerdelerForm(true);
+    console.log('🔧 EDIT: Form data set:', verdelerData);
   };
 
   const handleGenerateAccessCode = (verdeler: any) => {
@@ -197,10 +199,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         project_number: projectData.project_number || projectData.projectNumber
       };
 
+      console.log('🔑 ACCESS CODE: Creating with data:', accessCodeData);
       await dataService.createAccessCode(accessCodeData);
       await loadAccessCodes();
       
       setShowAccessCodeForm(false);
+      setSelectedVerdeler(null);
       setNewAccessCode({
         code: '',
         expiresAt: '',
@@ -256,24 +260,46 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         profilePhotoUrl = editingVerdeler.profilePhoto;
       }
 
+      console.log('🔍 SAVE: Saving verdeler with data:', verdelerData);
+      console.log('🔍 SAVE: distributorId:', verdelerData.distributorId);
+      console.log('🔍 SAVE: kastNaam:', verdelerData.kastNaam);
+
       const verdelerToSave = {
-        ...verdelerData,
-        profilePhoto: profilePhotoUrl,
         id: editingVerdeler?.id || uuidv4(),
+        distributorId: verdelerData.distributorId,
+        kastNaam: verdelerData.kastNaam,
+        toegewezenMonteur: verdelerData.toegewezenMonteur,
+        systeem: verdelerData.systeem,
+        voeding: verdelerData.voeding,
+        bouwjaar: verdelerData.bouwjaar,
+        status: verdelerData.status,
+        fabrikant: verdelerData.fabrikant,
+        unInV: verdelerData.unInV,
+        inInA: verdelerData.inInA,
+        ikThInKA1s: verdelerData.ikThInKA1s,
+        ikDynInKA: verdelerData.ikDynInKA,
+        freqInHz: verdelerData.freqInHz,
+        typeNrHs: verdelerData.typeNrHs,
+        profilePhoto: profilePhotoUrl,
         createdAt: editingVerdeler?.createdAt || new Date().toISOString(),
       };
+
+      console.log('🔍 SAVE: Final verdeler object:', verdelerToSave);
 
       let updatedVerdelers;
       if (editingVerdeler) {
         updatedVerdelers = verdelers.map(v => 
           v.id === editingVerdeler.id ? verdelerToSave : v
         );
+        console.log('✅ SAVE: Updated existing verdeler');
         toast.success('Verdeler bijgewerkt!');
       } else {
         updatedVerdelers = [...verdelers, verdelerToSave];
+        console.log('✅ SAVE: Added new verdeler');
         toast.success('Verdeler toegevoegd!');
       }
 
+      console.log('🔍 SAVE: Updated verdelers array:', updatedVerdelers);
       setVerdelers(updatedVerdelers);
       onVerdelersChange(updatedVerdelers);
       
