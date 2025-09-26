@@ -37,6 +37,7 @@ const Projects = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [selectedProjectForApproval, setSelectedProjectForApproval] = useState<Project | null>(null);
+  const [pendingApprovalProjects, setPendingApprovalProjects] = useState<Set<string>>(new Set());
 
   // Helper function to check for pending approvals in database
   const checkForPendingApproval = async (project: Project): Promise<boolean> => {
