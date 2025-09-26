@@ -63,6 +63,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   useEffect(() => {
     if (projectData?.distributors) {
       setVerdelers(projectData.distributors);
+      // Load access codes whenever verdelers are loaded
+      loadAccessCodes();
     } else if (projectData?.id) {
       // Load distributors for existing project
       loadDistributors();
@@ -76,9 +78,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
   const loadAccessCodes = async () => {
     if (!projectData?.id) return;
+      console.log('🔑 Loading access codes...');
     
     try {
       const data = await dataService.getAccessCodes();
+      console.log('🔑 Loaded access codes:', data?.length || 0);
       // Filter codes for this project's verdelers
       const projectVerdelerIds = verdelers.map(v => v.distributorId || v.distributor_id);
       const projectCodes = data.filter((code: any) => 
@@ -87,6 +91,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setAccessCodes(projectCodes);
     } catch (error) {
       console.error('Error loading access codes:', error);
+      console.log('🔑 Failed to load access codes, setting empty array');
+      setAccessCodes([]);
     }
   };
 
