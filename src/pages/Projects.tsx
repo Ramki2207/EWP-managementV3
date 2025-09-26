@@ -792,7 +792,7 @@ const Projects = () => {
             </tbody>
           </table>
 
-          {filteredProjects.length === 0 && (
+          {displayProjects.length === 0 && (
             <div className="text-center py-12">
               <FolderOpen size={48} className="mx-auto text-gray-600 mb-4" />
               <p className="text-gray-400 text-lg">Geen projecten gevonden</p>
