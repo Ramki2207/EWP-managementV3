@@ -10,6 +10,57 @@ import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
 
+// Component to show approval status in project table
+const ApprovalStatusIndicator: React.FC<{ project: any }> = ({ project }) => {
+  const [approvalStatus, setApprovalStatus] = useState<{
+    status: 'submitted' | 'approved' | 'declined' | null;
+    reviewedBy?: string;
+  }>({ status: null });
+
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!project.distributors || project.distributors.length === 0) return;
+      
+      try {
+        const firstDistributorId = project.distributors[0].id;
+        const testData = await dataService.getTestData(firstDistributorId);
+        const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+        
+        if (approvalRecord && approvalRecord.data.approvalData) {
+          const approvalData = approvalRecord.data.approvalData;
+          
+          if (approvalData.reviewedAt) {
+            setApprovalStatus({
+              status: approvalData.overallApproval ? 'approved' : 'declined',
+              reviewedBy: approvalData.reviewedBy
+            });
+          } else if (approvalData.status === 'submitted') {
+            setApprovalStatus({ status: 'submitted' });
+          }
+        }
+      } catch (error) {
+        console.error('Error checking approval status:', error);
+      }
+    };
+    
+    checkStatus();
+  }, [project]);
+
+  if (!approvalStatus.status) return null;
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs ${
+      approvalStatus.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+      approvalStatus.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+      'bg-yellow-500/20 text-yellow-400'
+    }`}>
+      {approvalStatus.status === 'approved' ? '✅ Goedgekeurd' :
+       approvalStatus.status === 'declined' ? '❌ Afgekeurd' :
+       '⏳ Wacht op beoordeling'}
+    </span>
+  );
+};
+
 interface Project {
   id: string;
   project_number: string;
