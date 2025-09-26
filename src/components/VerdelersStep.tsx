@@ -460,6 +460,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   <th className="table-header text-left">Monteur</th>
                   <th className="table-header text-left">Status</th>
                   <th className="table-header text-left">Test Status</th>
+                  <th className="table-header text-left">Toegangscodes</th>
                   <th className="table-header text-left">Systeem</th>
                   <th className="table-header text-left">Spanning</th>
                   <th className="table-header text-right">Acties</th>
