@@ -755,24 +755,7 @@ const Projects = () => {
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
                         {project.status || 'Onbekend'}
                       </span>
-                      {/* Show pending approval indicator for testers */}
-                      {currentUser?.role === 'tester' && project.status?.toLowerCase() === 'productie' && 
-                       project.distributors?.some((dist: any) => {
-                         try {
-                           const approvalData = localStorage.getItem(`pre_testing_approval_${dist.id}`);
-                           if (approvalData) {
-                             const parsed = JSON.parse(approvalData);
-                             return parsed.approvalData?.status === 'submitted' && !parsed.approvalData?.reviewedAt;
-                           }
-                         } catch (error) {
-                           return false;
-                         }
-                         return false;
-                       }) && (
-                        <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs">
-                          Wacht op beoordeling
-                        </span>
-                      )}
+                      <ProjectApprovalStatus project={project} />
                     </div>
                   </td>
                   <td className="py-4">

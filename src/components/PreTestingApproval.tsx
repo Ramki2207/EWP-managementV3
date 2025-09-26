@@ -59,6 +59,29 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'form' | 'review'>('form');
 
+  const handleResubmitApproval = () => {
+    // Reset the approval data to allow resubmission
+    setApprovalData(prev => ({
+      ...prev,
+      status: 'draft',
+      reviewedBy: '',
+      reviewedAt: '',
+      overallApproval: null
+    }));
+    
+    // Reset checklist tester data
+    setChecklist(prev => prev.map(item => ({
+      ...item,
+      approved: null,
+      testerComments: ''
+    })));
+    
+    // Switch to form mode
+    setViewMode('form');
+    
+    toast.success('Je kunt de checklist nu aanpassen en opnieuw indienen');
+  };
+
   // Load existing approval data if it exists
   useEffect(() => {
     if (project?.distributors && project.distributors.length > 0) {
