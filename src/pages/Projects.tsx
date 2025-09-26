@@ -41,21 +41,36 @@ const Projects = () => {
 
   // Helper function to check for pending approvals in database
   const checkForPendingApproval = async (project: Project): Promise<boolean> => {
+    console.log('🔍 APPROVAL CHECK: Checking project:', project.project_number, 'ID:', project.id);
+    console.log('🔍 APPROVAL CHECK: Project distributors:', project.distributors?.length || 0);
+    
     if (!project.distributors || project.distributors.length === 0) {
+      console.log('❌ APPROVAL CHECK: No distributors found');
       return false;
     }
 
     try {
       const firstDistributorId = project.distributors[0].id;
+      console.log('🔍 APPROVAL CHECK: Checking distributor ID:', firstDistributorId);
+      
       const testData = await dataService.getTestData(firstDistributorId);
+      console.log('🔍 APPROVAL CHECK: Test data found:', testData?.length || 0);
+      
       const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+      console.log('🔍 APPROVAL CHECK: Approval record found:', !!approvalRecord);
       
       if (approvalRecord && approvalRecord.data.approvalData) {
         const approvalData = approvalRecord.data.approvalData;
+        console.log('🔍 APPROVAL CHECK: Approval data status:', approvalData.status);
+        console.log('🔍 APPROVAL CHECK: Reviewed at:', approvalData.reviewedAt);
+        
         // Check if submitted but not yet reviewed
-        return approvalData.status === 'submitted' && !approvalData.reviewedAt;
+        const isPending = approvalData.status === 'submitted' && !approvalData.reviewedAt;
+        console.log('🔍 APPROVAL CHECK: Is pending approval:', isPending);
+        return isPending;
       }
       
+      console.log('❌ APPROVAL CHECK: No approval record or data found');
       return false;
     } catch (error) {
       console.error('Error checking approval status:', error);
@@ -180,12 +195,19 @@ const Projects = () => {
   const handleProjectClick = async (project: Project) => {
     // Check if this is a tester/admin accessing a project in Productie status
     if (currentUser?.role === 'tester' && 
-        project.status?.toLowerCase() === 'productie' &&
-        pendingApprovalProjects.has(project.id)) {
+        project.status?.toLowerCase() === 'productie') {
+      // Check if there's a pending approval for this project
+      const hasPendingApproval = await checkForPendingApproval(project);
+      
+      if (hasPendingApproval) {
+        console.log('🧪 TESTER: Opening approval interface for project:', project.project_number);
       // There's a pending approval - show review interface
       setSelectedProjectForApproval(project);
       setShowPreTestingApproval(true);
       return;
+      } else {
+        console.log('🧪 TESTER: No pending approval found for project:', project.project_number);
+      }
     }
     
     // Normal project navigation
