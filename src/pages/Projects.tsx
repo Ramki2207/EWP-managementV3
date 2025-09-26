@@ -245,12 +245,35 @@ const Projects = () => {
     return projectList.filter(project => {
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
-        // Testers can only see projects with status "Testen"
-        if (project.status?.toLowerCase() !== 'testen') {
-          console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
+        // Testers can see:
+        // 1. Projects with status "Testen" (normal testing work)
+        // 2. Projects with status "Productie" that have pending approval requests
+        const isTestingStatus = project.status?.toLowerCase() === 'testen';
+        const isProductionWithPendingApproval = project.status?.toLowerCase() === 'productie' && 
+          project.distributors?.some((dist: any) => {
+            // Check if there's a pending approval for this project
+            try {
+              const approvalData = localStorage.getItem(`pre_testing_approval_${dist.id}`);
+              if (approvalData) {
+                const parsed = JSON.parse(approvalData);
+                return parsed.approvalData?.status === 'submitted' && !parsed.approvalData?.reviewedAt;
+              }
+            } catch (error) {
+              console.error('Error checking approval data:', error);
+            }
+            return false;
+          });
+        
+        if (!isTestingStatus && !isProductionWithPendingApproval) {
+          console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE AND NO PENDING APPROVAL`);
           return false;
         }
-        console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
+        
+        if (isTestingStatus) {
+          console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
+        } else if (isProductionWithPendingApproval) {
+          console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - HAS PENDING APPROVAL`);
+        }
       }
 
       // Location filter based on user's assigned locations
@@ -653,9 +676,29 @@ const Projects = () => {
                     {project.location || '-'}
                   </td>
                   <td className="py-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
-                      {project.status || 'Onbekend'}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
+                        {project.status || 'Onbekend'}
+                      </span>
+                      {/* Show pending approval indicator for testers */}
+                      {currentUser?.role === 'tester' && project.status?.toLowerCase() === 'productie' && 
+                       project.distributors?.some((dist: any) => {
+                         try {
+                           const approvalData = localStorage.getItem(`pre_testing_approval_${dist.id}`);
+                           if (approvalData) {
+                             const parsed = JSON.parse(approvalData);
+                             return parsed.approvalData?.status === 'submitted' && !parsed.approvalData?.reviewedAt;
+                           }
+                         } catch (error) {
+                           return false;
+                         }
+                         return false;
+                       }) && (
+                        <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs">
+                          Wacht op beoordeling
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-4">
                     <ProjectLockStatus
