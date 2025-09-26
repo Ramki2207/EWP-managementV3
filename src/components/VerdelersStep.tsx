@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, FileEdit as Edit, Save, X, Upload, Server, Eye, CheckSquare, Printer, Key } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { v4 as uuidv4 } from 'uuid';
 import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
+import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
-import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import ewpLogo from '../assets/ewp-logo.png';
 
 interface VerdelersStepProps {
@@ -23,371 +22,197 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   projectData, 
   onVerdelersChange, 
   onNext, 
-  onBack,
+  onBack, 
   hideNavigation = false 
 }) => {
-  const { hasPermission } = useEnhancedPermissions();
-  const [verdelers, setVerdelers] = useState<any[]>([]);
-  const [accessCodes, setAccessCodes] = useState<any[]>([]);
+  const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
-  const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
-  const [selectedVerdelerForCode, setSelectedVerdelerForCode] = useState<any>(null);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
-  const [showVerdelerDetails, setShowVerdelerDetails] = useState<any>(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [newAccessCode, setNewAccessCode] = useState({
-    code: '',
-    expiresAt: '',
-    maxUses: '',
-    isActive: true
-  });
+  const [accessCodes, setAccessCodes] = useState<any[]>([]);
   const [verdelerData, setVerdelerData] = useState({
     distributorId: '',
     kastNaam: '',
     systeem: '',
     voeding: '',
     bouwjaar: '',
-    fabrikant: '',
-    status: 'In productie',
+    keuringDatum: new Date().toISOString().split('T')[0],
+    getestDoor: '',
     unInV: '',
     inInA: '',
     ikThInKA1s: '',
     ikDynInKA: '',
     freqInHz: '',
     typeNrHs: '',
-    toegewezenMonteur: '',
-    gewensteLeverDatum: '',
+    fabrikant: '',
     profilePhoto: null as File | null,
+    status: 'In productie',
   });
 
   useEffect(() => {
-    if (projectData?.distributors) {
-      setVerdelers(projectData.distributors);
-      // Load access codes whenever verdelers change
-      loadAccessCodes();
-      // Load access codes whenever verdelers are loaded
-      loadAccessCodes();
-    } else if (projectData?.id) {
-      // Load distributors for existing project
-      loadDistributors();
+    // Generate unique distributor ID when form opens
+    if (showVerdelerForm && !editingVerdeler) {
+      generateDistributorId();
     }
-    
-    // Load access codes for existing project
+  }, [showVerdelerForm, editingVerdeler]);
+
+  useEffect(() => {
+    // Load access codes when project data is available
     if (projectData?.id) {
       loadAccessCodes();
+    }
   }, [projectData]);
 
   const loadAccessCodes = async () => {
     if (!projectData?.id) return;
-      console.log('🔑 Loading access codes...');
     
     try {
-      const data = await dataService.getAccessCodes();
-      console.log('🔑 Loaded access codes:', data?.length || 0);
-      // Filter codes for this project's verdelers
-      const projectVerdelerIds = verdelers.map(v => v.distributorId || v.distributor_id);
-      const projectCodes = data.filter((code: any) => 
-        projectVerdelerIds.includes(code.verdeler_id)
+      const codes = await dataService.getAccessCodes();
+      // Filter codes for this project
+      const projectCodes = codes.filter((code: any) => 
+        code.project_number === projectData.project_number
       );
       setAccessCodes(projectCodes);
     } catch (error) {
       console.error('Error loading access codes:', error);
-      console.log('🔑 Failed to load access codes, setting empty array');
-      setAccessCodes([]);
+      // Don't show error toast as this is not critical
     }
-  };
-
-  const loadDistributors = async () => {
-    if (!projectData?.id) return;
-    
-    try {
-      const data = await dataService.getDistributorsByProject(projectData.id);
-      setVerdelers(data || []);
-      onVerdelersChange(data || []);
-    } catch (error) {
-      console.error('Error loading distributors:', error);
-      toast.error('Er is een fout opgetreden bij het laden van de verdelers');
-    }
-  };
-
-  const generateRandomCode = () => {
-    let result = '';
-    for (let i = 0; i < 5; i++) {
-      result += Math.floor(Math.random() * 10).toString();
-    }
-    return result;
-  };
-
-  const getDefaultExpiryDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().slice(0, 16);
-  };
-
-  const handleGenerateAccessCode = (verdeler: any) => {
-    if (!hasPermission('access_codes', 'create')) {
-      toast.error('Je hebt geen toestemming om toegangscodes aan te maken');
-      return;
-    }
-    
-    if (!projectData?.id) {
-      toast('Toegangscode functionaliteit beschikbaar na project opslaan');
-      return;
-    }
-    
-    setSelectedVerdelerForCode(verdeler);
-    setNewAccessCode({
-      code: generateRandomCode(),
-      expiresAt: getDefaultExpiryDate(),
-      maxUses: '',
-      isActive: true
-    });
-    setShowAccessCodeForm(true);
-  };
-
-  const handleCreateAccessCode = async () => {
-    if (!newAccessCode.code || !newAccessCode.expiresAt || !selectedVerdelerForCode) {
-      toast.error('Vul alle verplichte velden in!');
-      return;
-    }
-
-    if (!/^\d{5}$/.test(newAccessCode.code)) {
-      toast.error('Toegangscode moet precies 5 cijfers bevatten!');
-      return;
-    }
-
-    try {
-      setGeneratingCode(true);
-      const currentUserId = localStorage.getItem('currentUserId');
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const currentUser = users.find((u: any) => u.id === currentUserId);
-
-      const accessCodeData = {
-        code: newAccessCode.code.toUpperCase(),
-        createdBy: currentUser?.username || 'Unknown',
-        expiresAt: newAccessCode.expiresAt,
-        isActive: newAccessCode.isActive,
-        maxUses: newAccessCode.maxUses ? parseInt(newAccessCode.maxUses) : null,
-        verdeler_id: selectedVerdelerForCode.distributorId || selectedVerdelerForCode.distributor_id,
-        project_number: projectData.project_number
-      };
-
-      await dataService.createAccessCode(accessCodeData);
-      await loadAccessCodes(); // Reload to show new code
-      
-      setShowAccessCodeForm(false);
-      setSelectedVerdelerForCode(null);
-      setNewAccessCode({
-        code: '',
-        expiresAt: '',
-        maxUses: '',
-        isActive: true
-      });
-      
-      // Reload access codes to display the new one immediately
-      await loadAccessCodes();
-      
-      toast.success('Toegangscode succesvol aangemaakt!');
-    } catch (error) {
-      console.error('Error creating access code:', error);
-      toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
-    } finally {
-      setGeneratingCode(false);
-    }
-  };
-
-  const getVerdelerAccessCodes = (verdelerId: string) => {
-    return accessCodes.filter(code => code.verdeler_id === verdelerId && code.is_active);
-  };
-
-  const isCodeExpired = (expiresAt: string) => {
-    return new Date() > new Date(expiresAt);
   };
 
   const generateDistributorId = () => {
-    const existingIds = verdelers.map(v => v.distributorId || v.distributor_id);
-    let newId;
-    let counter = 1;
+    // Generate a unique 4-digit number
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const newId = `VD${randomNum}`;
     
-    do {
-      const randomNum = Math.floor(1000 + Math.random() * 9000);
-      newId = `VD${randomNum}`;
-      counter++;
-    } while (existingIds.includes(newId) && counter < 100);
-    
-    return newId;
+    // Check if this ID already exists in current verdelers
+    const exists = verdelers.some(v => v.distributorId === newId);
+    if (exists) {
+      // If it exists, try again
+      generateDistributorId();
+    } else {
+      setVerdelerData(prev => ({ ...prev, distributorId: newId }));
+    }
   };
 
-  const handleAddVerdeler = () => {
-    if (!hasPermission('verdelers', 'create')) {
-      toast.error('Je hebt geen toestemming om verdelers aan te maken');
-      return;
-    }
-    
-    setVerdelerData({
-      distributorId: generateDistributorId(),
-      kastNaam: '',
-      systeem: '',
-      voeding: '',
-      bouwjaar: new Date().getFullYear().toString(),
-      fabrikant: '',
-      status: 'In productie',
-      unInV: '',
-      inInA: '',
-      ikThInKA1s: '',
-      ikDynInKA: '',
-      freqInHz: '',
-      typeNrHs: '',
-      toegewezenMonteur: '',
-      gewensteLeverDatum: '',
-      profilePhoto: null,
-    });
-    setEditingVerdeler(null);
-    setShowVerdelerForm(true);
+  const handleInputChange = (field: string, value: string) => {
+    setVerdelerData({ ...verdelerData, [field]: value });
   };
 
-  const handleEditVerdeler = (verdeler: any) => {
-    if (!hasPermission('verdelers', 'update')) {
-      toast.error('Je hebt geen toestemming om verdelers te bewerken');
-      return;
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setVerdelerData({ ...verdelerData, profilePhoto: e.target.files[0] });
     }
-    
-    setVerdelerData({
-      distributorId: verdeler.distributorId || verdeler.distributor_id,
-      kastNaam: verdeler.kastNaam || verdeler.kast_naam || '',
-      systeem: verdeler.systeem || '',
-      voeding: verdeler.voeding || '',
-      bouwjaar: verdeler.bouwjaar || '',
-      fabrikant: verdeler.fabrikant || '',
-      status: verdeler.status || 'In productie',
-      unInV: verdeler.unInV || verdeler.un_in_v || '',
-      inInA: verdeler.inInA || verdeler.in_in_a || '',
-      ikThInKA1s: verdeler.ikThInKA1s || verdeler.ik_th_in_ka1s || '',
-      ikDynInKA: verdeler.ikDynInKA || verdeler.ik_dyn_in_ka || '',
-      freqInHz: verdeler.freqInHz || verdeler.freq_in_hz || '',
-      typeNrHs: verdeler.typeNrHs || verdeler.type_nr_hs || '',
-      toegewezenMonteur: verdeler.toegewezenMonteur || verdeler.toegewezen_monteur || '',
-      gewensteLeverDatum: verdeler.gewensteLeverDatum || verdeler.gewenste_lever_datum || '',
-      profilePhoto: null,
-    });
-    setEditingVerdeler(verdeler);
-    setShowVerdelerForm(true);
   };
 
   const handleSaveVerdeler = async () => {
     if (!verdelerData.distributorId || !verdelerData.kastNaam) {
-      toast.error('Vul tenminste de verdeler ID en kastnaam in!');
+      toast.error('Vul alle verplichte velden in!');
+      return;
+    }
+
+    // Check for duplicate distributor ID (excluding current editing verdeler)
+    const duplicateId = verdelers.some(v => 
+      v.distributorId === verdelerData.distributorId && 
+      (!editingVerdeler || v.id !== editingVerdeler.id)
+    );
+    
+    if (duplicateId) {
+      toast.error('Deze verdeler ID bestaat al. Kies een ander ID.');
       return;
     }
 
     try {
       let profilePhotoUrl = '';
       
-      // Handle profile photo upload
+      // Handle profile photo
       if (verdelerData.profilePhoto) {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          profilePhotoUrl = reader.result as string;
-          saveVerdelerData(profilePhotoUrl);
-        };
-        reader.readAsDataURL(verdelerData.profilePhoto);
-      } else {
-        saveVerdelerData(profilePhotoUrl);
+        profilePhotoUrl = await new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(verdelerData.profilePhoto!);
+        });
+      } else if (editingVerdeler?.profilePhoto) {
+        profilePhotoUrl = editingVerdeler.profilePhoto;
       }
+
+      const verdelerToSave = {
+        ...verdelerData,
+        profilePhoto: profilePhotoUrl,
+        id: editingVerdeler?.id || uuidv4(),
+        createdAt: editingVerdeler?.createdAt || new Date().toISOString(),
+      };
+
+      let updatedVerdelers;
+      if (editingVerdeler) {
+        // Update existing verdeler
+        updatedVerdelers = verdelers.map(v => 
+          v.id === editingVerdeler.id ? verdelerToSave : v
+        );
+        toast.success('Verdeler bijgewerkt!');
+      } else {
+        // Add new verdeler
+        updatedVerdelers = [...verdelers, verdelerToSave];
+        toast.success('Verdeler toegevoegd!');
+      }
+
+      setVerdelers(updatedVerdelers);
+      onVerdelersChange(updatedVerdelers);
+      
+      // Reset form
+      setShowVerdelerForm(false);
+      setEditingVerdeler(null);
+      setVerdelerData({
+        distributorId: '',
+        kastNaam: '',
+        systeem: '',
+        voeding: '',
+        bouwjaar: '',
+        keuringDatum: new Date().toISOString().split('T')[0],
+        getestDoor: '',
+        unInV: '',
+        inInA: '',
+        ikThInKA1s: '',
+        ikDynInKA: '',
+        freqInHz: '',
+        typeNrHs: '',
+        fabrikant: '',
+        profilePhoto: null,
+        status: 'In productie',
+      });
     } catch (error) {
       console.error('Error saving verdeler:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van de verdeler');
     }
   };
 
-  const saveVerdelerData = async (profilePhotoUrl: string) => {
-    const verdelerToSave = {
-      id: editingVerdeler?.id || uuidv4(),
-      distributorId: verdelerData.distributorId,
-      kastNaam: verdelerData.kastNaam,
-      systeem: verdelerData.systeem,
-      voeding: verdelerData.voeding,
-      bouwjaar: verdelerData.bouwjaar,
-      fabrikant: verdelerData.fabrikant,
-      status: verdelerData.status,
-      unInV: verdelerData.unInV,
-      inInA: verdelerData.inInA,
-      ikThInKA1s: verdelerData.ikThInKA1s,
-      ikDynInKA: verdelerData.ikDynInKA,
-      freqInHz: verdelerData.freqInHz,
-      typeNrHs: verdelerData.typeNrHs,
-      toegewezenMonteur: verdelerData.toegewezenMonteur,
-      gewensteLeverDatum: verdelerData.gewensteLeverDatum,
-      profilePhoto: profilePhotoUrl || editingVerdeler?.profilePhoto || editingVerdeler?.profile_photo || '',
-      projectId: projectData?.id,
-      projectnummer: projectData?.project_number || projectData?.projectNumber,
-      createdAt: editingVerdeler?.createdAt || editingVerdeler?.created_at || new Date().toISOString()
-    };
-
-    if (projectData?.id) {
-      // For existing projects, save to database
-      try {
-        if (editingVerdeler) {
-          await dataService.updateDistributor(editingVerdeler.id, verdelerToSave);
-          toast.success('Verdeler bijgewerkt!');
-        } else {
-          await dataService.createDistributor(verdelerToSave);
-          toast.success('Verdeler toegevoegd!');
-        }
-        await loadDistributors();
-      } catch (error) {
-        console.error('Error saving to database:', error);
-        toast.error('Er is een fout opgetreden bij het opslaan naar de database');
-        return;
-      }
-    } else {
-      // For new projects, update local state
-      let updatedVerdelers;
-      if (editingVerdeler) {
-        updatedVerdelers = verdelers.map(v => 
-          (v.id === editingVerdeler.id || v.distributorId === editingVerdeler.distributorId) 
-            ? verdelerToSave 
-            : v
-        );
-        toast.success('Verdeler bijgewerkt!');
-      } else {
-        updatedVerdelers = [...verdelers, verdelerToSave];
-        toast.success('Verdeler toegevoegd!');
-      }
-      
-      setVerdelers(updatedVerdelers);
-      onVerdelersChange(updatedVerdelers);
-    }
-
-    setShowVerdelerForm(false);
-    setEditingVerdeler(null);
+  const handleEditVerdeler = (verdeler: any) => {
+    setEditingVerdeler(verdeler);
+    setVerdelerData({
+      distributorId: verdeler.distributorId,
+      kastNaam: verdeler.kastNaam,
+      systeem: verdeler.systeem,
+      voeding: verdeler.voeding,
+      bouwjaar: verdeler.bouwjaar,
+      keuringDatum: verdeler.keuringDatum,
+      getestDoor: verdeler.getestDoor,
+      unInV: verdeler.unInV,
+      inInA: verdeler.inInA,
+      ikThInKA1s: verdeler.ikThInKA1s,
+      ikDynInKA: verdeler.ikDynInKA,
+      freqInHz: verdeler.freqInHz,
+      typeNrHs: verdeler.typeNrHs,
+      fabrikant: verdeler.fabrikant,
+      profilePhoto: null, // Will be handled separately
+      status: verdeler.status,
+    });
+    setShowVerdelerForm(true);
   };
 
-  const handleDeleteVerdeler = async (verdeler: any) => {
-    if (!hasPermission('verdelers', 'delete')) {
-      toast.error('Je hebt geen toestemming om verdelers te verwijderen');
-      return;
-    }
-    
-    if (window.confirm(`Weet je zeker dat je verdeler ${verdeler.distributorId || verdeler.distributor_id} wilt verwijderen?`)) {
-      try {
-        if (projectData?.id && verdeler.id) {
-          // For existing projects, delete from database
-          await dataService.deleteDistributor(verdeler.id);
-          await loadDistributors();
-        } else {
-          // For new projects, remove from local state
-          const updatedVerdelers = verdelers.filter(v => 
-            v.id !== verdeler.id && v.distributorId !== verdeler.distributorId
-          );
-          setVerdelers(updatedVerdelers);
-          onVerdelersChange(updatedVerdelers);
-        }
-        toast.success('Verdeler verwijderd!');
-      } catch (error) {
-        console.error('Error deleting verdeler:', error);
-        toast.error('Er is een fout opgetreden bij het verwijderen van de verdeler');
-      }
+  const handleDeleteVerdeler = (verdelerId: string) => {
+    if (window.confirm('Weet je zeker dat je deze verdeler wilt verwijderen?')) {
+      const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
+      setVerdelers(updatedVerdelers);
+      onVerdelersChange(updatedVerdelers);
+      toast.success('Verdeler verwijderd!');
     }
   };
 
@@ -400,66 +225,116 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeem: '',
       voeding: '',
       bouwjaar: '',
-      fabrikant: '',
-      status: 'In productie',
+      keuringDatum: new Date().toISOString().split('T')[0],
+      getestDoor: '',
       unInV: '',
       inInA: '',
       ikThInKA1s: '',
       ikDynInKA: '',
       freqInHz: '',
       typeNrHs: '',
-      toegewezenMonteur: '',
-      gewensteLeverDatum: '',
+      fabrikant: '',
       profilePhoto: null,
+      status: 'In productie',
     });
   };
 
-  const handleTestComplete = (verdelerIndex: number, testData: any) => {
-    // Handle test completion - this could save test data to localStorage or database
-    console.log('Test completed for verdeler:', verdelerIndex, testData);
+  const handleTestComplete = (verdeler: any, testData: any) => {
+    console.log('Test completed for verdeler:', verdeler.distributorId, 'with data:', testData);
+    // Test data is automatically saved to localStorage by the test components
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'in productie':
-        return 'bg-blue-500/20 text-blue-400';
-      case 'testen':
-        return 'bg-yellow-500/20 text-yellow-400';
-      case 'gereed':
-        return 'bg-green-500/20 text-green-400';
-      case 'opgeleverd':
-        return 'bg-green-500/20 text-green-400';
-      default:
-        return 'bg-gray-500/20 text-gray-400';
+  const getTestStatus = (verdeler: any) => {
+    const verdelerTestData = localStorage.getItem(`verdeler_test_${verdeler.distributorId}`);
+    const fatTestData = localStorage.getItem(`fat_test_${verdeler.distributorId}`);
+    const hvTestData = localStorage.getItem(`hv_test_${verdeler.distributorId}`);
+    const onsiteTestData = localStorage.getItem(`onsite_test_${verdeler.distributorId}`);
+    
+    let status = 'Niet getest';
+    let color = 'bg-gray-500/20 text-gray-400';
+    
+    try {
+      if (verdelerTestData) {
+        const testData = JSON.parse(verdelerTestData);
+        if (testData.inspectionReport?.completed) {
+          if (testData.inspectionReport.result === 'approved') {
+            status = 'Goedgekeurd';
+            color = 'bg-green-500/20 text-green-400';
+          } else if (testData.inspectionReport.result === 'conditionallyApproved') {
+            status = 'Voorwaardelijk';
+            color = 'bg-yellow-500/20 text-yellow-400';
+          } else if (testData.inspectionReport.result === 'rejected') {
+            status = 'Afgekeurd';
+            color = 'bg-red-500/20 text-red-400';
+          }
+        } else if (testData.workshopChecklist?.completed) {
+          status = 'Checklist Voltooid';
+          color = 'bg-blue-500/20 text-blue-400';
+        }
+      }
+      
+      if (fatTestData) {
+        const fatData = JSON.parse(fatTestData);
+        if (fatData.factoryTest?.completed) {
+          status = 'FAT Voltooid';
+          color = 'bg-yellow-500/20 text-yellow-400';
+        }
+      }
+      
+      if (hvTestData) {
+        const hvData = JSON.parse(hvTestData);
+        if (hvData.highVoltageTest?.completed) {
+          status = 'HV Test Voltooid';
+          color = 'bg-orange-500/20 text-orange-400';
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing test data:', error);
     }
+    
+    return { status, color };
   };
 
-  const handleVerdelerClick = (verdeler: any) => {
-    setShowVerdelerDetails(verdeler);
+  const getVerdelerAccessCodes = (verdelerId: string) => {
+    return accessCodes.filter(code => code.verdeler_id === verdelerId);
+  };
+
+  const isExpired = (expiresAt: string) => {
+    return new Date() > new Date(expiresAt);
+  };
+
+  const isUsageLimitReached = (usageCount: number, maxUses: number | null) => {
+    return maxUses !== null && usageCount >= maxUses;
+  };
+
+  const isCodeValid = (code: any) => {
+    return code.is_active && !isExpired(code.expires_at) && !isUsageLimitReached(code.usage_count, code.max_uses);
+  };
+
+  const handleNext = () => {
+    if (verdelers.length === 0) {
+      toast.error('Voeg tenminste één verdeler toe voordat je verder gaat!');
+      return;
+    }
+    if (onNext) onNext();
   };
 
   return (
-    <React.Fragment>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {!hideNavigation && (
         <div className="text-center mb-8">
           <h2 className="text-2xl font-semibold text-white mb-2">Verdelers</h2>
-          <p className="text-gray-400">Beheer de verdelers voor dit project</p>
+          <p className="text-gray-400">Voeg verdelers toe aan dit project</p>
         </div>
       )}
 
-      {/* Header with Add Button */}
+      {/* Add Verdeler Button */}
       <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-blue-400">
-            {hideNavigation ? 'Verdelers' : 'Project Verdelers'}
-          </h3>
-          <p className="text-gray-400 text-sm">
-            {hideNavigation ? 'Beheer de verdelers voor dit project' : 'Voeg verdelers toe aan dit project'}
-          </p>
-        </div>
+        <h3 className="text-lg font-semibold text-blue-400">
+          Project Verdelers ({verdelers.length})
+        </h3>
         <button
-          onClick={handleAddVerdeler}
+          onClick={() => setShowVerdelerForm(true)}
           className="btn-primary flex items-center space-x-2"
         >
           <Plus size={20} />
@@ -467,479 +342,209 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         </button>
       </div>
 
-      {/* Verdelers Table */}
+      {/* Verdelers List */}
       {verdelers.length > 0 ? (
-        <div className="card p-6">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="table-header text-left">Verdeler ID</th>
-                  <th className="table-header text-left">Kastnaam</th>
-                  <th className="table-header text-left">Systeem</th>
-                  <th className="table-header text-left">Status</th>
-                  <th className="table-header text-left">Toegangscodes</th>
-                  <th className="table-header text-right">Acties</th>
-                </tr>
-              </thead>
-              <tbody>
-                {verdelers.filter(Boolean).map((verdeler) => {
-                  // Skip if verdeler is still null/undefined after filtering
-                  if (!verdeler) return null;
-                  
-                  return (
-                  <tr 
-                    key={verdeler.id || verdeler.distributorId || Math.random().toString()} 
-                    className="table-row cursor-pointer"
-                    onClick={() => handleVerdelerClick(verdeler)}
-                  >
-                    <td className="py-4">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span className="font-medium text-green-400">
-                          {verdeler.distributorId || verdeler.distributor_id}
+        <div className="space-y-4">
+          {verdelers.map((verdeler) => {
+            const testStatus = getTestStatus(verdeler);
+            const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
+            const activeCodes = verdelerCodes.filter(isCodeValid);
+            
+            return (
+              <div key={verdeler.id} className="card p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4 flex-1">
+                    {/* Profile Photo */}
+                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#2A303C] flex items-center justify-center flex-shrink-0">
+                      {verdeler.profilePhoto ? (
+                        <img
+                          src={verdeler.profilePhoto}
+                          alt={verdeler.kastNaam}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-gray-400 text-xs text-center">
+                          Geen<br />foto
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Verdeler Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3 mb-2">
+                        <h4 className="text-lg font-semibold text-green-400">
+                          {verdeler.distributorId}
+                        </h4>
+                        <span className={`px-3 py-1 rounded-full text-sm ${testStatus.color}`}>
+                          {testStatus.status}
                         </span>
+                        {activeCodes.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <Key size={14} className="text-blue-400" />
+                            <span className="text-xs text-blue-400">
+                              {activeCodes.length} actieve code{activeCodes.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    <td className="py-4 text-gray-300">
-                      {verdeler.kastNaam || verdeler.kast_naam || '-'}
-                    </td>
-                    <td className="py-4 text-gray-300">
-                      {verdeler.systeem || '-'}
-                    </td>
-                    <td className="py-4">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(verdeler.status)}`}>
-                        {verdeler.status || 'In productie'}
-                      </span>
-                    </td>
-                    <td className="py-4 text-gray-300">
-                      {(() => {
-                        const codes = getVerdelerAccessCodes(verdeler.distributorId || verdeler.distributor_id);
-                        const activeCodes = codes.filter(code => !isCodeExpired(code.expires_at));
-                        
-                        if (activeCodes.length === 0) {
-                          return <span className="text-sm text-gray-500">Geen codes</span>;
-                        }
-                        
-                        return (
-                          <div className="flex flex-wrap gap-1">
-                            {activeCodes.slice(0, 2).map(code => (
-                              <span key={code.id} className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-mono">
-                                {code.code}
-                              </span>
+                      
+                      <p className="text-white font-medium mb-2">
+                        {verdeler.kastNaam || 'Naamloos'}
+                      </p>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-400">Systeem:</span>
+                          <p className="text-white">{verdeler.systeem || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Voeding:</span>
+                          <p className="text-white">{verdeler.voeding || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Spanning:</span>
+                          <p className="text-white">{verdeler.unInV ? `${verdeler.unInV}V` : '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Stroom:</span>
+                          <p className="text-white">{verdeler.inInA ? `${verdeler.inInA}A` : '-'}</p>
+                        </div>
+                      </div>
+
+                      {/* Access Codes Display */}
+                      {verdelerCodes.length > 0 && (
+                        <div className="mt-4 p-3 bg-[#2A303C]/50 rounded-lg">
+                          <h5 className="text-sm font-medium text-blue-400 mb-2">Toegangscodes</h5>
+                          <div className="space-y-2">
+                            {verdelerCodes.slice(0, 3).map((code) => (
+                              <div key={code.id} className="flex items-center justify-between text-xs">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-mono">{code.code}</span>
+                                  <div className="flex items-center space-x-1">
+                                    {isCodeValid(code) ? (
+                                      <CheckCircle size={12} className="text-green-400" />
+                                    ) : (
+                                      <XCircle size={12} className="text-red-400" />
+                                    )}
+                                    <span className={isCodeValid(code) ? 'text-green-400' : 'text-red-400'}>
+                                      {isCodeValid(code) ? 'Actief' : 'Inactief'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Clock size={12} className="text-gray-400" />
+                                  <span className="text-gray-400">
+                                    {new Date(code.expires_at).toLocaleDateString('nl-NL')}
+                                  </span>
+                                </div>
+                              </div>
                             ))}
-                            {activeCodes.length > 2 && (
-                              <span className="text-xs text-gray-400">+{activeCodes.length - 2}</span>
+                            {verdelerCodes.length > 3 && (
+                              <p className="text-xs text-gray-400">
+                                +{verdelerCodes.length - 3} meer...
+                              </p>
                             )}
                           </div>
-                        );
-                      })()}
-                    </td>
-                    <td className="py-4 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleVerdelerClick(verdeler);
-                          }}
-                          className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
-                          title="Info"
-                        >
-                          <div className="flex items-center space-x-1">
-                            <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
-                            <span className="text-xs text-gray-400 group-hover:text-blue-400">Info</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleGenerateAccessCode(verdeler);
-                          }}
-                          className="p-2 bg-[#2A303C] hover:bg-yellow-500/20 rounded-lg transition-colors group"
-                          title="Toegangscode"
-                        >
-                          <div className="flex items-center space-x-1">
-                            <Key size={16} className="text-gray-400 group-hover:text-yellow-400" />
-                            <span className="text-xs text-gray-400 group-hover:text-yellow-400">Code</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditVerdeler(verdeler);
-                          }}
-                          className="p-2 bg-[#2A303C] hover:bg-green-500/20 rounded-lg transition-colors group"
-                          title="Bewerken"
-                        >
-                          <div className="flex items-center space-x-1">
-                            <Edit size={16} className="text-gray-400 group-hover:text-green-400" />
-                            <span className="text-xs text-gray-400 group-hover:text-green-400">Bewerken</span>
-                          </div>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteVerdeler(verdeler);
-                          }}
-                          className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
-                          title="Verwijderen"
-                        >
-                          <div className="flex items-center space-x-1">
-                            <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
-                            <span className="text-xs text-gray-400 group-hover:text-red-400">Verwijderen</span>
-                          </div>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col space-y-2 ml-4">
+                    <button
+                      onClick={() => handleEditVerdeler(verdeler)}
+                      className="btn-secondary flex items-center space-x-2 text-sm"
+                      title="Bewerken"
+                    >
+                      <Eye size={16} />
+                      <span>Info</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleEditVerdeler(verdeler)}
+                      className="btn-secondary flex items-center space-x-2 text-sm"
+                      title="Bewerken"
+                    >
+                      <Eye size={16} />
+                      <span>Bewerken</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleDeleteVerdeler(verdeler.id)}
+                      className="btn-secondary flex items-center space-x-2 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400"
+                      title="Verwijderen"
+                    >
+                      <Trash2 size={16} />
+                      <span>Verwijderen</span>
+                    </button>
+
+                    {/* Testing Buttons */}
+                    <div className="pt-2 border-t border-gray-700 space-y-2">
+                      <VerdelerTesting
+                        verdeler={verdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
+                        projectId={projectData.id}
+                        distributorId={verdeler.id}
+                      />
+                      
+                      <FATTest
+                        verdeler={verdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
+                      />
+                      
+                      <HighVoltageTest
+                        verdeler={verdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
+                      />
+                      
+                      <OnSiteTest
+                        verdeler={verdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(verdeler, testData)}
+                      />
+                      
+                      <PrintLabel
+                        verdeler={verdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        logo={ewpLogo}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="card p-8 text-center">
-          <Server size={48} className="mx-auto text-gray-600 mb-4" />
-          <p className="text-gray-400 text-lg">Nog geen verdelers toegevoegd</p>
-          <p className="text-gray-500 text-sm mt-2">Klik op "Verdeler toevoegen" om te beginnen</p>
-        </div>
-      )}
-
-      {/* Verdeler Details Modal */}
-      {showVerdelerDetails && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-40 p-4 pt-10">
-          <div className="bg-[#1E2530] rounded-2xl p-12 max-w-4xl w-full max-h-[65vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-blue-400">
-                {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id} - {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam}
-              </h2>
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
+              <Plus size={32} className="text-gray-400" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-300 mb-2">Geen verdelers toegevoegd</h3>
+              <p className="text-gray-400 mb-4">
+                Voeg verdelers toe om dit project te voltooien
+              </p>
               <button
-                onClick={() => setShowVerdelerDetails(null)}
-                className="text-gray-400 hover:text-white transition-colors"
+                onClick={() => setShowVerdelerForm(true)}
+                className="btn-primary"
               >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-8">
-              {/* Basis Informatie */}
-              <div className="bg-[#2A303C] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Verdeler ID</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.distributorId || showVerdelerDetails.distributor_id}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Kastnaam</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.kastNaam || showVerdelerDetails.kast_naam || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.systeem || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.voeding || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.bouwjaar || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Status</label>
-                    <div className="input-field bg-[#1E2530]">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(showVerdelerDetails.status)}`}>
-                        {showVerdelerDetails.status || 'In productie'}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.fabrikant || '-'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Technische Specificaties */}
-              <div className="bg-[#2A303C] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.unInV || showVerdelerDetails.un_in_v || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.inInA || showVerdelerDetails.in_in_a || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.ikThInKA1s || showVerdelerDetails.ik_th_in_ka1s || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.ikDynInKA || showVerdelerDetails.ik_dyn_in_ka || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.freqInHz || showVerdelerDetails.freq_in_hz || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.typeNrHs || showVerdelerDetails.type_nr_hs || '-'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Aanvullende Informatie */}
-              <div className="bg-[#2A303C] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Aanvullende Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.toegewezenMonteur || showVerdelerDetails.toegewezen_monteur || 'Nader te bepalen'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.gewensteLeverDatum || showVerdelerDetails.gewenste_lever_datum 
-                        ? new Date(showVerdelerDetails.gewensteLeverDatum || showVerdelerDetails.gewenste_lever_datum).toLocaleDateString('nl-NL')
-                        : 'Niet ingesteld'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Getest door</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.getestDoor || showVerdelerDetails.getest_door || '-'}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
-                    <div className="input-field bg-[#1E2530]">
-                      {showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum 
-                        ? new Date(showVerdelerDetails.keuringDatum || showVerdelerDetails.keuring_datum).toLocaleDateString('nl-NL')
-                        : '-'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            {/* Actions Section */}
-            <div className="mt-8 pt-6 border-t border-gray-700">
-              <h3 className="text-lg font-semibold text-orange-400 mb-4">Acties</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {projectData && projectData.id && (
-                  <>
-                    <VerdelerTesting
-                      verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(0, testData)}
-                      projectId={projectData.id}
-                      distributorId={showVerdelerDetails.id}
-                    />
-                    <FATTest
-                      verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(0, testData)}
-                    />
-                    <HighVoltageTest
-                      verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(0, testData)}
-                    />
-                    <OnSiteTest
-                      verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(0, testData)}
-                    />
-                    <button
-                      className="btn-secondary flex items-center space-x-2"
-                      title="Toegangscode"
-                    >
-                      <Key size={16} />
-                      <span>Toegangscode</span>
-                    </button>
-                    <PrintLabel
-                      verdeler={showVerdelerDetails}
-                      projectNumber={projectData.project_number || ''}
-                      logo={ewpLogo}
-                    />
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    setShowVerdelerDetails(null);
-                    handleEditVerdeler(showVerdelerDetails);
-                  }}
-                  className="btn-secondary flex items-center space-x-2"
-                >
-                  <Edit size={26} />
-                  <span>Bewerken</span>
-                </button>
-              </div>
-            </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Access Code Form Modal */}
-      {showAccessCodeForm && selectedVerdelerForCode && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold text-yellow-400">Toegangscode genereren</h2>
-              <button
-                onClick={() => {
-                  setShowAccessCodeForm(false);
-                  setSelectedVerdelerForCode(null);
-                }}
-                className="text-gray-400 hover:text-white"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-[#2A303C] p-4 rounded-lg">
-                <h3 className="text-sm font-medium text-blue-400 mb-2">Voor verdeler</h3>
-                <p className="text-white">
-                  {selectedVerdelerForCode.distributorId || selectedVerdelerForCode.distributor_id} - {selectedVerdelerForCode.kastNaam || selectedVerdelerForCode.kast_naam || 'Naamloos'}
-                </p>
-                <p className="text-sm text-gray-400">Project: {projectData.project_number}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  Toegangscode <span className="text-red-400">*</span>
-                </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="text"
-                    className="input-field flex-1"
-                    value={newAccessCode.code}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 5);
-                      setNewAccessCode({ ...newAccessCode, code: value });
-                    }}
-                    placeholder="12345"
-                    maxLength={5}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setNewAccessCode({ ...newAccessCode, code: generateRandomCode() })}
-                    className="btn-secondary flex items-center space-x-2"
-                  >
-                    <Key size={16} />
-                    <span>Nieuw</span>
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Precies 5 cijfers (0-9)</p>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">
-                  Vervaldatum <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="datetime-local"
-                  className="input-field"
-                  value={newAccessCode.expiresAt}
-                  onChange={(e) => setNewAccessCode({ ...newAccessCode, expiresAt: e.target.value })}
-                  min={new Date().toISOString().slice(0, 16)}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-1">Maximum aantal keer gebruiken</label>
-                <input
-                  type="number"
-                  className="input-field"
-                  value={newAccessCode.maxUses}
-                  onChange={(e) => setNewAccessCode({ ...newAccessCode, maxUses: e.target.value })}
-                  placeholder="Onbeperkt (laat leeg)"
-                  min="1"
-                />
-                <p className="text-xs text-gray-500 mt-1">Laat leeg voor onbeperkt gebruik</p>
-              </div>
-
-              <div className="flex items-center">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={newAccessCode.isActive}
-                    onChange={(e) => setNewAccessCode({ ...newAccessCode, isActive: e.target.checked })}
-                    className="form-checkbox"
-                  />
-                  <span className="text-gray-400">Direct activeren</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                onClick={() => {
-                  setShowAccessCodeForm(false);
-                  setSelectedVerdelerForCode(null);
-                }}
-                className="btn-secondary"
-                disabled={generatingCode}
-              >
-                Annuleren
-              </button>
-              <button
-                onClick={handleCreateAccessCode}
-                className={`btn-primary ${generatingCode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={generatingCode || !newAccessCode.code || !newAccessCode.expiresAt || !/^\d{5}$/.test(newAccessCode.code)}
-              >
-                {generatingCode ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                    <span>Aanmaken...</span>
-                  </div>
-                ) : (
-                  'Code aanmaken'
-                )}
+                Eerste verdeler toevoegen
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add/Edit Verdeler Form Modal */}
+      {/* Verdeler Form Modal */}
       {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16">
-          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[65vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
                 {editingVerdeler ? 'Verdeler bewerken' : 'Nieuwe verdeler toevoegen'}
@@ -952,291 +557,241 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Basic Information */}
-              <div>
-                <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Verdeler ID <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.distributorId}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, distributorId: e.target.value })}
-                      placeholder="VD1234"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Kastnaam <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.kastNaam}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, kastNaam: e.target.value })}
-                      placeholder="Hoofdverdeler A"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.systeem}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, systeem: e.target.value })}
-                      placeholder="400V TN-S"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.voeding}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, voeding: e.target.value })}
-                      placeholder="3x400V + N + PE"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
-                    <input
-                      type="text"
-                      className="input-field"
-                      value={verdelerData.bouwjaar}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, bouwjaar: e.target.value })}
-                      placeholder="2025"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Status</label>
-                    <select
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.status}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, status: e.target.value })}
-                      disabled={projectData?.status === 'Offerte'}
-                    >
-                      <option value="In productie">In productie</option>
-                      <option value="Testen">Testen</option>
-                      <option value="Gereed">Gereed</option>
-                      <option value="Opgeleverd">Opgeleverd</option>
-                    </select>
-                    {projectData?.status === 'Offerte' && (
-                      <p className="text-xs text-yellow-400 mt-1">
-                        Status kan alleen worden gewijzigd wanneer project status "Productie" is
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-green-400 mb-4">Basis Informatie</h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Verdeler ID <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.distributorId}
+                        onChange={(e) => handleInputChange('distributorId', e.target.value)}
+                        placeholder="VD1234"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Unieke identificatie voor deze verdeler
                       </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.fabrikant}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, fabrikant: e.target.value })}
-                    >
-                      <option value="">Selecteer fabrikant</option>
-                      <option value="Schneider Electric">Schneider Electric</option>
-                      <option value="ABB">ABB</option>
-                      <option value="Siemens">Siemens</option>
-                      <option value="Eaton">Eaton</option>
-                      <option value="Legrand">Legrand</option>
-                      <option value="Phoenix Contact">Phoenix Contact</option>
-                      <option value="Weidmüller">Weidmüller</option>
-                      <option value="Rittal">Rittal</option>
-                      <option value="Hager">Hager</option>
-                      <option value="Moeller">Moeller</option>
-                      <option value="Anders">Anders</option>
-                    </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Kastnaam <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.kastNaam}
+                        onChange={(e) => handleInputChange('kastNaam', e.target.value)}
+                        placeholder="Hoofdverdeler Hal A"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Status</label>
+                      <select
+                        className="input-field"
+                        value={verdelerData.status}
+                        onChange={(e) => handleInputChange('status', e.target.value)}
+                      >
+                        <option value="In productie">In productie</option>
+                        <option value="Testen">Testen</option>
+                        <option value="Gereed">Gereed</option>
+                        <option value="Opgeleverd">Opgeleverd</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfilePhotoChange}
+                        className="input-field"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Optioneel: Upload een foto van de verdeler
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Technical Specifications */}
-              <div>
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
-                {projectData?.status === 'Offerte' && (
-                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs text-black font-bold">!</span>
-                      </div>
-                      <p className="text-yellow-300 text-sm">
-                        Technische specificaties kunnen alleen worden ingevuld wanneer project status "Productie" is
-                      </p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Technische Specificaties</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.systeem}
+                        onChange={(e) => handleInputChange('systeem', e.target.value)}
+                        placeholder="400V TN-S"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.voeding}
+                        onChange={(e) => handleInputChange('voeding', e.target.value)}
+                        placeholder="3x400V + N + PE"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Bouwjaar</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.bouwjaar}
+                        onChange={(e) => handleInputChange('bouwjaar', e.target.value)}
+                        placeholder="2025"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
+                      <input
+                        type="date"
+                        className="input-field"
+                        value={verdelerData.keuringDatum}
+                        onChange={(e) => handleInputChange('keuringDatum', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Getest door</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.getestDoor}
+                        onChange={(e) => handleInputChange('getestDoor', e.target.value)}
+                        placeholder="Naam tester"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Un in V</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.unInV}
+                        onChange={(e) => handleInputChange('unInV', e.target.value)}
+                        placeholder="400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">In in A</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.inInA}
+                        onChange={(e) => handleInputChange('inInA', e.target.value)}
+                        placeholder="400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.ikThInKA1s}
+                        onChange={(e) => handleInputChange('ikThInKA1s', e.target.value)}
+                        placeholder="25"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.ikDynInKA}
+                        onChange={(e) => handleInputChange('ikDynInKA', e.target.value)}
+                        placeholder="65"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.freqInHz}
+                        onChange={(e) => handleInputChange('freqInHz', e.target.value)}
+                        placeholder="50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.typeNrHs}
+                        onChange={(e) => handleInputChange('typeNrHs', e.target.value)}
+                        placeholder="HS-400"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">Fabrikant</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={verdelerData.fabrikant}
+                        onChange={(e) => handleInputChange('fabrikant', e.target.value)}
+                        placeholder="Schneider Electric"
+                      />
                     </div>
                   </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Un in V</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.unInV}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, unInV: e.target.value })}
-                      placeholder="400"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">In in A</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.inInA}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, inInA: e.target.value })}
-                      placeholder="400"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Th in KA 1s</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.ikThInKA1s}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, ikThInKA1s: e.target.value })}
-                      placeholder="25"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Ik Dyn in KA</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.ikDynInKA}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, ikDynInKA: e.target.value })}
-                      placeholder="65"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Freq. in Hz</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.freqInHz}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, freqInHz: e.target.value })}
-                      placeholder="50"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Type nr. HS</label>
-                    <input
-                      type="text"
-                      className={`input-field ${
-                        projectData?.status === 'Offerte' ? 'bg-[#2A303C]/50 cursor-not-allowed opacity-60' : ''
-                      }`}
-                      value={verdelerData.typeNrHs}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, typeNrHs: e.target.value })}
-                      placeholder="NS400N"
-                      disabled={projectData?.status === 'Offerte'}
-                    />
-                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Aanvullende Informatie */}
-              <div>
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Aanvullende Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.toegewezenMonteur || ''}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, toegewezenMonteur: e.target.value })}
-                    >
-                      <option value="">Nader te bepalen</option>
-                      {(() => {
-                        // Get users from localStorage
-                        const users = JSON.parse(localStorage.getItem('users') || '[]');
-                        const montageUsers = users.filter((user: any) => user.role === 'montage');
-                        
-                        return montageUsers.map((user: any) => (
-                          <option key={user.id} value={user.username}>
-                            {user.username}
-                          </option>
-                        ));
-                      })()}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Gewenste lever datum</label>
-                    <input
-                      type="date"
-                      className="input-field"
-                      value={verdelerData.gewensteLeverDatum || ''}
-                      onChange={(e) => setVerdelerData({ ...verdelerData, gewensteLeverDatum: e.target.value })}
-                      min={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
-                <button
-                  onClick={handleCancelForm}
-                  className="btn-secondary"
-                >
-                  Annuleren
-                </button>
-                <button
-                  onClick={handleSaveVerdeler}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <Save size={20} />
-                  <span>Opslaan</span>
-                </button>
-              </div>
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-700">
+              <button
+                onClick={handleCancelForm}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleSaveVerdeler}
+                className="btn-primary"
+              >
+                {editingVerdeler ? 'Verdeler bijwerken' : 'Verdeler toevoegen'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Navigation Buttons */}
+      {/* Navigation buttons */}
       {!hideNavigation && (
         <div className="flex justify-between pt-6 border-t border-gray-700">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="btn-secondary"
-            >
-              Vorige stap
-            </button>
-          )}
-          {onNext && (
-            <button
-              onClick={onNext}
-              className="btn-primary"
-            >
-              Volgende stap
-            </button>
-          )}
+          <button
+            onClick={onBack}
+            className="btn-secondary"
+          >
+            Terug
+          </button>
+          <button
+            onClick={handleNext}
+            className="btn-primary"
+          >
+            Volgende stap
+          </button>
         </div>
       )}
-      </div>
-    </React.Fragment>
+    </div>
   );
 };
 
