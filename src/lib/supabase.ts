@@ -275,23 +275,6 @@ export const dataService = {
 
   async createDistributor(distributor: any) {
     try {
-      console.log('createDistributor called with:', distributor);
-      console.log('🔍 DISTRIBUTOR SAVE: Checking key fields:');
-      console.log('  - distributorId:', distributor.distributorId);
-      console.log('  - kastNaam:', distributor.kastNaam);
-      console.log('  - projectId:', distributor.projectId);
-      
-      // Debug: Check all possible field variations
-      console.log('🔍 DISTRIBUTOR SAVE: All possible ID fields:');
-      console.log('  - distributor.distributorId:', distributor.distributorId);
-      console.log('  - distributor.distributor_id:', distributor.distributor_id);
-      console.log('  - distributor.id:', distributor.id);
-      
-      console.log('🔍 DISTRIBUTOR SAVE: All possible name fields:');
-      console.log('  - distributor.kastNaam:', distributor.kastNaam);
-      console.log('  - distributor.kast_naam:', distributor.kast_naam);
-      console.log('  - distributor.name:', distributor.name);
-      
       let profilePhotoUrl = '';
       
       // Handle file upload if profilePhoto is a File object
@@ -301,82 +284,34 @@ export const dataService = {
         profilePhotoUrl = distributor.profilePhoto;
       }
 
-      // Ensure we get the distributor ID from any possible field
-      const distributorId = distributor.distributorId || distributor.distributor_id || distributor.id;
-      const kastNaam = distributor.kastNaam || distributor.kast_naam || distributor.name;
-      
-      console.log('🔍 DISTRIBUTOR SAVE: Final mapped values:');
-      console.log('  - Final distributorId:', distributorId);
-      console.log('  - Final kastNaam:', kastNaam);
-      
-      if (!distributorId) {
-        console.error('❌ CRITICAL: No distributor ID found in any field!');
-        console.log('❌ Full distributor object:', JSON.stringify(distributor, null, 2));
-        throw new Error('Distributor ID is missing - cannot save distributor');
-      }
-      
-      if (!kastNaam) {
-        console.error('❌ CRITICAL: No kast naam found in any field!');
-        console.log('❌ Full distributor object:', JSON.stringify(distributor, null, 2));
-        throw new Error('Kast naam is missing - cannot save distributor');
-      }
-      const dbData = {
-        distributor_id: distributorId,
-        project_id: distributor.projectId,
-        kast_naam: kastNaam,
-        systeem: distributor.systeem,
-        voeding: distributor.voeding,
-        bouwjaar: distributor.bouwjaar,
-        keuring_datum: distributor.keuringDatum,
-        getest_door: distributor.getestDoor,
-        un_in_v: distributor.unInV,
-        in_in_a: distributor.inInA,
-        ik_th_in_ka1s: distributor.ikThInKA1s,
-        ik_dyn_in_ka: distributor.ikDynInKA,
-        freq_in_hz: distributor.freqInHz,
-        type_nr_hs: distributor.typeNrHs,
-        fabrikant: distributor.fabrikant,
-        profile_photo: profilePhotoUrl,
-        status: distributor.status
-      };
-      
-      console.log('Database data being inserted:', dbData);
-      console.log('🔍 DB DATA: Key fields check:');
-      console.log('  - distributor_id:', dbData.distributor_id);
-      console.log('  - kast_naam:', dbData.kast_naam);
-      console.log('  - project_id:', dbData.project_id);
-      
-      // Validate required fields before database insert
-      if (!dbData.distributor_id || dbData.distributor_id.trim() === '') {
-        console.error('❌ VALIDATION FAILED: distributor_id is empty or missing');
-        console.log('❌ dbData.distributor_id value:', JSON.stringify(dbData.distributor_id));
-        throw new Error('distributor_id is required but missing or empty');
-      }
-      
-      if (!dbData.kast_naam || dbData.kast_naam.trim() === '') {
-        console.error('❌ VALIDATION FAILED: kast_naam is empty or missing');
-        console.log('❌ dbData.kast_naam value:', JSON.stringify(dbData.kast_naam));
-        throw new Error('kast_naam is required but missing or empty');
-      }
-      
-      if (!dbData.project_id) {
-        console.error('❌ VALIDATION FAILED: project_id is missing');
-        throw new Error('project_id is required but missing');
-      }
-
       const { data, error } = await supabase
         .from('distributors')
-        .insert([dbData])
+        .insert([{
+          distributor_id: distributor.distributorId,
+          project_id: distributor.projectId,
+          kast_naam: distributor.kastNaam,
+          systeem: distributor.systeem,
+          voeding: distributor.voeding,
+          bouwjaar: distributor.bouwjaar,
+          keuring_datum: distributor.keuringDatum,
+          getest_door: distributor.getestDoor,
+          un_in_v: distributor.unInV,
+          in_in_a: distributor.inInA,
+          ik_th_in_ka1s: distributor.ikThInKA1s,
+          ik_dyn_in_ka: distributor.ikDynInKA,
+          freq_in_hz: distributor.freqInHz,
+          type_nr_hs: distributor.typeNrHs,
+          fabrikant: distributor.fabrikant,
+          profile_photo: profilePhotoUrl,
+          status: distributor.status
+        }])
         .select()
         .single();
       
       if (error) {
         console.error('Database error in createDistributor:', error);
-        console.error('Failed to insert data:', dbData);
         throw error;
       }
-      console.log('Distributor created successfully in database:', data);
-      console.log('✅ SAVED: distributor_id =', data.distributor_id, 'kast_naam =', data.kast_naam);
       return data;
     } catch (err) {
       console.error('Network error in createDistributor:', err);
@@ -404,8 +339,8 @@ export const dataService = {
           systeem: updates.systeem,
           voeding: updates.voeding,
           bouwjaar: updates.bouwjaar,
-          toegewezen_monteur: updates.toegewezenMonteur,
-          gewenste_lever_datum: updates.gewensteLeverDatum,
+          keuring_datum: updates.keuringDatum,
+          getest_door: updates.getestDoor,
           un_in_v: updates.unInV,
           in_in_a: updates.inInA,
           ik_th_in_ka1s: updates.ikThInKA1s,
