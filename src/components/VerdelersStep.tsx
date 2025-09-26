@@ -677,7 +677,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Verdeler Details Modal */}
       {showVerdelerDetails && selectedVerdeler && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
           <div className="bg-[#1E2530] rounded-2xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center space-x-4">
@@ -901,8 +901,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       )}
 
       {/* Verdeler Form Modal (Add/Edit) */}
-      {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[85vh] overflow-y-auto my-8"
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
           <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
@@ -1166,8 +1166,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       )}
 
       {/* Access Code Form Modal */}
-      {showAccessCodeForm && selectedVerdeler && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full my-8"
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16 overflow-y-auto">
           <div className="card p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold">Toegangscode genereren</h2>
