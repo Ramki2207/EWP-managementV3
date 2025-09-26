@@ -177,6 +177,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         isActive: true
       });
       
+      // Reload access codes to display the new one immediately
+      await loadAccessCodes();
+      
       toast.success('Toegangscode succesvol aangemaakt!');
     } catch (error) {
       console.error('Error creating access code:', error);
