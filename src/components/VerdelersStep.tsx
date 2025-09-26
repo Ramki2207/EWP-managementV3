@@ -494,7 +494,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           {testStatus.status}
                         </span>
                       </td>
-                      <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
+                      <td className="py-4">
                         {(() => {
                           const verdelerCodes = getVerdelerAccessCodes(verdeler.distributorId);
                           if (verdelerCodes.length === 0) {
@@ -525,6 +525,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
                       <td className="py-4">
                         <span className="text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</span>
+                      </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
