@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
