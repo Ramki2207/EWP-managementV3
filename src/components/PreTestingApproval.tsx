@@ -220,7 +220,10 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
         data: reviewData
       });
 
-      if (approvalData.overallApproval) {
+      if (appro
+    }
+  }
+}valData.overallApproval) {
         toast.success('Project goedgekeurd voor testfase!');
         onApprove();
       } else {
