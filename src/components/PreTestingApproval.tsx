@@ -69,16 +69,23 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
   // Determine view mode based on user role and existing data
   useEffect(() => {
     if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
-      // Check if there's submitted data to review
+      // Testers see review interface if there's submitted data
       if (approvalData.status === 'submitted' && !approvalData.reviewedAt) {
-        setViewMode('review');
+        setViewMode('review'); // Active review mode
       } else if (approvalData.reviewedAt) {
         setViewMode('review'); // Show completed review
       } else {
         setViewMode('form'); // No submission yet, show form
       }
     } else {
-      setViewMode('form'); // Non-testers always see form
+      // Non-testers (like montage users)
+      if (approvalData.reviewedAt) {
+        setViewMode('review'); // Show completed review (approved or declined)
+      } else if (approvalData.status === 'submitted') {
+        setViewMode('review'); // Show that it's submitted and waiting
+      } else {
+        setViewMode('form'); // Show form for new submission
+      }
     }
   }, [currentUser, approvalData]);
 
