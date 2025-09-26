@@ -540,6 +540,15 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                   >
                     Sluiten
                   </button>
+                  {approvalData.overallApproval === false && (
+                    <button
+                      onClick={handleResubmitApproval}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all flex items-center space-x-2"
+                    >
+                      <CheckSquare size={20} />
+                      <span>Opnieuw Indienen</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -793,6 +802,15 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                   >
                     Sluiten
                   </button>
+                  {approvalData.overallApproval === false && (
+                    <button
+                      onClick={handleResubmitApproval}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl transition-all flex items-center space-x-2"
+                    >
+                      <CheckSquare size={20} />
+                      <span>Opnieuw Indienen</span>
+                    </button>
+                  )}
                 </div>
               </div>
             ) : currentUser?.role === 'tester' && approvalData.status === 'submitted' && !approvalData.reviewedAt ? (
