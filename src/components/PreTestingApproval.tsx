@@ -414,7 +414,7 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
         ) : (
           /* Review Mode - For tester approval */
           <div className="space-y-6">
-            {approvalData.reviewedAt ? (
+            {approvalData.reviewedAt && (currentUser?.role === 'tester' || currentUser?.role === 'admin' || currentUser?.role === 'montage') ? (
               /* Show completed review */
               <div className="space-y-6">
                 <div className={`rounded-lg p-4 ${
@@ -729,7 +729,50 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                   </button>
                 </div>
               </div>
-            )}
+            ) : approvalData.status === 'submitted' && currentUser?.role === 'montage' ? (
+              /* Show waiting status for montage users */
+              <div className="space-y-6">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Clock size={16} className="text-blue-400" />
+                    <h3 className="font-medium text-blue-400">Wacht op Tester Beoordeling</h3>
+                  </div>
+                  <p className="text-blue-300 text-sm">
+                    Je aanvraag is ingediend en wacht op beoordeling door de tester. 
+                    Je ontvangt een melding zodra de beoordeling is voltooid.
+                  </p>
+                </div>
+
+                {/* Show submitted data for reference */}
+                <div className="bg-[#2A303C] rounded-lg p-4">
+                  <h3 className="font-medium text-gray-300 mb-3">Jouw Ingediende Checklist</h3>
+                  <div className="space-y-3">
+                    {checklist.map((item) => (
+                      <div key={item.id} className="bg-[#1E2530] p-3 rounded-lg">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <CheckSquare size={16} className={item.checked ? 'text-green-400' : 'text-gray-400'} />
+                          <span className="text-sm font-medium text-white">{item.question}</span>
+                        </div>
+                        {item.comments && (
+                          <p className="text-xs text-gray-400 ml-6">{item.comments}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4">
+                  <button
+                    onClick={onCancel}
+                    className="btn-secondary"
+                  >
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+            ) : currentUser?.role === 'tester' && approvalData.status === 'submitted' && !approvalData.reviewedAt ? (
+              /* Active tester review mode - this is the existing tester interface */
           </div>
         )}
       </div>
