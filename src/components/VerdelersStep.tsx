@@ -902,7 +902,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       {/* Verdeler Form Modal (Add/Edit) */}
       {showVerdelerForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-800 p-4">
           <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[60vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-blue-400">
