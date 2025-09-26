@@ -9,7 +9,6 @@ import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
-import PreTestingApproval from '../components/PreTestingApproval';
 
 interface Project {
   id: string;
