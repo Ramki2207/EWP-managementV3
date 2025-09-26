@@ -73,7 +73,7 @@ const Verdelers = () => {
       setDistributors(filteredDistributors);
     } catch (error) {
       console.error('Error loading distributors:', error);
-     toast.error(error.message || 'Er is een fout opgetreden bij het laden van de verdelers');
+      toast.error(error.message || 'Er is een fout opgetreden bij het laden van de verdelers');
     } finally {
       setLoading(false);
     }
