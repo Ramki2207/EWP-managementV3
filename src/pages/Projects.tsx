@@ -258,12 +258,25 @@ const Projects = () => {
       console.log('🌍 FILTER: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
       
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
-        // Check if user has access to all locations
-        const hasAllLocations = currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
-                               AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+        // Debug user's location data
+        console.log('🔍 LOCATION DEBUG: User assignedLocations type:', typeof currentUser.assignedLocations);
+        console.log('🔍 LOCATION DEBUG: User assignedLocations value:', currentUser.assignedLocations);
+        console.log('🔍 LOCATION DEBUG: Available locations:', AVAILABLE_LOCATIONS);
+        
+        // Check if user has access to all locations (multiple ways to check)
+        const hasAllLocations = 
+          // Method 1: Array length equals available locations
+          (Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length) ||
+          // Method 2: Contains all available locations
+          (Array.isArray(currentUser.assignedLocations) && AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc))) ||
+          // Method 3: Empty array means all access (legacy)
+          (Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length === 0);
+        
+        console.log('🔍 LOCATION DEBUG: hasAllLocations result:', hasAllLocations);
         
         if (hasAllLocations) {
           console.log(`🌍 LOCATION FILTER: User ${currentUser.username} has access to all locations - showing all projects`);
+          // Don't filter by location - show all projects
         } else {
           // If project has a location, user must have access to that specific location
           // If project has no location, allow access (legacy projects)
