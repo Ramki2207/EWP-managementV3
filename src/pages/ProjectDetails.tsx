@@ -27,7 +27,6 @@ const ProjectDetails = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [lockId, setLockId] = useState<string | null>(null);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
-  const [pendingStatusChange, setPendingStatusChange] = useState<string | null>(null);
 
   useEffect(() => {
     // Get current user info
@@ -193,7 +192,6 @@ const ProjectDetails = () => {
   const handleInputChange = (field: string, value: string) => {
     // Special handling for status change from Productie to Testen
     if (field === 'status' && value === 'Testen' && editedProject?.status === 'Productie') {
-      setPendingStatusChange(value);
       setShowPreTestingApproval(true);
       return;
     }
@@ -237,7 +235,6 @@ const ProjectDetails = () => {
 
   const handlePreTestingCancel = () => {
     setShowPreTestingApproval(false);
-    setPendingStatusChange(null);
   };
 
   const handleVerdelersChange = (verdelers: any[]) => {
