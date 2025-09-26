@@ -60,7 +60,9 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
 
   // Load existing approval data if it exists
   useEffect(() => {
-    loadExistingApproval();
+    if (project?.distributors && project.distributors.length > 0) {
+      loadExistingApproval();
+    }
   }, [project.id]);
 
   // Determine view mode based on user role and existing data
@@ -80,9 +82,15 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
   }, [currentUser, approvalData]);
 
   const loadExistingApproval = async () => {
+    if (!project?.distributors || project.distributors.length === 0) {
+      console.warn('No distributors found for project, cannot load approval data');
+      return;
+    }
+
     try {
       // Try to load from test_data table
-      const testData = await dataService.getTestData(project.id);
+      const firstDistributorId = project.distributors[0].id;
+      const testData = await dataService.getTestData(firstDistributorId);
       const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
       
       if (approvalRecord) {
@@ -123,6 +131,11 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
       return;
     }
 
+    if (!project?.distributors || project.distributors.length === 0) {
+      toast.error('Dit project heeft geen verdelers. Voeg eerst verdelers toe voordat je de goedkeuring indient.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -136,8 +149,9 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
       };
 
       // Save to test_data table
+      const firstDistributorId = project.distributors[0].id;
       await dataService.createTestData({
-        distributorId: project.id, // Using project ID as distributor ID for project-level data
+        distributorId: firstDistributorId,
         testType: 'pre_testing_approval',
         data: submissionData
       });
@@ -183,9 +197,10 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
         }
       };
 
+      const firstDistributorId = project.distributors[0].id;
       // Update test_data with review
       await dataService.createTestData({
-        distributorId: project.id,
+        distributorId: firstDistributorId,
         testType: 'pre_testing_approval',
         data: reviewData
       });
