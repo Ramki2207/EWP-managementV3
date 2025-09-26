@@ -38,6 +38,30 @@ const Projects = () => {
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [selectedProjectForApproval, setSelectedProjectForApproval] = useState<Project | null>(null);
 
+  // Helper function to check for pending approvals in database
+  const checkForPendingApproval = async (project: Project): Promise<boolean> => {
+    if (!project.distributors || project.distributors.length === 0) {
+      return false;
+    }
+
+    try {
+      const firstDistributorId = project.distributors[0].id;
+      const testData = await dataService.getTestData(firstDistributorId);
+      const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+      
+      if (approvalRecord && approvalRecord.data.approvalData) {
+        const approvalData = approvalRecord.data.approvalData;
+        // Check if submitted but not yet reviewed
+        return approvalData.status === 'submitted' && !approvalData.reviewedAt;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error checking approval status:', error);
+      return false;
+    }
+  };
+
   useEffect(() => {
     console.log('🚀 PROJECTS: Component mounting, setting up subscriptions...');
     
@@ -245,34 +269,21 @@ const Projects = () => {
     return projectList.filter(project => {
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
-        // Testers can see:
-        // 1. Projects with status "Testen" (normal testing work)
-        // 2. Projects with status "Productie" that have pending approval requests
         const isTestingStatus = project.status?.toLowerCase() === 'testen';
-        const isProductionWithPendingApproval = project.status?.toLowerCase() === 'productie' && 
-          project.distributors?.some((dist: any) => {
-            // Check if there's a pending approval for this project
-            try {
-              const approvalData = localStorage.getItem(`pre_testing_approval_${dist.id}`);
-              if (approvalData) {
-                const parsed = JSON.parse(approvalData);
-                return parsed.approvalData?.status === 'submitted' && !parsed.approvalData?.reviewedAt;
-              }
-            } catch (error) {
-              console.error('Error checking approval data:', error);
-            }
-            return false;
-          });
         
-        if (!isTestingStatus && !isProductionWithPendingApproval) {
-          console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE AND NO PENDING APPROVAL`);
+        // For production projects, we need to check database for pending approvals
+        // This will be handled by the async filtering below
+        const isProductionStatus = project.status?.toLowerCase() === 'productie';
+        
+        if (!isTestingStatus && !isProductionStatus) {
+          console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING OR PRODUCTION PHASE`);
           return false;
         }
         
         if (isTestingStatus) {
           console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
-        } else if (isProductionWithPendingApproval) {
-          console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - HAS PENDING APPROVAL`);
+        } else if (isProductionStatus) {
+          console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - PRODUCTION STATUS (will check for pending approval)`);
         }
       }
 
