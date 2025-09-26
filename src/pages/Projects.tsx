@@ -11,7 +11,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
 
 // Component to show approval status in project table
-const ApprovalStatusIndicator: React.FC<{ project: any }> = ({ project }) => {
+const ProjectApprovalStatus: React.FC<{ project: any }> = ({ project }) => {
   const [approvalStatus, setApprovalStatus] = useState<{
     status: 'submitted' | 'approved' | 'declined' | null;
     reviewedBy?: string;
@@ -49,14 +49,14 @@ const ApprovalStatusIndicator: React.FC<{ project: any }> = ({ project }) => {
   if (!approvalStatus.status) return null;
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs ${
+    <span className={`px-2 py-1 rounded-full text-xs ml-2 ${
       approvalStatus.status === 'approved' ? 'bg-green-500/20 text-green-400' :
       approvalStatus.status === 'declined' ? 'bg-red-500/20 text-red-400' :
       'bg-yellow-500/20 text-yellow-400'
     }`}>
       {approvalStatus.status === 'approved' ? '✅ Goedgekeurd' :
        approvalStatus.status === 'declined' ? '❌ Afgekeurd' :
-       '⏳ Wacht op beoordeling'}
+       '⏳ Ingediend'}
     </span>
   );
 };

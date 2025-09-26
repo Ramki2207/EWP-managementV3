@@ -52,6 +52,7 @@ const Dashboard = () => {
   const [projectLocks, setProjectLocks] = useState<ProjectLock[]>([]);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   
   const loadData = async () => {
     try {
@@ -95,12 +96,53 @@ const Dashboard = () => {
       }
       
       setProjects(filteredData);
+      
+      // Check for pending approvals
+      await checkPendingApprovals(filteredData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       toast.error('Er is een fout opgetreden bij het laden van de dashboard gegevens');
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkPendingApprovals = async (projectList: any[]) => {
+    const approvals = [];
+    
+    for (const project of projectList) {
+      if (project.status?.toLowerCase() === 'productie' && project.distributors?.length > 0) {
+        try {
+          const firstDistributorId = project.distributors[0].id;
+          const testData = await dataService.getTestData(firstDistributorId);
+          const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+          
+          if (approvalRecord && approvalRecord.data.approvalData) {
+            const approvalData = approvalRecord.data.approvalData;
+            
+            if (approvalData.reviewedAt) {
+              approvals.push({
+                project,
+                status: approvalData.overallApproval ? 'approved' : 'declined',
+                reviewedBy: approvalData.reviewedBy,
+                reviewedAt: approvalData.reviewedAt
+              });
+            } else if (approvalData.status === 'submitted') {
+              approvals.push({
+                project,
+                status: 'submitted',
+                submittedBy: approvalData.submittedBy,
+                submittedAt: approvalData.submittedAt
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error checking approval for project:', project.project_number, error);
+        }
+      }
+    }
+    
+    setPendingApprovals(approvals);
   };
 
   // Get current user ID from localStorage
@@ -584,6 +626,74 @@ const Dashboard = () => {
         projectLocks={projectLocks}
         currentUserId={currentUser?.id || ''}
       />
+
+      {/* Approval Status Alerts */}
+      {pendingApprovals.length > 0 && (
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-orange-500/20 rounded-lg">
+              <CheckCircle2 size={20} className="text-orange-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-orange-400">Pre-Testing Goedkeuringen</h2>
+          </div>
+          
+          <div className="space-y-3">
+            {pendingApprovals.map((approval, index) => (
+              <div 
+                key={index}
+                className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                  approval.status === 'approved' ? 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20' :
+                  approval.status === 'declined' ? 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20' :
+                  'bg-yellow-500/10 border-yellow-500/20 hover:bg-yellow-500/20'
+                }`}
+                onClick={() => navigate(`/project/${approval.project.id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className={`text-2xl ${
+                      approval.status === 'approved' ? 'text-green-400' :
+                      approval.status === 'declined' ? 'text-red-400' :
+                      'text-yellow-400'
+                    }`}>
+                      {approval.status === 'approved' ? '✅' :
+                       approval.status === 'declined' ? '❌' : '⏳'}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-white">
+                        Project {approval.project.project_number}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        {approval.status === 'approved' ? 
+                          `Goedgekeurd door ${approval.reviewedBy}` :
+                         approval.status === 'declined' ?
+                          `Afgekeurd door ${approval.reviewedBy} - Aanpassingen vereist` :
+                          `Ingediend door ${approval.submittedBy} - Wacht op beoordeling`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`px-3 py-1 rounded-full text-sm ${
+                      approval.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                      approval.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {approval.status === 'approved' ? 'Goedgekeurd' :
+                       approval.status === 'declined' ? 'Afgekeurd' :
+                       'Wacht op beoordeling'}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {approval.reviewedAt ? 
+                        new Date(approval.reviewedAt).toLocaleDateString('nl-NL') :
+                        approval.submittedAt ?
+                        new Date(approval.submittedAt).toLocaleDateString('nl-NL') : ''}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
