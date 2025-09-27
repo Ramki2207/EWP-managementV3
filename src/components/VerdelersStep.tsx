@@ -635,7 +635,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           >
                             <Eye size={16} className="text-gray-400 group-hover:text-blue-400" />
                           </button>
-                        </div>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
