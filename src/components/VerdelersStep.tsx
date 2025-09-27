@@ -5,7 +5,6 @@ import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
-import VerdelerVanaf630Test from './VerdelerVanaf630Test';
 import PrintLabel from './PrintLabel';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
@@ -625,8 +624,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                                verdeler_id: verdeler.distributorId || '',
-                                project_number: projectData.projectNumber || ''
+                          <button
+                            onClick={(e) => {
                               e.stopPropagation();
                               handleVerdelerClick(verdeler);
                             }}
@@ -786,13 +785,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 {/* Access Codes Display */}
                 {(() => {
                   const verdelerCodes = getVerdelerAccessCodes(selectedVerdeler.distributorId);
-                        <VerdelerVanaf630Test
-                          verdeler={verdeler}
-                          projectNumber={projectData?.project_number || projectData?.projectNumber || 'Unknown'}
-                          onComplete={(testData) => {
-                            console.log('Verdeler vanaf 630 test completed:', testData);
-                          }}
-                        />
                   
                   return verdelerCodes.length > 0 ? (
                     <div className="bg-[#2A303C] p-6 rounded-lg">
