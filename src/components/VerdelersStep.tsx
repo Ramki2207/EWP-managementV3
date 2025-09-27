@@ -5,7 +5,7 @@ import VerdelerTesting from './VerdelerTesting';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
-import PrintLabel from './PrintLabel';
+import VerdelerVanaf630Test from './VerdelerVanaf630Test';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
