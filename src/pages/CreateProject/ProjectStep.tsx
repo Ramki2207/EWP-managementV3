@@ -441,6 +441,45 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           </div>
         </div>
 
+        {/* Contact Person Selection */}
+        {projectData.client && (
+          <div>
+            <label className="block text-sm text-gray-400 mb-2">Contactpersoon</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <select
+                className="input-field pl-10"
+                value={projectData.contactPerson || ''}
+                onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+              >
+                <option value="">Selecteer een contactpersoon</option>
+                {(() => {
+                  const selectedClient = clients.find(c => c.name === projectData.client);
+                  return selectedClient?.contacts?.map((contact: any) => (
+                    <option key={contact.id} value={`${contact.first_name} ${contact.last_name}`}>
+                      {contact.first_name} {contact.last_name}
+                      {contact.department && ` (${contact.department})`}
+                      {contact.email && ` - ${contact.email}`}
+                    </option>
+                  )) || [];
+                })()}
+              </select>
+            </div>
+            {(() => {
+              const selectedClient = clients.find(c => c.name === projectData.client);
+              const contactCount = selectedClient?.contacts?.length || 0;
+              return contactCount === 0 ? (
+                <p className="text-xs text-yellow-400 mt-1">
+                  ⚠️ Deze klant heeft nog geen contactpersonen
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  {contactCount} contactpersoon{contactCount !== 1 ? 'en' : ''} beschikbaar
+                </p>
+              );
+            })()}
+          </div>
+        )}
         <div>
           <label className="block text-sm text-gray-400 mb-2">Status</label>
           <select
