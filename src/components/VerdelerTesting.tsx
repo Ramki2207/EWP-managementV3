@@ -714,7 +714,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
         title="Verdeler testen"
       >
         <CheckSquare size={16} />
-        <span>Verdeler testen</span>
+        <span>Verdeler tot 630</span>
         {testData.workshopChecklist.completed && (
           <div className="ml-2">{getTestStatusBadge()}</div>
         )}
