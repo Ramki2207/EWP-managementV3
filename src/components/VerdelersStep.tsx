@@ -620,10 +620,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         })()}
                       </td>
                       <td className="py-4 text-gray-300">{verdeler.systeem || "-"}</td>
-                              if (!verdeler) {
-                                console.error('Verdeler is undefined');
-                                return;
-                              }
                       <td className="py-4">
                         <span className="text-gray-300">{verdeler.unInV ? `${verdeler.unInV}V` : "-"}</span>
                       </td>
