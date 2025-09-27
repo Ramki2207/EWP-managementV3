@@ -864,6 +864,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       distributorId={selectedVerdeler.id}
                     />
                     
+                    <VerdelerVanaf630Test
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || ''}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
+                      projectId={projectData.id}
+                      distributorId={selectedVerdeler.id}
+                    />
+                    
                     <FATTest
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
