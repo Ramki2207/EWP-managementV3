@@ -526,7 +526,7 @@ const ProjectDetails = () => {
                 { label: "Datum", field: "date", type: "date" },
                 { label: "Locatie", field: "location" },
                 { label: "Klant", field: "client" },
-                { label: "Contactpersoon", field: "contactPerson" },
+                { label: "Contactpersoon", field: "contact_person" },
                 { 
                   label: "Status", 
                   field: "status",
