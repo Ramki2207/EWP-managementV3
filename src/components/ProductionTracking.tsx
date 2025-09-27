@@ -13,7 +13,6 @@ interface Material {
   description: string;
   quantity: number;
   unit: string;
-  price: number;
 }
 
 interface WorkEntry {
@@ -123,8 +122,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       id: uuidv4(),
       description: '',
       quantity: 1,
-      unit: 'stuks',
-      price: 0
+      unit: 'stuks'
     };
     setFormData(prev => ({
       ...prev,
@@ -141,20 +139,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
   const handleMaterialChange = (materialId: string, field: keyof Material, value: any) => {
     console.log('🔧 Material change:', { materialId, field, value });
-    
-    // Special handling for price field to prevent leading zeros
-    if (field === 'price') {
-      const numericValue = parseFloat(value) || 0;
-      console.log('💰 Price change:', { original: value, parsed: numericValue });
-      
-      setFormData(prev => ({
-        ...prev,
-        materials: prev.materials.map(m => 
-          m.id === materialId ? { ...m, [field]: numericValue } : m
-        )
-      }));
-      return;
-    }
     
     // Special handling for quantity field
     if (field === 'quantity') {
@@ -418,18 +402,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
             <div>
               <h3 className="text-sm font-medium text-gray-400">Totale Uren</h3>
               <p className="text-2xl font-bold text-white">{getTotalHours().toFixed(1)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 rounded-xl p-6">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
-              <span className="text-white text-xl font-bold">€</span>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-400">Materiaalkosten</h3>
-              <p className="text-2xl font-bold text-white">€{getTotalMaterialCost().toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -783,7 +755,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                             <Trash2 size={16} />
                           </button>
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           <div className="md:col-span-2">
                             <label className="block text-xs text-gray-400 mb-1">Beschrijving</label>
                             <input
@@ -819,35 +791,9 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                               <option value="set">Set</option>
                             </select>
                           </div>
-                          <div>
-                            <label className="block text-xs text-gray-400 mb-1">Prijs (€)</label>
-                            <input
-                              type="number"
-                              value={material.price}
-                              onChange={(e) => handleMaterialChange(material.id, 'price', e.target.value)}
-                              className="input-field text-sm"
-                              min="0"
-                              step="0.01"
-                              placeholder="49.00"
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-2 text-right">
-                          <span className="text-sm text-gray-400">
-                            Subtotaal: <span className="font-medium text-white">€{(material.quantity * material.price).toFixed(2)}</span>
-                          </span>
                         </div>
                       </div>
                     ))}
-                    
-                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-green-400">Totale materiaalkosten:</span>
-                        <span className="text-xl font-bold text-green-400">
-                          €{formData.materials.reduce((total, m) => total + (m.quantity * m.price), 0).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
