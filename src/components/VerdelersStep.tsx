@@ -6,7 +6,6 @@ import VerdelerVanaf630Test from './VerdelerVanaf630Test';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
-import VerdelerVanaf630Test from './VerdelerVanaf630Test';
 import PrintLabel from './PrintLabel';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
