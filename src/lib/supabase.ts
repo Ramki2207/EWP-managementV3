@@ -152,6 +152,7 @@ export const dataService = {
           date: project.date,
           location: project.location,
           client: project.client,
+          contact_person: project.contactPerson,
           status: project.status,
           description: project.description,
           intake_form: project.intakeForm || project.intakeFormData
