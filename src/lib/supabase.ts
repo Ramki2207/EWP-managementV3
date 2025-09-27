@@ -183,6 +183,7 @@ export const dataService = {
           date: updates.date,
           location: updates.location,
           client: updates.client,
+          contact_person: updates.contact_person,
           status: updates.status,
           description: updates.description,
           intake_form: updates.intakeForm || null
