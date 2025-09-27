@@ -349,13 +349,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     return workEntries.reduce((total, entry) => total + entry.hours, 0);
   };
 
-  const getTotalMaterialCost = () => {
-    return workEntries.reduce((total, entry) => {
-      return total + entry.materials.reduce((materialTotal, material) => 
-        materialTotal + (material.quantity * material.price), 0
-      );
-    }, 0);
-  };
 
   const getWorkerStats = () => {
     const workerHours: { [key: string]: { name: string; hours: number; entries: number } } = {};
@@ -418,17 +411,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 border border-green-500/20 rounded-xl p-6">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl">
-              <span className="text-white text-xl font-bold">€</span>
-            </div>
-            <div>
-              <h3 className="text-sm font-medium text-gray-400">Materiaalkosten</h3>
-              <p className="text-2xl font-bold text-white">€{getTotalMaterialCost().toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
 
         <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
           <div className="flex items-center space-x-4">
@@ -815,35 +797,9 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                               <option value="set">Set</option>
                             </select>
                           </div>
-                          <div>
-                            <label className="block text-xs text-gray-400 mb-1">Prijs (€)</label>
-                            <input
-                              type="number"
-                              value={material.price}
-                              onChange={(e) => handleMaterialChange(material.id, 'price', e.target.value)}
-                              className="input-field text-sm"
-                              min="0"
-                              step="0.01"
-                              placeholder="49.00"
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-2 text-right">
-                          <span className="text-sm text-gray-400">
-                            Subtotaal: <span className="font-medium text-white">€{(material.quantity * material.price).toFixed(2)}</span>
-                          </span>
                         </div>
                       </div>
                     ))}
-                    
-                    <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-green-400">Totale materiaalkosten:</span>
-                        <span className="text-xl font-bold text-green-400">
-                          €{formData.materials.reduce((total, m) => total + (m.quantity * m.price), 0).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
