@@ -176,6 +176,9 @@ export const dataService = {
 
   async updateProject(id: string, updates: any) {
     try {
+      console.log('updateProject called with updates:', updates);
+      console.log('contact_person in updates:', updates.contact_person);
+      
       const { data, error } = await supabase
         .from('projects')
         .update({
@@ -196,6 +199,7 @@ export const dataService = {
         console.error('Database error in updateProject:', error);
         throw error;
       }
+      console.log('Project updated successfully, returned data:', data);
       return data;
     } catch (err) {
       console.error('Network error in updateProject:', err);

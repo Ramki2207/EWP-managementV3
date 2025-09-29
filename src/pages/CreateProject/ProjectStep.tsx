@@ -316,12 +316,16 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       return;
     }
 
+    console.log('Project data being passed to next step:', projectData);
+    console.log('Contact person in project data:', projectData.contact_person);
+
     // Include intake form data if it was filled out
     const finalProjectData = {
       ...projectData,
       intakeForm: showIntakeForm ? intakeFormData : null
     };
     
+    console.log('Final project data with intake form:', finalProjectData);
     onProjectChange(finalProjectData);
     onNext();
   };
