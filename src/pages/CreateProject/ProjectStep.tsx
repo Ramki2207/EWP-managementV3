@@ -346,7 +346,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                 <select
                   className="input-field pl-10"
                   value={projectData.location}
-                  onChange={(e) => handleLocationChange(e.target.value)}
+                 onChange={(e) => handleInputChange('contactPerson', e.target.value)}
                 >
                   <option value="">Selecteer locatie</option>
                   <option value="Leerdam">Leerdam (PM)</option>
