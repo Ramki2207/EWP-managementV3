@@ -449,7 +449,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <select
                 className="input-field pl-10"
-                value={projectData.contactPerson || ''}
+                value={projectData.contact_person || ''}
                 onChange={(e) => handleInputChange('contact_person', e.target.value)}
               >
                 <option value="">Selecteer een contactpersoon</option>
