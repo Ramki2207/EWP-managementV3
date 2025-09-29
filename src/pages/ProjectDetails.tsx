@@ -220,6 +220,7 @@ const ProjectDetails = () => {
         date: editedProject.date,
         location: editedProject.location,
         client: editedProject.client,
+        contact_person: editedProject.contact_person,
         status: editedProject.status,
         description: editedProject.description
       };
