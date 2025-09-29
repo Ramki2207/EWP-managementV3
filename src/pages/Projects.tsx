@@ -493,6 +493,8 @@ const Projects = () => {
         return 'bg-yellow-500/20 text-yellow-400';
       case 'levering':
         return 'bg-green-500/20 text-green-400';
+      case 'gereed voor oplevering':
+        return 'bg-green-500/20 text-green-400';
       case 'opgeleverd':
         return 'bg-green-500/20 text-green-400';
       case 'verloren':

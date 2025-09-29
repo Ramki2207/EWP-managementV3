@@ -494,6 +494,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
             <option value="Productie">Productie</option>
             <option value="Testen">Testen</option>
             <option value="Levering">Levering</option>
+            <option value="Gereed voor oplevering">Gereed voor oplevering</option>
             <option value="Opgeleverd">Opgeleverd</option>
           </select>
         </div>

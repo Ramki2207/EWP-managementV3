@@ -631,6 +631,7 @@ const VerdelerDetails = () => {
                         <option value="In productie">In productie</option>
                         <option value="Testen">Testen</option>
                         <option value="Gereed">Gereed</option>
+                        <option value="Gereed voor oplevering">Gereed voor oplevering</option>
                         <option value="Opgeleverd">Opgeleverd</option>
                       </select>
                     ) : (
