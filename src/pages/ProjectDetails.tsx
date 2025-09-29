@@ -527,7 +527,7 @@ const ProjectDetails = () => {
                 { label: "Datum", field: "date", type: "date" },
                 { label: "Locatie", field: "location" },
                 { label: "Klant", field: "client" },
-               { label: "Contactpersoon", field: "contact_person", debug: true },
+                { label: "Contactpersoon", field: "contact_person" },
                 { 
                   label: "Status", 
                   field: "status",
@@ -562,15 +562,6 @@ const ProjectDetails = () => {
                         />
                       ) : (
                         <input
-                         {field.debug && (
-                           <div className="text-xs text-yellow-400 mb-1">
-                             Debug: {JSON.stringify({ 
-                               current: currentValue, 
-                               project_contact: project?.contact_person,
-                               edited_contact: editedProject?.contact_person 
-                             })}
-                           </div>
-                         )}
                           type={field.type || "text"}
                           className="input-field"
                           value={field.type === "date" && editedProject?.[field.field] 
