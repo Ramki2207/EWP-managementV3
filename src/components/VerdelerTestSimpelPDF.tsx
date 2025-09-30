@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { addProfessionalHeader, addProfessionalFooter, addSectionHeader } from '../lib/pdfUtils';
 
 export const generateVerdelerTestSimpelPDF = async (
   testData: any,
@@ -14,32 +15,22 @@ export const generateVerdelerTestSimpelPDF = async (
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     const margin = 20;
-    let yPos = 20;
+
+    // Add professional header
+    let yPos = addProfessionalHeader(doc);
+    yPos += 5;
 
     // Helper function to add a new page if needed
     const checkPageBreak = (requiredSpace: number = 20) => {
       if (yPos + requiredSpace > pageHeight - margin) {
+        addProfessionalFooter(doc);
         doc.addPage();
-        yPos = margin;
+        yPos = addProfessionalHeader(doc);
+        yPos += 5;
         return true;
       }
       return false;
     };
-
-    // Header with logo area (placeholder)
-    doc.setFillColor(255, 255, 255);
-    doc.rect(pageWidth - 60, 10, 50, 15, 'F');
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text('EWP MIDDEN', pageWidth - 35, 18, { align: 'center' });
-    doc.text('NEDERLAND', pageWidth - 35, 23, { align: 'center' });
-
-    // Title
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    doc.text('Keuringsrapport', margin, yPos);
-    yPos += 15;
 
     // Technical specifications section
     doc.setFontSize(10);
@@ -111,16 +102,11 @@ export const generateVerdelerTestSimpelPDF = async (
     });
 
     // Render each category
-    Object.keys(itemsByCategory).forEach((category) => {
+    for (const category of Object.keys(itemsByCategory)) {
       checkPageBreak(40);
 
       // Category header
-      doc.setFillColor(240, 240, 240);
-      doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 8, 'F');
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text(categoryTitles[category], margin + 2, yPos);
-      yPos += 10;
+      yPos = addSectionHeader(doc, categoryTitles[category], yPos);
 
       // Column headers (only for non-text categories)
       const hasTextItems = itemsByCategory[category].some((item: any) =>
@@ -142,7 +128,8 @@ export const generateVerdelerTestSimpelPDF = async (
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
 
-      itemsByCategory[category].forEach((item: any, index: number) => {
+      for (let index = 0; index < itemsByCategory[category].length; index++) {
+        const item = itemsByCategory[category][index];
         checkPageBreak(15);
 
         const itemY = yPos;
@@ -197,10 +184,10 @@ export const generateVerdelerTestSimpelPDF = async (
           doc.setDrawColor(230, 230, 230);
           doc.line(margin, yPos - 1, pageWidth - margin, yPos - 1);
         }
-      });
+      }
 
       yPos += 8;
-    });
+    }
 
     // Legend for status codes (add on new page if needed)
     checkPageBreak(30);
@@ -260,12 +247,8 @@ export const generateVerdelerTestSimpelPDF = async (
     doc.text('Datum', margin, yPos);
     doc.text(`: ${signatureDate}`, margin + 40, yPos);
 
-    // Footer on last page
-    doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text('Versie: 1.5e', margin, pageHeight - 10);
-    doc.text('Tekeningnummer: WB2 FRM411', pageWidth / 2, pageHeight - 10, { align: 'center' });
-    doc.text(`Pagina ${doc.internal.pages.length - 1}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+    // Add footer to last page
+    addProfessionalFooter(doc);
 
     // Generate the PDF blob
     const pdfBlob = doc.output('blob');

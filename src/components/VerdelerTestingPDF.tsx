@@ -2,6 +2,7 @@ import React from 'react';
 import jsPDF from 'jspdf';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { addProfessionalHeader, addProfessionalFooter } from '../lib/pdfUtils';
 
 interface VerdelerTestingPDFProps {
   testData: any;
@@ -20,30 +21,10 @@ export const generateVerdelerTestingPDF = async (
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    let yPosition = 20;
 
-    // Add the EWP header image
-    try {
-      const headerImg = new Image();
-      headerImg.crossOrigin = 'anonymous';
-      headerImg.onload = () => {
-        try {
-          // Add the header image at the top
-          const imgWidth = pageWidth - 40; // Full width minus margins
-          const imgHeight = 30; // Fixed height for header
-          pdf.addImage(headerImg, 'PNG', 20, yPosition, imgWidth, imgHeight);
-        } catch (imgError) {
-          console.warn('Could not add header image to PDF:', imgError);
-        }
-      };
-      headerImg.onerror = () => console.warn('Header image failed to load');
-      headerImg.src = '/src/assets/Scherm%C2%ADafbeelding%202025-09-17%20om%2016.25.21.png';
-    } catch (headerError) {
-      console.warn('Header image loading error:', headerError);
-    }
-
-    // Move content down to account for header
-    yPosition = 60;
+    // Add professional header
+    let yPosition = addProfessionalHeader(pdf);
+    yPosition += 5;
 
     // Project Information
     pdf.setFontSize(12);
@@ -111,8 +92,10 @@ export const generateVerdelerTestingPDF = async (
         Object.keys(itemsByCategory).forEach((category) => {
           // Category header
           if (yPosition > pageHeight - 40) {
+            addProfessionalFooter(pdf);
             pdf.addPage();
-            yPosition = 20;
+            yPosition = addProfessionalHeader(pdf);
+            yPosition += 5;
           }
 
           pdf.setFontSize(10);
@@ -122,9 +105,11 @@ export const generateVerdelerTestingPDF = async (
 
           // Add items for this category
           itemsByCategory[category].forEach((item: any) => {
-            if (yPosition > pageHeight - 20) {
+            if (yPosition > pageHeight - 30) {
+              addProfessionalFooter(pdf);
               pdf.addPage();
-              yPosition = 20;
+              yPosition = addProfessionalHeader(pdf);
+              yPosition += 5;
             }
 
             pdf.setFontSize(8);
@@ -175,13 +160,17 @@ export const generateVerdelerTestingPDF = async (
       
       // Check if we need a new page
       if (yPosition > pageHeight - 100) {
+        addProfessionalFooter(pdf);
         pdf.addPage();
-        yPosition = 20;
+        yPosition = addProfessionalHeader(pdf);
+        yPosition += 5;
       }
       
-      pdf.setFontSize(14);
+      pdf.setFontSize(12);
       pdf.setTextColor(0, 0, 0);
-      pdf.text('Keuringsrapport', 20, yPosition);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Keuringsrapport Details', 20, yPosition);
+      pdf.setFont('helvetica', 'normal');
       yPosition += 10;
       
       pdf.setFontSize(10);
@@ -201,9 +190,11 @@ export const generateVerdelerTestingPDF = async (
 
       // Inspection items
       inspectionReport.items.forEach((item: any) => {
-        if (yPosition > pageHeight - 20) {
+        if (yPosition > pageHeight - 30) {
+          addProfessionalFooter(pdf);
           pdf.addPage();
-          yPosition = 20;
+          yPosition = addProfessionalHeader(pdf);
+          yPosition += 5;
         }
 
         pdf.setFontSize(9);
@@ -256,10 +247,8 @@ export const generateVerdelerTestingPDF = async (
     }
 
     // Footer
-    pdf.setFontSize(8);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text('© 2025 EWP Paneelbouw B.V.', 20, pageHeight - 10);
-    pdf.text(`Gegenereerd op: ${new Date().toLocaleString('nl-NL')}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+    // Add professional footer to last page
+    addProfessionalFooter(pdf);
 
     // Generate PDF as base64
     const pdfBase64 = pdf.output('datauristring');
