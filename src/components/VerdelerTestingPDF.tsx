@@ -89,12 +89,12 @@ export const generateVerdelerTestingPDF = async (
         yPosition += 8;
 
         // Add each category
-        Object.keys(itemsByCategory).forEach((category) => {
+        for (const category of Object.keys(itemsByCategory)) {
           // Category header
           if (yPosition > pageHeight - 40) {
             addProfessionalFooter(pdf);
             pdf.addPage();
-            yPosition = addProfessionalHeader(pdf);
+            yPosition = await addProfessionalHeader(pdf);
             yPosition += 5;
           }
 
@@ -104,11 +104,11 @@ export const generateVerdelerTestingPDF = async (
           yPosition += 8;
 
           // Add items for this category
-          itemsByCategory[category].forEach((item: any) => {
+          for (const item of itemsByCategory[category]) {
             if (yPosition > pageHeight - 30) {
               addProfessionalFooter(pdf);
               pdf.addPage();
-              yPosition = addProfessionalHeader(pdf);
+              yPosition = await addProfessionalHeader(pdf);
               yPosition += 5;
             }
 
@@ -147,10 +147,10 @@ export const generateVerdelerTestingPDF = async (
             }
             
             yPosition += Math.max(descriptionLines.length * 3, 6);
-          });
-          
+          }
+
           yPosition += 5;
-        });
+        }
       }
     }
 
@@ -189,11 +189,11 @@ export const generateVerdelerTestingPDF = async (
       yPosition += 8;
 
       // Inspection items
-      inspectionReport.items.forEach((item: any) => {
+      for (const item of inspectionReport.items) {
         if (yPosition > pageHeight - 30) {
           addProfessionalFooter(pdf);
           pdf.addPage();
-          yPosition = addProfessionalHeader(pdf);
+          yPosition = await addProfessionalHeader(pdf);
           yPosition += 5;
         }
 
@@ -213,7 +213,7 @@ export const generateVerdelerTestingPDF = async (
         }
         
         yPosition += Math.max(descriptionLines.length * 4, 8);
-      });
+      }
 
       // Final result
       yPosition += 10;

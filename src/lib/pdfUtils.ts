@@ -1,11 +1,50 @@
 import jsPDF from 'jspdf';
 import ewpLogo from '../assets/ewp2-logo.png';
 
+// Cache for the logo image
+let logoImageCache: string | null = null;
+
+/**
+ * Load and cache the EWP logo as base64
+ */
+const loadLogoImage = (): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    if (logoImageCache) {
+      resolve(logoImageCache);
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          logoImageCache = canvas.toDataURL('image/png');
+          resolve(logoImageCache);
+        } else {
+          reject(new Error('Could not get canvas context'));
+        }
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    img.onerror = () => reject(new Error('Failed to load logo'));
+    img.src = ewpLogo;
+  });
+};
+
 /**
  * Adds the professional header with EWP logo and "Keuringsrapport" title
  * to the current page of a PDF document
  */
-export const addProfessionalHeader = (doc: jsPDF): number => {
+export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
   const pageWidth = doc.internal.pageSize.width;
   const margin = 20;
 
@@ -22,13 +61,14 @@ export const addProfessionalHeader = (doc: jsPDF): number => {
 
   // Add EWP logo on the right side
   try {
+    const logoData = await loadLogoImage();
     const logoX = pageWidth - 80;
     const logoY = 10;
     const logoWidth = 60;
     const logoHeight = 20;
 
     // Add the logo image
-    doc.addImage(ewpLogo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
   } catch (error) {
     console.warn('Could not add logo to PDF:', error);
     // Fallback to text if logo fails to load
@@ -74,19 +114,19 @@ export const addProfessionalFooter = (
 /**
  * Checks if a new page is needed and adds header/footer if page break occurs
  */
-export const checkPageBreak = (
+export const checkPageBreak = async (
   doc: jsPDF,
   yPos: number,
   requiredSpace: number = 20,
   addHeader: boolean = true
-): number => {
+): Promise<number> => {
   const pageHeight = doc.internal.pageSize.height;
   const margin = 20;
 
   if (yPos + requiredSpace > pageHeight - margin) {
     doc.addPage();
     if (addHeader) {
-      return addProfessionalHeader(doc);
+      return await addProfessionalHeader(doc);
     }
     return margin;
   }

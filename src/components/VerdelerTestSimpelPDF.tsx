@@ -17,15 +17,15 @@ export const generateVerdelerTestSimpelPDF = async (
     const margin = 20;
 
     // Add professional header
-    let yPos = addProfessionalHeader(doc);
+    let yPos = await addProfessionalHeader(doc);
     yPos += 5;
 
     // Helper function to add a new page if needed
-    const checkPageBreak = (requiredSpace: number = 20) => {
+    const checkPageBreak = async (requiredSpace: number = 20) => {
       if (yPos + requiredSpace > pageHeight - margin) {
         addProfessionalFooter(doc);
         doc.addPage();
-        yPos = addProfessionalHeader(doc);
+        yPos = await addProfessionalHeader(doc);
         yPos += 5;
         return true;
       }
@@ -103,7 +103,7 @@ export const generateVerdelerTestSimpelPDF = async (
 
     // Render each category
     for (const category of Object.keys(itemsByCategory)) {
-      checkPageBreak(40);
+      await checkPageBreak(40);
 
       // Category header
       yPos = addSectionHeader(doc, categoryTitles[category], yPos);
@@ -130,7 +130,7 @@ export const generateVerdelerTestSimpelPDF = async (
 
       for (let index = 0; index < itemsByCategory[category].length; index++) {
         const item = itemsByCategory[category][index];
-        checkPageBreak(15);
+        await checkPageBreak(15);
 
         const itemY = yPos;
 
@@ -190,7 +190,7 @@ export const generateVerdelerTestSimpelPDF = async (
     }
 
     // Legend for status codes (add on new page if needed)
-    checkPageBreak(30);
+    await checkPageBreak(30);
     yPos += 5;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
@@ -205,7 +205,7 @@ export const generateVerdelerTestSimpelPDF = async (
     yPos += 20;
 
     // Signatures section
-    checkPageBreak(40);
+    await checkPageBreak(40);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
     doc.text('Handtekening voor akkoord', margin, yPos);
