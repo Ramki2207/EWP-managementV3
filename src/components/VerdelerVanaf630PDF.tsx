@@ -2,6 +2,7 @@ import React from 'react';
 import jsPDF from 'jspdf';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { addProfessionalHeader, addProfessionalFooter } from '../lib/pdfUtils';
 
 interface VerdelerVanaf630PDFProps {
   testData: any;
@@ -20,35 +21,10 @@ export const generateVerdelerVanaf630PDF = async (
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    let yPosition = 20;
 
-    // Add the EWP header
-    try {
-      const headerImg = new Image();
-      headerImg.crossOrigin = 'anonymous';
-      headerImg.onload = () => {
-        try {
-          const imgWidth = pageWidth - 40;
-          const imgHeight = 30;
-          pdf.addImage(headerImg, 'PNG', 20, yPosition, imgWidth, imgHeight);
-        } catch (imgError) {
-          console.warn('Could not add header image to PDF:', imgError);
-        }
-      };
-      headerImg.onerror = () => console.warn('Header image failed to load');
-      headerImg.src = '/src/assets/Scherm%C2%ADafbeelding%202025-09-17%20om%2016.25.21.png';
-    } catch (headerError) {
-      console.warn('Header image loading error:', headerError);
-    }
-
-    // Move content down to account for header
-    yPosition = 60;
-
-    // Title
-    pdf.setFontSize(16);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text('Keuringsrapport verdeler vanaf 630 A', 20, yPosition);
-    yPosition += 15;
+    // Add professional header
+    let yPosition = await addProfessionalHeader(pdf);
+    yPosition += 10;
 
     // Project Information
     pdf.setFontSize(10);

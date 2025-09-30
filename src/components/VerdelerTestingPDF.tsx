@@ -23,7 +23,7 @@ export const generateVerdelerTestingPDF = async (
     const pageHeight = pdf.internal.pageSize.getHeight();
 
     // Add professional header
-    let yPosition = addProfessionalHeader(pdf);
+    let yPosition = await addProfessionalHeader(pdf);
     yPosition += 5;
 
     // Project Information
@@ -162,7 +162,7 @@ export const generateVerdelerTestingPDF = async (
       if (yPosition > pageHeight - 100) {
         addProfessionalFooter(pdf);
         pdf.addPage();
-        yPosition = addProfessionalHeader(pdf);
+        yPosition = await addProfessionalHeader(pdf);
         yPosition += 5;
       }
       
