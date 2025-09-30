@@ -340,7 +340,9 @@ export const dataService = {
         type_nr_hs: distributor.typeNrHs,
         fabrikant: distributor.fabrikant,
         profile_photo: profilePhotoUrl,
-        status: distributor.status
+        status: distributor.status,
+        toegewezen_monteur: distributor.toegewezenMonteur || null,
+        gewenste_lever_datum: distributor.gewensteLeverDatum || null
       };
       
       console.log('Database data being inserted:', dbData);
@@ -348,6 +350,7 @@ export const dataService = {
       console.log('  - distributor_id:', dbData.distributor_id);
       console.log('  - kast_naam:', dbData.kast_naam);
       console.log('  - project_id:', dbData.project_id);
+      console.log('  - toegewezen_monteur:', dbData.toegewezen_monteur);
       
       // Validate required fields before database insert
       if (!dbData.distributor_id || dbData.distributor_id.trim() === '') {

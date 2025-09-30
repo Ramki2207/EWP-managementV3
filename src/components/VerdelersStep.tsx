@@ -293,6 +293,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
 
     try {
+      console.log('🚀 SAVE: Saving verdeler with data:', verdelerData);
+      console.log('🚀 SAVE: Monteur being saved:', verdelerData.toegewezenMonteur);
+      
       let profilePhotoUrl = '';
       
       if (verdelerData.profilePhoto) {
