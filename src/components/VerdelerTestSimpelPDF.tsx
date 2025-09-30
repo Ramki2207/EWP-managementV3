@@ -16,24 +16,21 @@ export const generateVerdelerTestSimpelPDF = async (
     const pageHeight = doc.internal.pageSize.height;
     const margin = 20;
 
-    // Add professional header
     let yPos = await addProfessionalHeader(doc);
-    yPos += 5;
+    yPos += 10;
 
-    // Helper function to add a new page if needed
-    const checkPageBreak = async (requiredSpace: number = 20) => {
-      if (yPos + requiredSpace > pageHeight - margin) {
+    const checkPageBreak = async (requiredSpace: number = 25) => {
+      if (yPos + requiredSpace > pageHeight - 30) {
         addProfessionalFooter(doc);
         doc.addPage();
         yPos = await addProfessionalHeader(doc);
-        yPos += 5;
+        yPos += 10;
         return true;
       }
       return false;
     };
 
-    // Technical specifications section
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
 
     const specs = [
@@ -48,51 +45,49 @@ export const generateVerdelerTestSimpelPDF = async (
       doc.text(`${spec.label}`, margin, yPos);
       doc.text(`: ${spec.value}`, margin + 30, yPos);
       doc.text(spec.unit, margin + 80, yPos);
-      yPos += 6;
+      yPos += 5;
     });
 
-    // Un-hulp section
-    yPos += 4;
+    yPos += 3;
     doc.text('Un-hulp:', margin, yPos);
-    yPos += 6;
+    yPos += 5;
 
     const hulp230 = testData.verdelerTestSimpel.unHulp230 ? '[X]' : '[ ]';
     const hulp24 = testData.verdelerTestSimpel.unHulp24 ? '[X]' : '[ ]';
 
-    doc.text(`${hulp230} 230 [ Vac ]`, margin + 10, yPos);
+    doc.text(`        ${hulp230} 230 [ Vac ]`, margin, yPos);
     doc.text('Un van hulpstroombanen', margin + 50, yPos);
-    yPos += 6;
-    doc.text(`${hulp24} 24 [ Vac ]`, margin + 10, yPos);
+    yPos += 5;
+    doc.text(`        ${hulp24} 24 [ Vac ]`, margin, yPos);
     doc.text('( indien van toepassing )', margin + 50, yPos);
-    yPos += 8;
+    yPos += 7;
 
     if (testData.verdelerTestSimpel.afwijkend) {
       doc.text(`Afwijkend: ${testData.verdelerTestSimpel.afwijkend} [ V ]`, margin, yPos);
-      yPos += 8;
+      yPos += 7;
     }
 
-    // Keuringsprocedure
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
     doc.text('Keuringsprocedure', margin, yPos);
-    yPos += 6;
+    yPos += 5;
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
     doc.text('Samenstelling: NEN-EN-IEC 61439 -1-2 (EN 61439 / IEC 439) / NEN 1010', margin, yPos);
-    yPos += 12;
+    yPos += 10;
 
-    // Category titles mapping
     const categoryTitles: Record<string, string> = {
-      goederenstroom: '1  Goederenstroom',
-      verdeelblok: '2  Verdeelblok 80, 100, 125 en 160 A',
-      componenten: '3  Componenten',
-      interne_bedrading: '4  Interne bedrading',
-      montageframe: '5  Montageframe',
-      beproeving: '6  Beproeving',
-      eindafwerking: '7  Eindafwerking',
-      eindcontrole: '8  Eindcontrole',
-      diversen: '9  Diversen'
+      goederenstroom: '1 Goederenstroom',
+      verdeelblok: '2 Verdeelblok 80, 100, 125 en 160 A',
+      componenten: '3 Componenten',
+      interne_bedrading: '4 Interne bedrading',
+      montageframe: '5 Montageframe',
+      beproeving: '6 Beproeving',
+      eindafwerking: '7 Eindafwerking',
+      eindcontrole: '8 Eindcontrole',
+      diversen: '9 Diversen'
     };
 
-    // Group items by category
     const itemsByCategory: Record<string, any[]> = {};
     testData.verdelerTestSimpel.items.forEach((item: any) => {
       if (!itemsByCategory[item.category]) {
@@ -101,160 +96,126 @@ export const generateVerdelerTestSimpelPDF = async (
       itemsByCategory[item.category].push(item);
     });
 
-    // Render each category
     for (const category of Object.keys(itemsByCategory)) {
-      await checkPageBreak(40);
+      await checkPageBreak(35);
 
-      // Category header
       yPos = addSectionHeader(doc, categoryTitles[category], yPos);
+      yPos += 2;
 
-      // Column headers (only for non-text categories)
-      const hasTextItems = itemsByCategory[category].some((item: any) =>
-        item.options && item.options.includes('text')
-      );
-
-      if (!hasTextItems) {
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        const headerY = yPos;
-        yPos += 6;
-
-        // Draw header line
-        doc.setDrawColor(200, 200, 200);
-        doc.line(margin, yPos - 1, pageWidth - margin, yPos - 1);
-      }
-
-      // Render items
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
 
       for (let index = 0; index < itemsByCategory[category].length; index++) {
         const item = itemsByCategory[category][index];
-        await checkPageBreak(15);
+        await checkPageBreak(20);
 
         const itemY = yPos;
+        const descWidth = 85;
 
-        // Field number
-        doc.text(item.field, margin, itemY);
+        doc.text(item.field, margin + 2, itemY);
 
-        // Description (wrapped if too long)
-        const maxDescWidth = 90;
-        const descLines = doc.splitTextToSize(item.description, maxDescWidth);
+        const descLines = doc.splitTextToSize(item.description, descWidth);
         doc.text(descLines, margin + 15, itemY);
 
-        // Status checkboxes
         if (item.options && item.options.includes('text')) {
-          // Text field - show notes
           if (item.notes) {
-            const notesLines = doc.splitTextToSize(item.notes, 60);
-            doc.text(notesLines, margin + 110, itemY);
+            const notesLines = doc.splitTextToSize(item.notes, 45);
+            doc.text(notesLines, margin + 105, itemY);
           }
         } else {
-          // Checkbox options
-          const statusX = margin + 110;
+          const statusX = margin + 105;
           const boxSize = 3;
-          const spacing = 15;
+          const spacing = 12;
 
           item.options.forEach((option: string, optIndex: number) => {
             const boxX = statusX + (optIndex * spacing);
+            doc.setDrawColor(100, 100, 100);
+            doc.setLineWidth(0.3);
+            doc.rect(boxX, itemY - 2.5, boxSize, boxSize);
 
-            // Draw checkbox
-            doc.rect(boxX, itemY - 3, boxSize, boxSize);
-
-            // Fill if selected
             if (item.passed === option) {
               doc.setFillColor(0, 0, 0);
-              doc.rect(boxX + 0.5, itemY - 2.5, boxSize - 1, boxSize - 1, 'F');
+              doc.rect(boxX + 0.4, itemY - 2.1, boxSize - 0.8, boxSize - 0.8, 'F');
             }
           });
 
-          // Notes column
           if (item.notes) {
-            const notesText = doc.splitTextToSize(item.notes, 30);
-            doc.text(notesText, pageWidth - margin - 35, itemY);
+            const notesText = doc.splitTextToSize(item.notes, 35);
+            doc.text(notesText, margin + 145, itemY);
           }
         }
 
-        // Calculate line height based on wrapped text
-        const lineHeight = Math.max(descLines.length * 4, 8);
+        const lineHeight = Math.max(descLines.length * 3.5, 6);
         yPos += lineHeight;
 
-        // Draw separator line
         if (index < itemsByCategory[category].length - 1) {
-          doc.setDrawColor(230, 230, 230);
-          doc.line(margin, yPos - 1, pageWidth - margin, yPos - 1);
+          doc.setDrawColor(240, 240, 240);
+          doc.setLineWidth(0.1);
+          doc.line(margin + 12, yPos, pageWidth - margin, yPos);
+          yPos += 1;
         }
       }
 
-      yPos += 8;
+      yPos += 5;
     }
 
-    // Legend for status codes (add on new page if needed)
-    await checkPageBreak(30);
-    yPos += 5;
+    await checkPageBreak(25);
+    yPos += 3;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Legenda status:', margin, yPos);
-    yPos += 6;
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
+    doc.text('Legenda status:', margin, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
     doc.text('akkoord = Goedgekeurd', margin + 5, yPos);
-    doc.text('n.v.t. = Niet van toepassing', margin + 5, yPos + 4);
-    doc.text('fout = Fout geconstateerd', margin + 5, yPos + 8);
-    doc.text('hersteld = Fout hersteld', margin + 5, yPos + 12);
-    yPos += 20;
+    doc.text('n.v.t. = Niet van toepassing', margin + 5, yPos + 3.5);
+    doc.text('fout = Fout geconstateerd', margin + 5, yPos + 7);
+    doc.text('hersteld = Fout hersteld', margin + 5, yPos + 10.5);
+    yPos += 17;
 
-    // Signatures section
-    await checkPageBreak(40);
+    await checkPageBreak(35);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.text('Handtekening voor akkoord', margin, yPos);
-    yPos += 10;
+    yPos += 8;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
 
     const signatureDate = new Date(testData.verdelerTestSimpel.date).toLocaleDateString('nl-NL');
 
-    // Monteur
     doc.text('Monteur', margin, yPos);
     doc.text(`: ${testData.verdelerTestSimpel.monteur || '...................................................'}`, margin + 40, yPos);
-    yPos += 6;
+    yPos += 5;
     doc.text('Datum', margin, yPos);
     doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 12;
+    yPos += 10;
 
-    // Tester
     doc.text('Tester', margin, yPos);
     doc.text(`: ${testData.verdelerTestSimpel.testedBy || '...................................................'}`, margin + 40, yPos);
-    yPos += 6;
+    yPos += 5;
     doc.text('Datum', margin, yPos);
     doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 12;
+    yPos += 10;
 
-    // Beproevingen
     doc.text('Beproevingen', margin, yPos);
     doc.text(`: ${testData.verdelerTestSimpel.beproevingen || 'Ja'}`, margin + 40, yPos);
-    yPos += 6;
+    yPos += 5;
     doc.text('Datum', margin, yPos);
     doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 12;
+    yPos += 10;
 
-    // Eindcontroleur
     doc.text('Eindcontroleur', margin, yPos);
     doc.text(`: ${testData.verdelerTestSimpel.eindcontroleur || '...................................................'}`, margin + 40, yPos);
-    yPos += 6;
+    yPos += 5;
     doc.text('Datum', margin, yPos);
     doc.text(`: ${signatureDate}`, margin + 40, yPos);
 
-    // Add footer to last page
     addProfessionalFooter(doc);
 
-    // Generate the PDF as base64
     const pdfBase64 = doc.output('datauristring');
     const fileName = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL').replace(/\//g, '-')}.pdf`;
 
-    // Upload to Supabase if projectId and distributorId are provided
     if (projectId && distributorId) {
       try {
         await dataService.createDocument({
@@ -272,7 +233,6 @@ export const generateVerdelerTestSimpelPDF = async (
       } catch (uploadError) {
         console.error('Error uploading PDF:', uploadError);
         toast.error('PDF kon niet worden opgeslagen naar de server');
-        // Fallback to download
         const pdfBlob = doc.output('blob');
         const url = URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
@@ -282,7 +242,6 @@ export const generateVerdelerTestSimpelPDF = async (
         URL.revokeObjectURL(url);
       }
     } else {
-      // Download locally if no project/distributor context
       const pdfBlob = doc.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');

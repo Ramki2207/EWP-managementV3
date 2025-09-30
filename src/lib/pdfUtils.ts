@@ -62,12 +62,12 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
   // Add EWP logo on the right side
   try {
     const logoData = await loadLogoImage();
-    const logoX = pageWidth - 80;
-    const logoY = 10;
-    const logoWidth = 60;
-    const logoHeight = 20;
+    const logoX = pageWidth - 75;
+    const logoY = 12;
+    const logoWidth = 55;
+    const logoHeight = 15;
 
-    // Add the logo image
+    // Add the logo image with proper aspect ratio
     doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
   } catch (error) {
     console.warn('Could not add logo to PDF:', error);
