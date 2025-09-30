@@ -19,15 +19,14 @@ export const generateVerdelerTestSimpelPDF = async (
     let yPos = await addProfessionalHeader(doc);
     yPos += 10;
 
-    const checkPageBreak = async (requiredSpace: number = 25) => {
+    const checkPageBreak = async (requiredSpace: number = 25): Promise<number> => {
       if (yPos + requiredSpace > pageHeight - 30) {
         addProfessionalFooter(doc);
         doc.addPage();
-        yPos = await addProfessionalHeader(doc);
-        yPos += 10;
-        return true;
+        const newY = await addProfessionalHeader(doc);
+        return newY + 10;
       }
-      return false;
+      return yPos;
     };
 
     doc.setFontSize(9);
@@ -41,12 +40,12 @@ export const generateVerdelerTestSimpelPDF = async (
       { label: 'F', value: testData.verdelerTestSimpel.frequency || '50', unit: '[ Hz ]' },
     ];
 
-    specs.forEach(spec => {
+    for (const spec of specs) {
       doc.text(`${spec.label}`, margin, yPos);
       doc.text(`: ${spec.value}`, margin + 30, yPos);
       doc.text(spec.unit, margin + 80, yPos);
       yPos += 5;
-    });
+    }
 
     yPos += 3;
     doc.text('Un-hulp:', margin, yPos);
@@ -97,56 +96,57 @@ export const generateVerdelerTestSimpelPDF = async (
     });
 
     for (const category of Object.keys(itemsByCategory)) {
-      await checkPageBreak(35);
+      yPos = await checkPageBreak(35);
 
-      yPos = addSectionHeader(doc, categoryTitles[category], yPos);
-      yPos += 2;
+      const sectionY = addSectionHeader(doc, categoryTitles[category], yPos);
+      yPos = sectionY + 3;
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
 
       for (let index = 0; index < itemsByCategory[category].length; index++) {
         const item = itemsByCategory[category][index];
-        await checkPageBreak(20);
+        yPos = await checkPageBreak(18);
 
-        const itemY = yPos;
+        const currentY = yPos;
         const descWidth = 85;
 
-        doc.text(item.field, margin + 2, itemY);
+        doc.text(item.field, margin + 2, currentY);
 
         const descLines = doc.splitTextToSize(item.description, descWidth);
-        doc.text(descLines, margin + 15, itemY);
+        doc.text(descLines, margin + 15, currentY);
 
         if (item.options && item.options.includes('text')) {
           if (item.notes) {
             const notesLines = doc.splitTextToSize(item.notes, 45);
-            doc.text(notesLines, margin + 105, itemY);
+            doc.text(notesLines, margin + 105, currentY);
           }
         } else {
           const statusX = margin + 105;
           const boxSize = 3;
           const spacing = 12;
 
-          item.options.forEach((option: string, optIndex: number) => {
+          for (let optIndex = 0; optIndex < item.options.length; optIndex++) {
+            const option = item.options[optIndex];
             const boxX = statusX + (optIndex * spacing);
             doc.setDrawColor(100, 100, 100);
             doc.setLineWidth(0.3);
-            doc.rect(boxX, itemY - 2.5, boxSize, boxSize);
+            doc.rect(boxX, currentY - 2.5, boxSize, boxSize);
 
             if (item.passed === option) {
               doc.setFillColor(0, 0, 0);
-              doc.rect(boxX + 0.4, itemY - 2.1, boxSize - 0.8, boxSize - 0.8, 'F');
+              doc.rect(boxX + 0.4, currentY - 2.1, boxSize - 0.8, boxSize - 0.8, 'F');
             }
-          });
+          }
 
           if (item.notes) {
             const notesText = doc.splitTextToSize(item.notes, 35);
-            doc.text(notesText, margin + 145, itemY);
+            doc.text(notesText, margin + 145, currentY);
           }
         }
 
         const lineHeight = Math.max(descLines.length * 3.5, 6);
-        yPos += lineHeight;
+        yPos = currentY + lineHeight;
 
         if (index < itemsByCategory[category].length - 1) {
           doc.setDrawColor(240, 240, 240);
@@ -159,7 +159,7 @@ export const generateVerdelerTestSimpelPDF = async (
       yPos += 5;
     }
 
-    await checkPageBreak(25);
+    yPos = await checkPageBreak(25);
     yPos += 3;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -168,12 +168,15 @@ export const generateVerdelerTestSimpelPDF = async (
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.text('akkoord = Goedgekeurd', margin + 5, yPos);
-    doc.text('n.v.t. = Niet van toepassing', margin + 5, yPos + 3.5);
-    doc.text('fout = Fout geconstateerd', margin + 5, yPos + 7);
-    doc.text('hersteld = Fout hersteld', margin + 5, yPos + 10.5);
-    yPos += 17;
+    yPos += 3.5;
+    doc.text('n.v.t. = Niet van toepassing', margin + 5, yPos);
+    yPos += 3.5;
+    doc.text('fout = Fout geconstateerd', margin + 5, yPos);
+    yPos += 3.5;
+    doc.text('hersteld = Fout hersteld', margin + 5, yPos);
+    yPos += 10;
 
-    await checkPageBreak(35);
+    yPos = await checkPageBreak(35);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('Handtekening voor akkoord', margin, yPos);
