@@ -319,6 +319,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     // Include intake form data if it was filled out
     const finalProjectData = {
       ...projectData,
+      contactPerson: projectData.contact_person, // Ensure contact person is included
       intakeForm: showIntakeForm ? intakeFormData : null
     };
     

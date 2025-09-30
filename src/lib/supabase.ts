@@ -144,6 +144,7 @@ export const dataService = {
     try {
       console.log('Creating project with intake form:', project.intakeForm);
       console.log('Full project data:', project);
+      console.log('Contact person being saved:', project.contactPerson || project.contact_person);
       
       const { data, error } = await supabase
         .from('projects')
@@ -152,7 +153,7 @@ export const dataService = {
           date: project.date,
           location: project.location,
           client: project.client,
-          contact_person: project.contactPerson,
+          contact_person: project.contactPerson || project.contact_person,
           status: project.status,
           description: project.description,
           intake_form: project.intakeForm || project.intakeFormData
