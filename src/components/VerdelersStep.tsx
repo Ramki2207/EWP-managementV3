@@ -3,6 +3,7 @@ import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, User
 import toast from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import VerdelerVanaf630Test from './VerdelerVanaf630Test';
+import VerdelerTestSimpel from './VerdelerTestSimpel';
 import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
@@ -866,7 +867,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectId={projectData.id}
                       distributorId={selectedVerdeler.id}
                     />
-                    
+
                     <VerdelerVanaf630Test
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || ''}
@@ -874,19 +875,27 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectId={projectData.id}
                       distributorId={selectedVerdeler.id}
                     />
-                    
+
+                    <VerdelerTestSimpel
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || ''}
+                      onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
+                      projectId={projectData.id}
+                      distributorId={selectedVerdeler.id}
+                    />
+
                     <FATTest
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
                     />
-                    
+
                     <HighVoltageTest
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
                     />
-                    
+
                     <OnSiteTest
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
