@@ -250,26 +250,30 @@ export const generateVerdelerTestSimpelPDF = async (
     // Add footer to last page
     addProfessionalFooter(doc);
 
-    // Generate the PDF blob
-    const pdfBlob = doc.output('blob');
-    const fileName = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${Date.now()}.pdf`;
+    // Generate the PDF as base64
+    const pdfBase64 = doc.output('datauristring');
+    const fileName = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL').replace(/\//g, '-')}.pdf`;
 
     // Upload to Supabase if projectId and distributorId are provided
     if (projectId && distributorId) {
       try {
-        const uploadedUrl = await dataService.uploadProjectDocument(
+        await dataService.createDocument({
           projectId,
-          pdfBlob,
-          fileName,
-          'Test certificaten',
-          distributorId
-        );
-        console.log('PDF uploaded successfully:', uploadedUrl);
-        toast.success('Keuringsrapport opgeslagen in Test certificaten map');
+          distributorId,
+          folder: 'Test certificaat',
+          name: fileName,
+          type: 'application/pdf',
+          size: pdfBase64.length,
+          content: pdfBase64
+        });
+
+        console.log('PDF automatically saved to Test certificaat folder');
+        toast.success('Keuringsrapport automatisch opgeslagen in Test certificaat map!');
       } catch (uploadError) {
         console.error('Error uploading PDF:', uploadError);
-        toast.error('PDF kon niet worden geüpload naar de server');
+        toast.error('PDF kon niet worden opgeslagen naar de server');
         // Fallback to download
+        const pdfBlob = doc.output('blob');
         const url = URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -279,6 +283,7 @@ export const generateVerdelerTestSimpelPDF = async (
       }
     } else {
       // Download locally if no project/distributor context
+      const pdfBlob = doc.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
