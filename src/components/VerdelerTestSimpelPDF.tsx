@@ -19,14 +19,13 @@ export const generateVerdelerTestSimpelPDF = async (
     let yPos = await addProfessionalHeader(doc);
     yPos += 10;
 
-    const checkPageBreak = async (requiredSpace: number = 25): Promise<number> => {
+    const checkPageBreak = async (requiredSpace: number = 25) => {
       if (yPos + requiredSpace > pageHeight - 30) {
         addProfessionalFooter(doc);
         doc.addPage();
-        const newY = await addProfessionalHeader(doc);
-        return newY + 10;
+        yPos = await addProfessionalHeader(doc);
+        yPos += 10;
       }
-      return yPos;
     };
 
     doc.setFontSize(9);
@@ -96,17 +95,16 @@ export const generateVerdelerTestSimpelPDF = async (
     });
 
     for (const category of Object.keys(itemsByCategory)) {
-      yPos = await checkPageBreak(35);
+      await checkPageBreak(35);
 
-      const sectionY = addSectionHeader(doc, categoryTitles[category], yPos);
-      yPos = sectionY + 3;
+      yPos = addSectionHeader(doc, categoryTitles[category], yPos);
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
 
       for (let index = 0; index < itemsByCategory[category].length; index++) {
         const item = itemsByCategory[category][index];
-        yPos = await checkPageBreak(18);
+        await checkPageBreak(18);
 
         const currentY = yPos;
         const descWidth = 85;
@@ -159,7 +157,7 @@ export const generateVerdelerTestSimpelPDF = async (
       yPos += 5;
     }
 
-    yPos = await checkPageBreak(25);
+    await checkPageBreak(25);
     yPos += 3;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
@@ -176,7 +174,7 @@ export const generateVerdelerTestSimpelPDF = async (
     doc.text('hersteld = Fout hersteld', margin + 5, yPos);
     yPos += 10;
 
-    yPos = await checkPageBreak(35);
+    await checkPageBreak(35);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.text('Handtekening voor akkoord', margin, yPos);
