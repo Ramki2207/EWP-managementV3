@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { addProfessionalHeader, addProfessionalFooter, addSectionHeader } from '../lib/pdfUtils';
+import { addProfessionalHeader, addProfessionalFooter } from '../lib/pdfUtils';
 
 export const generateVerdelerTestSimpelPDF = async (
   testData: any,
@@ -11,251 +11,276 @@ export const generateVerdelerTestSimpelPDF = async (
   distributorId?: string
 ) => {
   try {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
-    const margin = 20;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-    let yPos = await addProfessionalHeader(doc);
-    yPos += 10;
+    let yPosition = await addProfessionalHeader(pdf);
+    yPosition += 10;
 
-    const checkPageBreak = async (requiredSpace: number = 25) => {
-      if (yPos + requiredSpace > pageHeight - 30) {
-        addProfessionalFooter(doc);
-        doc.addPage();
-        yPos = await addProfessionalHeader(doc);
-        yPos += 10;
-      }
-    };
+    const { verdelerTestSimpel } = testData;
 
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    // Technical specifications header section
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(0, 0, 0);
 
-    const specs = [
-      { label: 'Un', value: testData.verdelerTestSimpel.un || '400', unit: '[ Vac ]' },
-      { label: 'In', value: testData.verdelerTestSimpel.inValue || '', unit: '[ A ]' },
-      { label: 'Ik dyn', value: testData.verdelerTestSimpel.ikDyn || '', unit: '[ kA ]' },
-      { label: 'Ik th', value: testData.verdelerTestSimpel.ikTh || '', unit: '[ kA ]' },
-      { label: 'F', value: testData.verdelerTestSimpel.frequency || '50', unit: '[ Hz ]' },
-    ];
+    pdf.text(`Un`, 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.un || '400'}`, 50, yPosition);
+    pdf.text('[ Vac ]', 100, yPosition);
+    yPosition += 5;
 
-    for (const spec of specs) {
-      doc.text(`${spec.label}`, margin, yPos);
-      doc.text(`: ${spec.value}`, margin + 30, yPos);
-      doc.text(spec.unit, margin + 80, yPos);
-      yPos += 5;
-    }
+    pdf.text(`In`, 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.inValue || ''}`, 50, yPosition);
+    pdf.text('[ A ]', 100, yPosition);
+    yPosition += 5;
 
-    yPos += 3;
-    doc.text('Un-hulp:', margin, yPos);
-    yPos += 5;
+    pdf.text(`Ik dyn`, 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.ikDyn || ''}`, 50, yPosition);
+    pdf.text('[ kA ]', 100, yPosition);
+    yPosition += 5;
 
-    const hulp230 = testData.verdelerTestSimpel.unHulp230 ? '[X]' : '[ ]';
-    const hulp24 = testData.verdelerTestSimpel.unHulp24 ? '[X]' : '[ ]';
+    pdf.text(`Ik th`, 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.ikTh || ''}`, 50, yPosition);
+    pdf.text('[ kA ]', 100, yPosition);
+    yPosition += 5;
 
-    doc.text(`        ${hulp230} 230 [ Vac ]`, margin, yPos);
-    doc.text('Un van hulpstroombanen', margin + 50, yPos);
-    yPos += 5;
-    doc.text(`        ${hulp24} 24 [ Vac ]`, margin, yPos);
-    doc.text('( indien van toepassing )', margin + 50, yPos);
-    yPos += 7;
+    pdf.text(`F`, 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.frequency || '50'}`, 50, yPosition);
+    pdf.text('[ Hz ]', 100, yPosition);
+    yPosition += 8;
 
-    if (testData.verdelerTestSimpel.afwijkend) {
-      doc.text(`Afwijkend: ${testData.verdelerTestSimpel.afwijkend} [ V ]`, margin, yPos);
-      yPos += 7;
-    }
+    // Un-hulp section
+    pdf.text('Un-hulp:', 20, yPosition);
+    yPosition += 5;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('Keuringsprocedure', margin, yPos);
-    yPos += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Samenstelling: NEN-EN-IEC 61439 -1-2 (EN 61439 / IEC 439) / NEN 1010', margin, yPos);
-    yPos += 10;
+    const unHulp230 = verdelerTestSimpel.unHulp230;
+    const unHulp24 = verdelerTestSimpel.unHulp24;
 
-    const categoryTitles: Record<string, string> = {
-      goederenstroom: '1 Goederenstroom',
-      verdeelblok: '2 Verdeelblok 80, 100, 125 en 160 A',
-      componenten: '3 Componenten',
-      interne_bedrading: '4 Interne bedrading',
-      montageframe: '5 Montageframe',
-      beproeving: '6 Beproeving',
-      eindafwerking: '7 Eindafwerking',
-      eindcontrole: '8 Eindcontrole',
-      diversen: '9 Diversen'
-    };
+    pdf.text(unHulp230 ? ' [X] 230 [ Vac ]' : ' [ ] 230 [ Vac ]', 25, yPosition);
+    pdf.text('Un van hulpstroombanen', 60, yPosition);
+    yPosition += 5;
 
-    const itemsByCategory: Record<string, any[]> = {};
-    testData.verdelerTestSimpel.items.forEach((item: any) => {
-      if (!itemsByCategory[item.category]) {
-        itemsByCategory[item.category] = [];
-      }
-      itemsByCategory[item.category].push(item);
-    });
+    pdf.text(unHulp24 ? ' [X] 24 [ Vac ]' : ' [ ] 24 [ Vac ]', 25, yPosition);
+    pdf.text('( indien van toepassing )', 60, yPosition);
+    yPosition += 10;
 
-    for (const category of Object.keys(itemsByCategory)) {
-      await checkPageBreak(35);
+    // Keuringsprocedure
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Keuringsprocedure', 20, yPosition);
+    yPosition += 6;
 
-      yPos = addSectionHeader(doc, categoryTitles[category], yPos);
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Samenstelling: NEN-EN-IEC 61439 -1-2 (EN 61439 / IEC 439) / NEN 1010', 20, yPosition);
+    yPosition += 12;
 
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
+    // Add test items by category
+    if (verdelerTestSimpel.items && verdelerTestSimpel.items.length > 0) {
+      // Group items by category
+      const itemsByCategory: Record<string, any[]> = {};
+      verdelerTestSimpel.items.forEach((item: any) => {
+        if (!itemsByCategory[item.category]) {
+          itemsByCategory[item.category] = [];
+        }
+        itemsByCategory[item.category].push(item);
+      });
 
-      for (let index = 0; index < itemsByCategory[category].length; index++) {
-        const item = itemsByCategory[category][index];
-        await checkPageBreak(18);
+      const categoryTitles: Record<string, string> = {
+        goederenstroom: '1 Goederenstroom',
+        verdeelblok: '2 Verdeelblok 80, 100, 125 en 160 A',
+        componenten: '3 Componenten',
+        interne_bedrading: '4 Interne bedrading',
+        montageframe: '5 Montageframe',
+        beproeving: '6 Beproeving',
+        eindafwerking: '7 Eindafwerking',
+        eindcontrole: '8 Eindcontrole',
+        diversen: '9 Diversen'
+      };
 
-        const currentY = yPos;
-        const descWidth = 85;
+      // Add each category
+      Object.keys(itemsByCategory).forEach((category) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 60) {
+          addProfessionalFooter(pdf);
+          pdf.addPage();
+          yPosition = (async () => await addProfessionalHeader(pdf))() as any;
+          yPosition = 20;
+        }
 
-        doc.text(item.field, margin + 2, currentY);
+        // Category header with gray background
+        pdf.setFillColor(220, 220, 220);
+        pdf.rect(20, yPosition - 5, pageWidth - 40, 7, 'F');
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(categoryTitles[category] || category, 22, yPosition);
+        yPosition += 8;
 
-        const descLines = doc.splitTextToSize(item.description, descWidth);
-        const descLinesArray = Array.isArray(descLines) ? descLines : [descLines];
-        doc.text(descLinesArray, margin + 15, currentY);
+        // Add items for this category
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
 
-        if (item.options && item.options.includes('text')) {
-          if (item.notes) {
-            const notesLines = doc.splitTextToSize(item.notes, 45);
-            doc.text(notesLines, margin + 105, currentY);
+        itemsByCategory[category].forEach((item: any) => {
+          if (yPosition > pageHeight - 20) {
+            addProfessionalFooter(pdf);
+            pdf.addPage();
+            yPosition = 20;
           }
-        } else {
-          const statusX = margin + 105;
+
+          // Field number
+          pdf.text(item.field || '', 20, yPosition);
+
+          // Description (wrap text if too long)
+          const descriptionLines = pdf.splitTextToSize(item.description, 85);
+          pdf.text(descriptionLines, 35, yPosition);
+
+          // Status - show checkboxes
+          const statusX = 130;
           const boxSize = 3;
           const spacing = 12;
 
-          for (let optIndex = 0; optIndex < item.options.length; optIndex++) {
-            const option = item.options[optIndex];
-            const boxX = statusX + (optIndex * spacing);
-            doc.setDrawColor(100, 100, 100);
-            doc.setLineWidth(0.3);
-            doc.rect(boxX, currentY - 2.5, boxSize, boxSize);
+          if (item.options && item.options.length > 0) {
+            item.options.forEach((option: string, index: number) => {
+              const boxX = statusX + (index * spacing);
+              pdf.setDrawColor(100, 100, 100);
+              pdf.setLineWidth(0.3);
+              pdf.rect(boxX, yPosition - 2.5, boxSize, boxSize);
 
-            if (item.passed === option) {
-              doc.setFillColor(0, 0, 0);
-              doc.rect(boxX + 0.4, currentY - 2.1, boxSize - 0.8, boxSize - 0.8, 'F');
-            }
+              if (item.passed === option) {
+                pdf.setFillColor(0, 0, 0);
+                pdf.rect(boxX + 0.4, yPosition - 2.1, boxSize - 0.8, boxSize - 0.8, 'F');
+              }
+            });
           }
 
+          // Notes
           if (item.notes) {
-            const notesText = doc.splitTextToSize(item.notes, 35);
-            doc.text(notesText, margin + 145, currentY);
+            const notesLines = pdf.splitTextToSize(item.notes, 30);
+            pdf.text(notesLines, 168, yPosition);
           }
-        }
 
-        const lineHeight = Math.max(descLinesArray.length * 3.5, 6);
-        yPos = currentY + lineHeight;
-
-        if (index < itemsByCategory[category].length - 1) {
-          doc.setDrawColor(240, 240, 240);
-          doc.setLineWidth(0.1);
-          doc.line(margin + 12, yPos, pageWidth - margin, yPos);
-          yPos += 1;
-        }
-      }
-
-      yPos += 5;
-    }
-
-    await checkPageBreak(25);
-    yPos += 3;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('Legenda status:', margin, yPos);
-    yPos += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('akkoord = Goedgekeurd', margin + 5, yPos);
-    yPos += 3.5;
-    doc.text('n.v.t. = Niet van toepassing', margin + 5, yPos);
-    yPos += 3.5;
-    doc.text('fout = Fout geconstateerd', margin + 5, yPos);
-    yPos += 3.5;
-    doc.text('hersteld = Fout hersteld', margin + 5, yPos);
-    yPos += 10;
-
-    await checkPageBreak(35);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('Handtekening voor akkoord', margin, yPos);
-    yPos += 8;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-
-    const signatureDate = new Date(testData.verdelerTestSimpel.date).toLocaleDateString('nl-NL');
-
-    doc.text('Monteur', margin, yPos);
-    doc.text(`: ${testData.verdelerTestSimpel.monteur || '...................................................'}`, margin + 40, yPos);
-    yPos += 5;
-    doc.text('Datum', margin, yPos);
-    doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 10;
-
-    doc.text('Tester', margin, yPos);
-    doc.text(`: ${testData.verdelerTestSimpel.testedBy || '...................................................'}`, margin + 40, yPos);
-    yPos += 5;
-    doc.text('Datum', margin, yPos);
-    doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 10;
-
-    doc.text('Beproevingen', margin, yPos);
-    doc.text(`: ${testData.verdelerTestSimpel.beproevingen || 'Ja'}`, margin + 40, yPos);
-    yPos += 5;
-    doc.text('Datum', margin, yPos);
-    doc.text(`: ${signatureDate}`, margin + 40, yPos);
-    yPos += 10;
-
-    doc.text('Eindcontroleur', margin, yPos);
-    doc.text(`: ${testData.verdelerTestSimpel.eindcontroleur || '...................................................'}`, margin + 40, yPos);
-    yPos += 5;
-    doc.text('Datum', margin, yPos);
-    doc.text(`: ${signatureDate}`, margin + 40, yPos);
-
-    addProfessionalFooter(doc);
-
-    const pdfBase64 = doc.output('datauristring');
-    const fileName = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL').replace(/\//g, '-')}.pdf`;
-
-    if (projectId && distributorId) {
-      try {
-        await dataService.createDocument({
-          projectId,
-          distributorId,
-          folder: 'Test certificaat',
-          name: fileName,
-          type: 'application/pdf',
-          size: pdfBase64.length,
-          content: pdfBase64
+          const lineHeight = Math.max(descriptionLines.length * 3.5, 6);
+          yPosition += lineHeight;
         });
 
-        console.log('PDF automatically saved to Test certificaat folder');
-        toast.success('Keuringsrapport automatisch opgeslagen in Test certificaat map!');
-      } catch (uploadError) {
-        console.error('Error uploading PDF:', uploadError);
-        toast.error('PDF kon niet worden opgeslagen naar de server');
-        const pdfBlob = doc.output('blob');
-        const url = URL.createObjectURL(pdfBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        URL.revokeObjectURL(url);
-      }
-    } else {
-      const pdfBlob = doc.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.success('Keuringsrapport gedownload');
+        yPosition += 5;
+      });
     }
 
+    // Legend
+    if (yPosition > pageHeight - 40) {
+      addProfessionalFooter(pdf);
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    yPosition += 3;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8);
+    pdf.text('Legenda status:', 20, yPosition);
+    yPosition += 5;
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('akkoord = Goedgekeurd', 25, yPosition);
+    yPosition += 3.5;
+    pdf.text('n.v.t. = Niet van toepassing', 25, yPosition);
+    yPosition += 3.5;
+    pdf.text('fout = Fout geconstateerd', 25, yPosition);
+    yPosition += 3.5;
+    pdf.text('hersteld = Fout hersteld', 25, yPosition);
+    yPosition += 10;
+
+    // Signatures section
+    if (yPosition > pageHeight - 50) {
+      addProfessionalFooter(pdf);
+      pdf.addPage();
+      yPosition = 20;
+    }
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.text('Handtekening voor akkoord', 20, yPosition);
+    yPosition += 8;
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+
+    // Monteur
+    pdf.text('Monteur', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.monteur || ''}`, 60, yPosition);
+    yPosition += 6;
+    pdf.text('Datum', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.monteurDatum || ''}`, 60, yPosition);
+    yPosition += 10;
+
+    // Tester
+    pdf.text('Tester', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.tester || ''}`, 60, yPosition);
+    yPosition += 6;
+    pdf.text('Datum', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.testerDatum || ''}`, 60, yPosition);
+    yPosition += 10;
+
+    // Beproevingen
+    pdf.text('Beproevingen', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.beproevingen || ''}`, 60, yPosition);
+    yPosition += 6;
+    pdf.text('Datum', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.beproevingenDatum || ''}`, 60, yPosition);
+    yPosition += 10;
+
+    // Eindcontroleur
+    pdf.text('Eindcontroleur', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.eindcontroleur || ''}`, 60, yPosition);
+    yPosition += 6;
+    pdf.text('Datum', 20, yPosition);
+    pdf.text(`: ${verdelerTestSimpel.eindcontroleurDatum || ''}`, 60, yPosition);
+
+    // Add footer to last page
+    addProfessionalFooter(pdf);
+
+    const pdfBlob = pdf.output('blob');
+    const filename = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL')}.pdf`;
+
+    // Save to Supabase if projectId and distributorId are provided
+    if (projectId && distributorId) {
+      try {
+        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+        const filePath = `${projectId}/${distributorId}/${filename}`;
+
+        const { error: uploadError } = await dataService.uploadFile('project-documents', filePath, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error('Fout bij uploaden van PDF');
+        } else {
+          const { error: docError } = await dataService.createDocument({
+            project_id: projectId,
+            distributor_id: distributorId,
+            document_type: 'keuringsrapport_simpel',
+            file_path: filePath,
+            file_name: filename,
+            uploaded_by: 'system'
+          });
+
+          if (docError) {
+            console.error('Document creation error:', docError);
+          } else {
+            toast.success('PDF succesvol opgeslagen');
+          }
+        }
+      } catch (error) {
+        console.error('Error saving PDF:', error);
+        toast.error('Fout bij opslaan van PDF');
+      }
+    }
+
+    return filename;
   } catch (error) {
     console.error('Error generating PDF:', error);
+    toast.error('Fout bij genereren van PDF');
     throw error;
   }
 };
