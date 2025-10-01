@@ -112,7 +112,8 @@ export const generateVerdelerTestSimpelPDF = async (
         doc.text(item.field, margin + 2, currentY);
 
         const descLines = doc.splitTextToSize(item.description, descWidth);
-        doc.text(descLines, margin + 15, currentY);
+        const descLinesArray = Array.isArray(descLines) ? descLines : [descLines];
+        doc.text(descLinesArray, margin + 15, currentY);
 
         if (item.options && item.options.includes('text')) {
           if (item.notes) {
@@ -143,7 +144,7 @@ export const generateVerdelerTestSimpelPDF = async (
           }
         }
 
-        const lineHeight = Math.max(descLines.length * 3.5, 6);
+        const lineHeight = Math.max(descLinesArray.length * 3.5, 6);
         yPos = currentY + lineHeight;
 
         if (index < itemsByCategory[category].length - 1) {

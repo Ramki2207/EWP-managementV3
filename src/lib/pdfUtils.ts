@@ -62,11 +62,11 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
   // Add EWP logo on the right side
   try {
     const logoData = await loadLogoImage();
-    // Logo dimensions maintaining 4:1 aspect ratio (EWP PANEELBOUW logo is wide)
-    const logoWidth = 60;
-    const logoHeight = 20;
+    // Logo dimensions maintaining 3.5:1 aspect ratio (EWP PANEELBOUW logo is wide)
+    const logoWidth = 52.5;
+    const logoHeight = 15;
     const logoX = pageWidth - logoWidth - margin;
-    const logoY = 10;
+    const logoY = 12;
 
     // Add the logo image with proper aspect ratio
     doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
