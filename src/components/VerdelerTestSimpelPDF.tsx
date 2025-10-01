@@ -241,43 +241,33 @@ export const generateVerdelerTestSimpelPDF = async (
     // Add footer to last page
     addProfessionalFooter(pdf);
 
-    const pdfBlob = pdf.output('blob');
-    const filename = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL')}.pdf`;
+    // Generate PDF as base64
+    const pdfBase64 = pdf.output('datauristring');
 
-    // Save to Supabase if projectId and distributorId are provided
+    // Save PDF to documents if project and distributor IDs are provided
     if (projectId && distributorId) {
       try {
-        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
-        const filePath = `${projectId}/${distributorId}/${filename}`;
+        const filename = `Keuringsrapport_Simpel_${verdeler.distributor_id || verdeler.distributorId}_${new Date().toLocaleDateString('nl-NL').replace(/\//g, '-')}.pdf`;
 
-        const { error: uploadError } = await dataService.uploadFile('project-documents', filePath, file);
+        await dataService.createDocument({
+          projectId,
+          distributorId,
+          folder: 'Test certificaat',
+          name: filename,
+          type: 'application/pdf',
+          size: pdfBase64.length,
+          content: pdfBase64
+        });
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          toast.error('Fout bij uploaden van PDF');
-        } else {
-          const { error: docError } = await dataService.createDocument({
-            project_id: projectId,
-            distributor_id: distributorId,
-            document_type: 'keuringsrapport_simpel',
-            file_path: filePath,
-            file_name: filename,
-            uploaded_by: 'system'
-          });
-
-          if (docError) {
-            console.error('Document creation error:', docError);
-          } else {
-            toast.success('PDF succesvol opgeslagen');
-          }
-        }
+        console.log('PDF automatically saved to Test certificaat folder');
+        toast.success('Keuringsrapport Simpel PDF automatisch opgeslagen in Test certificaat map!');
       } catch (error) {
-        console.error('Error saving PDF:', error);
-        toast.error('Fout bij opslaan van PDF');
+        console.error('Error saving PDF to documents:', error);
+        toast.error('PDF gegenereerd maar kon niet automatisch worden opgeslagen');
       }
     }
 
-    return filename;
+    return pdfBase64;
   } catch (error) {
     console.error('Error generating PDF:', error);
     toast.error('Fout bij genereren van PDF');
