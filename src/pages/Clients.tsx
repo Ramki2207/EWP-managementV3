@@ -22,8 +22,11 @@ const Clients = () => {
     delivery_city: "",
     vat_number: "",
     kvk_number: "",
+    logo_url: "",
     contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   useEffect(() => {
     loadClients();
@@ -57,6 +60,24 @@ const Clients = () => {
     setClientData({ ...clientData, contacts: updated });
   };
 
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview("");
+    setClientData({ ...clientData, logo_url: "" });
+  };
+
   const handleSaveClient = async () => {
     if (!clientData.name.trim()) {
       toast.error('Vul tenminste de organisatienaam in!');
@@ -64,7 +85,19 @@ const Clients = () => {
     }
 
     try {
-      const savedClient = await dataService.createClient(clientData);
+      let logoUrl = clientData.logo_url;
+
+      if (logoFile) {
+        const uploadResult = await dataService.uploadClientLogo(logoFile);
+        if (uploadResult) {
+          logoUrl = uploadResult;
+        }
+      }
+
+      const savedClient = await dataService.createClient({
+        ...clientData,
+        logo_url: logoUrl
+      });
       setClients([savedClient, ...clients]);
       setShowClientForm(false);
       setClientData({
@@ -78,8 +111,11 @@ const Clients = () => {
         delivery_city: "",
         vat_number: "",
         kvk_number: "",
+        logo_url: "",
         contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
       });
+      setLogoFile(null);
+      setLogoPreview("");
       toast.success('Klant succesvol toegevoegd!');
     } catch (error) {
       console.error('Error saving client:', error);
@@ -271,6 +307,43 @@ const Clients = () => {
                   )}
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-md text-gradient">Logo</h3>
+              <div className="flex items-start space-x-4">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <label
+                    htmlFor="logo-upload"
+                    className="btn-secondary flex items-center space-x-2 cursor-pointer inline-flex"
+                  >
+                    <Upload size={20} />
+                    <span>Upload Logo</span>
+                  </label>
+                  {logoPreview && (
+                    <div className="mt-4 relative inline-block">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-24 w-auto object-contain bg-white p-2 rounded"
+                      />
+                      <button
+                        onClick={handleRemoveLogo}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">

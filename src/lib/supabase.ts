@@ -849,7 +849,7 @@ export const dataService = {
         .from('clients')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error('Database error in deleteClient:', error);
         throw error;
@@ -857,6 +857,32 @@ export const dataService = {
     } catch (err) {
       console.error('Network error in deleteClient:', err);
       throw new Error(`Failed to delete client: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async uploadClientLogo(file: File): Promise<string> {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `client-logos/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('project-files')
+        .upload(filePath, file);
+
+      if (error) {
+        console.error('Storage error uploading client logo:', error);
+        throw error;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (err) {
+      console.error('Error uploading client logo:', err);
+      throw new Error(`Failed to upload client logo: ${getErrorMessage(err)}`);
     }
   },
 
