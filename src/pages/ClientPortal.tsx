@@ -120,17 +120,17 @@ const ClientPortal = () => {
       console.log('Attempting to download document:', document.name);
       console.log('Document content type:', typeof document.content);
       console.log('Content starts with data:', document.content?.startsWith('data:'));
-      
+
       // Check if document has valid content
       if (!document.content) {
         console.error('No content found for document:', document.name);
         toast.error('Document inhoud niet beschikbaar voor download');
         return;
       }
-      
+
       // Handle different content formats
       let downloadUrl = '';
-      
+
       if (document.content.startsWith('data:')) {
         // Already a data URL
         downloadUrl = document.content;
@@ -142,9 +142,9 @@ const ClientPortal = () => {
         const mimeType = document.type || 'application/octet-stream';
         downloadUrl = `data:${mimeType};base64,${document.content}`;
       }
-      
+
       console.log('Download URL created:', downloadUrl.substring(0, 50) + '...');
-      
+
       // Use a more robust download approach
       try {
         // Method 1: Try using window.open for simple download
@@ -154,20 +154,20 @@ const ClientPortal = () => {
           if (!linkElement) {
             throw new Error('Cannot create download link element');
           }
-          
+
           linkElement.href = downloadUrl;
           linkElement.download = document.name || 'download';
           linkElement.style.display = 'none';
-          
+
           // Safely add to DOM
           const body = globalThis.document?.body;
           if (!body) {
             throw new Error('Cannot access document body');
           }
-          
+
           body.appendChild(linkElement);
           linkElement.click();
-          
+
           // Clean up
           setTimeout(() => {
             try {
@@ -182,7 +182,7 @@ const ClientPortal = () => {
         }
       } catch (downloadError) {
         console.error('Primary download method failed:', downloadError);
-        
+
         // Fallback method: Try using URL.createObjectURL
         try {
           // Convert data URL to blob
@@ -190,15 +190,15 @@ const ClientPortal = () => {
           response.then(res => res.blob()).then(blob => {
             const url = URL.createObjectURL(blob);
             const fallbackLink = globalThis.document?.createElement('a');
-            
+
             if (fallbackLink && globalThis.document?.body) {
               fallbackLink.href = url;
               fallbackLink.download = document.name || 'download';
               fallbackLink.style.display = 'none';
-              
+
               globalThis.document.body.appendChild(fallbackLink);
               fallbackLink.click();
-              
+
               setTimeout(() => {
                 try {
                   globalThis.document?.body?.removeChild(fallbackLink);
@@ -219,12 +219,37 @@ const ClientPortal = () => {
           toast.error('Download niet mogelijk - probeer het later opnieuw');
         }
       }
-      
+
       console.log('Download triggered for:', document.name);
       toast.success('Document gedownload!');
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error(`Download fout: ${error.message || 'Onbekende fout'}`);
+    }
+  };
+
+  const handleDownloadAll = async () => {
+    if (documents.length === 0) {
+      toast.error('Geen documenten om te downloaden');
+      return;
+    }
+
+    toast.loading('Alle documenten voorbereiden voor download...');
+
+    try {
+      for (let i = 0; i < documents.length; i++) {
+        const doc = documents[i];
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        handleDownload(doc);
+      }
+
+      toast.dismiss();
+      toast.success(`${documents.length} documenten gedownload!`);
+    } catch (error) {
+      console.error('Error downloading all documents:', error);
+      toast.error('Er is een fout opgetreden bij het downloaden van de documenten');
     }
   };
 
@@ -673,17 +698,28 @@ const ClientPortal = () => {
             <div className="flex-1 bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6 overflow-y-auto">
               {selectedDistributor && selectedFolder ? (
                 <div>
-                  {/* Breadcrumb */}
-                  <div className="flex items-center text-sm text-gray-400 space-x-2 mb-6">
-                    <span>Locatie:</span>
-                    <div className="flex items-center space-x-2">
-                      {getBreadcrumb().split(' / ').map((part, index, array) => (
-                        <React.Fragment key={index}>
-                          <span className="text-blue-400">{part}</span>
-                          {index < array.length - 1 && <ChevronRight size={14} />}
-                        </React.Fragment>
-                      ))}
+                  {/* Breadcrumb and Download All Button */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center text-sm text-gray-400 space-x-2">
+                      <span>Locatie:</span>
+                      <div className="flex items-center space-x-2">
+                        {getBreadcrumb().split(' / ').map((part, index, array) => (
+                          <React.Fragment key={index}>
+                            <span className="text-blue-400">{part}</span>
+                            {index < array.length - 1 && <ChevronRight size={14} />}
+                          </React.Fragment>
+                        ))}
+                      </div>
                     </div>
+                    {documents.length > 0 && (
+                      <button
+                        onClick={handleDownloadAll}
+                        className="bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500 text-white px-4 py-2 rounded-lg text-sm transition-all flex items-center space-x-2 shadow-lg"
+                      >
+                        <Download size={16} />
+                        <span>Download Alles ({documents.length})</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Documents */}
