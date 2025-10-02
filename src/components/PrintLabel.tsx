@@ -20,10 +20,12 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
 
     try {
       const canvas = await html2canvas(labelRef.current, {
-        scale: 2,
-        backgroundColor: null,
+        scale: 3,
+        backgroundColor: '#ffffff',
         logging: false,
-        useCORS: true
+        useCORS: true,
+        width: labelRef.current.offsetWidth,
+        height: labelRef.current.offsetHeight
       });
 
       // Create a new window for printing
@@ -41,17 +43,29 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 size: 100mm 50mm;
                 margin: 0;
               }
-              body {
+              * {
                 margin: 0;
                 padding: 0;
+                box-sizing: border-box;
+              }
+              html, body {
+                width: 100mm;
+                height: 50mm;
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+              }
+              body {
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                background: white;
               }
               img {
                 width: 100mm;
                 height: 50mm;
-                object-fit: contain;
+                display: block;
+                object-fit: fill;
               }
             </style>
           </head>
