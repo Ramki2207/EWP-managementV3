@@ -41,7 +41,7 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
             <style>
               @page {
                 size: 152.4mm 101.6mm landscape;
-                margin: 0;
+                margin: 3mm;
               }
               * {
                 margin: 0;
@@ -49,8 +49,8 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 box-sizing: border-box;
               }
               html, body {
-                width: 152.4mm;
-                height: 101.6mm;
+                width: 146.4mm;
+                height: 95.6mm;
                 margin: 0;
                 padding: 0;
                 overflow: hidden;
@@ -62,10 +62,10 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 background: white;
               }
               img {
-                width: 152.4mm;
-                height: 101.6mm;
+                width: 146.4mm;
+                height: 95.6mm;
                 display: block;
-                object-fit: fill;
+                object-fit: contain;
               }
             </style>
           </head>
