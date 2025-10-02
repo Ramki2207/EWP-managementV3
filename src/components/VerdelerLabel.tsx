@@ -46,7 +46,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
 
       {/* Right section - Details */}
       <div className="flex-1 pl-4 flex flex-col justify-center">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2.5" style={{ fontSize: '12pt' }}>
+        <div className="flex flex-col gap-y-2" style={{ fontSize: '12pt' }}>
           <div className="flex items-center">
             <span className="font-bold text-black whitespace-nowrap mr-2">Verdeler ID:</span>
             <span className="text-black font-semibold">{verdeler.distributor_id || verdeler.distributorId}</span>
