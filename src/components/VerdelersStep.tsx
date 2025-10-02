@@ -859,49 +859,66 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 {/* Testing Actions */}
                 <div className="bg-[#2A303C] p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
-                  <div className="space-y-3">
-                    <VerdelerTesting
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || projectData.projectNumber}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                      projectId={projectData.id}
-                      distributorId={selectedVerdeler.id}
-                    />
+                  {projectData.status?.toLowerCase() !== 'testen' ? (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
+                        <div>
+                          <p className="text-yellow-400 font-medium">Testing Niet Beschikbaar</p>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Testing is alleen beschikbaar wanneer de project status op "Testen" staat.
+                          </p>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Huidige status: <span className="font-semibold text-blue-400">{projectData.status || 'Onbekend'}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <VerdelerTesting
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                        projectId={projectData.id}
+                        distributorId={selectedVerdeler.id}
+                      />
 
-                    <VerdelerVanaf630Test
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
-                      projectId={projectData.id}
-                      distributorId={selectedVerdeler.id}
-                    />
+                      <VerdelerVanaf630Test
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || ''}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
+                        projectId={projectData.id}
+                        distributorId={selectedVerdeler.id}
+                      />
 
-                    <VerdelerTestSimpel
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || ''}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
-                      projectId={projectData.id}
-                      distributorId={selectedVerdeler.id}
-                    />
+                      <VerdelerTestSimpel
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || ''}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
+                        projectId={projectData.id}
+                        distributorId={selectedVerdeler.id}
+                      />
 
-                    <FATTest
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || projectData.projectNumber}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                    />
+                      <FATTest
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                      />
 
-                    <HighVoltageTest
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || projectData.projectNumber}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                    />
+                      <HighVoltageTest
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                      />
 
-                    <OnSiteTest
-                      verdeler={selectedVerdeler}
-                      projectNumber={projectData.project_number || projectData.projectNumber}
-                      onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                    />
-                  </div>
+                      <OnSiteTest
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Additional Actions */}
