@@ -20,13 +20,13 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
         {/* Left side - Logo and company info */}
         <div className="flex flex-col" style={{ maxWidth: '60%' }}>
           <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-11 object-contain mb-2" />
-          <div className="text-[8pt] leading-tight" style={{ color: '#000000' }}>
-            <p>EWP Paneelbouw</p>
-            <p>Gildenstraat 28</p>
-            <p>4143HS Leerdam</p>
-            <p>www.ewpmidden.nl</p>
-            <p>Patrick@ewpmidden.nl</p>
-            <p>06-27343669</p>
+          <div className="text-[8pt] leading-tight text-black">
+            <p className="text-black">EWP Paneelbouw</p>
+            <p className="text-black">Gildenstraat 28</p>
+            <p className="text-black">4143HS Leerdam</p>
+            <p className="text-black">www.ewpmidden.nl</p>
+            <p className="text-black">Patrick@ewpmidden.nl</p>
+            <p className="text-black">06-27343669</p>
           </div>
         </div>
 
