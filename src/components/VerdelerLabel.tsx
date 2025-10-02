@@ -15,12 +15,12 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
   const displayProjectNumber = projectNumber.replace(/-/g, '');
 
   return (
-    <div className="w-[101.6mm] h-[152.4mm] bg-white p-6 relative flex flex-col" style={{ color: '#000000' }}>
-      <div className="flex justify-between items-start gap-6 mb-6">
-        {/* Left side - Logo and company info */}
-        <div className="flex flex-col flex-1">
-          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-24 object-contain mb-4" style={{ width: 'auto' }} />
-          <div className="text-[14pt] leading-relaxed text-black">
+    <div className="w-[152.4mm] h-[101.6mm] bg-white p-4 relative flex flex-row" style={{ color: '#000000' }}>
+      {/* Left section - Logo and company info */}
+      <div className="flex flex-col justify-between pr-4 border-r-2 border-gray-300" style={{ width: '40%' }}>
+        <div>
+          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-16 object-contain mb-3" style={{ width: 'auto' }} />
+          <div className="text-[11pt] leading-snug text-black">
             <p className="text-black font-bold">EWP Paneelbouw</p>
             <p className="text-black">Gildenstraat 28</p>
             <p className="text-black">4143HS Leerdam</p>
@@ -30,60 +30,62 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
           </div>
         </div>
 
-        {/* Right side - QR Code */}
-        <div className="flex flex-col items-center justify-start">
-          <div className="bg-white p-2 border-2 border-gray-500">
+        {/* QR Code */}
+        <div className="flex flex-col items-center">
+          <div className="bg-white p-1 border-2 border-gray-500">
             <QRCodeSVG
               value={maintenanceUrl}
-              size={140}
+              size={100}
               level="M"
               includeMargin={false}
             />
           </div>
-          <p className="text-[12pt] mt-2 text-center text-black font-bold">Scan voor onderhoud</p>
+          <p className="text-[10pt] mt-1 text-center text-black font-bold">Scan voor onderhoud</p>
         </div>
       </div>
 
-      {/* Details section */}
-      <div className="text-[14pt] grid grid-cols-2 gap-x-6 gap-y-3">
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Verdeler ID:</span>
-          <span className="text-black font-semibold">{verdeler.distributor_id || verdeler.distributorId}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Project:</span>
-          <span className="text-black font-semibold">{displayProjectNumber}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Kastnaam:</span>
-          <span className="text-black font-semibold">{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Systeem:</span>
-          <span className="text-black font-semibold">{verdeler.systeem || '-'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Voeding:</span>
-          <span className="text-black font-semibold">{verdeler.voeding || '-'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Un in V:</span>
-          <span className="text-black font-semibold">{verdeler.un_in_v || verdeler.unInV || '-'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">In in A:</span>
-          <span className="text-black font-semibold">{verdeler.in_in_a || verdeler.inInA || '-'}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-bold text-black">Freq. in Hz:</span>
-          <span className="text-black font-semibold">{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+      {/* Right section - Details */}
+      <div className="flex-1 pl-4 flex flex-col justify-center">
+        <div className="text-[12pt] grid grid-cols-2 gap-x-8 gap-y-2">
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Verdeler ID:</span>
+            <span className="text-black font-semibold">{verdeler.distributor_id || verdeler.distributorId}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Project:</span>
+            <span className="text-black font-semibold">{displayProjectNumber}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Kastnaam:</span>
+            <span className="text-black font-semibold">{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Systeem:</span>
+            <span className="text-black font-semibold">{verdeler.systeem || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Voeding:</span>
+            <span className="text-black font-semibold">{verdeler.voeding || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Un in V:</span>
+            <span className="text-black font-semibold">{verdeler.un_in_v || verdeler.unInV || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">In in A:</span>
+            <span className="text-black font-semibold">{verdeler.in_in_a || verdeler.inInA || '-'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold text-black">Freq. in Hz:</span>
+            <span className="text-black font-semibold">{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+          </div>
         </div>
       </div>
 
       <style>{`
         @media print {
           @page {
-            size: 101.6mm 152.4mm;
+            size: 152.4mm 101.6mm landscape;
             margin: 0;
           }
           * {
