@@ -15,12 +15,12 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
   const displayProjectNumber = projectNumber.replace(/-/g, '');
 
   return (
-    <div className="w-[100mm] h-[50mm] bg-white p-4 relative flex flex-col" style={{ color: '#000000' }}>
-      <div className="flex justify-between items-start gap-4">
+    <div className="w-[101.6mm] h-[152.4mm] bg-white p-6 relative flex flex-col" style={{ color: '#000000' }}>
+      <div className="flex justify-between items-start gap-6 mb-6">
         {/* Left side - Logo and company info */}
         <div className="flex flex-col flex-1">
-          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-16 object-contain mb-3" style={{ width: 'auto' }} />
-          <div className="text-[11pt] leading-relaxed text-black">
+          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-24 object-contain mb-4" style={{ width: 'auto' }} />
+          <div className="text-[14pt] leading-relaxed text-black">
             <p className="text-black font-bold">EWP Paneelbouw</p>
             <p className="text-black">Gildenstraat 28</p>
             <p className="text-black">4143HS Leerdam</p>
@@ -32,20 +32,20 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
 
         {/* Right side - QR Code */}
         <div className="flex flex-col items-center justify-start">
-          <div className="bg-white p-1.5 border-2 border-gray-500">
+          <div className="bg-white p-2 border-2 border-gray-500">
             <QRCodeSVG
               value={maintenanceUrl}
-              size={110}
+              size={140}
               level="M"
               includeMargin={false}
             />
           </div>
-          <p className="text-[9pt] mt-1.5 text-center text-black font-bold">Scan voor onderhoud</p>
+          <p className="text-[12pt] mt-2 text-center text-black font-bold">Scan voor onderhoud</p>
         </div>
       </div>
 
       {/* Details section */}
-      <div className="mt-4 text-[11pt] grid grid-cols-2 gap-x-6 gap-y-1.5">
+      <div className="text-[14pt] grid grid-cols-2 gap-x-6 gap-y-3">
         <div className="flex justify-between">
           <span className="font-bold text-black">Verdeler ID:</span>
           <span className="text-black font-semibold">{verdeler.distributor_id || verdeler.distributorId}</span>
@@ -83,7 +83,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
       <style>{`
         @media print {
           @page {
-            size: 100mm 50mm;
+            size: 101.6mm 152.4mm;
             margin: 0;
           }
           * {
