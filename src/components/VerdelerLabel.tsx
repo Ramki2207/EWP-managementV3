@@ -11,6 +11,9 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
   // Create URL for maintenance report
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
 
+  // Remove hyphen from project number for display
+  const displayProjectNumber = projectNumber.replace(/-/g, '');
+
   return (
     <div className="w-[125mm] h-[95mm] bg-white p-4 relative" style={{ color: '#000000' }}>
       <div className="flex justify-between items-start">
@@ -49,7 +52,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#000000' }}>Project:</span>
-          <span style={{ color: '#000000' }}>{projectNumber}</span>
+          <span style={{ color: '#000000' }}>{displayProjectNumber}</span>
         </div>
         <div className="flex justify-between">
           <span className="font-semibold" style={{ color: '#000000' }}>Kastnaam:</span>

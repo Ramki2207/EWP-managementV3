@@ -38,6 +38,9 @@ export const generateMPrintExcel = (
     phone: '06-27343669'
   };
 
+  // Remove hyphen from project number for display
+  const displayProjectNumber = projectNumber.replace(/-/g, '');
+
   // Prepare data rows
   const data = verdelers.map(verdeler => {
     const verdelerIdValue = verdeler.distributor_id || verdeler.distributorId || '';
@@ -48,7 +51,7 @@ export const generateMPrintExcel = (
 
     return {
       'Verdeler ID': verdelerIdValue,
-      'Project Nummer': projectNumber,
+      'Project Nummer': displayProjectNumber,
       'Kastnaam': kastNaamValue,
       'Systeem': verdeler.systeem || '',
       'Voeding': verdeler.voeding || '',
@@ -105,7 +108,7 @@ export const generateMPrintExcel = (
   // Generate filename
   const defaultFilename = verdelers.length === 1
     ? `${verdelers[0].distributor_id || verdelers[0].distributorId}_Label.xlsx`
-    : `${projectNumber}_Labels.xlsx`;
+    : `${displayProjectNumber}_Labels.xlsx`;
 
   // Download file
   XLSX.writeFile(wb, filename || defaultFilename);
