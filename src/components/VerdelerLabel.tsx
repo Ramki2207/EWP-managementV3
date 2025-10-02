@@ -1,6 +1,5 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import ewpLogo from '../assets/ewp-logo.png';
 
 interface VerdelerLabelProps {
   verdeler: any;
@@ -17,7 +16,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
       <div className="flex justify-between items-start">
         {/* Left side - Logo and company info */}
         <div className="flex flex-col" style={{ maxWidth: '60%' }}>
-          <img src={ewpLogo} alt="EWP Logo" className="h-11 object-contain mb-2" />
+          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-11 object-contain mb-2" />
           <div className="text-[8pt] leading-tight" style={{ color: '#000000' }}>
             <p>EWP Paneelbouw</p>
             <p>Gildenstraat 28</p>
