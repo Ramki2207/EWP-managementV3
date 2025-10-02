@@ -40,7 +40,7 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
             <title>Print Label</title>
             <style>
               @page {
-                size: 101.6mm 152.4mm;
+                size: 152.4mm 101.6mm;
                 margin: 0;
               }
               * {
@@ -49,8 +49,8 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 box-sizing: border-box;
               }
               html, body {
-                width: 101.6mm;
-                height: 152.4mm;
+                width: 152.4mm;
+                height: 101.6mm;
                 margin: 0;
                 padding: 0;
                 overflow: hidden;
@@ -62,8 +62,8 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 background: white;
               }
               img {
-                width: 101.6mm;
-                height: 152.4mm;
+                width: 152.4mm;
+                height: 101.6mm;
                 display: block;
                 object-fit: fill;
               }
@@ -104,7 +104,7 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white text-black p-8 rounded-lg shadow-lg w-[600px] max-h-[90vh] overflow-y-auto relative"
+        className="bg-white text-black p-8 rounded-lg shadow-lg w-[900px] max-h-[90vh] overflow-y-auto relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button

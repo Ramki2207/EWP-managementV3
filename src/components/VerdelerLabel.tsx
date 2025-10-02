@@ -15,7 +15,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
   const displayProjectNumber = projectNumber.replace(/-/g, '');
 
   return (
-    <div className="w-[101.6mm] h-[152.4mm] bg-white p-6 relative flex flex-col" style={{ color: '#000000' }}>
+    <div className="w-[152.4mm] h-[101.6mm] bg-white p-6 relative flex flex-col" style={{ color: '#000000' }}>
       <div className="flex justify-between items-start gap-6 mb-6">
         {/* Left side - Logo and company info */}
         <div className="flex flex-col flex-1">
@@ -83,7 +83,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
       <style>{`
         @media print {
           @page {
-            size: 101.6mm 152.4mm;
+            size: 152.4mm 101.6mm;
             margin: 0;
           }
           * {
