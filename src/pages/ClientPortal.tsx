@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { 
-  Lock, Eye, Download, Calendar, Package, CheckCircle, 
+import {
+  Lock, Eye, Download, Calendar, Package, CheckCircle,
   AlertTriangle, FileText, Server, Building, User, Mail, Phone,
   Folder, ChevronRight, ChevronDown, X
 } from 'lucide-react';
 import { clientPortalService } from '../lib/clientPortalService';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import ewpLogo from '../assets/ewp-logo.png';
 
 const defaultFolders = [
   'Verdeler aanzicht',
@@ -302,8 +303,8 @@ const ClientPortal = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-[#1a1a1a] to-[#111] flex items-center justify-center p-4">
         <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-8 w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock size={32} className="text-white" />
+            <div className="flex items-center justify-center mb-4">
+              <img src={ewpLogo} alt="EWP Paneelbouw" className="h-16 w-auto object-contain" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Klant Portal</h1>
             <p className="text-gray-400">Voer uw toegangscode in om uw projectdocumenten te bekijken</p>
@@ -373,9 +374,7 @@ const ClientPortal = () => {
         <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <CheckCircle size={24} className="text-white" />
-              </div>
+              <img src={ewpLogo} alt="EWP Paneelbouw" className="h-12 w-auto object-contain" />
               <div>
                 <h1 className="text-2xl font-bold text-white">Klant Portal</h1>
                 <p className="text-gray-400">Project {portalData?.projects?.project_number}</p>
