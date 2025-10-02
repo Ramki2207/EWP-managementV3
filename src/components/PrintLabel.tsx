@@ -20,10 +20,11 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
 
     try {
       const canvas = await html2canvas(labelRef.current, {
-        scale: 3,
+        scale: 4,
         backgroundColor: '#ffffff',
         logging: false,
         useCORS: true,
+        allowTaint: true,
         width: labelRef.current.offsetWidth,
         height: labelRef.current.offsetHeight
       });
@@ -41,7 +42,7 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
             <style>
               @page {
                 size: 152.4mm 101.6mm landscape;
-                margin: 3mm;
+                margin: 5mm;
               }
               * {
                 margin: 0;
@@ -49,11 +50,10 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 box-sizing: border-box;
               }
               html, body {
-                width: 146.4mm;
-                height: 95.6mm;
+                width: 100%;
+                height: 100%;
                 margin: 0;
                 padding: 0;
-                overflow: hidden;
               }
               body {
                 display: flex;
@@ -62,19 +62,19 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
                 background: white;
               }
               img {
-                width: 146.4mm;
-                height: 95.6mm;
+                max-width: 100%;
+                max-height: 100%;
+                width: auto;
+                height: auto;
                 display: block;
-                object-fit: contain;
               }
             </style>
           </head>
           <body>
-            <img src="${canvas.toDataURL('image/png')}" />
+            <img src="${canvas.toDataURL('image/png')}" alt="Verdeler Label" />
             <script>
               setTimeout(() => {
                 window.print();
-                window.close();
               }, 500);
             </script>
           </body>
