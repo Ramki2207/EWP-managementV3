@@ -38,16 +38,19 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
             <title>Print Label</title>
             <style>
               @page {
-                size: 125mm 95mm;
+                size: 100mm 50mm;
                 margin: 0;
               }
               body {
                 margin: 0;
                 padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
               }
               img {
-                width: 125mm;
-                height: 95mm;
+                width: 100mm;
+                height: 50mm;
                 object-fit: contain;
               }
             </style>

@@ -15,12 +15,12 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
   const displayProjectNumber = projectNumber.replace(/-/g, '');
 
   return (
-    <div className="w-[125mm] h-[95mm] bg-white p-4 relative" style={{ color: '#000000' }}>
-      <div className="flex justify-between items-start">
+    <div className="w-[100mm] h-[50mm] bg-white p-2 relative" style={{ color: '#000000' }}>
+      <div className="flex justify-between items-start gap-2">
         {/* Left side - Logo and company info */}
-        <div className="flex flex-col" style={{ maxWidth: '60%' }}>
-          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-11 object-contain mb-2" />
-          <div className="text-[8pt] leading-tight text-black">
+        <div className="flex flex-col" style={{ maxWidth: '55%' }}>
+          <img src="/EWP-logo-zwart.png" alt="EWP Logo" className="h-8 object-contain mb-1" />
+          <div className="text-[6pt] leading-tight text-black">
             <p className="text-black">EWP Paneelbouw</p>
             <p className="text-black">Gildenstraat 28</p>
             <p className="text-black">4143HS Leerdam</p>
@@ -31,59 +31,59 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
         </div>
 
         {/* Right side - QR Code */}
-        <div className="flex flex-col items-center" style={{ maxWidth: '35%' }}>
-          <div className="bg-white p-1 border border-gray-300">
+        <div className="flex flex-col items-center justify-center" style={{ maxWidth: '40%' }}>
+          <div className="bg-white p-0.5 border border-gray-300">
             <QRCodeSVG
               value={maintenanceUrl}
-              size={130}
-              level="H"
+              size={60}
+              level="M"
               includeMargin={false}
             />
           </div>
-          <p className="text-[7pt] mt-1 text-center" style={{ color: '#000000' }}>Scan voor onderhoud</p>
+          <p className="text-[5pt] mt-0.5 text-center text-black">Scan voor onderhoud</p>
         </div>
       </div>
 
       {/* Details section */}
-      <div className="mt-4 text-[10pt] grid grid-cols-2 gap-x-4 gap-y-1">
+      <div className="mt-1.5 text-[7pt] grid grid-cols-2 gap-x-2 gap-y-0.5">
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Verdeler ID:</span>
-          <span style={{ color: '#000000' }}>{verdeler.distributor_id || verdeler.distributorId}</span>
+          <span className="font-semibold text-black">Verdeler ID:</span>
+          <span className="text-black">{verdeler.distributor_id || verdeler.distributorId}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Project:</span>
-          <span style={{ color: '#000000' }}>{displayProjectNumber}</span>
+          <span className="font-semibold text-black">Project:</span>
+          <span className="text-black">{displayProjectNumber}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Kastnaam:</span>
-          <span style={{ color: '#000000' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
+          <span className="font-semibold text-black">Kastnaam:</span>
+          <span className="text-black">{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Systeem:</span>
-          <span style={{ color: '#000000' }}>{verdeler.systeem || '-'}</span>
+          <span className="font-semibold text-black">Systeem:</span>
+          <span className="text-black">{verdeler.systeem || '-'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Voeding:</span>
-          <span style={{ color: '#000000' }}>{verdeler.voeding || '-'}</span>
+          <span className="font-semibold text-black">Voeding:</span>
+          <span className="text-black">{verdeler.voeding || '-'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Un in V:</span>
-          <span style={{ color: '#000000' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
+          <span className="font-semibold text-black">Un in V:</span>
+          <span className="text-black">{verdeler.un_in_v || verdeler.unInV || '-'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>In in A:</span>
-          <span style={{ color: '#000000' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
+          <span className="font-semibold text-black">In in A:</span>
+          <span className="text-black">{verdeler.in_in_a || verdeler.inInA || '-'}</span>
         </div>
         <div className="flex justify-between">
-          <span className="font-semibold" style={{ color: '#000000' }}>Freq. in Hz:</span>
-          <span style={{ color: '#000000' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+          <span className="font-semibold text-black">Freq. in Hz:</span>
+          <span className="text-black">{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
         </div>
       </div>
 
       <style>{`
         @media print {
           @page {
-            size: 125mm 95mm;
+            size: 100mm 50mm;
             margin: 0;
           }
           * {
