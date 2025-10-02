@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import VerdelerVanaf630Test from './VerdelerVanaf630Test';
@@ -11,6 +11,7 @@ import PrintLabel from './PrintLabel';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
+import { exportMultipleVerdelersToExcel } from '../lib/excelExport';
 
 interface VerdelersStepProps {
   projectData: any;
@@ -539,13 +540,42 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             <h1 className="text-2xl font-semibold text-white mb-2">Project Verdelers</h1>
             <p className="text-gray-400">Beheer alle verdelers voor dit project</p>
           </div>
-          <button
-            onClick={() => setShowVerdelerForm(true)}
-            className="btn-primary flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Verdeler toevoegen</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            {verdelers.length > 0 && (
+              <button
+                onClick={() => {
+                  const formattedVerdelers = verdelers.map(v => ({
+                    distributor_id: v.distributorId,
+                    kast_naam: v.kastNaam,
+                    systeem: v.systeem,
+                    voeding: v.voeding,
+                    bouwjaar: v.bouwjaar,
+                    fabrikant: v.fabrikant,
+                    un_in_v: v.unInV,
+                    in_in_a: v.inInA,
+                    ik_th_in_ka1s: v.ikThInKA1s,
+                    ik_dyn_in_ka: v.ikDynInKA,
+                    freq_in_hz: v.freqInHz,
+                    type_nr_hs: v.typeNrHs
+                  }));
+                  exportMultipleVerdelersToExcel(formattedVerdelers, projectData.projectNumber || projectData.project_number);
+                  toast.success(`${verdelers.length} verdelers geëxporteerd voor M-Print Pro`);
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center space-x-2"
+                title="Exporteer alle verdelers voor M-Print Pro"
+              >
+                <FileSpreadsheet size={20} />
+                <span>Exporteer Alle Labels</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowVerdelerForm(true)}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus size={20} />
+              <span>Verdeler toevoegen</span>
+            </button>
+          </div>
         </div>
       </div>
 

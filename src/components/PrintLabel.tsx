@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Printer, X } from 'lucide-react';
+import { Printer, X, FileSpreadsheet } from 'lucide-react';
 import VerdelerLabel from './VerdelerLabel';
 import html2canvas from 'html2canvas';
+import { exportSingleVerdelerToExcel } from '../lib/excelExport';
 
 interface PrintLabelProps {
   verdeler: any;
@@ -68,6 +69,11 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
     }
   };
 
+  const handleExportToExcel = () => {
+    exportSingleVerdelerToExcel(verdeler, projectNumber);
+    setShowModal(false);
+  };
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       setShowModal(false);
@@ -106,20 +112,31 @@ const PrintLabel: React.FC<PrintLabelProps> = ({ verdeler, projectNumber, logo }
           </div>
         </div>
 
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-between items-center">
           <button
-            onClick={() => setShowModal(false)}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            onClick={handleExportToExcel}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center space-x-2"
+            title="Download Excel bestand voor M-Print Pro"
           >
-            Annuleren
+            <FileSpreadsheet size={16} />
+            <span>Export voor M-Print Pro</span>
           </button>
-          <button
-            onClick={handlePrint}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center space-x-2"
-          >
-            <Printer size={16} />
-            <span>Print Label</span>
-          </button>
+
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setShowModal(false)}
+              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            >
+              Annuleren
+            </button>
+            <button
+              onClick={handlePrint}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center space-x-2"
+            >
+              <Printer size={16} />
+              <span>Print Label</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
