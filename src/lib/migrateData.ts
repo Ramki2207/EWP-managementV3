@@ -98,57 +98,63 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
   try {
     console.log('🚀 Starting document migration to storage...');
 
-    // Get all documents (we'll filter client-side)
-    console.log('📥 Fetching documents from database...');
-    const { data: allDocuments, error } = await dataService.supabase
+    // Get document list WITHOUT content (to avoid timeout)
+    console.log('📥 Fetching document list from database...');
+    const { data: documentList, error } = await dataService.supabase
       .from('documents')
-      .select('*');
+      .select('id, name, project_id, distributor_id, folder, storage_path, type, size')
+      .is('storage_path', null);
 
     if (error) {
       console.error('❌ Database error:', error);
       throw error;
     }
 
-    console.log(`📊 Total documents in database: ${allDocuments?.length || 0}`);
+    console.log(`📊 Found ${documentList?.length || 0} documents to migrate`);
 
-    // Filter documents that need migration (have content but no storage_path)
-    const documents = allDocuments?.filter(doc => doc.content && !doc.storage_path) || [];
-
-    console.log(`📊 Documents needing migration: ${documents.length}`);
-
-    if (documents.length === 0) {
+    if (!documentList || documentList.length === 0) {
       console.log('✅ No documents to migrate');
       toast.success('Alle documenten zijn al gemigreerd!');
       return { success: true, migrated: 0, failed: 0 };
     }
 
-    console.log(`📊 Starting migration of ${documents.length} documents...`);
-
     let migratedCount = 0;
     let failedCount = 0;
     const failedDocs: any[] = [];
 
-    for (let i = 0; i < documents.length; i++) {
-      const doc = documents[i];
+    // Process documents one at a time
+    for (let i = 0; i < documentList.length; i++) {
+      const docMeta = documentList[i];
 
       try {
-        console.log(`\n📄 Migrating ${i + 1}/${documents.length}: ${doc.name}`);
+        console.log(`\n📄 Migrating ${i + 1}/${documentList.length}: ${docMeta.name}`);
+
+        // Fetch the content for this specific document
+        const { data: doc, error: contentError } = await dataService.supabase
+          .from('documents')
+          .select('content')
+          .eq('id', docMeta.id)
+          .single();
+
+        if (contentError || !doc) {
+          throw new Error('Could not fetch document content');
+        }
 
         // Convert base64 data URL to blob
         const base64Data = doc.content;
         if (!base64Data || !base64Data.startsWith('data:')) {
-          console.error('❌ Invalid content format for document:', doc.id);
+          console.error('❌ Invalid content format for document:', docMeta.id);
           failedCount++;
-          failedDocs.push({ id: doc.id, name: doc.name, error: 'Invalid content format' });
+          failedDocs.push({ id: docMeta.id, name: docMeta.name, error: 'Invalid content format' });
           continue;
         }
 
         // Extract mime type and base64 string
         const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
         if (!matches) {
-          console.error('❌ Could not parse base64 data for document:', doc.id);
+          console.error('❌ Could not parse base64 data for document:', docMeta.id);
           failedCount++;
-          failedDocs.push({ id: doc.id, name: doc.name, error: 'Could not parse base64' });
+          failedDocs.push({ id: docMeta.id, name: docMeta.name, error: 'Could not parse base64' });
           continue;
         }
 
@@ -165,16 +171,16 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
         const blob = new Blob([byteArray], { type: mimeType });
 
         // Create a File object from the blob
-        const file = new File([blob], doc.name, { type: mimeType });
+        const file = new File([blob], docMeta.name, { type: mimeType });
 
-        console.log(`📤 Uploading to storage: ${doc.name} (${(file.size / 1024).toFixed(2)} KB)`);
+        console.log(`📤 Uploading to storage: ${docMeta.name} (${(file.size / 1024).toFixed(2)} KB)`);
 
         // Upload to storage
         const storagePath = await dataService.uploadFileToStorage(
           file,
-          doc.project_id,
-          doc.distributor_id,
-          doc.folder
+          docMeta.project_id,
+          docMeta.distributor_id,
+          docMeta.folder
         );
 
         console.log(`✅ Uploaded to: ${storagePath}`);
@@ -186,29 +192,29 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
             storage_path: storagePath,
             content: null // Clear the base64 content to save space
           })
-          .eq('id', doc.id);
+          .eq('id', docMeta.id);
 
         if (updateError) {
           throw updateError;
         }
 
         migratedCount++;
-        console.log(`✅ Migrated document ${i + 1}/${documents.length}`);
+        console.log(`✅ Migrated document ${i + 1}/${documentList.length}`);
 
         // Call progress callback
         if (onProgress) {
-          onProgress(i + 1, documents.length);
+          onProgress(i + 1, documentList.length);
         }
 
       } catch (error: any) {
-        console.error(`❌ Error migrating document ${doc.name}:`, error);
+        console.error(`❌ Error migrating document ${docMeta.name}:`, error);
         console.error('Error details:', {
           message: error.message,
           stack: error.stack,
           fullError: error
         });
         failedCount++;
-        failedDocs.push({ id: doc.id, name: doc.name, error: error?.message || String(error) });
+        failedDocs.push({ id: docMeta.id, name: docMeta.name, error: error?.message || String(error) });
       }
     }
 
