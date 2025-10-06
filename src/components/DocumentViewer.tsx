@@ -92,6 +92,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
 
     try {
       setLoadingContent(prev => ({ ...prev, [doc.id]: true }));
+
+      // Show a loading message with file size
+      const fileSizeMB = (doc.size / (1024 * 1024)).toFixed(1);
+      toast.loading(`Laden ${doc.name} (${fileSizeMB}MB)...`, { id: doc.id });
+
       const content = await dataService.getDocumentContent(doc.id);
 
       // Update the document in state with the loaded content
@@ -100,10 +105,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       ));
 
       setLoadingContent(prev => ({ ...prev, [doc.id]: false }));
+      toast.success('Document geladen!', { id: doc.id });
       return content;
     } catch (error) {
       setLoadingContent(prev => ({ ...prev, [doc.id]: false }));
-      toast.error('Fout bij laden van document inhoud');
+      toast.error(`Fout bij laden: ${error.message}`, { id: doc.id });
       throw error;
     }
   }, []);

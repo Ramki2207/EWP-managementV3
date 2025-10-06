@@ -509,12 +509,28 @@ export const dataService = {
   async getDocumentContent(documentId: string) {
     try {
       console.log('getDocumentContent called with:', documentId);
+      console.log('⏱️ Starting to fetch large document content...');
+
+      // Add a longer timeout for large files
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        console.error('❌ Document content fetch timed out after 30 seconds');
+        controller.abort();
+      }, 30000); // 30 second timeout for large files
+
+      const startTime = Date.now();
 
       const { data, error } = await supabase
         .from('documents')
         .select('content')
         .eq('id', documentId)
+        .abortSignal(controller.signal)
         .single();
+
+      clearTimeout(timeoutId);
+
+      const fetchTime = Date.now() - startTime;
+      console.log(`✅ Document content fetched in ${fetchTime}ms`);
 
       if (error) {
         console.error('Database error in getDocumentContent:', error);
@@ -523,6 +539,9 @@ export const dataService = {
 
       return data?.content;
     } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Document loading timed out - the file may be too large');
+      }
       console.error('Network error in getDocumentContent:', err);
       throw new Error(`Failed to fetch document content: ${getErrorMessage(err)}`);
     }
