@@ -12,8 +12,8 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
-  // Create an inline SVG logo with bold styling
-  const ewpLogoSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80'%3E%3Crect width='300' height='80' fill='white'/%3E%3Ctext x='10' y='55' font-family='Arial, sans-serif' font-size='48' font-weight='bold' fill='%23000000'%3EEWP%3C/text%3E%3C/svg%3E`;
+  // Use the uploaded EWP logo
+  const ewpLogoUrl = '/Untitled design - 2025-10-06T162449.134.png';
 
   const handleDownload = async () => {
     if (!labelRef.current) return;
@@ -98,21 +98,20 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               height: '80px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#fff',
-              padding: '10px',
-              borderRadius: '8px',
-              border: '2px solid #000'
+              justifyContent: 'flex-start',
+              backgroundColor: 'transparent',
+              padding: '0'
             }}>
-              <span style={{
-                fontSize: '52px',
-                fontWeight: 'bold',
-                color: '#000',
-                fontFamily: 'Arial, sans-serif',
-                letterSpacing: '2px'
-              }}>
-                EWP
-              </span>
+              <img
+                src={ewpLogoUrl}
+                alt="EWP Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+                crossOrigin="anonymous"
+              />
             </div>
 
             {/* Company Info */}
