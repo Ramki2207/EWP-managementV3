@@ -652,7 +652,7 @@ const VerdelerDetails = () => {
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
+                    <label className="block text-sm text-gray-400 mb-2">Binnenkomende voeding</label>
                     {isEditing ? (
                       <input
                         type="text"

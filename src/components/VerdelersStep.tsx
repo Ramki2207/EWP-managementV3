@@ -49,15 +49,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     kastNaam: '',
     toegewezenMonteur: 'Vrij',
     systeem: '',
+    systeemCustom: '',
     voeding: '',
-    bouwjaar: '',
+    voedingCustom: '',
+    bouwjaar: new Date().getFullYear().toString(),
     status: 'Offerte',
     fabrikant: '',
     unInV: '',
     inInA: '',
     ikThInKA1s: '',
     ikDynInKA: '',
-    freqInHz: '',
+    freqInHz: '50 Hz',
     typeNrHs: '',
     profilePhoto: null as File | null,
   });
@@ -172,10 +174,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
+  // Helper function to add units to technical spec values
+  const formatTechnicalValue = (value: string, unit: string) => {
+    if (!value) return '';
+    const cleanValue = value.trim().replace(new RegExp(`\\s*${unit}$`, 'i'), '');
+    return cleanValue ? `${cleanValue} ${unit}` : '';
+  };
+
   const generateDistributorId = () => {
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const newId = `VD${randomNum}`;
-    
+
     const exists = verdelers.some(v => v.distributorId === newId);
     if (exists) {
       generateDistributorId();
@@ -211,20 +220,30 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleEditVerdeler = (verdeler: any) => {
     console.log('🔧 EDIT: Starting edit for verdeler:', verdeler);
     setEditingVerdeler(verdeler);
+
+    // Check if systeem/voeding are custom values
+    const systeemOptions = ['TN-S', 'TN-C', 'TN-C-S'];
+    const voedingOptions = ['40', '63', '80', '125', '250', '400', '630', '750', '800', '1000', '1250', '1400', '1600', '2000', '2500', '3200', '4000', '5000', '6300'];
+
+    const isCustomSysteem = verdeler.systeem && !systeemOptions.includes(verdeler.systeem);
+    const isCustomVoeding = verdeler.voeding && !voedingOptions.includes(verdeler.voeding);
+
     setVerdelerData({
       distributorId: verdeler.distributorId,
       kastNaam: verdeler.kastNaam,
       toegewezenMonteur: verdeler.toegewezenMonteur || 'Vrij',
-      systeem: verdeler.systeem,
-      voeding: verdeler.voeding,
-      bouwjaar: verdeler.bouwjaar,
+      systeem: isCustomSysteem ? 'custom' : (verdeler.systeem || ''),
+      systeemCustom: isCustomSysteem ? verdeler.systeem : '',
+      voeding: isCustomVoeding ? 'custom' : (verdeler.voeding || ''),
+      voedingCustom: isCustomVoeding ? verdeler.voeding : '',
+      bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
       status: verdeler.status,
       fabrikant: verdeler.fabrikant,
       unInV: verdeler.unInV,
       inInA: verdeler.inInA,
       ikThInKA1s: verdeler.ikThInKA1s,
       ikDynInKA: verdeler.ikDynInKA,
-      freqInHz: verdeler.freqInHz,
+      freqInHz: verdeler.freqInHz || '50 Hz',
       typeNrHs: verdeler.typeNrHs,
       profilePhoto: null,
     });
@@ -322,9 +341,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     try {
       console.log('🚀 SAVE: Saving verdeler with data:', verdelerData);
       console.log('🚀 SAVE: Monteur being saved:', verdelerData.toegewezenMonteur);
-      
+
       let profilePhotoUrl = '';
-      
+
       if (verdelerData.profilePhoto) {
         const reader = new FileReader();
         profilePhotoUrl = await new Promise((resolve) => {
@@ -335,6 +354,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         profilePhotoUrl = editingVerdeler.profilePhoto;
       }
 
+      // Get actual values for systeem and voeding
+      const finalSysteem = verdelerData.systeem === 'custom' ? verdelerData.systeemCustom : verdelerData.systeem;
+      const finalVoeding = verdelerData.voeding === 'custom' ? verdelerData.voedingCustom : verdelerData.voeding;
+
       console.log('🔍 SAVE: Saving verdeler with data:', verdelerData);
       console.log('🔍 SAVE: distributorId:', verdelerData.distributorId);
       console.log('🔍 SAVE: kastNaam:', verdelerData.kastNaam);
@@ -342,13 +365,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       if (editingVerdeler) {
         // Update existing verdeler in database
         console.log('🔄 SAVE: Updating existing verdeler in database...');
-        
+
         const updateData = {
           distributorId: verdelerData.distributorId,
           projectId: projectData.id,
           kastNaam: verdelerData.kastNaam,
-          systeem: verdelerData.systeem,
-          voeding: verdelerData.voeding,
+          systeem: finalSysteem,
+          voeding: finalVoeding,
           bouwjaar: verdelerData.bouwjaar,
           status: verdelerData.status,
           fabrikant: verdelerData.fabrikant,
@@ -377,8 +400,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             projectId: projectData.id,
             kastNaam: verdelerData.kastNaam,
             toegewezenMonteur: verdelerData.toegewezenMonteur,
-            systeem: verdelerData.systeem,
-            voeding: verdelerData.voeding,
+            systeem: finalSysteem,
+            voeding: finalVoeding,
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -401,8 +424,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             distributorId: verdelerData.distributorId,
             kastNaam: verdelerData.kastNaam,
             toegewezenMonteur: verdelerData.toegewezenMonteur,
-            systeem: verdelerData.systeem,
-            voeding: verdelerData.voeding,
+            systeem: finalSysteem,
+            voeding: finalVoeding,
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -454,15 +477,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       kastNaam: '',
       toegewezenMonteur: 'Vrij',
       systeem: '',
+      systeemCustom: '',
       voeding: '',
-      bouwjaar: '',
+      voedingCustom: '',
+      bouwjaar: new Date().getFullYear().toString(),
       status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'In productie',
       fabrikant: '',
       unInV: '',
       inInA: '',
       ikThInKA1s: '',
       ikDynInKA: '',
-      freqInHz: '',
+      freqInHz: '50 Hz',
       typeNrHs: '',
       profilePhoto: null,
     });
@@ -1140,24 +1165,76 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Systeem</label>
-                    <input
-                      type="text"
+                    <select
                       className="input-field"
                       value={verdelerData.systeem}
-                      onChange={(e) => handleInputChange('systeem', e.target.value)}
-                      placeholder="400V TN-S"
-                    />
+                      onChange={(e) => {
+                        handleInputChange('systeem', e.target.value);
+                        if (e.target.value !== 'custom') {
+                          handleInputChange('systeemCustom', '');
+                        }
+                      }}
+                    >
+                      <option value="">Selecteer systeem</option>
+                      <option value="TN-S">TN-S</option>
+                      <option value="TN-C">TN-C</option>
+                      <option value="TN-C-S">TN-C-S</option>
+                      <option value="custom">Zelf invullen</option>
+                    </select>
+                    {verdelerData.systeem === 'custom' && (
+                      <input
+                        type="text"
+                        className="input-field mt-2"
+                        value={verdelerData.systeemCustom}
+                        onChange={(e) => handleInputChange('systeemCustom', e.target.value)}
+                        placeholder="Vul systeem in"
+                      />
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Voeding</label>
-                    <input
-                      type="text"
+                    <label className="block text-sm text-gray-400 mb-2">Binnenkomende voeding</label>
+                    <select
                       className="input-field"
                       value={verdelerData.voeding}
-                      onChange={(e) => handleInputChange('voeding', e.target.value)}
-                      placeholder="3x400V + N + PE"
-                    />
+                      onChange={(e) => {
+                        handleInputChange('voeding', e.target.value);
+                        if (e.target.value !== 'custom') {
+                          handleInputChange('voedingCustom', '');
+                        }
+                      }}
+                    >
+                      <option value="">Selecteer voeding</option>
+                      <option value="40">40</option>
+                      <option value="63">63</option>
+                      <option value="80">80</option>
+                      <option value="125">125</option>
+                      <option value="250">250</option>
+                      <option value="400">400</option>
+                      <option value="630">630</option>
+                      <option value="750">750</option>
+                      <option value="800">800</option>
+                      <option value="1000">1000</option>
+                      <option value="1250">1250</option>
+                      <option value="1400">1400</option>
+                      <option value="1600">1600</option>
+                      <option value="2000">2000</option>
+                      <option value="2500">2500</option>
+                      <option value="3200">3200</option>
+                      <option value="4000">4000</option>
+                      <option value="5000">5000</option>
+                      <option value="6300">6300</option>
+                      <option value="custom">Zelf invullen</option>
+                    </select>
+                    {verdelerData.voeding === 'custom' && (
+                      <input
+                        type="text"
+                        className="input-field mt-2"
+                        value={verdelerData.voedingCustom}
+                        onChange={(e) => handleInputChange('voedingCustom', e.target.value)}
+                        placeholder="Vul voeding in"
+                      />
+                    )}
                   </div>
 
                   <div>
@@ -1210,21 +1287,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <option value="Eaton">Eaton</option>
                       <option value="Legrand">Legrand</option>
                       <option value="Hager">Hager</option>
+                      <option value="Hensel">Hensel</option>
+                      <option value="Halyster">Halyster</option>
                       <option value="Rittal">Rittal</option>
                       <option value="Phoenix Contact">Phoenix Contact</option>
                       <option value="Weidmüller">Weidmüller</option>
                       <option value="Anders">Anders</option>
                     </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">Profiel foto</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProfilePhotoChange}
-                      className="input-field"
-                    />
                   </div>
                 </div>
               </div>
@@ -1251,7 +1320,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.unInV}
                       onChange={(e) => handleInputChange('unInV', e.target.value)}
-                      placeholder="400"
+                      onBlur={(e) => {
+                        const formatted = formatTechnicalValue(e.target.value, 'V');
+                        handleInputChange('unInV', formatted);
+                      }}
+                      placeholder="400 V"
                       disabled={!canEditTechnicalSpecs}
                     />
                   </div>
@@ -1263,7 +1336,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.inInA}
                       onChange={(e) => handleInputChange('inInA', e.target.value)}
-                      placeholder="400"
+                      onBlur={(e) => {
+                        const formatted = formatTechnicalValue(e.target.value, 'A');
+                        handleInputChange('inInA', formatted);
+                      }}
+                      placeholder="400 A"
                       disabled={!canEditTechnicalSpecs}
                     />
                   </div>
@@ -1275,7 +1352,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.ikThInKA1s}
                       onChange={(e) => handleInputChange('ikThInKA1s', e.target.value)}
-                      placeholder="25"
+                      onBlur={(e) => {
+                        const formatted = formatTechnicalValue(e.target.value, 'KA');
+                        handleInputChange('ikThInKA1s', formatted);
+                      }}
+                      placeholder="25 KA"
                       disabled={!canEditTechnicalSpecs}
                     />
                   </div>
@@ -1287,7 +1368,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.ikDynInKA}
                       onChange={(e) => handleInputChange('ikDynInKA', e.target.value)}
-                      placeholder="65"
+                      onBlur={(e) => {
+                        const formatted = formatTechnicalValue(e.target.value, 'KA');
+                        handleInputChange('ikDynInKA', formatted);
+                      }}
+                      placeholder="65 KA"
                       disabled={!canEditTechnicalSpecs}
                     />
                   </div>
@@ -1299,7 +1384,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.freqInHz}
                       onChange={(e) => handleInputChange('freqInHz', e.target.value)}
-                      placeholder="50"
+                      onBlur={(e) => {
+                        const formatted = formatTechnicalValue(e.target.value, 'Hz');
+                        handleInputChange('freqInHz', formatted);
+                      }}
+                      placeholder="50 Hz"
                       disabled={!canEditTechnicalSpecs}
                     />
                   </div>
