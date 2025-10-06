@@ -9,7 +9,7 @@ interface Document {
   name: string;
   type: string;
   size: number;
-  content: string;
+  content?: string;
   uploaded_at: string;
 }
 
@@ -82,6 +82,31 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [loadingContent, setLoadingContent] = useState<Record<string, boolean>>({});
+
+  // Helper function to load document content on-demand
+  const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
+    if (doc.content) {
+      return doc.content;
+    }
+
+    try {
+      setLoadingContent(prev => ({ ...prev, [doc.id]: true }));
+      const content = await dataService.getDocumentContent(doc.id);
+
+      // Update the document in state with the loaded content
+      setDocuments(prev => prev.map(d =>
+        d.id === doc.id ? { ...d, content } : d
+      ));
+
+      setLoadingContent(prev => ({ ...prev, [doc.id]: false }));
+      return content;
+    } catch (error) {
+      setLoadingContent(prev => ({ ...prev, [doc.id]: false }));
+      toast.error('Fout bij laden van document inhoud');
+      throw error;
+    }
+  }, []);
 
   const loadDocuments = useCallback(async () => {
     // Clear any existing timeout
@@ -207,9 +232,13 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       console.log('🔄 REVISION: Original document ID:', matchingDoc.id);
       console.log('🔄 REVISION: Will move original to Historie:', `${folder}/Historie`);
       console.log('🔄 REVISION: Will place new revision in Actueel:', `${folder}/Actueel`);
-      
+
       try {
-        // Step 1: Create copy of original document in Historie subfolder  
+        // Load the content of the matching document if not already loaded
+        console.log('📁 REVISION: Loading content of matching document...');
+        const content = await loadDocumentContent(matchingDoc);
+
+        // Step 1: Create copy of original document in Historie subfolder
         console.log('📁 REVISION: Creating document in Historie...');
         const historieDoc = await dataService.createDocument({
           projectId,
@@ -218,9 +247,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           name: matchingDoc.name,
           type: matchingDoc.type,
           size: matchingDoc.size,
-          content: matchingDoc.content
+          content: content
         });
-        
+
         console.log('✅ REVISION: Successfully created document in Historie:', historieDoc?.id);
         
         // Step 2: Delete original document from its current location
@@ -461,14 +490,20 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     <div
       key={doc.id}
       className="bg-[#2A303C] rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-lg"
-      onClick={(e) => {
+      onClick={async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        await loadDocumentContent(doc);
         setSelectedDocument(doc);
       }}
     >
-      <div className="aspect-video bg-[#1E2530] flex items-center justify-center">
-        {isImage(doc.type) ? (
+      <div className="aspect-video bg-[#1E2530] flex items-center justify-center relative">
+        {loadingContent[doc.id] && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        )}
+        {isImage(doc.type) && doc.content ? (
           <img
             src={doc.content}
             alt={doc.name}
@@ -580,10 +615,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
   };
 
-  const handleDownload = (doc: Document) => {
+  const handleDownload = async (doc: Document) => {
     try {
+      const content = await loadDocumentContent(doc);
       const link = document.createElement('a');
-      link.href = doc.content;
+      link.href = content;
       link.download = doc.name;
       document.body.appendChild(link);
       link.click();
@@ -607,10 +643,19 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const isPDF = (type: string) => type === 'application/pdf';
 
   const renderPreview = (doc: Document) => {
+    if (!doc.content) {
+      return (
+        <div className="flex flex-col items-center justify-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          <p className="text-gray-400 mt-4">Document laden...</p>
+        </div>
+      );
+    }
+
     if (isImage(doc.type)) {
       return (
-        <img 
-          src={doc.content} 
+        <img
+          src={doc.content}
           alt={doc.name}
           className="max-h-[500px] object-contain mx-auto"
           loading="lazy"

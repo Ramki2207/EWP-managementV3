@@ -461,14 +461,15 @@ export const dataService = {
   async getDocuments(projectId?: string, distributorId?: string, folder?: string) {
     try {
       console.log('getDocuments called with:', { projectId, distributorId, folder });
-      
+
       // Add timeout to prevent hanging requests - increased timeout for large datasets
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-      
+
+      // Select only metadata fields, not the content field to avoid loading large base64 data
       let query = supabase
         .from('documents')
-        .select('*')
+        .select('id, project_id, distributor_id, folder, name, type, size, uploaded_at')
         .order('uploaded_at', { ascending: false })
         .abortSignal(controller.signal);
 
@@ -483,9 +484,9 @@ export const dataService = {
       }
 
       const { data, error } = await query.limit(100); // Increased limit now that we have indexes
-      
+
       clearTimeout(timeoutId);
-      
+
       if (error) {
         if (error.name === 'AbortError') {
           throw new Error('Document loading timed out after 15 seconds - please try again or contact support');
@@ -493,7 +494,7 @@ export const dataService = {
         console.error('Database error in getDocuments:', error);
         throw error;
       }
-      
+
       console.log('getDocuments returning:', data?.length || 0, 'documents');
       return data;
     } catch (err) {
@@ -502,6 +503,28 @@ export const dataService = {
       }
       console.error('Network error in getDocuments:', err);
       throw new Error(`Failed to fetch documents: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async getDocumentContent(documentId: string) {
+    try {
+      console.log('getDocumentContent called with:', documentId);
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('content')
+        .eq('id', documentId)
+        .single();
+
+      if (error) {
+        console.error('Database error in getDocumentContent:', error);
+        throw error;
+      }
+
+      return data?.content;
+    } catch (err) {
+      console.error('Network error in getDocumentContent:', err);
+      throw new Error(`Failed to fetch document content: ${getErrorMessage(err)}`);
     }
   },
 
@@ -520,7 +543,7 @@ export const dataService = {
         }])
         .select()
         .single();
-      
+
       if (error) {
         console.error('Database error in createDocument:', error);
         throw error;
