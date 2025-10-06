@@ -16,6 +16,9 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
   // Use the uploaded EWP logo
   const ewpLogoUrl = '/Untitled design - 2025-10-06T162449.134.png';
 
+  // Create URL for maintenance report (same as VerdelerLabel)
+  const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
+
   const handleDownload = async () => {
     if (!labelRef.current) return;
 
@@ -426,7 +429,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 border: '3px solid #000'
               }}>
                 <QRCodeSVG
-                  value={`${projectNumber}-${verdeler.distributorId || verdeler.distributor_id}`}
+                  value={maintenanceUrl}
                   size={160}
                   level="M"
                   includeMargin={false}
