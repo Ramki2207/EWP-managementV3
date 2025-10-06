@@ -1169,10 +1169,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.systeem}
                       onChange={(e) => {
-                        handleInputChange('systeem', e.target.value);
-                        if (e.target.value !== 'custom') {
-                          handleInputChange('systeemCustom', '');
-                        }
+                        const value = e.target.value;
+                        setVerdelerData(prev => ({
+                          ...prev,
+                          systeem: value,
+                          systeemCustom: value !== 'custom' ? '' : prev.systeemCustom
+                        }));
                       }}
                     >
                       <option value="">Selecteer systeem</option>
@@ -1198,10 +1200,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.voeding}
                       onChange={(e) => {
-                        handleInputChange('voeding', e.target.value);
-                        if (e.target.value !== 'custom') {
-                          handleInputChange('voedingCustom', '');
-                        }
+                        const value = e.target.value;
+                        setVerdelerData(prev => ({
+                          ...prev,
+                          voeding: value,
+                          voedingCustom: value !== 'custom' ? '' : prev.voedingCustom
+                        }));
                       }}
                     >
                       <option value="">Selecteer voeding</option>
