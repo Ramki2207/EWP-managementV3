@@ -12,8 +12,8 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
-  // Fallback SVG logo as data URI
-  const fallbackLogo = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60'%3E%3Ctext x='10' y='40' font-family='Arial, sans-serif' font-size='36' font-weight='bold' fill='%23000'%3EEWP%3C/text%3E%3C/svg%3E`;
+  // Create an inline SVG logo with bold styling
+  const ewpLogoSVG = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 80'%3E%3Crect width='300' height='80' fill='white'/%3E%3Ctext x='10' y='55' font-family='Arial, sans-serif' font-size='48' font-weight='bold' fill='%23000000'%3EEWP%3C/text%3E%3C/svg%3E`;
 
   const handleDownload = async () => {
     if (!labelRef.current) return;
@@ -93,14 +93,21 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             borderBottom: '4px solid #000000'
           }}>
             {/* Logo */}
-            <div style={{ width: '250px', height: '80px', display: 'flex', alignItems: 'center' }}>
+            <div style={{
+              width: '250px',
+              height: '80px',
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: '#fff',
+              padding: '10px',
+              borderRadius: '8px'
+            }}>
               <img
-                src={fallbackLogo}
+                src={ewpLogoSVG}
                 alt="EWP Logo"
                 style={{
                   width: '100%',
-                  height: 'auto',
-                  maxHeight: '80px',
+                  height: '100%',
                   objectFit: 'contain'
                 }}
               />
@@ -410,3 +417,6 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 };
 
 export default MPrintLabel;
+
+
+export default MPrintLabel
