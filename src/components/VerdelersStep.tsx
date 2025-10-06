@@ -8,6 +8,7 @@ import FATTest from './FATTest';
 import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
+import MPrintLabel from './MPrintLabel';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -1089,6 +1090,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       logo={ewpLogo}
+                    />
+                    <MPrintLabel
+                      verdeler={selectedVerdeler}
+                      projectNumber={projectData.project_number || projectData.projectNumber}
                     />
                   </div>
                 </div>
