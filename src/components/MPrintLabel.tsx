@@ -103,19 +103,19 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              backgroundColor: 'transparent',
-              padding: '0'
+              backgroundColor: '#fff',
+              padding: '10px',
+              border: '2px solid #000',
+              borderRadius: '8px'
             }}>
-              <img
-                src={ewpLogoUrl}
-                alt="EWP Logo"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-                crossOrigin="anonymous"
-              />
+              <div style={{
+                fontSize: '32px',
+                fontWeight: 'bold',
+                color: '#000',
+                letterSpacing: '2px'
+              }}>
+                EWP
+              </div>
             </div>
 
             {/* Company Info */}
