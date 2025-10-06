@@ -146,12 +146,13 @@ const FATTest: React.FC<FATTestProps> = ({ verdeler, projectNumber, onComplete }
 
   // Memoize verdeler info to prevent unnecessary re-renders
   const verdelerInfo = useMemo(() => ({
-    id: verdeler.distributorId,
-    name: verdeler.kastNaam || 'Naamloos'
-  }), [verdeler.distributorId, verdeler.kastNaam]);
+    id: verdeler.id,
+    displayId: verdeler.distributorId || verdeler.distributor_id,
+    name: verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'
+  }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
-    const savedTestData = localStorage.getItem(`fat_test_${verdeler.distributorId}`);
+    const savedTestData = localStorage.getItem(`fat_test_${verdelerInfo.id}`);
     if (savedTestData) {
       try {
         const parsed = JSON.parse(savedTestData);
@@ -165,7 +166,7 @@ const FATTest: React.FC<FATTestProps> = ({ verdeler, projectNumber, onComplete }
 
   const saveTestData = useCallback((): boolean => {
     try {
-      localStorage.setItem(`fat_test_${verdeler.distributorId}`, JSON.stringify(testData));
+      localStorage.setItem(`fat_test_${verdelerInfo.id}`, JSON.stringify(testData));
       onComplete(testData);
       return true;
     } catch (error) {

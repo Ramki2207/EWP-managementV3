@@ -138,9 +138,10 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
   const [testData, setTestData] = useState(initialTestData);
 
   const verdelerInfo = useMemo(() => ({
-    id: verdeler.distributorId || verdeler.distributor_id,
+    id: verdeler.id,
+    displayId: verdeler.distributorId || verdeler.distributor_id,
     name: verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'
-  }), [verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
+  }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
     const savedTestData = localStorage.getItem(`verdeler_test_simpel_${verdelerInfo.id}`);

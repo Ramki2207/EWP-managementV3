@@ -124,9 +124,10 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
 
   // Memoize verdeler info to prevent unnecessary re-renders
   const verdelerInfo = useMemo(() => ({
-    id: verdeler.distributorId || verdeler.distributor_id,
+    id: verdeler.id,
+    displayId: verdeler.distributorId || verdeler.distributor_id,
     name: verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'
-  }), [verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
+  }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
     const loadTestData = async () => {

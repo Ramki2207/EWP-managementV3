@@ -46,12 +46,13 @@ const HighVoltageTest: React.FC<HighVoltageTestProps> = ({ verdeler, projectNumb
 
   // Memoize verdeler info to prevent unnecessary re-renders
   const verdelerInfo = useMemo(() => ({
-    id: verdeler.distributorId,
-    name: verdeler.kastNaam || 'Naamloos'
-  }), [verdeler.distributorId, verdeler.kastNaam]);
+    id: verdeler.id,
+    displayId: verdeler.distributorId || verdeler.distributor_id,
+    name: verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'
+  }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
-    const savedTestData = localStorage.getItem(`hv_test_${verdeler.distributorId}`);
+    const savedTestData = localStorage.getItem(`hv_test_${verdelerInfo.id}`);
     if (savedTestData) {
       try {
         const parsed = JSON.parse(savedTestData);
@@ -61,11 +62,11 @@ const HighVoltageTest: React.FC<HighVoltageTestProps> = ({ verdeler, projectNumb
         toast.error('Er is een fout opgetreden bij het laden van de testgegevens');
       }
     }
-  }, [verdeler.distributorId]);
+  }, [verdelerInfo.id]);
 
   const saveTestData = useCallback((): boolean => {
     try {
-      localStorage.setItem(`hv_test_${verdeler.distributorId}`, JSON.stringify(testData));
+      localStorage.setItem(`hv_test_${verdelerInfo.id}`, JSON.stringify(testData));
       onComplete(testData);
       return true;
     } catch (error) {
@@ -73,7 +74,7 @@ const HighVoltageTest: React.FC<HighVoltageTestProps> = ({ verdeler, projectNumb
       toast.error('Er is een fout opgetreden bij het opslaan van de testgegevens');
       return false;
     }
-  }, [testData, verdeler.distributorId, onComplete]);
+  }, [testData, verdelerInfo.id, onComplete]);
 
   const handleComplete = useCallback(() => {
     const updatedTestData = {
@@ -88,17 +89,17 @@ const HighVoltageTest: React.FC<HighVoltageTestProps> = ({ verdeler, projectNumb
     
     // Save immediately with updated data
     try {
-      localStorage.setItem(`hv_test_${verdeler.distributorId}`, JSON.stringify(updatedTestData));
+      localStorage.setItem(`hv_test_${verdelerInfo.id}`, JSON.stringify(updatedTestData));
       onComplete(updatedTestData);
     } catch (error) {
       console.error('Error saving test data:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van de testgegevens');
       return;
     }
-    
+
     toast.success('Hoogspanning test succesvol afgerond!');
     setShowModal(false);
-  }, [testData, verdeler.distributorId, onComplete]);
+  }, [testData, verdelerInfo.id, onComplete]);
 
   // Create stable, memoized change handlers
   const handleBasicFieldChange = useCallback((field: string) => {
