@@ -12,6 +12,9 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
+  // Fallback SVG logo as data URI
+  const fallbackLogo = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 60'%3E%3Ctext x='10' y='40' font-family='Arial, sans-serif' font-size='36' font-weight='bold' fill='%23000'%3EEWP%3C/text%3E%3C/svg%3E`;
+
   const handleDownload = async () => {
     if (!labelRef.current) return;
 
@@ -19,17 +22,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
     console.log('Project number:', projectNumber);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(labelRef.current, {
-        scale: 3,
+        scale: 2.5,
         backgroundColor: '#E8E8E8',
         logging: true,
         useCORS: true,
-        allowTaint: false,
-        width: labelRef.current.offsetWidth,
-        height: labelRef.current.offsetHeight,
-        imageTimeout: 0,
+        allowTaint: true,
+        width: 1200,
+        height: 1000,
+        imageTimeout: 15000,
         removeContainer: true
       });
 
@@ -70,7 +73,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           ref={labelRef}
           style={{
             width: '1200px',
-            height: '900px',
+            height: '1000px',
             backgroundColor: '#E8E8E8',
             padding: '40px',
             fontFamily: 'Arial, sans-serif',
@@ -92,9 +95,8 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             {/* Logo */}
             <div style={{ width: '250px', height: '80px', display: 'flex', alignItems: 'center' }}>
               <img
-                src="/EWP-logo-zwart.png"
+                src={fallbackLogo}
                 alt="EWP Logo"
-                crossOrigin="anonymous"
                 style={{
                   width: '100%',
                   height: 'auto',
