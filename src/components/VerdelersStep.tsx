@@ -443,8 +443,41 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     });
   };
 
-  const handleTestComplete = (verdeler: any, testData: any) => {
-    console.log('Test completed for verdeler:', verdeler.distributorId, 'with data:', testData);
+  const handleTestComplete = async (verdeler: any, testData: any) => {
+    console.log('Test completed for verdeler:', verdeler.distributorId || verdeler.id, 'with data:', testData);
+
+    // Determine the test type from the testData structure
+    let testType = 'unknown';
+    if (testData.workshopChecklist) testType = 'workshop_checklist';
+    else if (testData.verdelerVanaf630Test) testType = 'verdeler_vanaf_630';
+    else if (testData.verdelerTestSimpel) testType = 'verdeler_test_simpel';
+    else if (testData.factoryTest) testType = 'factory_test';
+    else if (testData.highVoltageTest) testType = 'high_voltage_test';
+    else if (testData.onSiteTest) testType = 'on_site_test';
+
+    try {
+      // Get the distributor ID (could be passed as object or string)
+      const distributorId = typeof verdeler === 'string' ? verdeler : (verdeler.id || verdeler.distributor_id);
+
+      console.log('💾 Saving test data to database:', {
+        distributorId,
+        testType,
+        dataKeys: Object.keys(testData)
+      });
+
+      // Save to database
+      await dataService.createTestData({
+        distributorId: distributorId,
+        testType: testType,
+        data: testData
+      });
+
+      console.log('✅ Test data saved to database successfully');
+      toast.success('Test opgeslagen in database');
+    } catch (error) {
+      console.error('❌ Error saving test data to database:', error);
+      toast.error('Fout bij opslaan van test data');
+    }
   };
 
   const getTestStatus = (verdeler: any) => {
