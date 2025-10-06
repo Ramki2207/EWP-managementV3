@@ -10,6 +10,7 @@ interface Document {
   type: string;
   size: number;
   content?: string;
+  storage_path?: string;
   uploaded_at: string;
 }
 
@@ -240,12 +241,12 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       console.log('🔄 REVISION: Will place new revision in Actueel:', `${folder}/Actueel`);
 
       try {
-        // Load the content of the matching document if not already loaded
-        console.log('📁 REVISION: Loading content of matching document...');
-        const content = await loadDocumentContent(matchingDoc);
-
         // Step 1: Create copy of original document in Historie subfolder
         console.log('📁 REVISION: Creating document in Historie...');
+
+        // For storage-based documents, we need to copy the file in storage
+        // For now, we'll just update the database record to point to the same storage file
+        // (multiple docs can reference the same storage file)
         const historieDoc = await dataService.createDocument({
           projectId,
           distributorId,
@@ -253,7 +254,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           name: matchingDoc.name,
           type: matchingDoc.type,
           size: matchingDoc.size,
-          content: content
+          storagePath: matchingDoc.storage_path || null,
+          content: matchingDoc.storage_path ? null : await loadDocumentContent(matchingDoc)
         });
 
         console.log('✅ REVISION: Successfully created document in Historie:', historieDoc?.id);
@@ -299,34 +301,35 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       return;
     }
 
-    const processFile = (file: File) => {
-      return new Promise<any>((resolve, reject) => {
-        // Check file size (limit to 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          reject(`Bestand ${file.name} is te groot. Maximum grootte is 5MB`);
-          return;
-        }
+    const processFile = async (file: File): Promise<any> => {
+      // Check file size (limit to 10MB to match storage limit)
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error(`Bestand ${file.name} is te groot. Maximum grootte is 10MB`);
+      }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const newDoc = {
-              projectId,
-              distributorId,
-              folder,
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              content: e.target?.result as string,
-            };
-            resolve(newDoc);
-          } catch (error) {
-            reject(`Fout bij het verwerken van bestand ${file.name}`);
-          }
+      try {
+        // Upload file to Supabase Storage
+        console.log('📤 Uploading file to storage:', file.name);
+        const storagePath = await dataService.uploadFileToStorage(file, projectId, distributorId, folder);
+        console.log('✅ File uploaded to storage:', storagePath);
+
+        // Get signed URL for the file
+        const signedUrl = await dataService.getSignedStorageUrl(storagePath, 31536000); // 1 year expiry
+
+        return {
+          projectId,
+          distributorId,
+          folder,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          storagePath,
+          content: signedUrl, // Store signed URL as content for immediate display
         };
-        reader.onerror = () => reject(`Fout bij het lezen van bestand ${file.name}`);
-        reader.readAsDataURL(file);
-      });
+      } catch (error) {
+        console.error('Error processing file:', error);
+        throw new Error(`Fout bij het verwerken van bestand ${file.name}: ${error.message}`);
+      }
     };
 
     try {

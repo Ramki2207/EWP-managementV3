@@ -466,10 +466,10 @@ export const dataService = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-      // Select only metadata fields, not the content field to avoid loading large base64 data
+      // Select metadata fields including storage_path for new storage-based documents
       let query = supabase
         .from('documents')
-        .select('id, project_id, distributor_id, folder, name, type, size, uploaded_at')
+        .select('id, project_id, distributor_id, folder, name, type, size, uploaded_at, storage_path')
         .order('uploaded_at', { ascending: false })
         .abortSignal(controller.signal);
 
@@ -509,42 +509,90 @@ export const dataService = {
   async getDocumentContent(documentId: string) {
     try {
       console.log('getDocumentContent called with:', documentId);
-      console.log('⏱️ Starting to fetch large document content...');
 
-      // Add a longer timeout for large files
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.error('❌ Document content fetch timed out after 30 seconds');
-        controller.abort();
-      }, 30000); // 30 second timeout for large files
-
-      const startTime = Date.now();
-
-      const { data, error } = await supabase
+      // First, check if document has storage_path or content
+      const { data: doc, error: fetchError } = await supabase
         .from('documents')
-        .select('content')
+        .select('storage_path, content')
         .eq('id', documentId)
-        .abortSignal(controller.signal)
         .single();
 
-      clearTimeout(timeoutId);
-
-      const fetchTime = Date.now() - startTime;
-      console.log(`✅ Document content fetched in ${fetchTime}ms`);
-
-      if (error) {
-        console.error('Database error in getDocumentContent:', error);
-        throw error;
+      if (fetchError) {
+        console.error('Database error in getDocumentContent:', fetchError);
+        throw fetchError;
       }
 
-      return data?.content;
+      // If document uses storage, get signed URL
+      if (doc?.storage_path) {
+        console.log('📁 Document uses storage, fetching signed URL...');
+        const signedUrl = await this.getSignedStorageUrl(doc.storage_path, 31536000); // 1 year expiry
+        console.log('✅ Signed URL generated for storage file');
+        return signedUrl;
+      }
+
+      // Otherwise, return legacy base64 content
+      if (doc?.content) {
+        console.log('⏱️ Fetching legacy base64 content...');
+        return doc.content;
+      }
+
+      throw new Error('Document has no content or storage path');
     } catch (err) {
-      if (err.name === 'AbortError') {
-        throw new Error('Document loading timed out - the file may be too large');
-      }
       console.error('Network error in getDocumentContent:', err);
       throw new Error(`Failed to fetch document content: ${getErrorMessage(err)}`);
     }
+  },
+
+  // Upload file to Supabase Storage
+  async uploadFileToStorage(file: File, projectId: string, distributorId: string, folder: string): Promise<string> {
+    try {
+      // Create a path: projectId/distributorId/folder/filename
+      const timestamp = Date.now();
+      const sanitizedFolder = folder.replace(/\//g, '_');
+      const storagePath = `${projectId}/${distributorId}/${sanitizedFolder}/${timestamp}_${file.name}`;
+
+      console.log('📤 Uploading file to storage:', storagePath);
+
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .upload(storagePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      console.log('✅ File uploaded successfully:', data.path);
+      return data.path;
+    } catch (err) {
+      console.error('Network error in uploadFileToStorage:', err);
+      throw new Error(`Failed to upload file: ${getErrorMessage(err)}`);
+    }
+  },
+
+  // Get public URL for a storage file
+  getStorageUrl(storagePath: string): string {
+    const { data } = supabase.storage
+      .from('documents')
+      .getPublicUrl(storagePath);
+    return data.publicUrl;
+  },
+
+  // Get signed URL for a storage file (for private access)
+  async getSignedStorageUrl(storagePath: string, expiresIn: number = 3600): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(storagePath, expiresIn);
+
+    if (error) {
+      console.error('Error creating signed URL:', error);
+      throw error;
+    }
+
+    return data.signedUrl;
   },
 
   async createDocument(document: any) {
@@ -558,7 +606,8 @@ export const dataService = {
           name: document.name,
           type: document.type,
           size: document.size,
-          content: document.content
+          storage_path: document.storagePath || null,
+          content: document.content || null // Keep for backward compatibility during migration
         }])
         .select()
         .single();
@@ -576,15 +625,44 @@ export const dataService = {
 
   async deleteDocument(id: string) {
     try {
+      // First, get the document to find its storage path
+      const { data: doc, error: fetchError } = await supabase
+        .from('documents')
+        .select('storage_path')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching document:', fetchError);
+      }
+
+      // Delete from storage if storage_path exists
+      if (doc?.storage_path) {
+        console.log('🗑️ Deleting file from storage:', doc.storage_path);
+        const { error: storageError } = await supabase.storage
+          .from('documents')
+          .remove([doc.storage_path]);
+
+        if (storageError) {
+          console.error('Error deleting from storage:', storageError);
+          // Continue with database deletion even if storage deletion fails
+        } else {
+          console.log('✅ File deleted from storage');
+        }
+      }
+
+      // Delete from database
       const { error } = await supabase
         .from('documents')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error('Database error in deleteDocument:', error);
         throw error;
       }
+
+      console.log('✅ Document deleted from database');
     } catch (err) {
       console.error('Network error in deleteDocument:', err);
       throw new Error(`Failed to delete document: ${getErrorMessage(err)}`);
