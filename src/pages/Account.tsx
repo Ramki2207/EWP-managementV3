@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Key, Save, Upload, UserCircle, Shield, Calendar, Clock, Edit, X } from 'lucide-react';
+import { User, Mail, Key, Save, Upload, UserCircle, Shield, Calendar, Clock, Edit, X, Database, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import bcrypt from 'bcryptjs';
 import { dataService } from '../lib/supabase';
 import { UserPermissions } from '../types/userRoles';
+import { migrateDocumentsToStorage } from '../lib/migrateData';
 
 interface UserData {
   id: string;
@@ -21,6 +22,8 @@ interface UserData {
 const Account = () => {
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationProgress, setMigrationProgress] = useState({ current: 0, total: 0 });
   const [formData, setFormData] = useState({
     email: '',
     currentPassword: '',
@@ -179,6 +182,35 @@ const Account = () => {
         }));
         toast.success('Account gegevens bijgewerkt (lokaal)!');
       }
+    }
+  };
+
+  const handleMigrateDocuments = async () => {
+    if (!window.confirm('Weet u zeker dat u alle documenten wilt migreren naar Supabase Storage? Dit kan enkele minuten duren.')) {
+      return;
+    }
+
+    setIsMigrating(true);
+    setMigrationProgress({ current: 0, total: 0 });
+
+    try {
+      const result = await migrateDocumentsToStorage((current, total) => {
+        setMigrationProgress({ current, total });
+      });
+
+      console.log('Migration result:', result);
+
+      if (result.success) {
+        toast.success(`Migratie voltooid! ${result.migrated} documenten gemigreerd.`);
+      } else {
+        toast.error(`Migratie voltooid met fouten. ${result.migrated} succesvol, ${result.failed} mislukt.`);
+      }
+    } catch (error) {
+      console.error('Migration error:', error);
+      toast.error('Fout tijdens migratie');
+    } finally {
+      setIsMigrating(false);
+      setMigrationProgress({ current: 0, total: 0 });
     }
   };
 
@@ -620,7 +652,7 @@ const Account = () => {
             </div>
             <h2 className="text-xl font-semibold">Toegangsrechten</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {Object.entries(currentUser.permissions).map(([module, modulePerms]) => (
               <div key={module} className="p-4 bg-[#2A303C] rounded-lg">
@@ -641,6 +673,63 @@ const Account = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* System Tools Section (for admin users only) */}
+      {currentUser.role === 'admin' && (
+        <div className="card p-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-orange-500/20 rounded-lg">
+              <Database size={20} className="text-orange-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Systeemtools</h2>
+          </div>
+
+          <div className="p-4 bg-[#2A303C] rounded-lg">
+            <h3 className="font-medium text-gray-300 mb-2">Document Migratie naar Storage</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Migreer alle documenten van base64 opslag in de database naar Supabase Storage voor betere prestaties.
+              Dit maakt het laden van documenten veel sneller.
+            </p>
+
+            {isMigrating && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                  <span>Migratie bezig...</span>
+                  <span>{migrationProgress.current} / {migrationProgress.total}</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{
+                      width: migrationProgress.total > 0
+                        ? `${(migrationProgress.current / migrationProgress.total) * 100}%`
+                        : '0%'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleMigrateDocuments}
+              disabled={isMigrating}
+              className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isMigrating ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Bezig met migreren...</span>
+                </>
+              ) : (
+                <>
+                  <Database size={16} />
+                  <span>Start Migratie</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}

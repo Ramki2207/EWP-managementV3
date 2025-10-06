@@ -99,6 +99,9 @@ async function uploadFileToStorage(file: File, bucketName: string = 'distributor
 
 // Helper functions for data operations
 export const dataService = {
+  // Expose supabase client for advanced operations
+  supabase,
+
   // Projects
   async getProjects() {
     try {
