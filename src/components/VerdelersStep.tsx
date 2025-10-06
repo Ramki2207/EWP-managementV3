@@ -37,6 +37,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [generatingCode, setGeneratingCode] = useState(false);
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [testDataCache, setTestDataCache] = useState<Record<string, any>>({});
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -67,6 +68,30 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       loadVerdelersFromDatabase();
     }
   }, [projectData?.id]);
+
+  // Load test data for all verdelers
+  useEffect(() => {
+    const loadAllTestData = async () => {
+      const cache: Record<string, any> = {};
+
+      for (const verdeler of verdelers) {
+        try {
+          const testData = await dataService.getTestData(verdeler.id);
+          if (testData && testData.length > 0) {
+            cache[verdeler.id] = testData;
+          }
+        } catch (error) {
+          console.error('Error loading test data for verdeler:', verdeler.id, error);
+        }
+      }
+
+      setTestDataCache(cache);
+    };
+
+    if (verdelers.length > 0) {
+      loadAllTestData();
+    }
+  }, [verdelers]);
 
   const loadVerdelersFromDatabase = async () => {
     if (!projectData?.id) return;
@@ -474,6 +499,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       console.log('✅ Test data saved to database successfully');
       toast.success('Test opgeslagen in database');
+
+      // Reload test data for this verdeler to update the cache
+      const updatedTestData = await dataService.getTestData(distributorId);
+      setTestDataCache(prev => ({
+        ...prev,
+        [distributorId]: updatedTestData
+      }));
     } catch (error) {
       console.error('❌ Error saving test data to database:', error);
       toast.error('Fout bij opslaan van test data');
@@ -481,52 +513,92 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   const getTestStatus = (verdeler: any) => {
-    const verdelerTestData = localStorage.getItem(`verdeler_test_${verdeler.distributorId}`);
-    const fatTestData = localStorage.getItem(`fat_test_${verdeler.distributorId}`);
-    const hvTestData = localStorage.getItem(`hv_test_${verdeler.distributorId}`);
-    
     let status = 'Niet getest';
     let color = 'bg-gray-500/20 text-gray-400';
-    
-    try {
-      if (verdelerTestData) {
-        const testData = JSON.parse(verdelerTestData);
-        if (testData.inspectionReport?.completed) {
-          if (testData.inspectionReport.result === 'approved') {
+
+    // Load from database cache first
+    const cachedTests = testDataCache[verdeler.id];
+
+    if (cachedTests && cachedTests.length > 0) {
+      // Check for workshop_checklist test
+      const workshopTest = cachedTests.find((t: any) => t.test_type === 'workshop_checklist');
+      if (workshopTest?.data) {
+        if (workshopTest.data.inspectionReport?.completed) {
+          if (workshopTest.data.inspectionReport.result === 'approved') {
             status = 'Goedgekeurd';
             color = 'bg-green-500/20 text-green-400';
-          } else if (testData.inspectionReport.result === 'conditionallyApproved') {
+          } else if (workshopTest.data.inspectionReport.result === 'conditionallyApproved') {
             status = 'Voorwaardelijk';
             color = 'bg-yellow-500/20 text-yellow-400';
-          } else if (testData.inspectionReport.result === 'rejected') {
+          } else if (workshopTest.data.inspectionReport.result === 'rejected') {
             status = 'Afgekeurd';
             color = 'bg-red-500/20 text-red-400';
           }
-        } else if (testData.workshopChecklist?.completed) {
+        } else if (workshopTest.data.workshopChecklist?.completed) {
           status = 'Checklist Voltooid';
           color = 'bg-blue-500/20 text-blue-400';
         }
       }
-      
-      if (fatTestData) {
-        const fatData = JSON.parse(fatTestData);
-        if (fatData.factoryTest?.completed) {
-          status = 'FAT Voltooid';
-          color = 'bg-yellow-500/20 text-yellow-400';
-        }
+
+      // Check for factory_test
+      const fatTest = cachedTests.find((t: any) => t.test_type === 'factory_test');
+      if (fatTest?.data?.factoryTest?.completed) {
+        status = 'FAT Voltooid';
+        color = 'bg-yellow-500/20 text-yellow-400';
       }
-      
-      if (hvTestData) {
-        const hvData = JSON.parse(hvTestData);
-        if (hvData.highVoltageTest?.completed) {
-          status = 'HV Test Voltooid';
-          color = 'bg-orange-500/20 text-orange-400';
-        }
+
+      // Check for high_voltage_test
+      const hvTest = cachedTests.find((t: any) => t.test_type === 'high_voltage_test');
+      if (hvTest?.data?.highVoltageTest?.completed) {
+        status = 'HV Test Voltooid';
+        color = 'bg-orange-500/20 text-orange-400';
       }
-    } catch (error) {
-      console.error('Error parsing test data:', error);
+    } else {
+      // Fallback to localStorage if no database data
+      try {
+        const verdelerTestData = localStorage.getItem(`verdeler_test_${verdeler.id}`);
+        const fatTestData = localStorage.getItem(`fat_test_${verdeler.id}`);
+        const hvTestData = localStorage.getItem(`hv_test_${verdeler.id}`);
+
+        if (verdelerTestData) {
+          const testData = JSON.parse(verdelerTestData);
+          if (testData.inspectionReport?.completed) {
+            if (testData.inspectionReport.result === 'approved') {
+              status = 'Goedgekeurd';
+              color = 'bg-green-500/20 text-green-400';
+            } else if (testData.inspectionReport.result === 'conditionallyApproved') {
+              status = 'Voorwaardelijk';
+              color = 'bg-yellow-500/20 text-yellow-400';
+            } else if (testData.inspectionReport.result === 'rejected') {
+              status = 'Afgekeurd';
+              color = 'bg-red-500/20 text-red-400';
+            }
+          } else if (testData.workshopChecklist?.completed) {
+            status = 'Checklist Voltooid';
+            color = 'bg-blue-500/20 text-blue-400';
+          }
+        }
+
+        if (fatTestData) {
+          const fatData = JSON.parse(fatTestData);
+          if (fatData.factoryTest?.completed) {
+            status = 'FAT Voltooid';
+            color = 'bg-yellow-500/20 text-yellow-400';
+          }
+        }
+
+        if (hvTestData) {
+          const hvData = JSON.parse(hvTestData);
+          if (hvData.highVoltageTest?.completed) {
+            status = 'HV Test Voltooid';
+            color = 'bg-orange-500/20 text-orange-400';
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing test data:', error);
+      }
     }
-    
+
     return { status, color };
   };
 
