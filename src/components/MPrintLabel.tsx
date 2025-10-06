@@ -19,7 +19,6 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
     console.log('Project number:', projectNumber);
 
     try {
-      // Wait a bit to ensure images are loaded
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(labelRef.current, {
@@ -71,13 +70,14 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           ref={labelRef}
           style={{
             width: '1200px',
-            height: '800px',
+            height: '900px',
             backgroundColor: '#E8E8E8',
             padding: '40px',
             fontFamily: 'Arial, sans-serif',
             borderRadius: '30px',
             position: 'relative',
-            border: '8px solid #000000'
+            border: '8px solid #000000',
+            boxSizing: 'border-box'
           }}
         >
           {/* Header Section */}
@@ -122,31 +122,33 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           {/* Main Content Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '400px 1fr',
-            gap: '30px',
+            gridTemplateColumns: '380px 1fr',
+            gap: '25px',
             marginTop: '20px'
           }}>
             {/* Left Column - Labels */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px',
-              paddingTop: '8px'
+              gap: '14px',
+              paddingTop: '6px'
             }}>
               {[
                 'PROJECTNUMMER:',
                 'TYPE:',
                 'SERIENUMMER:',
-                'VOEDINGSSPANNING:',
-                'STUURSPANNING:',
-                'FREQUENTIE:',
+                'KASTNAAM:',
+                'VOEDING:',
+                'UN IN V:',
+                'IN IN A:',
+                'FREQ. IN HZ:',
                 'IP-WAARDE:',
                 'BOUWJAAR:'
               ].map((label, index) => (
                 <div key={index} style={{
-                  fontSize: '28px',
+                  fontSize: '26px',
                   fontWeight: 'bold',
-                  height: '60px',
+                  height: '56px',
                   display: 'flex',
                   alignItems: 'center',
                   color: '#000000'
@@ -160,17 +162,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '16px'
+              gap: '14px'
             }}>
               {/* Project Number */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
                 textAlign: 'center',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -183,12 +185,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Type */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
                 textAlign: 'center',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -201,12 +203,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Serial Number */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
                 textAlign: 'center',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -216,73 +218,107 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 {`${projectNumber}-${verdeler.distributorId || verdeler.distributor_id}`}
               </div>
 
-              {/* Voedingsspanning */}
+              {/* Kastnaam */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
+                textAlign: 'center',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 borderRadius: '8px',
                 color: '#000'
               }}>
-                <span>{verdeler.un_in_v || verdeler.unInV || '400'}</span>
-                <span>V</span>
+                {verdeler.kast_naam || verdeler.kastNaam || '-'}
               </div>
 
-              {/* Stuurspanning */}
+              {/* Voeding */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
+                textAlign: 'center',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-end',
+                justifyContent: 'center',
                 borderRadius: '8px',
                 color: '#000'
               }}>
-                <span>V</span>
+                {verdeler.voeding || '-'}
               </div>
 
-              {/* Frequentie */}
+              {/* Un in V */}
               <div style={{
                 border: '3px solid #000',
-                padding: '12px 20px',
-                fontSize: '28px',
+                padding: '10px 20px',
+                fontSize: '26px',
                 fontWeight: 'bold',
                 backgroundColor: '#fff',
-                height: '60px',
+                height: '56px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center',
                 borderRadius: '8px',
                 color: '#000'
               }}>
-                <span>{verdeler.freq_in_hz || verdeler.freqInHz || '50'}</span>
-                <span>Hz</span>
+                {verdeler.un_in_v || verdeler.unInV || '-'}
               </div>
 
-              {/* IP-Waarde - Split into two boxes */}
+              {/* In in A */}
+              <div style={{
+                border: '3px solid #000',
+                padding: '10px 20px',
+                fontSize: '26px',
+                fontWeight: 'bold',
+                backgroundColor: '#fff',
+                height: '56px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                color: '#000'
+              }}>
+                {verdeler.in_in_a || verdeler.inInA || '-'}
+              </div>
+
+              {/* Freq in Hz */}
+              <div style={{
+                border: '3px solid #000',
+                padding: '10px 20px',
+                fontSize: '26px',
+                fontWeight: 'bold',
+                backgroundColor: '#fff',
+                height: '56px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                color: '#000'
+              }}>
+                {verdeler.freq_in_hz || verdeler.freqInHz || '-'}
+              </div>
+
+              {/* IP-Waarde */}
               <div style={{
                 display: 'flex',
-                gap: '16px',
-                height: '60px'
+                gap: '14px',
+                height: '56px'
               }}>
                 <div style={{
                   border: '3px solid #000',
-                  padding: '12px 20px',
-                  fontSize: '28px',
+                  padding: '10px 20px',
+                  fontSize: '26px',
                   fontWeight: 'bold',
                   textAlign: 'center',
                   backgroundColor: '#fff',
-                  width: '180px',
+                  width: '160px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -293,37 +329,35 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 </div>
                 <div style={{
                   border: '3px solid #000',
-                  padding: '12px 20px',
-                  fontSize: '28px',
+                  padding: '10px 20px',
+                  fontSize: '26px',
                   fontWeight: 'bold',
                   backgroundColor: '#fff',
                   flex: 1,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  justifyContent: 'center',
                   borderRadius: '8px',
                   color: '#000'
                 }}>
-                  <span>In:</span>
-                  <span>{verdeler.in_in_a || verdeler.inInA || '250'}</span>
-                  <span>A</span>
+                  -
                 </div>
               </div>
 
-              {/* Bouwjaar - Split into three boxes */}
+              {/* Bouwjaar */}
               <div style={{
                 display: 'flex',
-                gap: '16px',
-                height: '60px'
+                gap: '14px',
+                height: '56px'
               }}>
                 <div style={{
                   border: '3px solid #000',
-                  padding: '12px 20px',
-                  fontSize: '28px',
+                  padding: '10px 20px',
+                  fontSize: '26px',
                   fontWeight: 'bold',
                   textAlign: 'center',
                   backgroundColor: '#fff',
-                  width: '180px',
+                  width: '160px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -334,30 +368,30 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 </div>
                 <div style={{
                   border: '3px solid #000',
-                  padding: '12px 16px',
-                  fontSize: '20px',
+                  padding: '10px 14px',
+                  fontSize: '18px',
                   fontWeight: 'normal',
                   backgroundColor: '#fff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px',
+                  gap: '6px',
                   borderRadius: '8px',
                   color: '#000'
                 }}>
                   <span>Icu:</span>
-                  <span style={{ fontSize: '18px' }}>(IEC61439-1/3)</span>
+                  <span style={{ fontSize: '16px' }}>(IEC61439-1/3)</span>
                 </div>
                 <div style={{
                   border: '3px solid #000',
-                  padding: '12px 20px',
-                  fontSize: '28px',
+                  padding: '10px 20px',
+                  fontSize: '26px',
                   fontWeight: 'bold',
                   backgroundColor: '#fff',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  gap: '10px',
                   borderRadius: '8px',
-                  minWidth: '120px',
+                  minWidth: '110px',
                   justifyContent: 'center',
                   color: '#000'
                 }}>
