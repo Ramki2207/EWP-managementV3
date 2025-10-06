@@ -313,8 +313,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         const storagePath = await dataService.uploadFileToStorage(file, projectId, distributorId, folder);
         console.log('✅ File uploaded to storage:', storagePath);
 
-        // Get signed URL for the file
-        const signedUrl = await dataService.getSignedStorageUrl(storagePath, 31536000); // 1 year expiry
+        // Get public URL for the file (bucket is public)
+        const publicUrl = dataService.getStorageUrl(storagePath);
+        console.log('📎 Public URL:', publicUrl);
 
         return {
           projectId,
@@ -324,7 +325,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           type: file.type,
           size: file.size,
           storagePath,
-          content: signedUrl, // Store signed URL as content for immediate display
+          content: publicUrl, // Store public URL as content for immediate display
         };
       } catch (error) {
         console.error('Error processing file:', error);

@@ -525,12 +525,12 @@ export const dataService = {
         throw fetchError;
       }
 
-      // If document uses storage, get signed URL
+      // If document uses storage, get public URL (bucket is public)
       if (doc?.storage_path) {
-        console.log('📁 Document uses storage, fetching signed URL...');
-        const signedUrl = await this.getSignedStorageUrl(doc.storage_path, 31536000); // 1 year expiry
-        console.log('✅ Signed URL generated for storage file');
-        return signedUrl;
+        console.log('📁 Document uses storage, generating public URL...');
+        const publicUrl = this.getStorageUrl(doc.storage_path);
+        console.log('✅ Public URL generated for storage file:', publicUrl);
+        return publicUrl;
       }
 
       // Otherwise, return legacy base64 content
