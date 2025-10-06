@@ -121,44 +121,32 @@ const VerdelerDetails = () => {
     }
   };
 
-  const loadTestData = () => {
+  const loadTestData = async () => {
     if (!distributor?.distributor_id) return;
-    
+
     try {
-      // Load all test data from localStorage
-      const verdelerTestData = localStorage.getItem(`verdeler_test_${distributor.distributor_id}`);
-      const fatTestData = localStorage.getItem(`fat_test_${distributor.distributor_id}`);
-      const hvTestData = localStorage.getItem(`hv_test_${distributor.distributor_id}`);
-      const onsiteTestData = localStorage.getItem(`onsite_test_${distributor.distributor_id}`);
-      
-      let combinedTestData = {};
-      
-      if (verdelerTestData) {
-        const parsed = JSON.parse(verdelerTestData);
-        combinedTestData = { ...combinedTestData, ...parsed };
-      }
-      
-      if (fatTestData) {
-        const parsed = JSON.parse(fatTestData);
-        combinedTestData = { ...combinedTestData, ...parsed };
-      }
-      
-      if (hvTestData) {
-        const parsed = JSON.parse(hvTestData);
-        combinedTestData = { ...combinedTestData, ...parsed };
-      }
-      
-      if (onsiteTestData) {
-        const parsed = JSON.parse(onsiteTestData);
-        combinedTestData = { ...combinedTestData, ...parsed };
-      }
-      
-      // Only set test data if we have any tests
-      if (Object.keys(combinedTestData).length > 0) {
+      // Load test data from database
+      const dbTestData = await dataService.getTestData(distributor.distributor_id);
+
+      if (dbTestData && dbTestData.length > 0) {
+        // Convert array of test records to object keyed by test_type
+        const combinedTestData: any = {};
+
+        dbTestData.forEach((record: any) => {
+          if (record.test_type && record.data) {
+            combinedTestData[record.test_type] = record.data;
+          }
+        });
+
         setTestData(combinedTestData);
+        console.log('✅ VERDELER DETAILS: Loaded test data from database:', Object.keys(combinedTestData));
+      } else {
+        console.log('ℹ️ VERDELER DETAILS: No test data found in database');
+        setTestData(null);
       }
     } catch (error) {
       console.error('Error loading test data:', error);
+      setTestData(null);
     }
   };
   const generateRandomCode = () => {
