@@ -98,19 +98,21 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               height: '80px',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               backgroundColor: '#fff',
               padding: '10px',
-              borderRadius: '8px'
+              borderRadius: '8px',
+              border: '2px solid #000'
             }}>
-              <img
-                src={ewpLogoSVG}
-                alt="EWP Logo"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-              />
+              <span style={{
+                fontSize: '52px',
+                fontWeight: 'bold',
+                color: '#000',
+                fontFamily: 'Arial, sans-serif',
+                letterSpacing: '2px'
+              }}>
+                EWP
+              </span>
             </div>
 
             {/* Company Info */}
@@ -417,3 +419,5 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 };
 
 export default MPrintLabel;
+
+export default MPrintLabel
