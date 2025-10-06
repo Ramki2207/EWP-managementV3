@@ -1094,6 +1094,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     <MPrintLabel
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
+                      logo={ewpLogo}
                     />
                   </div>
                 </div>
