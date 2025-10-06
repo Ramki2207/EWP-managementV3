@@ -13,8 +13,13 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
-  // Use the EWP logo
-  const ewpLogoUrl = '/EWP-logo-zwart.png';
+  // Use inline SVG for EWP logo to ensure it renders in html2canvas
+  const ewpLogoSvg = `data:image/svg+xml;base64,${btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80">
+      <rect width="200" height="80" fill="white"/>
+      <text x="100" y="50" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="black">EWP</text>
+    </svg>
+  `)}`;
 
   // Create URL for maintenance report (same as VerdelerLabel)
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
@@ -107,14 +112,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               padding: '0'
             }}>
               <img
-                src={ewpLogoUrl}
+                src={ewpLogoSvg}
                 alt="EWP Logo"
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain'
                 }}
-                crossOrigin="anonymous"
               />
             </div>
 
