@@ -87,10 +87,22 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
 
   // Helper function to load document content on-demand
   const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
+    // If content already exists, return it immediately
     if (doc.content) {
       return doc.content;
     }
 
+    // If storage_path exists, generate public URL immediately (no database call needed)
+    if (doc.storage_path) {
+      const publicUrl = dataService.getStorageUrl(doc.storage_path);
+      // Update document in state with URL
+      setDocuments(prev => prev.map(d =>
+        d.id === doc.id ? { ...d, content: publicUrl } : d
+      ));
+      return publicUrl;
+    }
+
+    // Only for legacy base64 documents, fetch from database
     try {
       setLoadingContent(prev => ({ ...prev, [doc.id]: true }));
 
@@ -172,8 +184,20 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       
       console.log('📁 LOAD: Total documents loaded:', allDocuments.length);
       console.log('📁 LOAD: Document folders:', allDocuments.map(d => d.folder));
-      
-      setDocuments(allDocuments);
+
+      // Preload public URLs for storage-based documents
+      const documentsWithUrls = allDocuments.map(doc => {
+        if (doc.storage_path && !doc.content) {
+          // Generate public URL immediately for fast preview
+          return {
+            ...doc,
+            content: dataService.getStorageUrl(doc.storage_path)
+          };
+        }
+        return doc;
+      });
+
+      setDocuments(documentsWithUrls);
       
       // Clear timeout on success
       clearTimeout(timeout);
