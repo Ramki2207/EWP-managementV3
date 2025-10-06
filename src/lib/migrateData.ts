@@ -158,8 +158,37 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
           continue;
         }
 
-        const mimeType = matches[1];
+        let mimeType = matches[1];
         const base64String = matches[2];
+
+        // Fix MIME type for specific file formats
+        // application/octet-stream is not supported by Supabase Storage
+        if (mimeType === 'application/octet-stream' || !mimeType) {
+          const extension = docMeta.name.split('.').pop()?.toLowerCase();
+          const mimeTypeMap: { [key: string]: string } = {
+            'heic': 'image/heic',
+            'heif': 'image/heif',
+            'pdf': 'application/pdf',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'webp': 'image/webp',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls': 'application/vnd.ms-excel',
+            'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          };
+
+          if (extension && mimeTypeMap[extension]) {
+            console.log(`🔧 Fixing MIME type from ${mimeType} to ${mimeTypeMap[extension]} for ${docMeta.name}`);
+            mimeType = mimeTypeMap[extension];
+          } else {
+            console.warn(`⚠️ Unknown file extension: ${extension} for ${docMeta.name}`);
+            // Default to image/jpeg as fallback
+            mimeType = 'image/jpeg';
+          }
+        }
 
         // Convert base64 to blob
         const byteCharacters = atob(base64String);
