@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Key, Save, Upload, UserCircle, Shield, Calendar, Clock, Edit, X, Database, RefreshCw } from 'lucide-react';
+import { User, Mail, Key, Save, Upload, CircleUser as UserCircle, Shield, Calendar, Clock, FileEdit as Edit, X, Database, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import bcrypt from 'bcryptjs';
 import { dataService } from '../lib/supabase';
