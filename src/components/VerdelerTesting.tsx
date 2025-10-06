@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, X, CheckSquare, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateVerdelerTestingPDF } from './VerdelerTestingPDF';
+import { dataService } from '../lib/supabase';
 
 interface VerdelerTestingProps {
   verdeler: any;
@@ -128,35 +129,59 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   }), [verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
-    // IMPORTANT: Clear any old cached data and force new structure
-    const storageKey = `verdeler_test_${verdelerInfo.id}`;
-    
-    // Check if we have old data structure
-    const savedTestData = localStorage.getItem(storageKey);
-    if (savedTestData) {
+    const loadTestData = async () => {
       try {
-        const parsed = JSON.parse(savedTestData);
-        
-        // Check if the data has the new structure with field numbers
-        const hasNewStructure = parsed.workshopChecklist?.items?.some((item: any) => item.field);
-        
-        if (!hasNewStructure) {
-          console.log('Old test data structure detected, clearing cache for:', verdelerInfo.id);
-          localStorage.removeItem(storageKey);
-          toast.info('Test data structure updated - starting fresh');
-          setTestData(initialTestData);
+        // First try to load from database
+        const dbTestData = await dataService.getTestData(verdelerInfo.id);
+        const workshopTest = dbTestData?.find((test: any) => test.test_type === 'workshop_checklist');
+
+        if (workshopTest && workshopTest.data) {
+          console.log('✅ VERDELER TESTING: Loading from database');
+          setTestData(workshopTest.data);
+          return;
+        }
+
+        // Fallback to localStorage if no database data
+        const storageKey = `verdeler_test_${verdelerInfo.id}`;
+        const savedTestData = localStorage.getItem(storageKey);
+
+        if (savedTestData) {
+          try {
+            const parsed = JSON.parse(savedTestData);
+            const hasNewStructure = parsed.workshopChecklist?.items?.some((item: any) => item.field);
+
+            if (!hasNewStructure) {
+              console.log('Old test data structure detected, clearing cache for:', verdelerInfo.id);
+              localStorage.removeItem(storageKey);
+              toast.info('Test data structure updated - starting fresh');
+              setTestData(initialTestData);
+            } else {
+              console.log('📦 VERDELER TESTING: Loading from localStorage');
+              setTestData(parsed);
+            }
+          } catch (error) {
+            console.error('Error parsing saved test data:', error);
+            localStorage.removeItem(storageKey);
+            setTestData(initialTestData);
+          }
         } else {
-          console.log('Loading existing test data with new structure');
-          setTestData(parsed);
+          console.log('🆕 VERDELER TESTING: No existing data, using initial');
+          setTestData(initialTestData);
         }
       } catch (error) {
-        console.error('Error parsing saved test data:', error);
-        localStorage.removeItem(storageKey);
-        setTestData(initialTestData);
+        console.error('Error loading test data from database:', error);
+        // Fallback to localStorage on database error
+        const storageKey = `verdeler_test_${verdelerInfo.id}`;
+        const savedData = localStorage.getItem(storageKey);
+        if (savedData) {
+          setTestData(JSON.parse(savedData));
+        } else {
+          setTestData(initialTestData);
+        }
       }
-    } else {
-      setTestData(initialTestData);
-    }
+    };
+
+    loadTestData();
   }, [verdelerInfo.id, initialTestData]);
 
   const saveTestData = useCallback((): boolean => {
