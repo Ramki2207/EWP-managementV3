@@ -746,19 +746,26 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         />
       );
     } else if (isPDF(doc.type)) {
-      // For PDFs, always show download option due to browser compatibility issues
       return (
-        <div className="flex flex-col items-center justify-center p-8">
-          <FileText size={64} className="text-gray-400 mb-4" />
-          <p className="text-gray-400 mb-2">PDF Bestand</p>
-          <p className="text-sm text-gray-500 mb-4">Klik op download om het bestand te openen</p>
-          <button
-            onClick={() => handleDownload(doc)}
-            className="btn-primary"
+        <div className="w-full h-[500px] relative">
+          <object
+            data={doc.content}
+            type="application/pdf"
+            className="w-full h-full"
           >
-            <Download size={16} className="mr-2" />
-            Download PDF
-          </button>
+            <div className="flex flex-col items-center justify-center h-full bg-[#1E2530] p-8">
+              <FileText size={64} className="text-gray-400 mb-4" />
+              <p className="text-gray-400 mb-2">Kan PDF niet weergeven in browser</p>
+              <p className="text-sm text-gray-500 mb-4">Browser ondersteunt geen PDF preview of het bestand kan niet worden geladen</p>
+              <button
+                onClick={() => handleDownload(doc)}
+                className="btn-primary"
+              >
+                <Download size={16} className="mr-2" />
+                Download PDF
+              </button>
+            </div>
+          </object>
         </div>
       );
     } else {
