@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface MPrintLabelProps {
   verdeler: any;
@@ -132,7 +133,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           {/* Main Content Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '380px 1fr',
+            gridTemplateColumns: '380px 1fr 200px',
             gap: '25px',
             marginTop: '20px'
           }}>
@@ -410,6 +411,28 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 </div>
               </div>
             </div>
+
+            {/* Right Column - QR Code */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingTop: '20px'
+            }}>
+              <div style={{
+                backgroundColor: '#fff',
+                padding: '12px',
+                borderRadius: '8px',
+                border: '3px solid #000'
+              }}>
+                <QRCodeSVG
+                  value={`${projectNumber}-${verdeler.distributorId || verdeler.distributor_id}`}
+                  size={160}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -418,3 +441,5 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 };
 
 export default MPrintLabel;
+
+export default MPrintLabel
