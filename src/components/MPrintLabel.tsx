@@ -13,8 +13,8 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
 
-  // Use the uploaded EWP logo
-  const ewpLogoUrl = '/Untitled design - 2025-10-06T162449.134.png';
+  // Use the EWP logo
+  const ewpLogoUrl = '/EWP-logo-zwart.png';
 
   // Create URL for maintenance report (same as VerdelerLabel)
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
@@ -103,19 +103,19 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
-              backgroundColor: '#fff',
-              padding: '10px',
-              border: '2px solid #000',
-              borderRadius: '8px'
+              backgroundColor: 'transparent',
+              padding: '0'
             }}>
-              <div style={{
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: '#000',
-                letterSpacing: '2px'
-              }}>
-                EWP
-              </div>
+              <img
+                src={ewpLogoUrl}
+                alt="EWP Logo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain'
+                }}
+                crossOrigin="anonymous"
+              />
             </div>
 
             {/* Company Info */}
