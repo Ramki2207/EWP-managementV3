@@ -98,24 +98,31 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
   try {
     console.log('🚀 Starting document migration to storage...');
 
-    // Get all documents that have content but no storage_path
-    const { data: documents, error } = await dataService.supabase
+    // Get all documents (we'll filter client-side)
+    console.log('📥 Fetching documents from database...');
+    const { data: allDocuments, error } = await dataService.supabase
       .from('documents')
-      .select('*')
-      .not('content', 'is', null)
-      .is('storage_path', null);
+      .select('*');
 
     if (error) {
+      console.error('❌ Database error:', error);
       throw error;
     }
 
-    if (!documents || documents.length === 0) {
+    console.log(`📊 Total documents in database: ${allDocuments?.length || 0}`);
+
+    // Filter documents that need migration (have content but no storage_path)
+    const documents = allDocuments?.filter(doc => doc.content && !doc.storage_path) || [];
+
+    console.log(`📊 Documents needing migration: ${documents.length}`);
+
+    if (documents.length === 0) {
       console.log('✅ No documents to migrate');
       toast.success('Alle documenten zijn al gemigreerd!');
       return { success: true, migrated: 0, failed: 0 };
     }
 
-    console.log(`📊 Found ${documents.length} documents to migrate`);
+    console.log(`📊 Starting migration of ${documents.length} documents...`);
 
     let migratedCount = 0;
     let failedCount = 0;
@@ -193,10 +200,15 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
           onProgress(i + 1, documents.length);
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error(`❌ Error migrating document ${doc.name}:`, error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          fullError: error
+        });
         failedCount++;
-        failedDocs.push({ id: doc.id, name: doc.name, error: error.message });
+        failedDocs.push({ id: doc.id, name: doc.name, error: error?.message || String(error) });
       }
     }
 
@@ -226,14 +238,19 @@ export const migrateDocumentsToStorage = async (onProgress?: (current: number, t
       failedDocs
     };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error during document migration:', error);
-    toast.error('Er is een fout opgetreden tijdens de migratie');
+    console.error('Full error details:', {
+      message: error?.message,
+      stack: error?.stack,
+      fullError: error
+    });
+    toast.error(`Fout tijdens migratie: ${error?.message || 'Onbekende fout'}`);
     return {
       success: false,
       migrated: 0,
       failed: 0,
-      error: error.message
+      error: error?.message || String(error)
     };
   }
 };
