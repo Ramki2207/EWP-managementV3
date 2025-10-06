@@ -419,7 +419,3 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 };
 
 export default MPrintLabel;
-
-
-
-export default MPrintLabel
