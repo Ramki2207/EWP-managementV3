@@ -673,7 +673,16 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const isImage = (type: string) => type.startsWith('image/');
+  const isImage = (type: string, name: string) => {
+    // Check by MIME type first
+    if (type.startsWith('image/')) {
+      return true;
+    }
+    // Also check by file extension for HEIC files (browsers may not recognize the MIME type)
+    const ext = name.split('.').pop()?.toLowerCase();
+    return ext === 'heic' || ext === 'heif' || ext === 'jpg' || ext === 'jpeg' || ext === 'png' || ext === 'gif' || ext === 'webp';
+  };
+
   const isPDF = (type: string) => type === 'application/pdf';
 
   const renderPreview = (doc: Document) => {
@@ -686,29 +695,99 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       );
     }
 
-    if (isImage(doc.type)) {
+    if (isImage(doc.type, doc.name)) {
+      // Special handling for HEIC files
+      const ext = doc.name.split('.').pop()?.toLowerCase();
+      const isHEIC = ext === 'heic' || ext === 'heif';
+
+      if (isHEIC) {
+        return (
+          <div className="flex flex-col items-center justify-center p-8">
+            <FileText size={64} className="text-gray-400 mb-4" />
+            <p className="text-gray-400 mb-4">Preview niet beschikbaar voor HEIC bestanden</p>
+            <p className="text-sm text-gray-500 mb-4">HEIC formaat wordt niet ondersteund in browsers</p>
+            <button
+              onClick={() => handleDownload(doc)}
+              className="btn-primary"
+            >
+              <Download size={16} className="mr-2" />
+              Download bestand
+            </button>
+          </div>
+        );
+      }
+
       return (
         <img
           src={doc.content}
           alt={doc.name}
           className="max-h-[500px] object-contain mx-auto"
           loading="lazy"
+          onError={(e) => {
+            console.error('Image failed to load:', doc.name);
+            e.currentTarget.style.display = 'none';
+            const parent = e.currentTarget.parentElement;
+            if (parent) {
+              parent.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8">
+                  <div class="text-gray-400 mb-4">
+                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p class="text-gray-400 mb-4">Kan afbeelding niet laden</p>
+                  <a href="${doc.content}" download="${doc.name}" class="btn-primary inline-flex items-center">
+                    Download bestand
+                  </a>
+                </div>
+              `;
+            }
+          }}
         />
       );
     } else if (isPDF(doc.type)) {
       return (
-        <iframe
-          src={doc.content}
-          className="w-full h-[500px]"
-          title={doc.name}
-          loading="lazy"
-        />
+        <div className="w-full h-[500px]">
+          <iframe
+            src={`${doc.content}#view=FitH`}
+            className="w-full h-full border-0"
+            title={doc.name}
+            loading="lazy"
+            onError={(e) => {
+              console.error('PDF failed to load:', doc.name);
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.innerHTML = `
+                  <div class="flex flex-col items-center justify-center h-full">
+                    <div class="text-gray-400 mb-4">
+                      <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p class="text-gray-400 mb-2">Kan PDF niet laden in browser</p>
+                    <p class="text-sm text-gray-500 mb-4">Gebruik de download knop om het bestand te openen</p>
+                    <a href="${doc.content}" download="${doc.name}" class="btn-primary inline-flex items-center">
+                      Download PDF
+                    </a>
+                  </div>
+                `;
+              }
+            }}
+          />
+        </div>
       );
     } else {
       return (
         <div className="flex flex-col items-center justify-center p-8">
           <FileText size={64} className="text-gray-400 mb-4" />
-          <p className="text-gray-400">Preview niet beschikbaar voor dit bestandstype</p>
+          <p className="text-gray-400 mb-4">Preview niet beschikbaar voor dit bestandstype</p>
+          <button
+            onClick={() => handleDownload(doc)}
+            className="btn-primary"
+          >
+            <Download size={16} className="mr-2" />
+            Download bestand
+          </button>
         </div>
       );
     }
