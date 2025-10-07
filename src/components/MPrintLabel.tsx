@@ -130,8 +130,8 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           }}>
             {/* Logo */}
             <div style={{
-              width: '250px',
-              height: '80px',
+              width: '450px',
+              height: '150px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
