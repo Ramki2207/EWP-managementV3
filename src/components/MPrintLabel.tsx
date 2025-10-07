@@ -111,7 +111,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             width: '1004px',
             height: '638px',
             backgroundColor: '#E8E8E8',
-            padding: '24px',
+            padding: '20px',
             fontFamily: 'Arial, sans-serif',
             borderRadius: '0px',
             position: 'relative',
@@ -124,14 +124,14 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            marginBottom: '15px',
-            paddingBottom: '10px',
+            marginBottom: '20px',
+            paddingBottom: '12px',
             borderBottom: '3px solid #000000'
           }}>
             {/* Logo */}
             <div style={{
-              width: '450px',
-              height: '100px',
+              width: '500px',
+              height: '120px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
@@ -157,12 +157,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             {/* Company Info */}
             <div style={{
               textAlign: 'right',
-              fontSize: '14px',
-              lineHeight: '1.4',
+              fontSize: '16px',
+              lineHeight: '1.5',
               fontWeight: '500',
               color: '#000'
             }}>
-              <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px', color: '#000' }}>EWP Paneelbouw Utrecht</div>
+              <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '6px', color: '#000' }}>EWP Paneelbouw Utrecht</div>
               <div style={{ color: '#000' }}>Gildenstraat 28, 4143 HS Leerdam</div>
               <div style={{ color: '#000' }}>info@ewp-paneelbouw.nl</div>
               <div style={{ color: '#000' }}>www.ewp-paneelbouw.nl</div>
@@ -172,234 +172,131 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           {/* Main Content Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '200px 1fr 120px',
-            gap: '12px',
-            marginTop: '10px'
+            gridTemplateColumns: '1fr 160px',
+            gap: '20px',
+            marginTop: '0px'
           }}>
-            {/* Left Column - Labels */}
+            {/* Left Column - All Information */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
-            }}>
-              {[
-                'PROJECTNUMMER:',
-                'TYPE:',
-                'KASTNAAM:',
-                'VOEDING:',
-                'UN IN V:',
-                'IN IN A:',
-                'FREQ. IN HZ:',
-                'IP-WAARDE:',
-                'BOUWJAAR:'
-              ].map((label, index) => (
-                <div key={index} style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: '#000000',
-                  lineHeight: '1'
-                }}>
-                  {label}
-                </div>
-              ))}
-            </div>
-
-            {/* Right Column - Values */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
+              gap: '12px'
             }}>
               {/* Project Number */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {projectNumber.replace(/-/g, '')}
+                <span style={{ minWidth: '270px' }}>PROJECTNUMMER:</span>
+                <span style={{ marginLeft: '10px' }}>{projectNumber.replace(/-/g, '')}</span>
               </div>
 
               {/* Type */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.systeem || 'VK'}
+                <span style={{ minWidth: '270px' }}>TYPE:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.systeem || 'VK'}</span>
               </div>
 
               {/* Kastnaam */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.kast_naam || verdeler.kastNaam || '-'}
+                <span style={{ minWidth: '270px' }}>KASTNAAM:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
               </div>
 
               {/* Voeding */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.voeding || '-'}
+                <span style={{ minWidth: '270px' }}>VOEDING:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.voeding || '-'}</span>
               </div>
 
               {/* Un in V */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.un_in_v || verdeler.unInV || '-'}
+                <span style={{ minWidth: '270px' }}>UN IN V:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
               </div>
 
               {/* In in A */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.in_in_a || verdeler.inInA || '-'}
+                <span style={{ minWidth: '270px' }}>IN IN A:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
               </div>
 
               {/* Freq in Hz */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.freq_in_hz || verdeler.freqInHz || '-'}
+                <span style={{ minWidth: '270px' }}>FREQ. IN HZ:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
               </div>
 
               {/* IP-Waarde */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                65
+                <span style={{ minWidth: '270px' }}>IP-WAARDE:</span>
+                <span style={{ marginLeft: '10px' }}>65</span>
               </div>
 
               {/* Bouwjaar */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
+                fontSize: '26px',
                 fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                color: '#000000',
+                lineHeight: '1'
               }}>
-                {verdeler.bouwjaar || new Date().getFullYear()}
+                <span style={{ minWidth: '270px' }}>BOUWJAAR:</span>
+                <span style={{ marginLeft: '10px' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
               </div>
             </div>
 
@@ -407,18 +304,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              paddingTop: '10px'
+              justifyContent: 'center'
             }}>
               <div style={{
                 backgroundColor: '#fff',
-                padding: '6px',
-                borderRadius: '4px',
-                border: '2px solid #000'
+                padding: '8px',
+                borderRadius: '6px',
+                border: '3px solid #000'
               }}>
                 <QRCodeSVG
                   value={maintenanceUrl}
-                  size={110}
+                  size={140}
                   level="M"
                   includeMargin={false}
                 />
