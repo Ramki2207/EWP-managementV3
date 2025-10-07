@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
@@ -13,28 +13,52 @@ interface MPrintLabelProps {
 
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
+  const [logoDataUrl, setLogoDataUrl] = useState<string>('');
+
+  // Convert logo to base64 data URL on mount
+  useEffect(() => {
+    const convertLogoToDataUrl = async () => {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+          img.src = ewpLogo;
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          const dataUrl = canvas.toDataURL('image/png');
+          setLogoDataUrl(dataUrl);
+        }
+      } catch (error) {
+        console.error('Error converting logo to data URL:', error);
+      }
+    };
+
+    convertLogoToDataUrl();
+  }, []);
 
   // Create URL for maintenance report (same as VerdelerLabel)
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
 
   const handleDownload = async () => {
-    if (!labelRef.current) return;
+    if (!labelRef.current || !logoDataUrl) {
+      toast.error('Logo is nog aan het laden, probeer opnieuw');
+      return;
+    }
 
     console.log('Verdeler data:', verdeler);
     console.log('Project number:', projectNumber);
 
     try {
-      // Preload the logo image to ensure it renders
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = ewpLogo;
-      });
-
-      // Wait a bit more for the image to be ready
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Wait for everything to be ready
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const canvas = await html2canvas(labelRef.current, {
         scale: 2.5,
@@ -114,15 +138,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               backgroundColor: 'transparent',
               padding: '0'
             }}>
-              <img
-                src={ewpLogo}
-                alt="EWP Logo"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain'
-                }}
-              />
+              {logoDataUrl && (
+                <img
+                  src={logoDataUrl}
+                  alt="EWP Logo"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              )}
             </div>
 
             {/* Company Info */}
