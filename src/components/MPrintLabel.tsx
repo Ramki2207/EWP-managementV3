@@ -40,7 +40,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
         useCORS: true,
         allowTaint: true,
         width: 1400,
-        height: 900,
+        height: 950,
         imageTimeout: 15000,
         removeContainer: true
       });
@@ -82,7 +82,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           ref={labelRef}
           style={{
             width: '1400px',
-            height: '900px',
+            height: '950px',
             backgroundColor: '#E8E8E8',
             padding: '40px',
             fontFamily: 'Arial, sans-serif',
@@ -325,97 +325,38 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 
               {/* IP-Waarde */}
               <div style={{
+                border: '3px solid #000',
+                padding: '10px 20px',
+                fontSize: '26px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                backgroundColor: '#fff',
+                height: '56px',
                 display: 'flex',
-                gap: '14px',
-                height: '56px'
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                color: '#000'
               }}>
-                <div style={{
-                  border: '3px solid #000',
-                  padding: '10px 20px',
-                  fontSize: '26px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  backgroundColor: '#fff',
-                  width: '160px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  color: '#000'
-                }}>
-                  65
-                </div>
-                <div style={{
-                  border: '3px solid #000',
-                  padding: '10px 20px',
-                  fontSize: '26px',
-                  fontWeight: 'bold',
-                  backgroundColor: '#fff',
-                  flex: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  color: '#000'
-                }}>
-                  -
-                </div>
+                65
               </div>
 
               {/* Bouwjaar */}
               <div style={{
+                border: '3px solid #000',
+                padding: '10px 20px',
+                fontSize: '26px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                backgroundColor: '#fff',
+                height: '56px',
                 display: 'flex',
-                gap: '14px',
-                height: '56px'
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                color: '#000'
               }}>
-                <div style={{
-                  border: '3px solid #000',
-                  padding: '10px 20px',
-                  fontSize: '26px',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  backgroundColor: '#fff',
-                  width: '160px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '8px',
-                  color: '#000'
-                }}>
-                  {verdeler.bouwjaar || new Date().getFullYear()}
-                </div>
-                <div style={{
-                  border: '3px solid #000',
-                  padding: '10px 14px',
-                  fontSize: '18px',
-                  fontWeight: 'normal',
-                  backgroundColor: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  borderRadius: '8px',
-                  color: '#000'
-                }}>
-                  <span>Icu:</span>
-                  <span style={{ fontSize: '16px' }}>(IEC61439-1/3)</span>
-                </div>
-                <div style={{
-                  border: '3px solid #000',
-                  padding: '10px 20px',
-                  fontSize: '26px',
-                  fontWeight: 'bold',
-                  backgroundColor: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  borderRadius: '8px',
-                  minWidth: '110px',
-                  justifyContent: 'center',
-                  color: '#000'
-                }}>
-                  <span>6</span>
-                  <span>kA</span>
-                </div>
+                {verdeler.bouwjaar || new Date().getFullYear()}
               </div>
             </div>
 
