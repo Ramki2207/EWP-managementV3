@@ -24,7 +24,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
     console.log('Project number:', projectNumber);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Preload the logo image to ensure it renders
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = ewpLogo;
+      });
+
+      // Wait a bit more for the image to be ready
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       const canvas = await html2canvas(labelRef.current, {
         scale: 2.5,
