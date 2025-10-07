@@ -124,14 +124,14 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'flex-start',
-            marginBottom: '15px',
-            paddingBottom: '10px',
+            marginBottom: '20px',
+            paddingBottom: '15px',
             borderBottom: '3px solid #000000'
           }}>
             {/* Logo */}
             <div style={{
-              width: '450px',
-              height: '100px',
+              width: '550px',
+              height: '120px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
@@ -157,249 +157,326 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             {/* Company Info */}
             <div style={{
               textAlign: 'right',
-              fontSize: '14px',
-              lineHeight: '1.4',
+              fontSize: '16px',
+              lineHeight: '1.5',
               fontWeight: '500',
               color: '#000'
             }}>
-              <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px', color: '#000' }}>EWP Paneelbouw Utrecht</div>
+              <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '6px', color: '#000' }}>EWP Paneelbouw Utrecht</div>
               <div style={{ color: '#000' }}>Gildenstraat 28, 4143 HS Leerdam</div>
               <div style={{ color: '#000' }}>info@ewp-paneelbouw.nl</div>
               <div style={{ color: '#000' }}>www.ewp-paneelbouw.nl</div>
             </div>
           </div>
 
-          {/* Main Content Grid */}
+          {/* Main Content - Two Column Layout */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '200px 1fr 120px',
-            gap: '12px',
-            marginTop: '10px'
+            gridTemplateColumns: '1fr 180px',
+            gap: '20px',
+            marginTop: '15px'
           }}>
-            {/* Left Column - Labels */}
+            {/* Left Column - Information Rows */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '8px'
+              gap: '10px'
             }}>
-              {[
-                'PROJECTNUMMER:',
-                'TYPE:',
-                'KASTNAAM:',
-                'VOEDING:',
-                'UN IN V:',
-                'IN IN A:',
-                'FREQ. IN HZ:',
-                'IP-WAARDE:',
-                'BOUWJAAR:'
-              ].map((label, index) => (
-                <div key={index} style={{
-                  fontSize: '18px',
+              {/* Project Number Row */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '15px'
+              }}>
+                <div style={{
+                  fontSize: '22px',
                   fontWeight: 'bold',
-                  height: '40px',
-                  display: 'flex',
-                  alignItems: 'center',
                   color: '#000000',
+                  minWidth: '250px',
                   lineHeight: '1'
                 }}>
-                  {label}
+                  PROJECTNUMMER:
                 </div>
-              ))}
-            </div>
-
-            {/* Right Column - Values */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '8px'
-            }}>
-              {/* Project Number */}
-              <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
-              }}>
-                {projectNumber.replace(/-/g, '')}
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {projectNumber.replace(/-/g, '')}
+                </div>
               </div>
 
-              {/* Type */}
+              {/* Type Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.systeem || 'VK'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  TYPE:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.systeem || 'VK'}
+                </div>
               </div>
 
-              {/* Kastnaam */}
+              {/* Kastnaam Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.kast_naam || verdeler.kastNaam || '-'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  KASTNAAM:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.kast_naam || verdeler.kastNaam || '-'}
+                </div>
               </div>
 
-              {/* Voeding */}
+              {/* Voeding Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.voeding || '-'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  VOEDING:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.voeding || '-'}
+                </div>
               </div>
 
-              {/* Un in V */}
+              {/* Un in V Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.un_in_v || verdeler.unInV || '-'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  UN IN V:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.un_in_v || verdeler.unInV || '-'}
+                </div>
               </div>
 
-              {/* In in A */}
+              {/* In in A Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.in_in_a || verdeler.inInA || '-'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  IN IN A:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.in_in_a || verdeler.inInA || '-'}
+                </div>
               </div>
 
-              {/* Freq in Hz */}
+              {/* Freq in Hz Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.freq_in_hz || verdeler.freqInHz || '-'}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  FREQ. IN HZ:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.freq_in_hz || verdeler.freqInHz || '-'}
+                </div>
               </div>
 
-              {/* IP-Waarde */}
+              {/* IP-Waarde Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                65
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  IP-WAARDE:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  65
+                </div>
               </div>
 
-              {/* Bouwjaar */}
+              {/* Bouwjaar Row */}
               <div style={{
-                border: '2px solid #000',
-                padding: '4px 10px 0px 10px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '40px',
-                minHeight: '40px',
                 display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'center',
-                borderRadius: '4px',
-                lineHeight: '1',
-                boxSizing: 'border-box',
-                color: '#000'
+                alignItems: 'center',
+                gap: '15px'
               }}>
-                {verdeler.bouwjaar || new Date().getFullYear()}
+                <div style={{
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  color: '#000000',
+                  minWidth: '250px',
+                  lineHeight: '1'
+                }}>
+                  BOUWJAAR:
+                </div>
+                <div style={{
+                  border: '2px solid #000',
+                  padding: '8px 15px',
+                  fontSize: '22px',
+                  fontWeight: 'bold',
+                  backgroundColor: '#fff',
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '4px',
+                  color: '#000',
+                  minHeight: '45px'
+                }}>
+                  {verdeler.bouwjaar || new Date().getFullYear()}
+                </div>
               </div>
             </div>
 
@@ -407,18 +484,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              paddingTop: '10px'
+              justifyContent: 'center'
             }}>
               <div style={{
                 backgroundColor: '#fff',
-                padding: '6px',
+                padding: '10px',
                 borderRadius: '4px',
-                border: '2px solid #000'
+                border: '3px solid #000'
               }}>
                 <QRCodeSVG
                   value={maintenanceUrl}
-                  size={110}
+                  size={160}
                   level="M"
                   includeMargin={false}
                 />
