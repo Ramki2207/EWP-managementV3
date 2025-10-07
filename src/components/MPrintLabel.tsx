@@ -224,10 +224,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -245,10 +245,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -266,10 +266,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -287,10 +287,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -308,10 +308,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -329,10 +329,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -350,10 +350,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -371,10 +371,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
@@ -392,10 +392,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 height: '66px',
                 minHeight: '66px',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-start',
                 justifyContent: 'center',
                 borderRadius: '8px',
-                lineHeight: '1',
+                lineHeight: '66px',
                 boxSizing: 'border-box',
                 color: '#000'
               }}>
