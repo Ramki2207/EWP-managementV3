@@ -184,42 +184,42 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             }}>
               {/* Project Number */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                PROJECTNUMMER: <span style={{ fontWeight: '900', color: '#000000' }}>{projectNumber.replace(/-/g, '')}</span>
+                PROJECTNUMMER: <span style={{ fontWeight: 'normal', color: '#000000' }}>{projectNumber.replace(/-/g, '')}</span>
               </div>
 
               {/* Type */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                TYPE: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.systeem || 'VK'}</span>
+                TYPE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.systeem || 'VK'}</span>
               </div>
 
               {/* Kastnaam */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                KASTNAAM: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
+                KASTNAAM: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
               </div>
 
               {/* Voeding */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                VOEDING: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.voeding || '-'}</span>
+                VOEDING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.voeding || '-'}</span>
               </div>
             </div>
 
@@ -231,52 +231,52 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             }}>
               {/* Un in V */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                UN IN V: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
+                UN IN V: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
               </div>
 
               {/* In in A */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                IN IN A: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
+                IN IN A: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
               </div>
 
               {/* Freq in Hz */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                FREQ. IN HZ: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+                FREQ. IN HZ: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
               </div>
 
               {/* IP-Waarde */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                IP-WAARDE: <span style={{ fontWeight: '900', color: '#000000' }}>65</span>
+                IP-WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>65</span>
               </div>
 
               {/* Bouwjaar */}
               <div style={{
-                fontSize: '38px',
+                fontSize: '34px',
                 fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                BOUWJAAR: <span style={{ fontWeight: '900', color: '#000000' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
+                BOUWJAAR: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
               </div>
             </div>
 
