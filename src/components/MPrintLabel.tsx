@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
+import ewpLogo from '../assets/ewp-logo.png';
 
 interface MPrintLabelProps {
   verdeler: any;
@@ -12,14 +13,6 @@ interface MPrintLabelProps {
 
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
-
-  // Use inline SVG for EWP logo to ensure it renders in html2canvas
-  const ewpLogoSvg = `data:image/svg+xml;base64,${btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 80">
-      <rect width="250" height="80" fill="white"/>
-      <text x="20" y="55" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="black" letter-spacing="4">EWP</text>
-    </svg>
-  `)}`;
 
   // Create URL for maintenance report (same as VerdelerLabel)
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
@@ -112,7 +105,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               padding: '0'
             }}>
               <img
-                src={ewpLogoSvg}
+                src={ewpLogo}
                 alt="EWP Logo"
                 style={{
                   width: '100%',
