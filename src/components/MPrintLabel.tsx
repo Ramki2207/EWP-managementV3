@@ -186,7 +186,6 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {[
                 'PROJECTNUMMER:',
                 'TYPE:',
-                'SERIENUMMER:',
                 'KASTNAAM:',
                 'VOEDING:',
                 'UN IN V:',
@@ -229,7 +228,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 borderRadius: '8px',
                 color: '#000'
               }}>
-                {projectNumber}
+                {projectNumber.replace(/-/g, '')}
               </div>
 
               {/* Type */}
@@ -250,28 +249,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 {verdeler.systeem || 'VK'}
               </div>
 
-              {/* Serial Number */}
-              <div style={{
-                border: '3px solid #000',
-                padding: '10px 20px',
-                fontSize: '26px',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                backgroundColor: '#fff',
-                height: '56px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '8px',
-                color: '#000'
-              }}>
-                {`${projectNumber}-${verdeler.distributorId || verdeler.distributor_id}`}
-              </div>
-
               {/* Kastnaam */}
               <div style={{
                 border: '3px solid #000',
-                padding: '10px 20px',
+                padding: '8px 20px',
                 fontSize: '26px',
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -289,7 +270,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Voeding */}
               <div style={{
                 border: '3px solid #000',
-                padding: '10px 20px',
+                padding: '8px 20px',
                 fontSize: '26px',
                 fontWeight: 'bold',
                 textAlign: 'center',
@@ -307,9 +288,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Un in V */}
               <div style={{
                 border: '3px solid #000',
-                padding: '10px 20px',
+                padding: '8px 20px',
                 fontSize: '26px',
                 fontWeight: 'bold',
+                textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '56px',
                 display: 'flex',
@@ -324,9 +306,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* In in A */}
               <div style={{
                 border: '3px solid #000',
-                padding: '10px 20px',
+                padding: '8px 20px',
                 fontSize: '26px',
                 fontWeight: 'bold',
+                textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '56px',
                 display: 'flex',
@@ -341,9 +324,10 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Freq in Hz */}
               <div style={{
                 border: '3px solid #000',
-                padding: '10px 20px',
+                padding: '8px 20px',
                 fontSize: '26px',
                 fontWeight: 'bold',
+                textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '56px',
                 display: 'flex',
