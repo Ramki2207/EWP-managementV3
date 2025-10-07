@@ -15,9 +15,9 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
 
   // Use inline SVG for EWP logo to ensure it renders in html2canvas
   const ewpLogoSvg = `data:image/svg+xml;base64,${btoa(`
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80">
-      <rect width="200" height="80" fill="white"/>
-      <text x="100" y="50" font-family="Arial, sans-serif" font-size="36" font-weight="bold" text-anchor="middle" fill="black">EWP</text>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 80">
+      <rect width="250" height="80" fill="white"/>
+      <text x="20" y="55" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="black" letter-spacing="4">EWP</text>
     </svg>
   `)}`;
 
