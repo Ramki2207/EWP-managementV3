@@ -40,7 +40,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
         useCORS: true,
         allowTaint: true,
         width: 1400,
-        height: 700,
+        height: 900,
         imageTimeout: 15000,
         removeContainer: true
       });
@@ -82,7 +82,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
           ref={labelRef}
           style={{
             width: '1400px',
-            height: '700px',
+            height: '900px',
             backgroundColor: '#E8E8E8',
             padding: '40px',
             fontFamily: 'Arial, sans-serif',
