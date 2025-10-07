@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, FolderOpen, Trash2, Server } from 'lucide-react';
+import { Search, FolderOpen, Trash2, Server } from 'lucide-react';
 import toast from "react-hot-toast";
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
@@ -119,18 +119,9 @@ const Verdelers = () => {
     <div className="min-h-screen p-8">
       {/* Header */}
       <div className="card p-6 mb-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Verdelers overzicht</h1>
-            <p className="text-gray-400">Beheer al je verdelers op één plek</p>
-          </div>
-          <button
-            onClick={() => navigate("/create-distributor")}
-            className="btn-primary flex items-center space-x-2"
-          >
-            <Plus size={20} />
-            <span>Verdeler toevoegen</span>
-          </button>
+        <div>
+          <h1 className="text-2xl font-semibold text-white mb-2">Verdelers overzicht</h1>
+          <p className="text-gray-400">Beheer al je verdelers op één plek</p>
         </div>
       </div>
 
