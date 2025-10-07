@@ -180,8 +180,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '14px',
-              paddingTop: '6px'
+              gap: '14px'
             }}>
               {[
                 'PROJECTNUMMER:',
@@ -200,7 +199,8 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                   height: '66px',
                   display: 'flex',
                   alignItems: 'center',
-                  color: '#000000'
+                  color: '#000000',
+                  lineHeight: '1'
                 }}>
                   {label}
                 </div>
@@ -222,10 +222,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {projectNumber.replace(/-/g, '')}
@@ -240,10 +243,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.systeem || 'VK'}
@@ -258,10 +264,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.kast_naam || verdeler.kastNaam || '-'}
@@ -276,10 +285,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.voeding || '-'}
@@ -294,10 +306,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.un_in_v || verdeler.unInV || '-'}
@@ -312,10 +327,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.in_in_a || verdeler.inInA || '-'}
@@ -330,10 +348,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.freq_in_hz || verdeler.freqInHz || '-'}
@@ -348,10 +369,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 65
@@ -366,10 +390,13 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 textAlign: 'center',
                 backgroundColor: '#fff',
                 height: '66px',
+                minHeight: '66px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: '8px',
+                lineHeight: '1',
+                boxSizing: 'border-box',
                 color: '#000'
               }}>
                 {verdeler.bouwjaar || new Date().getFullYear()}
