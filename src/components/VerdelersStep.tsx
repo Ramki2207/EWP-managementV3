@@ -158,8 +158,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     // Generate unique distributor ID when form opens for new verdeler
     if (showVerdelerForm && !editingVerdeler) {
       generateDistributorId();
+
+      // Auto-fill delivery date from project if available
+      if (projectData?.deliveryDate) {
+        setVerdelerData(prev => ({
+          ...prev,
+          deliveryDate: projectData.deliveryDate
+        }));
+      }
     }
-  }, [showVerdelerForm, editingVerdeler]);
+  }, [showVerdelerForm, editingVerdeler, projectData?.deliveryDate]);
 
   const loadUsers = async () => {
     try {
@@ -517,6 +525,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       freqInHz: '50 Hz',
       typeNrHs: '',
       profilePhoto: null,
+      expectedHours: '',
+      deliveryDate: '',
     });
   };
 
