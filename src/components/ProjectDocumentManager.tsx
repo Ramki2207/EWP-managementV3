@@ -22,6 +22,23 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log('🔍 ProjectDocumentManager - Full project object:', project);
+    console.log('🔍 ProjectDocumentManager - Distributors array:', project?.distributors);
+    if (project?.distributors) {
+      project.distributors.forEach((d: any, i: number) => {
+        console.log(`🔍 Distributor ${i}:`, {
+          id: d.id,
+          distributor_id: d.distributor_id,
+          kast_naam: d.kast_naam,
+          allKeys: Object.keys(d),
+          fullObject: d
+        });
+      });
+    }
+  }, [project]);
+
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
