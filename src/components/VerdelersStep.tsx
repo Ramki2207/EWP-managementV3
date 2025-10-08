@@ -105,10 +105,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       console.log('📥 Loaded distributors from database:', distributors.length);
       
       // Convert database format to component format
+      // Keep BOTH camelCase (for UI) and snake_case (for other components like ProjectDocumentManager)
       const formattedVerdelers = distributors.map((dist: any) => ({
         id: dist.id,
         distributorId: dist.distributor_id,
+        distributor_id: dist.distributor_id, // Keep snake_case for compatibility
         kastNaam: dist.kast_naam,
+        kast_naam: dist.kast_naam, // Keep snake_case for compatibility
         toegewezenMonteur: dist.toegewezen_monteur || 'Vrij',
         systeem: dist.systeem,
         voeding: dist.voeding,
@@ -420,10 +423,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           toast.success('Verdeler toegevoegd!');
         } else {
           // For project creation (no project ID yet), save to local state
+          // Keep BOTH camelCase and snake_case for compatibility
           const verdelerToSave = {
             id: uuidv4(),
             distributorId: verdelerData.distributorId,
+            distributor_id: verdelerData.distributorId, // Keep snake_case
             kastNaam: verdelerData.kastNaam,
+            kast_naam: verdelerData.kastNaam, // Keep snake_case
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
