@@ -172,6 +172,18 @@ const ProjectDetails = () => {
       setLoading(true);
       const projects = await dataService.getProjects();
       const foundProject = projects.find((p: any) => p.id === projectId);
+
+      console.log('🔍 ProjectDetails - Loaded project:', {
+        projectId: foundProject?.id,
+        projectNumber: foundProject?.project_number,
+        distributorsCount: foundProject?.distributors?.length,
+        distributorsSample: foundProject?.distributors?.slice(0, 2).map((d: any) => ({
+          id: d.id,
+          distributor_id: d.distributor_id,
+          kast_naam: d.kast_naam
+        }))
+      });
+
       setProject(foundProject || null);
       setEditedProject(foundProject || null);
     } catch (error) {

@@ -22,6 +22,20 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
 
+  // Debug: Log project data when component receives it
+  React.useEffect(() => {
+    console.log('📄 ProjectDocumentManager - Project data received:', {
+      projectId: project?.id,
+      projectNumber: project?.project_number,
+      distributorsCount: project?.distributors?.length,
+      distributors: project?.distributors?.map((d: any) => ({
+        id: d.id,
+        distributor_id: d.distributor_id,
+        kast_naam: d.kast_naam
+      }))
+    });
+  }, [project]);
+
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
