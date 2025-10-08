@@ -15,6 +15,7 @@ const defaultFolders = [
   'Handleidingen',
   'Documentatie',
   'Oplever foto\'s',
+  'Klant informatie',
 ];
 
 const Uploads = () => {
