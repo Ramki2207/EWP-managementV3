@@ -652,16 +652,43 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const handleDownload = async (doc: Document) => {
     try {
       const content = await loadDocumentContent(doc);
-      const link = document.createElement('a');
-      link.href = content;
-      link.download = doc.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Document gedownload!');
+
+      // Check if it's a base64 data URL or a regular URL
+      if (content.startsWith('data:')) {
+        // For base64 data URLs, we can download directly
+        const link = document.createElement('a');
+        link.href = content;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For storage URLs, fetch as blob to avoid CORS issues
+        toast.loading('Bestand wordt gedownload...', { id: 'download' });
+
+        const response = await fetch(content);
+        if (!response.ok) {
+          throw new Error('Failed to fetch file');
+        }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      }
+
+      toast.success('Document gedownload!', { id: 'download' });
     } catch (error) {
       console.error('Error downloading file:', error);
-      toast.error('Er is een fout opgetreden bij het downloaden van het document');
+      toast.error('Er is een fout opgetreden bij het downloaden van het document', { id: 'download' });
     }
   };
 
@@ -717,6 +744,28 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         );
       }
 
+      const [imageError, setImageError] = React.useState(false);
+
+      if (imageError) {
+        return (
+          <div className="flex flex-col items-center justify-center p-8">
+            <FileText size={64} className="text-gray-400 mb-4" />
+            <p className="text-gray-400 mb-4">Kan afbeelding niet laden</p>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(doc);
+              }}
+              className="btn-primary"
+            >
+              <Download size={16} className="mr-2" />
+              Download bestand
+            </button>
+          </div>
+        );
+      }
+
       return (
         <img
           src={doc.content}
@@ -725,23 +774,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           loading="lazy"
           onError={(e) => {
             console.error('Image failed to load:', doc.name);
-            e.currentTarget.style.display = 'none';
-            const parent = e.currentTarget.parentElement;
-            if (parent) {
-              parent.innerHTML = `
-                <div class="flex flex-col items-center justify-center p-8">
-                  <div class="text-gray-400 mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
-                  <p class="text-gray-400 mb-4">Kan afbeelding niet laden</p>
-                  <a href="${doc.content}" download="${doc.name}" class="btn-primary inline-flex items-center">
-                    Download bestand
-                  </a>
-                </div>
-              `;
-            }
+            setImageError(true);
           }}
         />
       );
