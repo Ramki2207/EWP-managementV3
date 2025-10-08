@@ -510,7 +510,7 @@ const Dashboard = () => {
 
   const getStatusColor = (status: string | undefined) => {
     if (!status) return 'bg-gray-500/20 text-gray-400';
-    
+
     switch (status.toLowerCase()) {
       case 'intake':
         return 'bg-blue-500/20 text-blue-400';
@@ -518,9 +518,15 @@ const Dashboard = () => {
         return 'bg-yellow-500/20 text-yellow-400';
       case 'order':
         return 'bg-blue-500/20 text-blue-400';
+      case 'werkvoorbereiding':
+        return 'bg-purple-500/20 text-purple-400';
+      case 'productie':
+        return 'bg-orange-500/20 text-orange-400';
       case 'testen':
         return 'bg-yellow-500/20 text-yellow-400';
       case 'levering':
+        return 'bg-green-500/20 text-green-400';
+      case 'gereed voor oplevering':
         return 'bg-green-500/20 text-green-400';
       case 'opgeleverd':
         return 'bg-green-500/20 text-green-400';

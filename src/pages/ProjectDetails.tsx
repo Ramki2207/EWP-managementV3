@@ -27,6 +27,9 @@ const ProjectDetails = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [lockId, setLockId] = useState<string | null>(null);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
+  const [showWerkvoorbereidingModal, setShowWerkvoorbereidingModal] = useState(false);
+  const [tempProjectDeliveryDate, setTempProjectDeliveryDate] = useState('');
+  const [tempVerdelerDates, setTempVerdelerDates] = useState<{[key: string]: string}>({});
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -249,12 +252,24 @@ const ProjectDetails = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    // Special handling for status change from Order to Werkvoorbereiding
+    if (field === 'status' && value === 'Werkvoorbereiding' && editedProject?.status === 'Order') {
+      setTempProjectDeliveryDate(editedProject?.expected_delivery_date || '');
+      const verdelerDates: {[key: string]: string} = {};
+      editedProject?.distributors?.forEach((v: any) => {
+        verdelerDates[v.id] = v.gewenste_lever_datum || '';
+      });
+      setTempVerdelerDates(verdelerDates);
+      setShowWerkvoorbereidingModal(true);
+      return;
+    }
+
     // Special handling for status change from Productie to Testen
     if (field === 'status' && value === 'Testen' && editedProject?.status === 'Productie') {
       setShowPreTestingApproval(true);
       return;
     }
-    
+
     setEditedProject({
       ...editedProject,
       [field]: value
@@ -296,6 +311,47 @@ const ProjectDetails = () => {
     setShowPreTestingApproval(false);
   };
 
+  const handleWerkvoorbereidingConfirm = async () => {
+    try {
+      const updateData = {
+        status: 'Werkvoorbereiding',
+        expectedDeliveryDate: tempProjectDeliveryDate
+      };
+
+      await dataService.updateProject(editedProject.id, updateData);
+
+      for (const [verdId, date] of Object.entries(tempVerdelerDates)) {
+        if (date) {
+          await dataService.updateDistributor(verdId, {
+            gewensteLeverDatum: date
+          });
+        }
+      }
+
+      const updatedProject = {
+        ...editedProject,
+        status: 'Werkvoorbereiding',
+        expected_delivery_date: tempProjectDeliveryDate,
+        distributors: editedProject.distributors?.map((v: any) => ({
+          ...v,
+          gewenste_lever_datum: tempVerdelerDates[v.id] || v.gewenste_lever_datum
+        }))
+      };
+
+      setProject(updatedProject);
+      setEditedProject(updatedProject);
+      setShowWerkvoorbereidingModal(false);
+      toast.success('Project status bijgewerkt naar Werkvoorbereiding!');
+    } catch (error) {
+      console.error('Error updating to Werkvoorbereiding:', error);
+      toast.error('Er is een fout opgetreden bij het bijwerken van de status');
+    }
+  };
+
+  const handleWerkvoorbereidingCancel = () => {
+    setShowWerkvoorbereidingModal(false);
+  };
+
   const handleVerdelersChange = (verdelers: any[]) => {
     // Update the project with new verdelers data
     setProject(prev => ({
@@ -311,7 +367,7 @@ const ProjectDetails = () => {
 
   const getStatusColor = (status: string | undefined) => {
     if (!status) return 'bg-gray-500/20 text-gray-400';
-    
+
     switch (status.toLowerCase()) {
       case 'intake':
         return 'bg-blue-500/20 text-blue-400';
@@ -319,6 +375,10 @@ const ProjectDetails = () => {
         return 'bg-yellow-500/20 text-yellow-400';
       case 'order':
         return 'bg-blue-500/20 text-blue-400';
+      case 'werkvoorbereiding':
+        return 'bg-purple-500/20 text-purple-400';
+      case 'productie':
+        return 'bg-orange-500/20 text-orange-400';
       case 'testen':
         return 'bg-yellow-500/20 text-yellow-400';
       case 'levering':
@@ -548,7 +608,7 @@ const ProjectDetails = () => {
                   label: "Status",
                   field: "status",
                   type: "select",
-                  options: ["", "Intake", "Offerte", "Order", "Productie", "Testen", "Levering", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
+                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
                 },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
               ].map((field) => {
@@ -871,6 +931,95 @@ const ProjectDetails = () => {
           onCancel={handlePreTestingCancel}
           currentUser={currentUser}
         />
+      )}
+
+      {/* Werkvoorbereiding Modal */}
+      {showWerkvoorbereidingModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-2xl font-bold text-orange-400">📋 Werkvoorbereiding Controle</h2>
+              <p className="text-gray-400 mt-2">
+                Controleer de leverdata en upload de benodigde documenten voordat u doorgaat naar werkvoorbereiding.
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Project Delivery Date */}
+              <div className="card p-4">
+                <h3 className="text-lg font-semibold text-white mb-4">📅 Project Leverdatum</h3>
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Verwachte leverdatum project
+                  </label>
+                  <input
+                    type="date"
+                    className="input-field"
+                    value={tempProjectDeliveryDate}
+                    onChange={(e) => setTempProjectDeliveryDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Verdelers Delivery Dates */}
+              {editedProject?.distributors && editedProject.distributors.length > 0 && (
+                <div className="card p-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">🔌 Verdeler Leverdata</h3>
+                  <div className="space-y-4">
+                    {editedProject.distributors.map((verdeler: any) => (
+                      <div key={verdeler.id} className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <label className="block text-sm text-gray-400 mb-2">
+                            {verdeler.distributorId || verdeler.distributor_id} - {verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'}
+                          </label>
+                          <input
+                            type="date"
+                            className="input-field"
+                            value={tempVerdelerDates[verdeler.id] || ''}
+                            onChange={(e) => setTempVerdelerDates({
+                              ...tempVerdelerDates,
+                              [verdeler.id]: e.target.value
+                            })}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Document Upload Reminder */}
+              <div className="card p-4 bg-yellow-500/10 border border-yellow-500/30">
+                <h3 className="text-lg font-semibold text-yellow-400 mb-4">⚠️ Documentatie Controle</h3>
+                <p className="text-gray-300 mb-3">
+                  Controleer of de volgende documenten zijn geüpload:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
+                  <li>Verdeleraanzichten</li>
+                  <li>Installatie schema's</li>
+                </ul>
+                <p className="text-sm text-gray-400 mt-4">
+                  U kunt deze documenten uploaden via het "Documenten" tabblad.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-700 flex justify-end space-x-4">
+              <button
+                onClick={handleWerkvoorbereidingCancel}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleWerkvoorbereidingConfirm}
+                className="btn-primary"
+              >
+                Bevestigen en doorgaan
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
