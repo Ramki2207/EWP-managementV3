@@ -636,7 +636,7 @@ const VerdelerDetails = () => {
                 <h3 className="text-lg font-semibold text-green-400 mb-4">Technische Specificaties</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                    <label className="block text-sm text-gray-400 mb-2">Stelsel</label>
                     {isEditing ? (
                       <input
                         type="text"

@@ -232,7 +232,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     setEditingVerdeler(verdeler);
 
     // Check if systeem/voeding are custom values
-    const systeemOptions = ['TN-S', 'TN-C', 'TN-C-S'];
+    const systeemOptions = ['TN-S', 'TN-C', 'TN-C-S', 'TT'];
     const voedingOptions = ['40', '63', '80', '125', '250', '400', '630', '750', '800', '1000', '1250', '1400', '1600', '2000', '2500', '3200', '4000', '5000', '6300'];
 
     const isCustomSysteem = verdeler.systeem && !systeemOptions.includes(verdeler.systeem);
@@ -749,7 +749,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   <th className="table-header text-left">Status</th>
                   <th className="table-header text-left">Test Status</th>
                   <th className="table-header text-left">Toegangscodes</th>
-                  <th className="table-header text-left">Systeem</th>
+                  <th className="table-header text-left">Stelsel</th>
                   <th className="table-header text-left">Spanning</th>
                   <th className="table-header text-right">Acties</th>
                 </tr>
@@ -925,7 +925,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <p className="text-white">{selectedVerdeler.status || 'In productie'}</p>
                     </div>
                     <div>
-                      <span className="text-gray-400">Systeem:</span>
+                      <span className="text-gray-400">Stelsel:</span>
                       <p className="text-white">{selectedVerdeler.systeem || '-'}</p>
                     </div>
                     <div>
@@ -1237,7 +1237,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Systeem</label>
+                    <label className="block text-sm text-gray-400 mb-2">Stelsel</label>
                     <select
                       className="input-field"
                       value={verdelerData.systeem}
@@ -1250,10 +1250,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         }));
                       }}
                     >
-                      <option value="">Selecteer systeem</option>
+                      <option value="">Selecteer stelsel</option>
                       <option value="TN-S">TN-S</option>
                       <option value="TN-C">TN-C</option>
                       <option value="TN-C-S">TN-C-S</option>
+                      <option value="TT">TT</option>
                       <option value="custom">Zelf invullen</option>
                     </select>
                     {verdelerData.systeem === 'custom' && (
@@ -1262,7 +1263,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         className="input-field mt-2"
                         value={verdelerData.systeemCustom}
                         onChange={(e) => handleInputChange('systeemCustom', e.target.value)}
-                        placeholder="Vul systeem in"
+                        placeholder="Vul stelsel in"
                       />
                     )}
                   </div>

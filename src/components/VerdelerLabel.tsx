@@ -60,7 +60,7 @@ const VerdelerLabel: React.FC<VerdelerLabelProps> = ({ verdeler, projectNumber }
             <span className="text-black font-semibold">{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
           </div>
           <div className="flex items-center">
-            <span className="font-bold text-black whitespace-nowrap mr-2">Systeem:</span>
+            <span className="font-bold text-black whitespace-nowrap mr-2">Stelsel:</span>
             <span className="text-black font-semibold">{verdeler.systeem || '-'}</span>
           </div>
           <div className="flex items-center">
