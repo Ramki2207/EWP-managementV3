@@ -160,14 +160,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       generateDistributorId();
 
       // Auto-fill delivery date from project if available
-      if (projectData?.deliveryDate) {
+      if (projectData?.expectedDeliveryDate) {
         setVerdelerData(prev => ({
           ...prev,
-          deliveryDate: projectData.deliveryDate
+          deliveryDate: projectData.expectedDeliveryDate
         }));
       }
     }
-  }, [showVerdelerForm, editingVerdeler, projectData?.deliveryDate]);
+  }, [showVerdelerForm, editingVerdeler, projectData?.expectedDeliveryDate]);
 
   const loadUsers = async () => {
     try {
