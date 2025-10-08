@@ -481,12 +481,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
-  const handleDeleteVerdeler = (verdelerId: string) => {
+  const handleDeleteVerdeler = async (verdelerId: string) => {
     if (window.confirm('Weet je zeker dat je deze verdeler wilt verwijderen?')) {
-      const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
-      setVerdelers(updatedVerdelers);
-      onVerdelersChange(updatedVerdelers);
-      toast.success('Verdeler verwijderd!');
+      try {
+        await dataService.deleteDistributor(verdelerId);
+        const updatedVerdelers = verdelers.filter(v => v.id !== verdelerId);
+        setVerdelers(updatedVerdelers);
+        onVerdelersChange(updatedVerdelers);
+        toast.success('Verdeler verwijderd!');
+      } catch (error) {
+        console.error('Error deleting verdeler:', error);
+        toast.error('Er is een fout opgetreden bij het verwijderen van de verdeler');
+      }
     }
   };
 
