@@ -55,6 +55,21 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     loadData();
   }, [project.id]);
 
+  // Auto-calculate hours when start_time or end_time changes
+  useEffect(() => {
+    if (formData.start_time && formData.end_time) {
+      const start = new Date(`2000-01-01T${formData.start_time}`);
+      const end = new Date(`2000-01-01T${formData.end_time}`);
+      const diffMs = end.getTime() - start.getTime();
+      const hours = Math.max(0, diffMs / (1000 * 60 * 60));
+      const roundedHours = Math.round(hours * 100) / 100;
+      console.log('🕐 Auto-calculating hours:', { start: formData.start_time, end: formData.end_time, hours: roundedHours });
+      if (roundedHours !== formData.hours) {
+        setFormData(prev => ({ ...prev, hours: roundedHours }));
+      }
+    }
+  }, [formData.start_time, formData.end_time]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -102,17 +117,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     }
   };
 
-  const calculateHours = () => {
-    if (formData.start_time && formData.end_time) {
-      const start = new Date(`2000-01-01T${formData.start_time}`);
-      const end = new Date(`2000-01-01T${formData.end_time}`);
-      const diffMs = end.getTime() - start.getTime();
-      const hours = Math.max(0, diffMs / (1000 * 60 * 60));
-      const roundedHours = Math.round(hours * 100) / 100;
-      console.log('🕐 Calculating hours:', { start: formData.start_time, end: formData.end_time, hours: roundedHours });
-      setFormData(prev => ({ ...prev, hours: roundedHours }));
-    }
-  };
 
   const handleAddMaterial = () => {
     const newMaterial: Material = {
@@ -369,20 +373,22 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   };
 
   const getDistributorProgress = () => {
-    const distributorWork: { [key: string]: { name: string; hours: number; status: string } } = {};
-    
+    const distributorWork: { [key: string]: { id: string; name: string; hours: number; status: string; expectedHours: number } } = {};
+
     project.distributors?.forEach((distributor: any) => {
       const distributorEntries = workEntries.filter(entry => entry.distributor_id === distributor.id);
       const totalHours = distributorEntries.reduce((sum, entry) => sum + entry.hours, 0);
       const hasCompleted = distributorEntries.some(entry => entry.status === 'completed');
-      
+
       distributorWork[distributor.id] = {
+        id: distributor.id,
         name: `${distributor.distributor_id} - ${distributor.kast_naam || 'Naamloos'}`,
         hours: totalHours,
-        status: hasCompleted ? 'completed' : totalHours > 0 ? 'in_progress' : 'not_started'
+        status: hasCompleted ? 'completed' : totalHours > 0 ? 'in_progress' : 'not_started',
+        expectedHours: parseFloat(distributor.expected_hours) || 0
       };
     });
-    
+
     return Object.values(distributorWork);
   };
 
@@ -442,18 +448,13 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         <h3 className="text-lg font-semibold text-blue-400 mb-4">Verdeler Voortgang</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {getDistributorProgress().map((dist, index) => {
-            // Find the distributor to get expected hours
-            const distributor = project.distributors?.find((d: any) =>
-              (d.distributor_id === dist.id || d.distributorId === dist.id) ||
-              (d.kast_naam === dist.name || d.kastNaam === dist.name)
-            );
-            const expectedHours = distributor?.expected_hours || distributor?.expectedHours || 0;
+            const expectedHours = dist.expectedHours;
             const loggedHours = dist.hours;
             const remainingHours = expectedHours - loggedHours;
             const percentageComplete = expectedHours > 0 ? (loggedHours / expectedHours) * 100 : 0;
 
             return (
-              <div key={index} className="bg-[#1E2530] rounded-lg p-4">
+              <div key={dist.id} className="bg-[#1E2530] rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium text-white text-sm">{dist.name}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
@@ -730,10 +731,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                       type="time"
                       className="input-field"
                       value={formData.start_time}
-                      onChange={(e) => {
-                        setFormData({ ...formData, start_time: e.target.value });
-                        setTimeout(calculateHours, 100);
-                      }}
+                      onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                     />
                   </div>
                   <div>
@@ -742,10 +740,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                       type="time"
                       className="input-field"
                       value={formData.end_time}
-                      onChange={(e) => {
-                        setFormData({ ...formData, end_time: e.target.value });
-                        setTimeout(calculateHours, 100);
-                      }}
+                      onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                     />
                   </div>
                   <div>
