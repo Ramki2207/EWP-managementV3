@@ -98,11 +98,9 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                         <div className="text-sm font-medium truncate">
                           {distributor.distributor_id}
                         </div>
-                        {distributor.kast_naam && (
-                          <div className="text-xs opacity-75 truncate">
-                            {distributor.kast_naam}
-                          </div>
-                        )}
+                        <div className="text-xs opacity-75 truncate">
+                          {distributor.kast_naam || 'Geen kastnaam'}
+                        </div>
                       </div>
                     </div>
                   </div>

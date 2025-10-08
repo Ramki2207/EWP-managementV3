@@ -130,7 +130,8 @@ export const dataService = {
             created_at
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .order('created_at', { referencedTable: 'distributors', ascending: true });
       
       if (error) {
         console.error('Database error in getProjects:', error);
