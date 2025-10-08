@@ -22,22 +22,6 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
 
-  // Debug: Log distributors to see what fields are available
-  React.useEffect(() => {
-    if (project?.distributors) {
-      console.log('📦 ProjectDocumentManager - Distributors data:', project.distributors);
-      project.distributors.forEach((d: any, i: number) => {
-        console.log(`📦 Distributor ${i}:`, {
-          id: d.id,
-          distributor_id: d.distributor_id,
-          kast_naam: d.kast_naam,
-          kastNaam: d.kastNaam,
-          allKeys: Object.keys(d)
-        });
-      });
-    }
-  }, [project?.distributors]);
-
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
@@ -115,7 +99,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                           {distributor.distributor_id}
                         </div>
                         <div className="text-xs opacity-75 truncate">
-                          {distributor.kast_naam || 'Geen kastnaam'}
+                          {distributor.kast_naam}
                         </div>
                       </div>
                     </div>
