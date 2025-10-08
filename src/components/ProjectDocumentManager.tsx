@@ -22,23 +22,6 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
 
-  // Debug logging
-  React.useEffect(() => {
-    console.log('🔍 ProjectDocumentManager - Full project object:', project);
-    console.log('🔍 ProjectDocumentManager - Distributors array:', project?.distributors);
-    if (project?.distributors) {
-      project.distributors.forEach((d: any, i: number) => {
-        console.log(`🔍 Distributor ${i}:`, {
-          id: d.id,
-          distributor_id: d.distributor_id,
-          kast_naam: d.kast_naam,
-          allKeys: Object.keys(d),
-          fullObject: d
-        });
-      });
-    }
-  }, [project]);
-
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
@@ -112,12 +95,12 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                       )}
                       <Server size={14} className="mr-2 flex-shrink-0 text-green-400" />
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate text-white">
-                          {distributor.distributor_id || 'No ID'}
+                        <div className="text-sm font-medium truncate">
+                          {distributor.kast_naam || distributor.distributor_id}
                         </div>
                         {distributor.kast_naam && (
-                          <div className="text-xs opacity-75 truncate text-gray-300">
-                            {distributor.kast_naam}
+                          <div className="text-xs opacity-75 truncate">
+                            {distributor.distributor_id}
                           </div>
                         )}
                       </div>
