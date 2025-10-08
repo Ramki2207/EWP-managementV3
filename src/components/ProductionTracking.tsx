@@ -38,6 +38,8 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   const [editingEntry, setEditingEntry] = useState<WorkEntry | null>(null);
   const [selectedDistributor, setSelectedDistributor] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDistributorDetails, setShowDistributorDetails] = useState(false);
+  const [selectedDistributorData, setSelectedDistributorData] = useState<any>(null);
   const [formData, setFormData] = useState({
     distributor_id: '',
     worker_id: '',
@@ -392,6 +394,17 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     return Object.values(distributorWork);
   };
 
+  const handleDistributorClick = (distributorId: string) => {
+    const distributor = project.distributors?.find((d: any) => d.id === distributorId);
+    if (distributor) {
+      setSelectedDistributorData({
+        ...distributor,
+        entries: workEntries.filter(entry => entry.distributor_id === distributorId)
+      });
+      setShowDistributorDetails(true);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -445,7 +458,16 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
       {/* Distributor Progress */}
       <div className="bg-[#2A303C] rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-400 mb-4">Verdeler Voortgang</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-blue-400">Verdeler Voortgang</h3>
+          <button
+            onClick={() => setShowWorkForm(true)}
+            className="btn-primary flex items-center space-x-2"
+          >
+            <Plus size={20} />
+            <span>Werk Registreren</span>
+          </button>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {getDistributorProgress().map((dist, index) => {
             const expectedHours = dist.expectedHours;
@@ -454,7 +476,11 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
             const percentageComplete = expectedHours > 0 ? (loggedHours / expectedHours) * 100 : 0;
 
             return (
-              <div key={dist.id} className="bg-[#1E2530] rounded-lg p-4">
+              <div
+                key={dist.id}
+                className="bg-[#1E2530] rounded-lg p-4 cursor-pointer hover:bg-[#252B38] transition-colors border border-transparent hover:border-blue-500/30"
+                onClick={() => handleDistributorClick(dist.id)}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-medium text-white text-sm">{dist.name}</h4>
                   <span className={`px-2 py-1 rounded-full text-xs ${
@@ -546,102 +572,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         </div>
       </div>
 
-      {/* Add Work Entry Button */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-orange-400">Werk Registraties</h3>
-        <button
-          onClick={() => setShowWorkForm(true)}
-          className="btn-primary flex items-center space-x-2"
-        >
-          <Plus size={20} />
-          <span>Werk Registreren</span>
-        </button>
-      </div>
-
-      {/* Work Entries Table */}
-      <div className="bg-[#2A303C] rounded-xl p-6">
-        {workEntries.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-700">
-                  <th className="table-header text-left">Verdeler</th>
-                  <th className="table-header text-left">Medewerker</th>
-                  <th className="table-header text-left">Datum</th>
-                  <th className="table-header text-left">Uren</th>
-                  <th className="table-header text-left">Status</th>
-                  <th className="table-header text-left">Opmerkingen</th>
-                  <th className="table-header text-right">Acties</th>
-                </tr>
-              </thead>
-              <tbody>
-                {workEntries.map((entry) => {
-                  const distributor = project.distributors?.find((d: any) => d.id === entry.distributor_id);
-                  return (
-                    <tr key={entry.id} className="table-row">
-                      <td className="py-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                          <span className="font-medium text-green-400">
-                            {distributor?.distributor_id || 'Onbekend'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 text-gray-300">{entry.worker_name}</td>
-                      <td className="py-4 text-gray-300">
-                        {new Date(entry.date).toLocaleDateString('nl-NL')}
-                      </td>
-                      <td className="py-4">
-                        <div className="flex items-center space-x-2">
-                          <Clock size={14} className="text-blue-400" />
-                          <span className="font-medium text-blue-400">{entry.hours}h</span>
-                        </div>
-                      </td>
-                      <td className="py-4">
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          entry.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                          entry.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-blue-500/20 text-blue-400'
-                        }`}>
-                          {entry.status === 'completed' ? 'Voltooid' :
-                           entry.status === 'paused' ? 'Gepauzeerd' : 'Bezig'}
-                        </span>
-                      </td>
-                      <td className="py-4 text-gray-300 max-w-xs truncate">
-                        {entry.notes || '-'}
-                      </td>
-                      <td className="py-4 text-right">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleEditEntry(entry)}
-                            className="p-2 bg-[#1E2530] hover:bg-blue-500/20 rounded-lg transition-colors group"
-                            title="Bewerken"
-                          >
-                            <Edit size={16} className="text-gray-400 group-hover:text-blue-400" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteEntry(entry.id)}
-                            className="p-2 bg-[#1E2530] hover:bg-red-500/20 rounded-lg transition-colors group"
-                            title="Verwijderen"
-                          >
-                            <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Clock size={48} className="mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400 text-lg">Nog geen werk geregistreerd</p>
-            <p className="text-gray-500 text-sm mt-2">Klik op "Werk Registreren" om te beginnen</p>
-          </div>
-        )}
-      </div>
 
       {/* Work Entry Form Modal */}
       {showWorkForm && (
@@ -920,6 +850,139 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Distributor Details Modal */}
+      {showDistributorDetails && selectedDistributorData && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-blue-400">
+                  {selectedDistributorData.distributor_id} - {selectedDistributorData.kast_naam || 'Naamloos'}
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Geregistreerde uren per medewerker</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDistributorDetails(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Work Entries Table */}
+            {selectedDistributorData.entries && selectedDistributorData.entries.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="table-header text-left">Medewerker</th>
+                      <th className="table-header text-left">Datum</th>
+                      <th className="table-header text-left">Uren</th>
+                      <th className="table-header text-left">Status</th>
+                      <th className="table-header text-left">Opmerkingen</th>
+                      <th className="table-header text-right">Acties</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedDistributorData.entries.map((entry: WorkEntry) => (
+                      <tr key={entry.id} className="table-row">
+                        <td className="py-4 text-gray-300">{entry.worker_name}</td>
+                        <td className="py-4 text-gray-300">
+                          {new Date(entry.date).toLocaleDateString('nl-NL')}
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center space-x-2">
+                            <Clock size={14} className="text-blue-400" />
+                            <span className="font-medium text-blue-400">{entry.hours}h</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            entry.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                            entry.status === 'paused' ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-blue-500/20 text-blue-400'
+                          }`}>
+                            {entry.status === 'completed' ? 'Voltooid' :
+                             entry.status === 'paused' ? 'Gepauzeerd' : 'Bezig'}
+                          </span>
+                        </td>
+                        <td className="py-4 text-gray-300 max-w-xs truncate">
+                          {entry.notes || '-'}
+                        </td>
+                        <td className="py-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => {
+                                setShowDistributorDetails(false);
+                                handleEditEntry(entry);
+                              }}
+                              className="p-2 bg-[#2A303C] hover:bg-blue-500/20 rounded-lg transition-colors group"
+                              title="Bewerken"
+                            >
+                              <Edit size={16} className="text-gray-400 group-hover:text-blue-400" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEntry(entry.id)}
+                              className="p-2 bg-[#2A303C] hover:bg-red-500/20 rounded-lg transition-colors group"
+                              title="Verwijderen"
+                            >
+                              <Trash2 size={16} className="text-gray-400 group-hover:text-red-400" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Summary */}
+                <div className="mt-6 pt-4 border-t border-gray-700">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Totaal gelogde uren:</span>
+                    <span className="text-xl font-bold text-blue-400">
+                      {selectedDistributorData.entries.reduce((sum: number, entry: WorkEntry) => sum + entry.hours, 0).toFixed(1)} uur
+                    </span>
+                  </div>
+                  {selectedDistributorData.expected_hours > 0 && (
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-gray-400">Verwachte uren:</span>
+                      <span className="text-lg text-gray-300">
+                        {parseFloat(selectedDistributorData.expected_hours).toFixed(1)} uur
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Clock size={48} className="mx-auto text-gray-600 mb-4" />
+                <p className="text-gray-400 text-lg">Geen uren geregistreerd voor deze verdeler</p>
+                <p className="text-gray-500 text-sm mt-2">Klik op "Werk Registreren" om te beginnen</p>
+              </div>
+            )}
+
+            {/* Add Work Entry Button */}
+            <div className="mt-6 pt-4 border-t border-gray-700">
+              <button
+                onClick={() => {
+                  setShowDistributorDetails(false);
+                  setFormData({
+                    ...formData,
+                    distributor_id: selectedDistributorData.id
+                  });
+                  setShowWorkForm(true);
+                }}
+                className="btn-primary w-full flex items-center justify-center space-x-2"
+              >
+                <Plus size={20} />
+                <span>Uren Registreren voor deze Verdeler</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
