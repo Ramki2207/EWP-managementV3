@@ -58,19 +58,19 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Load users
-      const usersData = JSON.parse(localStorage.getItem('users') || '[]');
+
+      // Load users from database instead of localStorage
+      const usersData = await dataService.getUsers();
       setUsers(usersData);
 
       // Load work entries for all distributors in this project
       if (project.distributors && project.distributors.length > 0) {
         const allWorkEntries: WorkEntry[] = [];
-        
+
         for (const distributor of project.distributors) {
           try {
             const entries = await dataService.getWorkEntries(distributor.id);
-            
+
             // Convert database entries to our format
             const formattedEntries = entries.map((entry: any) => ({
               id: entry.id,
@@ -85,13 +85,13 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
               photos: [], // Will be loaded from test_data if needed
               created_at: entry.created_at
             }));
-            
+
             allWorkEntries.push(...formattedEntries);
           } catch (error) {
             console.error(`Error loading work entries for distributor ${distributor.id}:`, error);
           }
         }
-        
+
         setWorkEntries(allWorkEntries);
       }
     } catch (error) {
