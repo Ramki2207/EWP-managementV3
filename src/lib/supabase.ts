@@ -127,7 +127,10 @@ export const dataService = {
             fabrikant,
             profile_photo,
             status,
-            created_at
+            created_at,
+            toegewezen_monteur,
+            gewenste_lever_datum,
+            expected_hours
           )
         `)
         .order('created_at', { ascending: false })

@@ -934,6 +934,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <span className="text-gray-400">Fabrikant:</span>
                       <p className="text-white">{selectedVerdeler.fabrikant || '-'}</p>
                     </div>
+                    <div>
+                      <span className="text-gray-400">Voorcalculatorische uren:</span>
+                      <p className="text-white">{selectedVerdeler.expectedHours || selectedVerdeler.expected_hours || '-'} uur</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Gewenste leverdatum:</span>
+                      <p className="text-white">{selectedVerdeler.deliveryDate || selectedVerdeler.gewenste_lever_datum || '-'}</p>
+                    </div>
                   </div>
                 </div>
 

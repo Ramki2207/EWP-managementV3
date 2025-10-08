@@ -234,7 +234,8 @@ const ProjectDetails = () => {
         client: editedProject.client,
         contact_person: editedProject.contact_person,
         status: editedProject.status,
-        description: editedProject.description
+        description: editedProject.description,
+        expectedDeliveryDate: editedProject.expected_delivery_date
       };
 
       await dataService.updateProject(editedProject.id, updateData);
@@ -539,11 +540,12 @@ const ProjectDetails = () => {
               {[
                 { label: "Projectnummer", field: "project_number", readOnly: true },
                 { label: "Datum", field: "date", type: "date" },
+                { label: "Verwachte leverdatum", field: "expected_delivery_date", type: "date" },
                 { label: "Locatie", field: "location" },
                 { label: "Klant", field: "client" },
                 { label: "Contactpersoon", field: "contact_person" },
-                { 
-                  label: "Status", 
+                {
+                  label: "Status",
                   field: "status",
                   type: "select",
                   options: ["", "Intake", "Offerte", "Order", "Productie", "Testen", "Levering", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
