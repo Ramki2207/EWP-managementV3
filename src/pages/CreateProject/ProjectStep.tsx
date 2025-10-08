@@ -414,6 +414,24 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
         </div>
 
         <div>
+          <label className="block text-sm text-gray-400 mb-2">
+            Verwachte leverdatum
+          </label>
+          <div className="relative">
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="date"
+              className="input-field pl-10"
+              value={projectData.expectedDeliveryDate || ''}
+              onChange={(e) => handleInputChange('expectedDeliveryDate', e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Verwachte leverdatum voor het hele project
+          </p>
+        </div>
+
+        <div>
           <label className="block text-sm text-gray-400 mb-2">Klant</label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />

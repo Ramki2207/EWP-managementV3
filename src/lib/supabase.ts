@@ -160,7 +160,8 @@ export const dataService = {
           contact_person: project.contactPerson || project.contact_person,
           status: project.status,
           description: project.description,
-          intake_form: project.intakeForm || project.intakeFormData
+          intake_form: project.intakeForm || project.intakeFormData,
+          expected_delivery_date: project.expectedDeliveryDate
         }])
         .select()
         .single();
@@ -191,7 +192,8 @@ export const dataService = {
           contact_person: updates.contact_person,
           status: updates.status,
           description: updates.description,
-          intake_form: updates.intakeForm || null
+          intake_form: updates.intakeForm || null,
+          expected_delivery_date: updates.expectedDeliveryDate
         })
         .eq('id', id)
         .select()
@@ -346,7 +348,8 @@ export const dataService = {
         profile_photo: profilePhotoUrl,
         status: distributor.status,
         toegewezen_monteur: distributor.toegewezenMonteur || null,
-        gewenste_lever_datum: distributor.gewensteLeverDatum || null
+        gewenste_lever_datum: distributor.gewensteLeverDatum || null,
+        expected_hours: distributor.expectedHours || null
       };
       
       console.log('Database data being inserted:', dbData);
@@ -427,7 +430,8 @@ export const dataService = {
           status: updates.status,
           // Add new columns conditionally to handle migration
           ...(updates.toegewezenMonteur !== undefined && { toegewezen_monteur: updates.toegewezenMonteur }),
-          ...(updates.gewensteLeverDatum !== undefined && { gewenste_lever_datum: updates.gewensteLeverDatum })
+          ...(updates.gewensteLeverDatum !== undefined && { gewenste_lever_datum: updates.gewensteLeverDatum }),
+          ...(updates.expectedHours !== undefined && { expected_hours: updates.expectedHours })
         })
         .eq('id', id)
         .select()

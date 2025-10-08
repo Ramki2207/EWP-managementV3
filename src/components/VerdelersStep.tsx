@@ -63,6 +63,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     freqInHz: '50 Hz',
     typeNrHs: '',
     profilePhoto: null as File | null,
+    expectedHours: '',
+    deliveryDate: '',
   });
 
   // Load verdelers from database when component mounts or project changes
@@ -125,7 +127,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         freqInHz: dist.freq_in_hz,
         typeNrHs: dist.type_nr_hs,
         profilePhoto: dist.profile_photo,
-        createdAt: dist.created_at
+        createdAt: dist.created_at,
+        expectedHours: dist.expected_hours,
+        expected_hours: dist.expected_hours, // Keep snake_case for compatibility
+        deliveryDate: dist.gewenste_lever_datum,
+        gewenste_lever_datum: dist.gewenste_lever_datum // Keep snake_case for compatibility
       }));
       
       console.log('✅ Formatted verdelers:', formattedVerdelers);
@@ -250,6 +256,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       freqInHz: verdeler.freqInHz || '50 Hz',
       typeNrHs: verdeler.typeNrHs,
       profilePhoto: null,
+      expectedHours: verdeler.expectedHours || verdeler.expected_hours || '',
+      deliveryDate: verdeler.deliveryDate || verdeler.gewenste_lever_datum || '',
     });
     setShowVerdelerDetails(false);
     setShowVerdelerForm(true);
@@ -386,9 +394,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           freqInHz: verdelerData.freqInHz,
           typeNrHs: verdelerData.typeNrHs,
           profilePhoto: profilePhotoUrl,
-          // Only include new columns if they exist in database
           toegewezenMonteur: verdelerData.toegewezenMonteur,
-          gewensteLeverDatum: null // Will be added later when column exists
+          expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+          gewensteLeverDatum: verdelerData.deliveryDate || null
         };
         
         await dataService.updateDistributor(editingVerdeler.id, updateData);
@@ -415,7 +423,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             ikDynInKA: verdelerData.ikDynInKA,
             freqInHz: verdelerData.freqInHz,
             typeNrHs: verdelerData.typeNrHs,
-            profilePhoto: profilePhotoUrl
+            profilePhoto: profilePhotoUrl,
+            expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+            gewensteLeverDatum: verdelerData.deliveryDate || null
           };
           
           await dataService.createDistributor(newVerdelerData);
@@ -444,6 +454,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             typeNrHs: verdelerData.typeNrHs,
             profilePhoto: profilePhotoUrl,
             createdAt: new Date().toISOString(),
+            expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+            expected_hours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null, // Keep snake_case
+            deliveryDate: verdelerData.deliveryDate || null,
+            gewenste_lever_datum: verdelerData.deliveryDate || null, // Keep snake_case
           };
           
           const updatedVerdelers = [...verdelers, verdelerToSave];
@@ -1173,6 +1187,39 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Voorcalculatorische uren
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      className="input-field"
+                      value={verdelerData.expectedHours}
+                      onChange={(e) => handleInputChange('expectedHours', e.target.value)}
+                      placeholder="8.5"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Verwachte werkuren voor deze verdeler
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Gewenste leverdatum
+                    </label>
+                    <input
+                      type="date"
+                      className="input-field"
+                      value={verdelerData.deliveryDate}
+                      onChange={(e) => handleInputChange('deliveryDate', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Specifieke leverdatum voor deze verdeler (optioneel)
+                    </p>
                   </div>
 
                   <div>

@@ -441,25 +441,82 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       <div className="bg-[#2A303C] rounded-xl p-6">
         <h3 className="text-lg font-semibold text-blue-400 mb-4">Verdeler Voortgang</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {getDistributorProgress().map((dist, index) => (
-            <div key={index} className="bg-[#1E2530] rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium text-white text-sm">{dist.name}</h4>
-                <span className={`px-2 py-1 rounded-full text-xs ${
-                  dist.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                  dist.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                  'bg-gray-500/20 text-gray-400'
-                }`}>
-                  {dist.status === 'completed' ? 'Voltooid' :
-                   dist.status === 'in_progress' ? 'Bezig' : 'Niet gestart'}
-                </span>
+          {getDistributorProgress().map((dist, index) => {
+            // Find the distributor to get expected hours
+            const distributor = project.distributors?.find((d: any) =>
+              (d.distributor_id === dist.id || d.distributorId === dist.id) ||
+              (d.kast_naam === dist.name || d.kastNaam === dist.name)
+            );
+            const expectedHours = distributor?.expected_hours || distributor?.expectedHours || 0;
+            const loggedHours = dist.hours;
+            const remainingHours = expectedHours - loggedHours;
+            const percentageComplete = expectedHours > 0 ? (loggedHours / expectedHours) * 100 : 0;
+
+            return (
+              <div key={index} className="bg-[#1E2530] rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-white text-sm">{dist.name}</h4>
+                  <span className={`px-2 py-1 rounded-full text-xs ${
+                    dist.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                    dist.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>
+                    {dist.status === 'completed' ? 'Voltooid' :
+                     dist.status === 'in_progress' ? 'Bezig' : 'Niet gestart'}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Gelogd:</span>
+                    <span className="text-white font-medium">{loggedHours.toFixed(1)} uur</span>
+                  </div>
+
+                  {expectedHours > 0 && (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Verwacht:</span>
+                        <span className="text-gray-300">{expectedHours.toFixed(1)} uur</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400">Resterend:</span>
+                        <span className={`font-medium ${
+                          remainingHours > 0 ? 'text-blue-400' :
+                          remainingHours < 0 ? 'text-red-400' : 'text-green-400'
+                        }`}>
+                          {remainingHours > 0 ? '+' : ''}{remainingHours.toFixed(1)} uur
+                        </span>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="mt-3">
+                        <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all ${
+                              percentageComplete >= 100 ? 'bg-green-500' :
+                              percentageComplete >= 75 ? 'bg-blue-500' :
+                              'bg-yellow-500'
+                            }`}
+                            style={{ width: `${Math.min(percentageComplete, 100)}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1 text-right">
+                          {percentageComplete.toFixed(0)}%
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {expectedHours === 0 && (
+                    <p className="text-xs text-gray-500 italic mt-2">
+                      Geen voorcalculatorische uren ingesteld
+                    </p>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Clock size={14} className="text-gray-400" />
-                <span className="text-sm text-gray-300">{dist.hours.toFixed(1)} uur</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
