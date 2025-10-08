@@ -233,7 +233,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
     // Check if systeem/voeding are custom values
     const systeemOptions = ['TN-S', 'TN-C', 'TN-C-S', 'TT'];
-    const voedingOptions = ['40', '63', '80', '125', '250', '400', '630', '750', '800', '1000', '1250', '1400', '1600', '2000', '2500', '3200', '4000', '5000', '6300'];
+    const voedingOptions = ['40', '63', '80', '125', '160', '250', '400', '630', '750', '800', '1000', '1250', '1400', '1600', '2000', '2500', '3200', '4000', '5000', '6300'];
 
     const isCustomSysteem = verdeler.systeem && !systeemOptions.includes(verdeler.systeem);
     const isCustomVoeding = verdeler.voeding && !voedingOptions.includes(verdeler.voeding);
@@ -1287,6 +1287,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <option value="63">63</option>
                       <option value="80">80</option>
                       <option value="125">125</option>
+                      <option value="160">160</option>
                       <option value="250">250</option>
                       <option value="400">400</option>
                       <option value="630">630</option>
