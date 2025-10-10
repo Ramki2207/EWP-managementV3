@@ -325,6 +325,18 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         console.log('🗑️ Deleting work entry:', entryId);
         await dataService.deleteWorkEntry(entryId);
         console.log('✅ Work entry deleted successfully');
+
+        // Update local state immediately for instant UI feedback
+        setWorkEntries(prev => prev.filter(entry => entry.id !== entryId));
+
+        // Update selectedDistributorData if modal is open
+        if (selectedDistributorData) {
+          setSelectedDistributorData(prev => ({
+            ...prev,
+            entries: prev.entries.filter((entry: WorkEntry) => entry.id !== entryId)
+          }));
+        }
+
         toast.success('Werk registratie verwijderd!');
         await loadData();
       } catch (error) {
