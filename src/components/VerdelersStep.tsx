@@ -963,7 +963,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </div>
                     <div>
                       <span className="text-gray-400">Gewenste leverdatum:</span>
-                      <p className="text-white">{selectedVerdeler.deliveryDate || selectedVerdeler.gewenste_lever_datum || '-'}</p>
+                      <p className="text-white">
+                        {(() => {
+                          const date = selectedVerdeler.deliveryDate || selectedVerdeler.gewenste_lever_datum;
+                          if (!date) return '-';
+                          const dateStr = typeof date === 'string' ? date.split('T')[0] : date;
+                          return dateStr;
+                        })()}
+                      </p>
                     </div>
                   </div>
                 </div>

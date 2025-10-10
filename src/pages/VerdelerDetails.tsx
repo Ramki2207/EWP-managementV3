@@ -894,8 +894,8 @@ const VerdelerDetails = () => {
                       />
                     ) : (
                       <div className="input-field">
-                        {distributor.gewenste_lever_datum 
-                          ? new Date(distributor.gewenste_lever_datum).toLocaleDateString('nl-NL')
+                        {distributor.gewenste_lever_datum
+                          ? distributor.gewenste_lever_datum.split('T')[0]
                           : "Niet ingesteld"}
                       </div>
                     )}
