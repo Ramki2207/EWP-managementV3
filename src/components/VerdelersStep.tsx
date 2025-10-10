@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
@@ -22,17 +22,18 @@ interface VerdelersStepProps {
   hideNavigation?: boolean;
 }
 
-const VerdelersStep: React.FC<VerdelersStepProps> = ({ 
-  projectData, 
-  onVerdelersChange, 
-  onNext, 
-  onBack, 
-  hideNavigation = false 
+const VerdelersStep: React.FC<VerdelersStepProps> = ({
+  projectData,
+  onVerdelersChange,
+  onNext,
+  onBack,
+  hideNavigation = false
 }) => {
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState(false);
   const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
+  const loadedProjectIdRef = useRef<string | null>(null);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
@@ -67,9 +68,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     deliveryDate: '',
   });
 
-  // Load verdelers from database when component mounts or project changes
+  // Load verdelers from database when component mounts or project ID actually changes
   useEffect(() => {
-    if (projectData?.id) {
+    if (projectData?.id && projectData.id !== loadedProjectIdRef.current) {
+      loadedProjectIdRef.current = projectData.id;
       loadVerdelersFromDatabase();
     }
   }, [projectData?.id]);
@@ -136,7 +138,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       
       console.log('✅ Formatted verdelers:', formattedVerdelers);
       setVerdelers(formattedVerdelers);
-      onVerdelersChange(formattedVerdelers);
+      // Don't call onVerdelersChange here - we're just loading existing data, not changing it
+      // This prevents infinite refresh loops
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
     }
