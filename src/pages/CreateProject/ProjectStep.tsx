@@ -312,11 +312,12 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     }
 
     try {
-      const updatedClient = await dataService.updateClient(selectedClient.id, {
-        ...selectedClient,
-        contacts: [...(selectedClient.contacts || []), newContactData]
-      });
+      const newContact = await dataService.createContact(selectedClient.id, newContactData);
 
+      const updatedClient = {
+        ...selectedClient,
+        contacts: [...(selectedClient.contacts || []), newContact]
+      };
       setClients(prev => prev.map(c => c.id === selectedClient.id ? updatedClient : c));
 
       const contactFullName = `${newContactData.first_name} ${newContactData.last_name}`;

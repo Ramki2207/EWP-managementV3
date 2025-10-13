@@ -973,6 +973,34 @@ export const dataService = {
     }
   },
 
+  async createContact(clientId: string, contactData: any) {
+    try {
+      const { data: contact, error } = await supabase
+        .from('contacts')
+        .insert({
+          client_id: clientId,
+          first_name: contactData.first_name,
+          last_name: contactData.last_name,
+          email: contactData.email,
+          phone: contactData.phone,
+          department: contactData.department,
+          function: contactData.function
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in createContact:', error);
+        throw error;
+      }
+
+      return contact;
+    } catch (err) {
+      console.error('Network error in createContact:', err);
+      throw new Error(`Failed to create contact: ${getErrorMessage(err)}`);
+    }
+  },
+
   async deleteClient(id: string) {
     try {
       // Contacts will be automatically deleted due to ON DELETE CASCADE
