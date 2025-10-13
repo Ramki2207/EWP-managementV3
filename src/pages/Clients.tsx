@@ -206,9 +206,11 @@ const Clients = () => {
     }
   };
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients
+    .filter((client) =>
+      client.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => a.name.localeCompare(b.name, 'nl', { sensitivity: 'base' }));
 
   return (
     <div className="min-h-screen p-8">
