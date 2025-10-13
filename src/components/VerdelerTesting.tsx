@@ -413,16 +413,31 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                           ))}
                         </div>
                       ) : item.options && item.options.length > 4 ? (
-                        <select
-                          className="bg-[#2A303C] text-white border border-gray-700 rounded p-1 text-xs"
-                          value={item.passed || ''}
-                          onChange={(e) => handleItemChange('workshopChecklist', item.id, 'passed', e.target.value)}
-                        >
-                          <option value="">Selecteer...</option>
-                          {item.options.map((option: string) => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center justify-center space-x-2">
+                          <select
+                            className="bg-[#2A303C] text-white border border-gray-700 rounded p-1 text-xs"
+                            value={item.passed || ''}
+                            onChange={(e) => handleItemChange('workshopChecklist', item.id, 'passed', e.target.value)}
+                          >
+                            <option value="">Selecteer...</option>
+                            {item.options.map((option: string) => (
+                              <option key={option} value={option}>{option}</option>
+                            ))}
+                          </select>
+                          {item.field === '2.02' && (
+                            <button
+                              className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                                item.passed === 'n.v.t.'
+                                  ? 'bg-yellow-600 text-white'
+                                  : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                              }`}
+                              onClick={() => handleItemChange('workshopChecklist', item.id, 'passed', 'n.v.t.')}
+                              title="Niet van toepassing"
+                            >
+                              n.v.t.
+                            </button>
+                          )}
+                        </div>
                       ) : (
                         <div className="flex justify-center space-x-2">
                           <button
