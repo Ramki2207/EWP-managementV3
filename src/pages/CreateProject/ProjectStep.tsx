@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Building, Calendar, MapPin, User, FileText, Briefcase, Plus, X, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../../lib/supabase';
+import ClientSearchSelect from '../../components/ClientSearchSelect';
 
 interface ProjectStepProps {
   projectData: any;
@@ -433,21 +434,13 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
 
         <div>
           <label className="block text-sm text-gray-400 mb-2">Klant</label>
-          <div className="relative">
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <select
-              className="input-field pl-10"
-              value={projectData.client}
-              onChange={(e) => handleInputChange('client', e.target.value)}
-            >
-              <option value="">Selecteer een klant</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.name}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ClientSearchSelect
+            clients={clients}
+            selectedClientName={projectData.client}
+            onSelect={(clientName) => handleInputChange('client', clientName)}
+            placeholder="Selecteer een klant"
+            required={true}
+          />
           <div className="mt-2">
             <button
               type="button"
