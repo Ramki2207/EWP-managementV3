@@ -111,7 +111,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             width: '1004px',
             height: '638px',
             backgroundColor: '#E8E8E8',
-            padding: '24px',
+            padding: '16px',
             fontFamily: 'Arial, sans-serif',
             borderRadius: '0px',
             position: 'relative',
@@ -119,24 +119,22 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             boxSizing: 'border-box'
           }}
         >
-          {/* Header Section */}
+          {/* Header Section - Compact */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: '20px',
-            paddingBottom: '15px',
-            borderBottom: '3px solid #000000'
+            alignItems: 'center',
+            marginBottom: '12px',
+            paddingBottom: '8px',
+            borderBottom: '2px solid #000000'
           }}>
             {/* Logo */}
             <div style={{
-              width: '550px',
-              height: '120px',
+              width: '280px',
+              height: '70px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'flex-start',
-              backgroundColor: 'transparent',
-              padding: '0'
+              justifyContent: 'flex-start'
             }}>
               {logoDataUrl && (
                 <img
@@ -147,79 +145,88 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                     maxHeight: '100%',
                     width: 'auto',
                     height: 'auto',
-                    objectFit: 'contain',
-                    objectPosition: 'left center'
+                    objectFit: 'contain'
                   }}
                 />
               )}
             </div>
 
-            {/* Company Info */}
+            {/* Company Info - Compact */}
             <div style={{
               textAlign: 'right',
-              fontSize: '16px',
-              lineHeight: '1.5',
-              fontWeight: '500',
+              fontSize: '13px',
+              lineHeight: '1.4',
               color: '#000'
             }}>
-              <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '6px', color: '#000' }}>EWP Paneelbouw Utrecht</div>
-              <div style={{ color: '#000' }}>Gildenstraat 28, 4143 HS Leerdam</div>
-              <div style={{ color: '#000' }}>info@ewp-paneelbouw.nl</div>
-              <div style={{ color: '#000' }}>www.ewp-paneelbouw.nl</div>
+              <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '3px' }}>EWP Paneelbouw Utrecht</div>
+              <div>Gildenstraat 28, 4143 HS Leerdam</div>
+              <div>info@ewp-paneelbouw.nl</div>
+              <div>www.ewp-paneelbouw.nl</div>
             </div>
           </div>
 
-          {/* Main Content - Three Column Layout */}
+          {/* Main Content - Optimized Layout */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr 220px',
-            gap: '35px',
-            marginTop: '25px'
+            gridTemplateColumns: '340px 340px 260px',
+            gap: '20px',
+            marginTop: '12px'
           }}>
             {/* First Column */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '28px'
+              gap: '14px'
             }}>
               {/* Project Number */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '26px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                PROJECTNUMMER: <span style={{ fontWeight: 'normal', color: '#000000' }}>{projectNumber.replace(/-/g, '')}</span>
+                PROJECTNUMMER:<br/>
+                <span style={{ fontWeight: 'normal', fontSize: '24px' }}>{projectNumber.replace(/-/g, '')}</span>
               </div>
 
               {/* Type */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                TYPE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.systeem || 'VK'}</span>
+                TYPE: <span style={{ fontWeight: 'normal' }}>{verdeler.systeem || 'VK'}</span>
               </div>
 
               {/* Kastnaam */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                KASTNAAM: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
+                KASTNAAM: <span style={{ fontWeight: 'normal' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
               </div>
 
               {/* Voeding */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                VOEDING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.voeding ? `${verdeler.voeding}A` : '-'}</span>
+                VOEDING: <span style={{ fontWeight: 'normal' }}>{verdeler.voeding ? `${verdeler.voeding}A` : '-'}</span>
+              </div>
+
+              {/* Stuurspanning */}
+              <div style={{
+                fontSize: '22px',
+                fontWeight: 'bold',
+                color: '#000000',
+                lineHeight: '1.2'
+              }}>
+                STUURSPANNING: <span style={{ fontWeight: 'normal' }}>{verdeler.stuurspanning || '-'}</span>
               </div>
             </div>
 
@@ -227,110 +234,102 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '28px'
+              gap: '14px'
             }}>
               {/* Un in V */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                UN IN V: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
+                UN IN V: <span style={{ fontWeight: 'normal' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
               </div>
 
               {/* In in A */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                IN IN A: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
+                IN IN A: <span style={{ fontWeight: 'normal' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
               </div>
 
               {/* Freq in Hz */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                FREQ. IN HZ: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+                FREQ. IN HZ: <span style={{ fontWeight: 'normal' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
               </div>
 
               {/* IP-Waarde */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                IP-WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>65</span>
-              </div>
-
-              {/* Bouwjaar */}
-              <div style={{
-                fontSize: '34px',
-                fontWeight: 'bold',
-                color: '#000000',
-                lineHeight: '1.3'
-              }}>
-                BOUWJAAR: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
-              </div>
-
-              {/* Stuurspanning */}
-              <div style={{
-                fontSize: '34px',
-                fontWeight: 'bold',
-                color: '#000000',
-                lineHeight: '1.3'
-              }}>
-                STUURSPANNING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.stuurspanning || '-'}</span>
+                IP-WAARDE: <span style={{ fontWeight: 'normal' }}>65</span>
               </div>
 
               {/* kA Waarde */}
               <div style={{
-                fontSize: '34px',
+                fontSize: '22px',
                 fontWeight: 'bold',
                 color: '#000000',
-                lineHeight: '1.3'
+                lineHeight: '1.2'
               }}>
-                KA WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{(verdeler.ka_waarde || verdeler.kaWaarde) ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
+                KA WAARDE: <span style={{ fontWeight: 'normal' }}>{(verdeler.ka_waarde || verdeler.kaWaarde) ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
+              </div>
+
+              {/* Bouwjaar */}
+              <div style={{
+                fontSize: '22px',
+                fontWeight: 'bold',
+                color: '#000000',
+                lineHeight: '1.2'
+              }}>
+                BOUWJAAR: <span style={{ fontWeight: 'normal' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
               </div>
             </div>
 
             {/* Third Column - QR Code */}
             <div style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'flex-start',
+              gap: '12px'
             }}>
               <div style={{
                 backgroundColor: '#fff',
-                padding: '14px',
+                padding: '10px',
                 borderRadius: '4px',
-                border: '3px solid #000'
+                border: '2px solid #000'
               }}>
                 <QRCodeSVG
                   value={maintenanceUrl}
-                  size={190}
+                  size={220}
                   level="M"
                   includeMargin={false}
                 />
               </div>
-            </div>
-          </div>
 
-          {/* IEC Standard Text */}
-          <div style={{
-            marginTop: '25px',
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#000000',
-            textAlign: 'center'
-          }}>
-            (IEC61439-1/3)
+              {/* IEC Standard Text - Moved under QR */}
+              <div style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: '#000000',
+                textAlign: 'center',
+                marginTop: '4px'
+              }}>
+                (IEC61439-1/3)
+              </div>
+            </div>
           </div>
         </div>
       </div>
