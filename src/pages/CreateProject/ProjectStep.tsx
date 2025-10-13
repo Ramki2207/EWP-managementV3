@@ -17,6 +17,15 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const [duplicateError, setDuplicateError] = useState('');
   const [showClientForm, setShowClientForm] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [newContactData, setNewContactData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    department: '',
+    function: ''
+  });
   const [newClientData, setNewClientData] = useState({
     name: '',
     visit_street: '',
@@ -290,6 +299,49 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     }
   };
 
+  const handleSaveNewContact = async () => {
+    if (!newContactData.first_name.trim() || !newContactData.last_name.trim()) {
+      toast.error('Vul tenminste voor- en achternaam in!');
+      return;
+    }
+
+    const selectedClient = clients.find(c => c.name === projectData.client);
+    if (!selectedClient) {
+      toast.error('Selecteer eerst een klant!');
+      return;
+    }
+
+    try {
+      const updatedClient = await dataService.updateClient(selectedClient.id, {
+        ...selectedClient,
+        contacts: [...(selectedClient.contacts || []), newContactData]
+      });
+
+      setClients(prev => prev.map(c => c.id === selectedClient.id ? updatedClient : c));
+
+      const contactFullName = `${newContactData.first_name} ${newContactData.last_name}`;
+      const updatedData = {
+        ...projectData,
+        contact_person: contactFullName
+      };
+      onProjectChange(updatedData);
+
+      setNewContactData({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        department: '',
+        function: ''
+      });
+      setShowContactForm(false);
+      toast.success('Nieuwe contactpersoon succesvol toegevoegd!');
+    } catch (error) {
+      console.error('Error saving contact:', error);
+      toast.error('Er is een fout opgetreden bij het opslaan van de contactpersoon');
+    }
+  };
+
   const handleIntakeFormChange = (field: string, value: any) => {
     setIntakeFormData(prev => ({
       ...prev,
@@ -490,6 +542,16 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                 </p>
               );
             })()}
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={() => setShowContactForm(true)}
+                className="btn-secondary flex items-center space-x-2 text-sm"
+              >
+                <Plus size={16} />
+                <span>Nieuwe contactpersoon aanmaken</span>
+              </button>
+            </div>
           </div>
         )}
         <div>
@@ -1177,6 +1239,124 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                 >
                   <Save size={20} />
                   <span>Klant opslaan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Contact Form Modal */}
+      {showContactForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-blue-400">Nieuwe contactpersoon aanmaken</h2>
+              <button
+                onClick={() => setShowContactForm(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                <p className="text-sm text-blue-300">
+                  <strong>Klant:</strong> {projectData.client}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Deze contactpersoon wordt toegevoegd aan bovenstaande klant
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Voornaam <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={newContactData.first_name}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, first_name: e.target.value }))}
+                    placeholder="Jan"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">
+                    Achternaam <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={newContactData.last_name}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, last_name: e.target.value }))}
+                    placeholder="de Vries"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">E-mail</label>
+                  <input
+                    type="email"
+                    className="input-field"
+                    value={newContactData.email}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="jan@bedrijf.nl"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Telefoon</label>
+                  <input
+                    type="tel"
+                    className="input-field"
+                    value={newContactData.phone}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="06 12345678"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Afdeling</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={newContactData.department}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, department: e.target.value }))}
+                    placeholder="Inkoop"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Functie</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    value={newContactData.function}
+                    onChange={(e) => setNewContactData(prev => ({ ...prev, function: e.target.value }))}
+                    placeholder="Manager"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-6 border-t border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShowContactForm(false)}
+                  className="btn-secondary"
+                >
+                  Annuleren
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveNewContact}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Save size={20} />
+                  <span>Contactpersoon opslaan</span>
                 </button>
               </div>
             </div>
