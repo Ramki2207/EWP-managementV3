@@ -139,6 +139,19 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
         if (workshopTest && workshopTest.data) {
           console.log('✅ VERDELER TESTING: Loading from database');
           setTestData(workshopTest.data);
+
+          // Check if workshopChecklist is completed to determine the step
+          if (workshopTest.data.workshopChecklist?.completed) {
+            setCurrentStep(1);
+            toast.info('Werkplaats Checklist is voltooid - ga verder met Keuringsrapport');
+          } else {
+            const hasWorkshopData = workshopTest.data.workshopChecklist?.items?.some((item: any) =>
+              item.passed !== null || item.notes !== ''
+            );
+            if (hasWorkshopData) {
+              toast.info('Werkplaats Checklist opgeslagen data geladen - ga verder waar je gebleven was');
+            }
+          }
           return;
         }
 
@@ -159,6 +172,20 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             } else {
               console.log('📦 VERDELER TESTING: Loading from localStorage');
               setTestData(parsed);
+
+              // Check if workshopChecklist is completed to determine the step
+              if (parsed.workshopChecklist?.completed) {
+                setCurrentStep(1);
+                toast.info('Werkplaats Checklist is voltooid - ga verder met Keuringsrapport');
+              } else {
+                // Check if there's any data filled in the workshopChecklist
+                const hasWorkshopData = parsed.workshopChecklist?.items?.some((item: any) =>
+                  item.passed !== null || item.notes !== ''
+                );
+                if (hasWorkshopData) {
+                  toast.info('Werkplaats Checklist opgeslagen data geladen - ga verder waar je gebleven was');
+                }
+              }
             }
           } catch (error) {
             console.error('Error parsing saved test data:', error);
@@ -471,13 +498,25 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           </div>
         ))}
         
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
+          <button
+            className="btn-secondary"
+            onClick={async () => {
+              const saved = await saveTestData();
+              if (saved) {
+                toast.success('Werkplaats Checklist opgeslagen! Je kunt later verder gaan.');
+                setShowModal(false);
+              }
+            }}
+          >
+            Opslaan en later verdergaan
+          </button>
           <button
             className={`btn-primary ${isStepComplete('workshopChecklist') ? '' : 'opacity-50 cursor-not-allowed'}`}
             onClick={handleStepComplete}
             disabled={!isStepComplete('workshopChecklist')}
           >
-            Voltooien en doorgaan
+            Voltooien en doorgaan naar Keuringsrapport
           </button>
         </div>
       </div>
@@ -685,6 +724,14 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
       }
     } else if (testData.workshopChecklist.completed) {
       return <span className="px-2 py-1 bg-blue-400 text-white text-xs rounded-full">Checklist Voltooid</span>;
+    } else {
+      // Check if there's any saved progress
+      const hasWorkshopData = testData.workshopChecklist.items?.some((item: any) =>
+        item.passed !== null || item.notes !== ''
+      );
+      if (hasWorkshopData) {
+        return <span className="px-2 py-1 bg-orange-500 text-white text-xs rounded-full">In uitvoering</span>;
+      }
     }
     return <span className="px-2 py-1 bg-gray-600 text-white text-xs rounded-full">Niet getest</span>;
   };
@@ -756,9 +803,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
       >
         <CheckSquare size={16} />
         <span>Verdeler tot 630</span>
-        {testData.workshopChecklist.completed && (
-          <div className="ml-2">{getTestStatusBadge()}</div>
-        )}
+        <div className="ml-2">{getTestStatusBadge()}</div>
       </button>
 
       {showModal && createPortal(ModalContent, document.body)}
