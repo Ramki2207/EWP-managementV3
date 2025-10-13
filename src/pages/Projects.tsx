@@ -331,19 +331,34 @@ const Projects = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
+      // Role-based filtering for Montage users
+      if (currentUser?.role === 'montage') {
+        // Check if this project has any verdelers assigned to this monteur
+        const hasAssignedVerdelers = project.distributors?.some(
+          (dist: any) => dist.toegewezen_monteur === currentUser.username
+        );
+
+        if (!hasAssignedVerdelers) {
+          console.log(`🔧 MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
+          return false;
+        }
+
+        console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
+      }
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         const isTestingStatus = project.status?.toLowerCase() === 'testen';
-        
+
         // For production projects, we need to check database for pending approvals
         // This will be handled by the async filtering below
         const isProductionStatus = project.status?.toLowerCase() === 'productie';
-        
+
         if (!isTestingStatus && !isProductionStatus) {
           console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING OR PRODUCTION PHASE`);
           return false;
         }
-        
+
         if (isTestingStatus) {
           console.log(`🧪 TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
         } else if (isProductionStatus) {

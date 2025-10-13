@@ -27,20 +27,37 @@ const Verdelers = () => {
       
       console.log('🌍 VERDELERS: Raw distributors loaded:', filteredDistributors.length);
       console.log('🌍 VERDELERS: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
-      
+
+      // Role-based filtering for Montage users
+      if (currentUser?.role === 'montage') {
+        const beforeMontageFilter = filteredDistributors.length;
+        filteredDistributors = filteredDistributors.filter((distributor: any) => {
+          const isAssignedToUser = distributor.toegewezen_monteur === currentUser.username;
+
+          if (!isAssignedToUser) {
+            console.log(`🔧 MONTAGE FILTER: Hiding distributor ${distributor.distributor_id} (assigned to: ${distributor.toegewezen_monteur}) from monteur ${currentUser.username} - NOT ASSIGNED`);
+          } else {
+            console.log(`🔧 MONTAGE FILTER: Showing distributor ${distributor.distributor_id} to monteur ${currentUser.username} - ASSIGNED TO USER`);
+          }
+
+          return isAssignedToUser;
+        });
+        console.log(`🔧 MONTAGE FILTER: Filtered ${beforeMontageFilter} distributors down to ${filteredDistributors.length} for monteur ${currentUser.username}`);
+      }
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         const beforeRoleFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectStatus = distributor.projects?.status;
           const hasTestingStatus = projectStatus?.toLowerCase() === 'testen';
-          
+
           if (!hasTestingStatus) {
             console.log(`🧪 TESTER FILTER: Hiding distributor ${distributor.distributor_id} (project status: ${projectStatus}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
           } else {
             console.log(`🧪 TESTER FILTER: Showing distributor ${distributor.distributor_id} (project status: ${projectStatus}) to tester ${currentUser.username} - IN TESTING PHASE`);
           }
-          
+
           return hasTestingStatus;
         });
         console.log(`🧪 TESTER FILTER: Filtered ${beforeRoleFilter} distributors down to ${filteredDistributors.length} for tester ${currentUser.username}`);

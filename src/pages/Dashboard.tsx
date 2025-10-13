@@ -60,19 +60,38 @@ const Dashboard = () => {
       const data = await dataService.getProjects();
       
       let filteredData = data || [];
-      
+
+      // Role-based filtering for Montage users
+      if (currentUser?.role === 'montage') {
+        const beforeMontageFilter = filteredData.length;
+        filteredData = filteredData.filter((project: any) => {
+          const hasAssignedVerdelers = project.distributors?.some(
+            (dist: any) => dist.toegewezen_monteur === currentUser.username
+          );
+
+          if (!hasAssignedVerdelers) {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
+          } else {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
+          }
+
+          return hasAssignedVerdelers;
+        });
+        console.log(`🔧 DASHBOARD MONTAGE FILTER: Filtered ${beforeMontageFilter} projects down to ${filteredData.length} for monteur ${currentUser.username}`);
+      }
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         const beforeRoleFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
-          
+
           if (!hasTestingStatus) {
             console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
           } else {
             console.log(`🧪 DASHBOARD TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
           }
-          
+
           return hasTestingStatus;
         });
         console.log(`🧪 DASHBOARD TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredData.length} for tester ${currentUser.username}`);
@@ -204,19 +223,39 @@ const Dashboard = () => {
       
       console.log('🌍 DASHBOARD: Raw projects loaded:', filteredProjects.length);
       console.log('🌍 DASHBOARD: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
-      
+
+      // Role-based filtering for Montage users
+      if (currentUser?.role === 'montage') {
+        const beforeMontageFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: any) => {
+          // Check if this project has any verdelers assigned to this monteur
+          const hasAssignedVerdelers = project.distributors?.some(
+            (dist: any) => dist.toegewezen_monteur === currentUser.username
+          );
+
+          if (!hasAssignedVerdelers) {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
+          } else {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
+          }
+
+          return hasAssignedVerdelers;
+        });
+        console.log(`🔧 DASHBOARD MONTAGE FILTER: Filtered ${beforeMontageFilter} projects down to ${filteredProjects.length} for monteur ${currentUser.username}`);
+      }
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
-          
+
           if (!hasTestingStatus) {
             console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
           } else {
             console.log(`🧪 DASHBOARD TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
           }
-          
+
           return hasTestingStatus;
         });
         console.log(`🧪 DASHBOARD TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
