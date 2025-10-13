@@ -266,8 +266,12 @@ const ProjectDetails = () => {
 
     // Special handling for status change from Productie to Testen
     if (field === 'status' && value === 'Testen' && editedProject?.status === 'Productie') {
-      setShowPreTestingApproval(true);
-      return;
+      // Only show approval modal if approval hasn't been granted yet
+      if (approvalStatus.status !== 'approved') {
+        setShowPreTestingApproval(true);
+        return;
+      }
+      // If already approved, allow direct status change
     }
 
     setEditedProject({
