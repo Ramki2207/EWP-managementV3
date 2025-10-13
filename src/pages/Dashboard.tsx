@@ -484,8 +484,18 @@ const Dashboard = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
+      // Role-based filtering for Montage users
+      if (currentUser?.role === 'montage') {
+        const hasAssignedVerdelers = project.distributors?.some(
+          (dist: any) => dist.toegewezen_monteur === currentUser.username
+        );
+        if (!hasAssignedVerdelers) {
+          return false;
+        }
+      }
+
       // Search filter
-      const matchesSearch = 
+      const matchesSearch =
         project.project_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (project.status?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (project.client?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
