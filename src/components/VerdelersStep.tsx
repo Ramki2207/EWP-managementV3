@@ -974,7 +974,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </div>
                     <div>
                       <span className="text-gray-400">kA Waarde:</span>
-                      <p className="text-white">{selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde ? `${selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde} kA` : '-'}</p>
+                      <p className="text-white">{(selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde) ? `${selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde} kA` : '-'}</p>
                     </div>
                     <div>
                       <span className="text-gray-400">Bouwjaar:</span>

@@ -296,7 +296,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                KA WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.ka_waarde || verdeler.kaWaarde ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
+                KA WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{(verdeler.ka_waarde || verdeler.kaWaarde) ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
               </div>
             </div>
 
