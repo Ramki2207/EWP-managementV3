@@ -101,7 +101,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     
     // Extract year and suffix from existing project number if editing
     if (projectData.projectNumber) {
-      const match = projectData.projectNumber.match(/^P[MDR](\d{2})(\d{5})$/);
+      const match = projectData.projectNumber.match(/^P[MDR](\d{2})(\d{3})$/);
       if (match) {
         setProjectNumberYear(match[1]);
         setProjectNumberSuffix(match[2]);
@@ -170,9 +170,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       return;
     }
 
-    // Validate suffix format (exactly 5 digits)
-    if (!/^\d{5}$/.test(suffix)) {
-      setDuplicateError('Projectnummer moet precies 5 cijfers bevatten (00001-99999)');
+    // Validate suffix format (exactly 3 digits)
+    if (!/^\d{3}$/.test(suffix)) {
+      setDuplicateError('Projectnummer moet precies 3 cijfers bevatten (001-999)');
       return;
     }
 
@@ -206,7 +206,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     setProjectNumberYear(cleanYear);
 
     // Validate if we have all required fields
-    if (cleanYear.length === 2 && projectNumberSuffix.length === 5 && projectData.location) {
+    if (cleanYear.length === 2 && projectNumberSuffix.length === 3 && projectData.location) {
       validateProjectNumber(cleanYear, projectNumberSuffix, projectData.location);
     } else {
       setDuplicateError('');
@@ -214,12 +214,12 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   };
 
   const handleProjectNumberSuffixChange = (suffix: string) => {
-    // Only allow digits and limit to 5 characters
-    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 5);
+    // Only allow digits and limit to 3 characters
+    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 3);
     setProjectNumberSuffix(cleanSuffix);
 
     // Validate if we have all required fields
-    if (projectNumberYear.length === 2 && cleanSuffix.length === 5 && projectData.location) {
+    if (projectNumberYear.length === 2 && cleanSuffix.length === 3 && projectData.location) {
       validateProjectNumber(projectNumberYear, cleanSuffix, projectData.location);
     } else {
       setDuplicateError('');
@@ -228,7 +228,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
 
   const handleLocationChange = (location: string) => {
     // When location changes, validate if we have complete number
-    if (projectNumberYear.length === 2 && projectNumberSuffix.length === 5) {
+    if (projectNumberYear.length === 2 && projectNumberSuffix.length === 3) {
       validateProjectNumber(projectNumberYear, projectNumberSuffix, location);
     } else {
       // Clear project number if not complete
@@ -445,7 +445,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">5-cijferig projectnummer</label>
+              <label className="block text-xs text-gray-500 mb-1">3-cijferig projectnummer</label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -453,9 +453,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   className={`input-field pl-10 ${duplicateError ? 'border-red-500' : ''}`}
                   value={projectNumberSuffix}
                   onChange={(e) => handleProjectNumberSuffixChange(e.target.value)}
-                  placeholder="00001"
-                  maxLength={5}
-                  pattern="\d{5}"
+                  placeholder="001"
+                  maxLength={3}
+                  pattern="\d{3}"
                 />
                 {isCheckingDuplicate && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -471,7 +471,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           {/* Project Number Preview */}
-          {projectData.location && projectNumberYear.length === 2 && projectNumberSuffix.length === 5 && !duplicateError && (
+          {projectData.location && projectNumberYear.length === 2 && projectNumberSuffix.length === 3 && !duplicateError && (
             <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Briefcase size={16} className="text-green-400" />
@@ -483,7 +483,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Format: [Locatie Prefix][Jaar][5 cijfers] (bijv. PM2500001, PD2512345, PR2599999)
+            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PM25001, PD25123, PR25999)
           </p>
         </div>
 
