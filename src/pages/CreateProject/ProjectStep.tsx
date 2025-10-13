@@ -13,6 +13,7 @@ interface ProjectStepProps {
 const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange, onNext }) => {
   const [clients, setClients] = useState<any[]>([]);
   const [existingProjects, setExistingProjects] = useState<any[]>([]);
+  const [projectNumberYear, setProjectNumberYear] = useState('');
   const [projectNumberSuffix, setProjectNumberSuffix] = useState('');
   const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
   const [duplicateError, setDuplicateError] = useState('');
@@ -98,11 +99,12 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     loadClients();
     loadExistingProjects();
     
-    // Extract suffix from existing project number if editing
+    // Extract year and suffix from existing project number if editing
     if (projectData.projectNumber) {
-      const match = projectData.projectNumber.match(/^P[MDR]\d{2}-(\d{3})$/);
+      const match = projectData.projectNumber.match(/^P[MDR](\d{2})(\d{5})$/);
       if (match) {
-        setProjectNumberSuffix(match[1]);
+        setProjectNumberYear(match[1]);
+        setProjectNumberSuffix(match[2]);
       }
     }
   }, []);
@@ -131,9 +133,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     }
   };
 
-  const generateProjectNumber = (location: string, suffix: string) => {
-    const currentYear = new Date().getFullYear().toString().slice(-2); // Get last 2 digits of year
-    
+  const generateProjectNumber = (location: string, year: string, suffix: string) => {
     let prefix = '';
     switch (location) {
       case 'Leerdam':
@@ -148,8 +148,8 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       default:
         prefix = 'PM'; // Default to PM if no location selected
     }
-    
-    return `${prefix}${currentYear}-${suffix}`;
+
+    return `${prefix}${year}${suffix}`;
   };
 
   const checkProjectNumberExists = (projectNumber: string) => {
@@ -158,31 +158,37 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     );
   };
 
-  const validateProjectNumberSuffix = async (suffix: string, location: string) => {
-    if (!suffix || !location) {
+  const validateProjectNumber = async (year: string, suffix: string, location: string) => {
+    if (!year || !suffix || !location) {
       setDuplicateError('');
       return;
     }
 
-    // Validate format (exactly 3 digits)
-    if (!/^\d{3}$/.test(suffix)) {
-      setDuplicateError('Projectnummer moet precies 3 cijfers bevatten (001-999)');
+    // Validate year format (exactly 2 digits)
+    if (!/^\d{2}$/.test(year)) {
+      setDuplicateError('Jaar moet precies 2 cijfers bevatten (bijv. 25 voor 2025)');
+      return;
+    }
+
+    // Validate suffix format (exactly 5 digits)
+    if (!/^\d{5}$/.test(suffix)) {
+      setDuplicateError('Projectnummer moet precies 5 cijfers bevatten (00001-99999)');
       return;
     }
 
     setIsCheckingDuplicate(true);
-    
+
     // Generate full project number and check for duplicates
-    const fullProjectNumber = generateProjectNumber(location, suffix);
-    
+    const fullProjectNumber = generateProjectNumber(location, year, suffix);
+
     // Check against existing projects
     const exists = checkProjectNumberExists(fullProjectNumber);
-    
+
     if (exists) {
       setDuplicateError(`Projectnummer ${fullProjectNumber} bestaat al. Kies een ander nummer.`);
     } else {
       setDuplicateError('');
-      
+
       // Update project data with new number
       const updatedData = {
         ...projectData,
@@ -190,29 +196,42 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       };
       onProjectChange(updatedData);
     }
-    
+
     setIsCheckingDuplicate(false);
   };
 
+  const handleProjectNumberYearChange = (year: string) => {
+    // Only allow digits and limit to 2 characters
+    const cleanYear = year.replace(/\D/g, '').slice(0, 2);
+    setProjectNumberYear(cleanYear);
+
+    // Validate if we have all required fields
+    if (cleanYear.length === 2 && projectNumberSuffix.length === 5 && projectData.location) {
+      validateProjectNumber(cleanYear, projectNumberSuffix, projectData.location);
+    } else {
+      setDuplicateError('');
+    }
+  };
+
   const handleProjectNumberSuffixChange = (suffix: string) => {
-    // Only allow digits and limit to 3 characters
-    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 3);
+    // Only allow digits and limit to 5 characters
+    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 5);
     setProjectNumberSuffix(cleanSuffix);
-    
-    // Validate if we have location and 3 digits
-    if (cleanSuffix.length === 3 && projectData.location) {
-      validateProjectNumberSuffix(cleanSuffix, projectData.location);
+
+    // Validate if we have all required fields
+    if (projectNumberYear.length === 2 && cleanSuffix.length === 5 && projectData.location) {
+      validateProjectNumber(projectNumberYear, cleanSuffix, projectData.location);
     } else {
       setDuplicateError('');
     }
   };
 
   const handleLocationChange = (location: string) => {
-    // When location changes, validate current suffix if we have one
-    if (projectNumberSuffix.length === 3) {
-      validateProjectNumberSuffix(projectNumberSuffix, location);
+    // When location changes, validate if we have complete number
+    if (projectNumberYear.length === 2 && projectNumberSuffix.length === 5) {
+      validateProjectNumber(projectNumberYear, projectNumberSuffix, location);
     } else {
-      // Clear project number if no valid suffix
+      // Clear project number if not complete
       const updatedData = {
         ...projectData,
         location: location,
@@ -220,13 +239,13 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       };
       onProjectChange(updatedData);
     }
-    
+
     // Always update location
     const updatedData = {
       ...projectData,
       location: location
     };
-    
+
     onProjectChange(updatedData);
   };
 
@@ -360,7 +379,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   };
 
   const handleNext = () => {
-    if (!projectData.projectNumber || !projectData.date || !projectData.location || !projectNumberSuffix) {
+    if (!projectData.projectNumber || !projectData.date || !projectData.location || !projectNumberYear || !projectNumberSuffix) {
       toast.error('Vul alle verplichte velden in!');
       return;
     }
@@ -393,7 +412,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           <label className="block text-sm text-gray-400 mb-2">
             Projectnummer <span className="text-red-400">*</span>
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Locatie selecteren voor prefix</label>
               <div className="relative">
@@ -411,7 +430,22 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">3-cijferig projectnummer</label>
+              <label className="block text-xs text-gray-500 mb-1">Jaar (2 cijfers)</label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  className={`input-field pl-10 ${duplicateError ? 'border-red-500' : ''}`}
+                  value={projectNumberYear}
+                  onChange={(e) => handleProjectNumberYearChange(e.target.value)}
+                  placeholder="25"
+                  maxLength={2}
+                  pattern="\d{2}"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">5-cijferig projectnummer</label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -419,9 +453,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   className={`input-field pl-10 ${duplicateError ? 'border-red-500' : ''}`}
                   value={projectNumberSuffix}
                   onChange={(e) => handleProjectNumberSuffixChange(e.target.value)}
-                  placeholder="001-999"
-                  maxLength={3}
-                  pattern="\d{3}"
+                  placeholder="00001"
+                  maxLength={5}
+                  pattern="\d{5}"
                 />
                 {isCheckingDuplicate && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -429,14 +463,15 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   </div>
                 )}
               </div>
-              {duplicateError && (
-                <p className="text-red-400 text-xs mt-1">{duplicateError}</p>
-              )}
             </div>
           </div>
-          
+
+          {duplicateError && (
+            <p className="text-red-400 text-xs mt-2">{duplicateError}</p>
+          )}
+
           {/* Project Number Preview */}
-          {projectData.location && projectNumberSuffix.length === 3 && !duplicateError && (
+          {projectData.location && projectNumberYear.length === 2 && projectNumberSuffix.length === 5 && !duplicateError && (
             <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Briefcase size={16} className="text-green-400" />
@@ -446,9 +481,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               </div>
             </div>
           )}
-          
+
           <p className="text-xs text-gray-500 mt-2">
-            Format: [Locatie Prefix][Jaar]-[3 cijfers] (bijv. PM25-001, PD25-123, PR25-456)
+            Format: [Locatie Prefix][Jaar][5 cijfers] (bijv. PM2500001, PD2512345, PR2599999)
           </p>
         </div>
 
