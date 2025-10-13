@@ -219,7 +219,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 color: '#000000',
                 lineHeight: '1.3'
               }}>
-                VOEDING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.voeding || '-'}</span>
+                VOEDING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.voeding ? `${verdeler.voeding}A` : '-'}</span>
               </div>
             </div>
 
@@ -278,6 +278,26 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               }}>
                 BOUWJAAR: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
               </div>
+
+              {/* Stuurspanning */}
+              <div style={{
+                fontSize: '34px',
+                fontWeight: 'bold',
+                color: '#000000',
+                lineHeight: '1.3'
+              }}>
+                STUURSPANNING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.stuurspanning || '-'}</span>
+              </div>
+
+              {/* kA Waarde */}
+              <div style={{
+                fontSize: '34px',
+                fontWeight: 'bold',
+                color: '#000000',
+                lineHeight: '1.3'
+              }}>
+                KA WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.ka_waarde || verdeler.kaWaarde ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
+              </div>
             </div>
 
             {/* Third Column - QR Code */}
@@ -300,6 +320,17 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                 />
               </div>
             </div>
+          </div>
+
+          {/* IEC Standard Text */}
+          <div style={{
+            marginTop: '25px',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#000000',
+            textAlign: 'center'
+          }}>
+            (IEC61439-1/3)
           </div>
         </div>
       </div>

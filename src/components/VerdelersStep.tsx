@@ -54,6 +54,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     systeemCustom: '',
     voeding: '',
     voedingCustom: '',
+    stuurspanning: '',
+    kaWaarde: '',
     bouwjaar: new Date().getFullYear().toString(),
     status: 'Offerte',
     fabrikant: '',
@@ -119,6 +121,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         toegewezenMonteur: dist.toegewezen_monteur || 'Vrij',
         systeem: dist.systeem,
         voeding: dist.voeding,
+        stuurspanning: dist.stuurspanning,
+        kaWaarde: dist.ka_waarde,
+        ka_waarde: dist.ka_waarde, // Keep snake_case for compatibility
         bouwjaar: dist.bouwjaar,
         status: dist.status,
         fabrikant: dist.fabrikant,
@@ -257,6 +262,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeemCustom: isCustomSysteem ? verdeler.systeem : '',
       voeding: isCustomVoeding ? 'custom' : (verdeler.voeding || ''),
       voedingCustom: isCustomVoeding ? verdeler.voeding : '',
+      stuurspanning: verdeler.stuurspanning || '',
+      kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde || '',
       bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
       status: verdeler.status,
       fabrikant: verdeler.fabrikant,
@@ -395,6 +402,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           kastNaam: verdelerData.kastNaam,
           systeem: finalSysteem,
           voeding: finalVoeding,
+          stuurspanning: verdelerData.stuurspanning,
+          kaWaarde: verdelerData.kaWaarde,
           bouwjaar: verdelerData.bouwjaar,
           status: verdelerData.status,
           fabrikant: verdelerData.fabrikant,
@@ -425,6 +434,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
+            stuurspanning: verdelerData.stuurspanning,
+            kaWaarde: verdelerData.kaWaarde,
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -454,6 +465,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
+            stuurspanning: verdelerData.stuurspanning,
+            kaWaarde: verdelerData.kaWaarde,
+            ka_waarde: verdelerData.kaWaarde, // Keep snake_case
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -518,6 +532,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeemCustom: '',
       voeding: '',
       voedingCustom: '',
+      stuurspanning: '',
+      kaWaarde: '',
       bouwjaar: new Date().getFullYear().toString(),
       status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'In productie',
       fabrikant: '',
@@ -950,7 +966,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </div>
                     <div>
                       <span className="text-gray-400">Voeding:</span>
-                      <p className="text-white">{selectedVerdeler.voeding || '-'}</p>
+                      <p className="text-white">{selectedVerdeler.voeding ? `${selectedVerdeler.voeding}A` : '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Stuurspanning:</span>
+                      <p className="text-white">{selectedVerdeler.stuurspanning || '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">kA Waarde:</span>
+                      <p className="text-white">{selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde ? `${selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde} kA` : '-'}</p>
                     </div>
                     <div>
                       <span className="text-gray-400">Bouwjaar:</span>
@@ -1341,6 +1365,40 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         placeholder="Vul voeding in"
                       />
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Stuurspanning</label>
+                    <select
+                      className="input-field"
+                      value={verdelerData.stuurspanning}
+                      onChange={(e) => handleInputChange('stuurspanning', e.target.value)}
+                    >
+                      <option value="">Selecteer stuurspanning</option>
+                      <option value="230V AC">230V AC</option>
+                      <option value="24V AC">24V AC</option>
+                      <option value="12V AC">12V AC</option>
+                      <option value="8V AC">8V AC</option>
+                      <option value="24V DC">24V DC</option>
+                      <option value="12V DC">12V DC</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">kA Waarde</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.kaWaarde}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        // Remove 'kA' if it exists to prevent duplication
+                        value = value.replace(/\s*kA\s*$/i, '');
+                        handleInputChange('kaWaarde', value);
+                      }}
+                      placeholder="Bijv. 25"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Waarde wordt automatisch aangevuld met 'kA'</p>
                   </div>
 
                   <div>
