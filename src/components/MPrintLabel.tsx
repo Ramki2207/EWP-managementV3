@@ -180,52 +180,97 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             }}>
               {/* Project Number */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                PROJECTNUMMER: <span style={{ fontWeight: 'normal', color: '#000000' }}>{projectNumber.replace(/-/g, '')}</span>
+                <span style={{ fontWeight: 'bold' }}>PROJECTNUMMER:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{projectNumber.replace(/-/g, '')}</span>
               </div>
 
-              {/* Type */}
+              {/* Stelsel */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                TYPE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.systeem || 'VK'}</span>
+                <span style={{ fontWeight: 'bold' }}>STELSEL:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.systeem || 'VK'}</span>
               </div>
 
               {/* Kastnaam */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                KASTNAAM: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>KASTNAAM:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.kast_naam || verdeler.kastNaam || '-'}</span>
               </div>
 
               {/* Voeding */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                VOEDING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.voeding ? `${verdeler.voeding}A` : '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>VOEDING:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.voeding ? `${verdeler.voeding}A` : '-'}</span>
               </div>
 
               {/* Stuurspanning */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                STUURSPANNING: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.stuurspanning || '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>STUURSPANNING:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.stuurspanning || '-'}</span>
               </div>
             </div>
 
@@ -237,62 +282,116 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             }}>
               {/* Un in V */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                UN IN V: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>UN IN V:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.un_in_v || verdeler.unInV || '-'}</span>
               </div>
 
               {/* In in A */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                IN IN A: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>IN IN A:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.in_in_a || verdeler.inInA || '-'}</span>
               </div>
 
               {/* Freq in Hz */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                FREQ. IN HZ: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>FREQ. IN HZ:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.freq_in_hz || verdeler.freqInHz || '-'}</span>
               </div>
 
               {/* IP-Waarde */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                IP-WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>65</span>
+                <span style={{ fontWeight: 'bold' }}>IP-WAARDE:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>65</span>
               </div>
 
               {/* kA Waarde */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                KA WAARDE: <span style={{ fontWeight: 'normal', color: '#000000' }}>{(verdeler.ka_waarde || verdeler.kaWaarde) ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
+                <span style={{ fontWeight: 'bold' }}>KA WAARDE:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{(verdeler.ka_waarde || verdeler.kaWaarde) ? `${verdeler.ka_waarde || verdeler.kaWaarde} kA` : '-'}</span>
               </div>
 
               {/* Bouwjaar */}
               <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
                 fontSize: '22px',
-                fontWeight: 'bold',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                BOUWJAAR: <span style={{ fontWeight: 'normal', color: '#000000' }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
+                <span style={{ fontWeight: 'bold' }}>BOUWJAAR:</span>
+                <span style={{
+                  fontWeight: 'normal',
+                  border: '2px solid #000000',
+                  padding: '6px 12px',
+                  minWidth: '120px',
+                  textAlign: 'center'
+                }}>{verdeler.bouwjaar || new Date().getFullYear()}</span>
               </div>
             </div>
 
