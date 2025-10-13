@@ -181,13 +181,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Project Number */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>PROJECTNUMMER:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '200px' }}>PROJECTNUMMER:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -202,13 +201,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Stelsel */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>STELSEL:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '200px' }}>STELSEL:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -223,13 +221,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Kastnaam */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>KASTNAAM:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '200px' }}>KASTNAAM:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -244,13 +241,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Voeding */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>VOEDING:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '200px' }}>VOEDING:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -265,13 +261,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Stuurspanning */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>STUURSPANNING:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '200px' }}>STUURSPANNING:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -293,13 +288,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Un in V */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>UN IN V:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>UN IN V:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -314,13 +308,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* In in A */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>IN IN A:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>IN IN A:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -335,13 +328,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Freq in Hz */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>FREQ. IN HZ:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>FREQ. IN HZ:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -356,13 +348,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* IP-Waarde */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>IP-WAARDE:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>IP-WAARDE:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -377,13 +368,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* kA Waarde */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>KA WAARDE:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>KA WAARDE:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
@@ -398,13 +388,12 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               {/* Bouwjaar */}
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
                 fontSize: '22px',
                 color: '#000000',
                 lineHeight: '1.2'
               }}>
-                <span style={{ fontWeight: 'bold', color: '#000000' }}>BOUWJAAR:</span>
+                <span style={{ fontWeight: 'bold', color: '#000000', minWidth: '180px' }}>BOUWJAAR:</span>
                 <span style={{
                   fontWeight: 'normal',
                   color: '#000000',
