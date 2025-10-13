@@ -183,8 +183,8 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Foto is te groot. Maximum grootte is 5MB');
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error('Foto is te groot. Maximum grootte is 15MB');
         return;
       }
 
@@ -817,7 +817,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                       <Camera size={20} />
                       <span>Foto toevoegen</span>
                     </label>
-                    <span className="text-sm text-gray-400">(Max. 5MB per foto)</span>
+                    <span className="text-sm text-gray-400">(Max. 15MB per foto)</span>
                   </div>
 
                   {formData.photos.length > 0 && (

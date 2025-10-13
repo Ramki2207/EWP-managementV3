@@ -95,9 +95,9 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
 
     const processFile = (file: File) => {
       return new Promise<Document>((resolve, reject) => {
-        // Check file size (limit to 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          reject(`Bestand ${file.name} is te groot. Maximum grootte is 5MB`);
+        // Check file size (limit to 15MB)
+        if (file.size > 15 * 1024 * 1024) {
+          reject(`Bestand ${file.name} is te groot. Maximum grootte is 15MB`);
           return;
         }
 
@@ -379,7 +379,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
                       <div>
                         <p className="text-lg font-semibold">Sleep bestanden hierheen</p>
                         <p className="text-gray-400">of klik om te uploaden</p>
-                        <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 5MB</p>
+                        <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 15MB</p>
                       </div>
                     </label>
                   </div>

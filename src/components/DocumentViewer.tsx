@@ -326,9 +326,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
 
     const processFile = async (file: File): Promise<any> => {
-      // Check file size (limit to 10MB to match storage limit)
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error(`Bestand ${file.name} is te groot. Maximum grootte is 10MB`);
+      // Check file size (limit to 15MB to match storage limit)
+      if (file.size > 15 * 1024 * 1024) {
+        throw new Error(`Bestand ${file.name} is te groot. Maximum grootte is 15MB`);
       }
 
       try {
@@ -888,7 +888,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           <div>
             <p className="text-lg font-semibold">Sleep bestanden hierheen</p>
             <p className="text-gray-400">of klik om te uploaden</p>
-            <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 5MB</p>
+            <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 15MB</p>
           </div>
         </label>
       </div>
