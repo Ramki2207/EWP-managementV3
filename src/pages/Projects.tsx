@@ -333,17 +333,23 @@ const Projects = () => {
     return projectList.filter(project => {
       // Role-based filtering for Montage users
       if (currentUser?.role === 'montage') {
-        // Check if this project has any verdelers assigned to this monteur
-        const hasAssignedVerdelers = project.distributors?.some(
-          (dist: any) => dist.toegewezen_monteur === currentUser.username
-        );
+        // Exception for Zouhair Taha - can see all projects (montage + tester role)
+        if (currentUser.username === 'Zouhair Taha') {
+          console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS (MONTAGE + TESTER)`);
+          // Skip the montage filtering for Zouhair - he can see all projects
+        } else {
+          // Check if this project has any verdelers assigned to this monteur
+          const hasAssignedVerdelers = project.distributors?.some(
+            (dist: any) => dist.toegewezen_monteur === currentUser.username
+          );
 
-        if (!hasAssignedVerdelers) {
-          console.log(`🔧 MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
-          return false;
+          if (!hasAssignedVerdelers) {
+            console.log(`🔧 MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
+            return false;
+          }
+
+          console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
         }
-
-        console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
       }
 
       // Role-based filtering for Tester users
