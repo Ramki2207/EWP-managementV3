@@ -19,14 +19,13 @@ const defaultFolders = [
 ];
 
 const projectLevelFolders = [
-  'Project documenten',
-  'Offertes',
-  'Contracten',
-  'Correspondentie',
-  'Technische tekeningen',
-  'Planningen',
-  'Foto\'s',
-  'Overige documenten',
+  'Opname Locatie',
+  'Aanvraag',
+  'Bestelling',
+  'Calculatie',
+  'Offerte',
+  'Opdracht',
+  'Ondersteuning',
 ];
 
 const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project }) => {
