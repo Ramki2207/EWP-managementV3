@@ -55,11 +55,15 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         // Use existing portal
         const verdelers = await dataService.getDistributorsByProject(project.id);
         setVerdelers(verdelers);
+        const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
+
         setPortal(existingPortal);
+        setEmailTemplate(template);
+        setShowPreview(true);
 
         toast.success('Bestaande portal geladen voor dit project!');
       } else {
-        // Get project verdelers for new portal
+        // Get project verdelers
         const verdelers = await dataService.getDistributorsByProject(project.id);
 
         if (verdelers.length === 0) {
@@ -68,11 +72,27 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
           return;
         }
 
-        setVerdelers(verdelers);
-      }
+        // Find client for this project
+        const clients = await dataService.getClients();
+        const client = clients.find((c: any) => c.name === project.client);
 
-      // Show folder selection modal
-      setShowFolderSelection(true);
+        // Create client portal with default folders (will be updated later)
+        const newPortal = await clientPortalService.createClientPortal(
+          project.id,
+          client?.id,
+          selectedFolders
+        );
+
+        // Generate email template
+        const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
+
+        setPortal(newPortal);
+        setVerdelers(verdelers);
+        setEmailTemplate(template);
+        setShowPreview(true);
+
+        toast.success('Nieuwe portal aangemaakt voor dit project!');
+      }
     } catch (error) {
       console.error('Error generating delivery notification:', error);
       toast.error('Er is een fout opgetreden bij het genereren van de notificatie');
@@ -81,52 +101,35 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     }
   };
 
+  const handleOpenFolderSelection = () => {
+    setShowPreview(false);
+    setShowFolderSelection(true);
+  };
+
   const handleConfirmFolderSelection = async () => {
     try {
       setIsGenerating(true);
       setShowFolderSelection(false);
 
-      // Check if portal already exists for this project
-      const existingPortals = await clientPortalService.getAllClientPortals();
-      const existingPortal = existingPortals.find(p => p.project_id === project.id && p.is_active);
-
-      if (existingPortal) {
-        // Update existing portal with new folder selection
-        await clientPortalService.updatePortalFolders(existingPortal.id, selectedFolders);
-
-        // Generate email template with updated portal
-        const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
-
-        setPortal({ ...existingPortal, shared_folders: selectedFolders });
-        setEmailTemplate(template);
-        setShowPreview(true);
-
-        toast.success('Mappen geselecteerd! Bekijk de email preview.');
+      if (!portal) {
+        toast.error('Portal niet gevonden');
         return;
       }
 
-      // Find client for this project
-      const clients = await dataService.getClients();
-      const client = clients.find((c: any) => c.name === project.client);
+      // Update portal with selected folders
+      await clientPortalService.updatePortalFolders(portal.id, selectedFolders);
 
-      // Create client portal with selected folders
-      const newPortal = await clientPortalService.createClientPortal(
-        project.id,
-        client?.id,
-        selectedFolders
-      );
+      // Update local portal state
+      setPortal({ ...portal, shared_folders: selectedFolders });
 
-      // Generate email template
-      const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
+      toast.success('Mappen geselecteerd! De geselecteerde mappen zijn opgeslagen.');
 
-      setPortal(newPortal);
-      setEmailTemplate(template);
+      // Go back to preview
       setShowPreview(true);
-
-      toast.success('Mappen geselecteerd! Bekijk de email preview.');
     } catch (error) {
       console.error('Error confirming folder selection:', error);
       toast.error('Er is een fout opgetreden bij het bevestigen van de mapselectie');
+      setShowPreview(true);
     } finally {
       setIsGenerating(false);
     }
@@ -399,6 +402,25 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
               </div>
             </div>
 
+            {/* Shared Folders Info */}
+            <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-purple-400 mb-4">Gedeelde Mappen</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedFolders.map((folder) => (
+                  <div
+                    key={folder}
+                    className="flex items-center space-x-2 bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-2"
+                  >
+                    <Folder size={14} className="text-purple-400" />
+                    <span className="text-sm text-purple-300">{folder}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                Deze mappen zijn zichtbaar voor de klant in het portal. Klik op "Selecteer Mappen" om aan te passen.
+              </p>
+            </div>
+
             {/* Delivery Date Selection */}
             <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-semibold text-orange-400 mb-4">Levering Planning</h3>
@@ -458,20 +480,29 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-4">
+            <div className="flex justify-between items-center">
               <button
                 onClick={() => setShowPreview(false)}
                 className="btn-secondary"
               >
                 Annuleren
               </button>
-              <button
-                onClick={handleSendNotification}
-                className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
-              >
-                <Send size={20} />
-                <span>Verstuur Notificatie</span>
-              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleOpenFolderSelection}
+                  className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
+                >
+                  <Folder size={20} />
+                  <span>Selecteer Mappen</span>
+                </button>
+                <button
+                  onClick={handleSendNotification}
+                  className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
+                >
+                  <Send size={20} />
+                  <span>Verstuur Notificatie</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
