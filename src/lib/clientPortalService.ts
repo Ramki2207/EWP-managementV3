@@ -44,7 +44,7 @@ class ClientPortalService {
   }
 
   // Create client portal when project status changes to "Levering"
-  async createClientPortal(projectId: string, clientId?: string): Promise<ClientPortal> {
+  async createClientPortal(projectId: string, clientId?: string, sharedFolders?: string[]): Promise<ClientPortal> {
     try {
       // First check if portal already exists for this project
       const { data: existingPortals, error: checkError } = await supabase
@@ -64,10 +64,14 @@ class ClientPortalService {
 
       const accessCode = this.generateAccessCode();
       const portalUrl = this.generatePortalUrl(accessCode);
-      
+
       // Set expiration to 30 days from now
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 30);
+
+      // Use provided shared folders or default ones
+      const defaultFolders = ['Verdeler aanzicht', 'Test certificaat', 'Installatie schema'];
+      const folders = sharedFolders && sharedFolders.length > 0 ? sharedFolders : defaultFolders;
 
       const portalData = {
         project_id: projectId,
@@ -76,7 +80,8 @@ class ClientPortalService {
         portal_url: portalUrl,
         expires_at: expiresAt.toISOString(),
         is_active: true,
-        delivery_status: 'preparing'
+        delivery_status: 'preparing',
+        shared_folders: folders
       };
 
       const { data, error } = await supabase
@@ -91,6 +96,22 @@ class ClientPortalService {
     } catch (error) {
       console.error('Error creating client portal:', error);
       throw new Error(`Failed to create client portal: ${error.message}`);
+    }
+  }
+
+  // Update shared folders for an existing portal
+  async updatePortalFolders(portalId: string, sharedFolders: string[]): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('client_portals')
+        .update({ shared_folders: sharedFolders })
+        .eq('id', portalId);
+
+      if (error) throw error;
+      console.log('Portal folders updated:', portalId);
+    } catch (error) {
+      console.error('Error updating portal folders:', error);
+      throw new Error(`Failed to update portal folders: ${error.message}`);
     }
   }
 

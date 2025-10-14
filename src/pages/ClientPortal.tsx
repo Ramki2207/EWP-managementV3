@@ -10,12 +10,6 @@ import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import ewpLogo from '../assets/ewp-logo.png';
 
-const defaultFolders = [
-  'Verdeler aanzicht',
-  'Test certificaat', 
-  'Installatie schema'
-];
-
 const ClientPortal = () => {
   const { accessCode } = useParams<{ accessCode: string }>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -31,6 +25,13 @@ const ClientPortal = () => {
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'distributors' | 'documents'>('overview');
   const [documentsLoading, setDocumentsLoading] = useState(false);
+
+  // Get shared folders from portal data, or fall back to defaults
+  const sharedFolders = portalData?.shared_folders || [
+    'Verdeler aanzicht',
+    'Test certificaat',
+    'Installatie schema'
+  ];
 
   useEffect(() => {
     // Never auto-authenticate - always require manual code entry
@@ -664,7 +665,7 @@ const ClientPortal = () => {
                         {/* Folders Level - Only show client folders */}
                         {expandedDistributors.has(distributor.id) && (
                           <div className="ml-6 space-y-1">
-                            {defaultFolders.map((folder) => (
+                            {sharedFolders.map((folder) => (
                               <div
                                 key={folder}
                                 className={`flex items-center p-2 rounded-lg transition-all cursor-pointer group ${
@@ -786,7 +787,7 @@ const ClientPortal = () => {
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {defaultFolders.map((folderName) => (
+                    {sharedFolders.map((folderName) => (
                       <div
                         key={folderName}
                         onClick={() => handleSelectFolder(selectedDistributor, folderName)}

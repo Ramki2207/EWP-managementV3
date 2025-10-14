@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Send, Eye, Copy, Calendar, Package, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Mail, Send, Eye, Copy, Calendar, Package, AlertCircle, CheckCircle, X, Folder } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientPortalService } from '../lib/clientPortalService';
 import { dataService } from '../lib/supabase';
@@ -9,42 +9,70 @@ interface DeliveryNotificationManagerProps {
   onStatusChange?: () => void;
 }
 
-const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = ({ 
-  project, 
-  onStatusChange 
+const allAvailableFolders = [
+  'Verdeler aanzicht',
+  'Test certificaat',
+  'Algemene informatie',
+  'Installatie schema',
+  'Onderdelen',
+  'Handleidingen',
+  'Documentatie',
+  'Oplever foto\'s',
+  'Klant informatie',
+];
+
+const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = ({
+  project,
+  onStatusChange
 }) => {
+  const [showFolderSelection, setShowFolderSelection] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [portal, setPortal] = useState<any>(null);
   const [emailTemplate, setEmailTemplate] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [verdelers, setVerdelers] = useState<any[]>([]);
+  const [selectedFolders, setSelectedFolders] = useState<string[]>([
+    'Verdeler aanzicht',
+    'Test certificaat',
+    'Installatie schema'
+  ]);
 
   const handleGenerateDeliveryNotification = async () => {
+    setIsGenerating(true);
+    setShowFolderSelection(true);
+    setIsGenerating(false);
+  };
+
+  const handleConfirmFolderSelection = async () => {
     try {
       setIsGenerating(true);
-      
+      setShowFolderSelection(false);
+
       // Check if portal already exists for this project
       const existingPortals = await clientPortalService.getAllClientPortals();
       const existingPortal = existingPortals.find(p => p.project_id === project.id && p.is_active);
-      
+
       if (existingPortal) {
-        // Use existing portal instead of creating new one
+        // Update existing portal with new folder selection
+        await clientPortalService.updatePortalFolders(existingPortal.id, selectedFolders);
+
+        // Use existing portal
         const verdelers = await dataService.getDistributorsByProject(project.id);
         setVerdelers(verdelers);
         const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
-        
-        setPortal(existingPortal);
+
+        setPortal({ ...existingPortal, shared_folders: selectedFolders });
         setEmailTemplate(template);
         setShowPreview(true);
-        
-        toast.success('Bestaande portal geladen voor dit project!');
+
+        toast.success('Bestaande portal bijgewerkt met gekozen mappen!');
         return;
       }
-      
+
       // Get project verdelers
       const verdelers = await dataService.getDistributorsByProject(project.id);
-      
+
       if (verdelers.length === 0) {
         toast.error('Geen verdelers gevonden voor dit project');
         return;
@@ -54,20 +82,21 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
       const clients = await dataService.getClients();
       const client = clients.find((c: any) => c.name === project.client);
 
-      // Create client portal
+      // Create client portal with selected folders
       const newPortal = await clientPortalService.createClientPortal(
         project.id,
-        client?.id
+        client?.id,
+        selectedFolders
       );
 
       // Generate email template
       const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
-      
+
       setPortal(newPortal);
       setVerdelers(verdelers);
       setEmailTemplate(template);
       setShowPreview(true);
-      
+
       toast.success('Nieuwe portal aangemaakt voor dit project!');
     } catch (error) {
       console.error('Error generating delivery notification:', error);
@@ -75,6 +104,21 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const toggleFolder = (folder: string) => {
+    setSelectedFolders(prev => {
+      if (prev.includes(folder)) {
+        // Don't allow removing all folders
+        if (prev.length === 1) {
+          toast.error('Er moet minimaal 1 map geselecteerd zijn');
+          return prev;
+        }
+        return prev.filter(f => f !== folder);
+      } else {
+        return [...prev, folder];
+      }
+    });
   };
 
   // Update email template when delivery date changes
@@ -148,7 +192,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
               </p>
             </div>
           </div>
-          
+
           <button
             onClick={handleGenerateDeliveryNotification}
             disabled={isGenerating}
@@ -170,6 +214,98 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
           </button>
         </div>
       </div>
+
+      {/* Folder Selection Modal */}
+      {showFolderSelection && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-blue-400">Selecteer te delen mappen</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Kies welke document mappen zichtbaar zijn in het klantportaal
+                </p>
+              </div>
+              <button
+                onClick={() => setShowFolderSelection(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
+              <h3 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">
+                Beschikbare Mappen ({selectedFolders.length} geselecteerd)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {allAvailableFolders.map((folder) => {
+                  const isSelected = selectedFolders.includes(folder);
+                  return (
+                    <div
+                      key={folder}
+                      onClick={() => toggleFolder(folder)}
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-gray-600 bg-[#374151] hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-500'
+                        }`}>
+                          {isSelected && (
+                            <CheckCircle size={16} className="text-white" />
+                          )}
+                        </div>
+                        <Folder size={18} className={isSelected ? 'text-blue-400' : 'text-gray-400'} />
+                        <span className={`text-sm font-medium ${
+                          isSelected ? 'text-white' : 'text-gray-300'
+                        }`}>
+                          {folder}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Minimaal 1 map moet geselecteerd zijn
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowFolderSelection(false)}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleConfirmFolderSelection}
+                disabled={selectedFolders.length === 0 || isGenerating}
+                className={`bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2 ${
+                  selectedFolders.length === 0 || isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                    <span>Bevestigen...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={20} />
+                    <span>Bevestig Selectie</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Modal */}
       {showPreview && portal && (
