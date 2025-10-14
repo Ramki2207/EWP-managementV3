@@ -39,9 +39,46 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
   ]);
 
   const handleGenerateDeliveryNotification = async () => {
-    setIsGenerating(true);
-    setShowFolderSelection(true);
-    setIsGenerating(false);
+    try {
+      setIsGenerating(true);
+
+      // Check if portal already exists for this project
+      const existingPortals = await clientPortalService.getAllClientPortals();
+      const existingPortal = existingPortals.find(p => p.project_id === project.id && p.is_active);
+
+      if (existingPortal) {
+        // Load existing folder selection
+        if (existingPortal.shared_folders && existingPortal.shared_folders.length > 0) {
+          setSelectedFolders(existingPortal.shared_folders);
+        }
+
+        // Use existing portal
+        const verdelers = await dataService.getDistributorsByProject(project.id);
+        setVerdelers(verdelers);
+        setPortal(existingPortal);
+
+        toast.success('Bestaande portal geladen voor dit project!');
+      } else {
+        // Get project verdelers for new portal
+        const verdelers = await dataService.getDistributorsByProject(project.id);
+
+        if (verdelers.length === 0) {
+          toast.error('Geen verdelers gevonden voor dit project');
+          setIsGenerating(false);
+          return;
+        }
+
+        setVerdelers(verdelers);
+      }
+
+      // Show folder selection modal
+      setShowFolderSelection(true);
+    } catch (error) {
+      console.error('Error generating delivery notification:', error);
+      toast.error('Er is een fout opgetreden bij het genereren van de notificatie');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleConfirmFolderSelection = async () => {
@@ -57,24 +94,14 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         // Update existing portal with new folder selection
         await clientPortalService.updatePortalFolders(existingPortal.id, selectedFolders);
 
-        // Use existing portal
-        const verdelers = await dataService.getDistributorsByProject(project.id);
-        setVerdelers(verdelers);
+        // Generate email template with updated portal
         const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
 
         setPortal({ ...existingPortal, shared_folders: selectedFolders });
         setEmailTemplate(template);
         setShowPreview(true);
 
-        toast.success('Bestaande portal bijgewerkt met gekozen mappen!');
-        return;
-      }
-
-      // Get project verdelers
-      const verdelers = await dataService.getDistributorsByProject(project.id);
-
-      if (verdelers.length === 0) {
-        toast.error('Geen verdelers gevonden voor dit project');
+        toast.success('Mappen geselecteerd! Bekijk de email preview.');
         return;
       }
 
@@ -93,14 +120,13 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
       const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
 
       setPortal(newPortal);
-      setVerdelers(verdelers);
       setEmailTemplate(template);
       setShowPreview(true);
 
-      toast.success('Nieuwe portal aangemaakt voor dit project!');
+      toast.success('Mappen geselecteerd! Bekijk de email preview.');
     } catch (error) {
-      console.error('Error generating delivery notification:', error);
-      toast.error('Er is een fout opgetreden bij het genereren van de notificatie');
+      console.error('Error confirming folder selection:', error);
+      toast.error('Er is een fout opgetreden bij het bevestigen van de mapselectie');
     } finally {
       setIsGenerating(false);
     }
