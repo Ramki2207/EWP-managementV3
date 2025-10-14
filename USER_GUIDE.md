@@ -69,7 +69,7 @@ The main dashboard provides:
    - Real-time data updates
 
 2. **Navigation Sidebar** (left side):
-   - **Home**: Dashboard with KPIs
+   - **Startpagina**: Dashboard with KPIs
    - **Projecten**: Project management
    - **Verdelers**: Distributor management
    - **Klanten**: Client management

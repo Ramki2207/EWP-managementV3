@@ -11,7 +11,7 @@ import ewpLogo from '../assets/ewp-logo.png';
 import processLogo from '../assets/process-logo.png';
 
 const navItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Home', module: 'dashboard' as SystemModule },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Startpagina', module: 'dashboard' as SystemModule },
   { path: '/projects', icon: FolderOpen, label: 'Projecten', module: 'projects' as SystemModule },
   { path: '/verdelers', icon: Server, label: 'Verdelers', module: 'verdelers' as SystemModule },
   { path: '/clients', icon: Building, label: 'Klanten', module: 'clients' as SystemModule },
