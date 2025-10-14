@@ -451,7 +451,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               }}>
                 <QRCodeSVG
                   value={maintenanceUrl}
-                  size={235}
+                  size={210}
                   level="M"
                   includeMargin={false}
                 />
