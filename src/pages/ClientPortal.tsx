@@ -33,6 +33,9 @@ const ClientPortal = () => {
     'Installatie schema'
   ];
 
+  console.log('Current portalData:', portalData);
+  console.log('Shared folders being used:', sharedFolders);
+
   useEffect(() => {
     // Never auto-authenticate - always require manual code entry
     if (accessCode) {
@@ -60,7 +63,10 @@ const ClientPortal = () => {
 
       // Track portal access
       await clientPortalService.trackPortalAccess(portal.id);
-      
+
+      console.log('Portal data loaded:', portal);
+      console.log('Shared folders from portal:', portal.shared_folders);
+
       setPortalData(portal);
       setIsAuthenticated(true);
       
