@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, ChevronRight, ChevronDown, Server, Upload, FileText, X, Trash2, Download } from 'lucide-react';
+import { Folder, ChevronRight, ChevronDown, Server, Upload, FileText, X, Trash2, Download, Building } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface UploadsStepProps {
@@ -23,6 +23,16 @@ const defaultFolders = [
   'Klant informatie',
 ];
 
+const projectLevelFolders = [
+  'Opname Locatie',
+  'Aanvraag',
+  'Bestelling',
+  'Calculatie',
+  'Offerte',
+  'Opdracht',
+  'Ondersteuning',
+];
+
 interface Document {
   id: string;
   name: string;
@@ -30,18 +40,19 @@ interface Document {
   size: number;
   content: string;
   folder: string;
-  distributorId: string;
+  distributorId: string | null;
   uploadedAt: string;
 }
 
-const UploadsStep: React.FC<UploadsStepProps> = ({ 
-  onBack, 
-  onSave, 
-  verdelers, 
-  saving = false, 
+const UploadsStep: React.FC<UploadsStepProps> = ({
+  onBack,
+  onSave,
+  verdelers,
+  saving = false,
   onDocumentsChange,
   tempDocuments = {}
 }) => {
+  const [viewMode, setViewMode] = useState<'project' | 'verdelers'>('project');
   const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
@@ -51,6 +62,12 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
+  };
+
+  const handleSelectProjectFolder = (folder: string) => {
+    setViewMode('project');
+    setSelectedDistributor(null);
+    setSelectedFolder(folder);
   };
 
   const toggleDistributorExpansion = (distributorId: string) => {
@@ -65,7 +82,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
 
   const getBreadcrumb = () => {
     const selectedDistributorData = verdelers.find(v => v.distributorId === selectedDistributor);
-    
+
     const parts = ['Nieuw Project'];
     if (selectedDistributorData) {
       parts.push(`${selectedDistributorData.distributorId} - ${selectedDistributorData.kastNaam || 'Naamloos'}`);
@@ -73,23 +90,25 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
     if (selectedFolder) {
       parts.push(selectedFolder);
     }
-    
+
     return parts.join(' / ');
   };
 
-  const getDocumentKey = (distributorId: string, folder: string) => {
-    return `${distributorId}-${folder}`;
+  const getDocumentKey = (distributorId: string | null, folder: string) => {
+    // For project-level docs, use 'project' as the key prefix
+    const distKey = distributorId || 'project';
+    return `${distKey}-${folder}`;
   };
 
   const getCurrentDocuments = () => {
-    if (!selectedDistributor || !selectedFolder) return [];
+    if (!selectedFolder) return [];
     const key = getDocumentKey(selectedDistributor, selectedFolder);
     return tempDocuments[key] || [];
   };
 
   const handleFileSave = async (files: File[]) => {
-    if (!selectedDistributor || !selectedFolder) {
-      toast.error('Selecteer eerst een verdeler en map!');
+    if (!selectedFolder) {
+      toast.error('Selecteer eerst een map!');
       return;
     }
 
@@ -111,7 +130,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
               size: file.size,
               content: e.target?.result as string,
               folder: selectedFolder,
-              distributorId: selectedDistributor,
+              distributorId: selectedDistributor || null,
               uploadedAt: new Date().toISOString(),
             };
             resolve(newDoc);
@@ -176,7 +195,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
   };
 
   const handleDeleteDocument = (docId: string) => {
-    if (!selectedDistributor || !selectedFolder) return;
+    if (!selectedFolder) return;
 
     if (window.confirm('Weet je zeker dat je dit document wilt verwijderen?')) {
       const key = getDocumentKey(selectedDistributor, selectedFolder);
@@ -240,10 +259,226 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-semibold text-white mb-2">Project Documenten</h2>
-        <p className="text-gray-400">Upload documenten per verdeler en organiseer ze in mappen</p>
+        <p className="text-gray-400">Upload project documenten of verdeler-specifieke documenten</p>
       </div>
 
-      {verdelers.length === 0 ? (
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-gray-700">
+        <button
+          onClick={() => {
+            setViewMode('project');
+            setSelectedDistributor(null);
+            setSelectedFolder(null);
+          }}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            viewMode === 'project'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-gray-400 hover:text-gray-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Building size={16} />
+            <span>Project documenten</span>
+          </div>
+        </button>
+        <button
+          onClick={() => {
+            setViewMode('verdelers');
+            setSelectedDistributor(null);
+            setSelectedFolder(null);
+          }}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            viewMode === 'verdelers'
+              ? 'border-green-500 text-green-400'
+              : 'border-transparent text-gray-400 hover:text-gray-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Server size={16} />
+            <span>Verdeler documenten ({verdelers.length})</span>
+          </div>
+        </button>
+      </div>
+
+      {viewMode === 'project' ? (
+        /* Project-level documents */
+        <div className="flex gap-6">
+          {/* Project Folders Sidebar */}
+          <div className="w-80 bg-[#2A303C] rounded-lg p-4 h-[500px] overflow-y-auto">
+            <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Project Mappen</h3>
+            <div className="space-y-1">
+              {projectLevelFolders.map((folder) => {
+                const key = getDocumentKey(null, folder);
+                const docCount = tempDocuments[key]?.length || 0;
+
+                return (
+                  <div
+                    key={folder}
+                    className={`flex items-center p-3 rounded-lg transition-all cursor-pointer group ${
+                      selectedFolder === folder && !selectedDistributor
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
+                        : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
+                    }`}
+                    onClick={() => handleSelectProjectFolder(folder)}
+                  >
+                    <Folder size={16} className="mr-3 flex-shrink-0 text-blue-400" />
+                    <span className="text-sm font-medium truncate flex-1">{folder}</span>
+                    {docCount > 0 && (
+                      <span className="ml-2 text-xs bg-blue-500/30 text-blue-300 px-2 py-0.5 rounded-full">
+                        {docCount}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Main Content Area - same as below */}
+          <div className="flex-1">
+            {selectedFolder && !selectedDistributor ? (
+              /* Project folder selected */
+              <div>
+                {/* Breadcrumb */}
+                <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
+                  <span>Locatie:</span>
+                  <span className="text-blue-400">Nieuw Project</span>
+                  <ChevronRight size={14} />
+                  <span className="text-blue-400">{selectedFolder}</span>
+                </div>
+
+                {/* Document Management */}
+                <div className="space-y-6">
+                  {/* Upload area */}
+                  <div
+                    className={`border-2 border-dashed ${
+                      isDragging ? 'border-blue-400 bg-blue-400/10' : 'border-gray-600'
+                    } rounded-xl p-8 text-center transition-colors`}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      type="file"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      id="file-upload-project"
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                      multiple
+                    />
+                    <label
+                      htmlFor="file-upload-project"
+                      className="cursor-pointer flex flex-col items-center space-y-4"
+                    >
+                      <Upload size={48} className="text-gray-400" />
+                      <div>
+                        <p className="text-lg font-semibold">Sleep bestanden hierheen</p>
+                        <p className="text-gray-400">of klik om te uploaden</p>
+                        <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 15MB</p>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Documents grid */}
+                  {getCurrentDocuments().length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {getCurrentDocuments().map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="bg-[#1E2530] rounded-lg overflow-hidden cursor-pointer transition-all hover:shadow-lg"
+                          onClick={() => setSelectedDocument(doc)}
+                        >
+                          <div className="aspect-video bg-[#2A303C] flex items-center justify-center">
+                            {isImage(doc.type) ? (
+                              <img
+                                src={doc.content}
+                                alt={doc.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <FileText size={48} className="text-gray-400" />
+                            )}
+                          </div>
+                          <div className="p-4">
+                            <p className="font-medium text-white truncate">{doc.name}</p>
+                            <p className="text-sm text-gray-400">
+                              {formatFileSize(doc.size)} • {new Date(doc.uploadedAt).toLocaleString('nl-NL')}
+                            </p>
+                            <div className="flex justify-end mt-2 space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDownload(doc);
+                                }}
+                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                                title="Download"
+                              >
+                                <Download size={16} className="text-gray-400 hover:text-white" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteDocument(doc.id);
+                                }}
+                                className="p-2 hover:bg-red-500/20 rounded-lg transition-colors"
+                                title="Verwijderen"
+                              >
+                                <Trash2 size={16} className="text-gray-400 hover:text-red-400" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {getCurrentDocuments().length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">Geen documenten in deze map</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Folder Grid View */
+              <div>
+                <div className="text-center py-8 mb-4">
+                  <Building size={48} className="mx-auto text-gray-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer een map</h3>
+                  <p className="text-gray-400">Kies een map om project documenten te uploaden</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {projectLevelFolders.map((folderName) => {
+                    const key = getDocumentKey(null, folderName);
+                    const docCount = tempDocuments[key]?.length || 0;
+
+                    return (
+                      <div
+                        key={folderName}
+                        onClick={() => handleSelectProjectFolder(folderName)}
+                        className="bg-[#1E2530] rounded-lg p-6 flex flex-col items-center justify-center space-y-3 hover:bg-[#2A303C] transition-colors cursor-pointer group min-h-[120px] relative"
+                      >
+                        <Folder
+                          size={40}
+                          className="text-gray-400 group-hover:text-blue-400 transition-colors"
+                        />
+                        <span className="text-sm text-center font-medium group-hover:text-white transition-colors">
+                          {folderName}
+                        </span>
+                        {docCount > 0 && (
+                          <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                            {docCount}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : verdelers.length === 0 ? (
         <div className="text-center py-12">
           <Server size={48} className="mx-auto text-gray-600 mb-4" />
           <p className="text-gray-400 text-lg">Geen verdelers toegevoegd</p>
