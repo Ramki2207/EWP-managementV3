@@ -14,7 +14,7 @@ interface PreTestingApprovalProps {
 interface ChecklistItem {
   id: string;
   question: string;
-  checked: boolean;
+  checked: boolean | 'n.v.t'; // true = checked, false = not checked, 'n.v.t' = not applicable
   comments: string;
   approved?: boolean | null | 'n.v.t'; // For tester review: true = approved, false = declined, 'n.v.t' = not applicable, null = not reviewed
   testerComments?: string;
@@ -134,8 +134,8 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
     }
   };
 
-  const handleChecklistChange = (id: string, field: 'checked' | 'comments', value: boolean | string) => {
-    setChecklist(prev => prev.map(item => 
+  const handleChecklistChange = (id: string, field: 'checked' | 'comments', value: boolean | 'n.v.t' | string) => {
+    setChecklist(prev => prev.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -147,7 +147,7 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
   };
 
   const isFormComplete = () => {
-    return checklist.every(item => item.checked) && approvalData.submittedBy.trim() !== '';
+    return checklist.every(item => item.checked === true || item.checked === 'n.v.t') && approvalData.submittedBy.trim() !== '';
   };
 
   const isTesterReviewComplete = () => {
@@ -368,20 +368,44 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
               <div className="space-y-4">
                 {checklist.map((item) => (
                   <div key={item.id} className="bg-[#1E2530] p-4 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <label className="flex items-center space-x-2 mt-1">
-                        <input
-                          type="checkbox"
-                          checked={item.checked}
-                          onChange={(e) => handleChecklistChange(item.id, 'checked', e.target.checked)}
-                          className="form-checkbox text-green-500"
-                        />
-                        <span className="text-sm font-medium text-white">
-                          {item.question}
-                        </span>
-                      </label>
+                    <div className="flex items-start justify-between">
+                      <span className="text-sm font-medium text-white">
+                        {item.question}
+                      </span>
+                      <div className="flex space-x-2 ml-4">
+                        <button
+                          onClick={() => handleChecklistChange(item.id, 'checked', true)}
+                          className={`px-3 py-1 rounded text-xs transition ${
+                            item.checked === true
+                              ? 'bg-green-500 text-white'
+                              : 'bg-gray-700 hover:bg-green-500/20 text-gray-300'
+                          }`}
+                        >
+                          ✓ Ja
+                        </button>
+                        <button
+                          onClick={() => handleChecklistChange(item.id, 'checked', false)}
+                          className={`px-3 py-1 rounded text-xs transition ${
+                            item.checked === false
+                              ? 'bg-red-500 text-white'
+                              : 'bg-gray-700 hover:bg-red-500/20 text-gray-300'
+                          }`}
+                        >
+                          ✗ Nee
+                        </button>
+                        <button
+                          onClick={() => handleChecklistChange(item.id, 'checked', 'n.v.t')}
+                          className={`px-3 py-1 rounded text-xs transition ${
+                            item.checked === 'n.v.t'
+                              ? 'bg-blue-500 text-white'
+                              : 'bg-gray-700 hover:bg-blue-500/20 text-gray-300'
+                          }`}
+                        >
+                          — N.v.t
+                        </button>
+                      </div>
                     </div>
-                    <div className="mt-3 ml-6">
+                    <div className="mt-3">
                       <label className="block text-xs text-gray-400 mb-1">Opmerkingen</label>
                       <textarea
                         className="input-field h-20 text-sm"
@@ -517,6 +541,13 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
                               <span className="text-sm font-medium text-white">{item.question}</span>
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.checked === true ? 'bg-green-500/20 text-green-400' :
+                                item.checked === false ? 'bg-red-500/20 text-red-400' :
+                                'bg-blue-500/20 text-blue-400'
+                              }`}>
+                                {item.checked === true ? '✓ Ja' : item.checked === false ? '✗ Nee' : '— N.v.t'}
+                              </span>
                               <span className={`px-2 py-1 rounded-full text-xs ${getApprovalColor(item.approved)}`}>
                                 {getApprovalIcon(item.approved)}
                               </span>
@@ -630,13 +661,19 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
-                              <CheckSquare size={16} className={item.checked ? 'text-green-400' : 'text-gray-400'} />
                               <span className="text-sm font-medium text-white">
                                 {item.question}
                               </span>
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                item.checked === true ? 'bg-green-500/20 text-green-400' :
+                                item.checked === false ? 'bg-red-500/20 text-red-400' :
+                                'bg-blue-500/20 text-blue-400'
+                              }`}>
+                                {item.checked === true ? '✓ Ja' : item.checked === false ? '✗ Nee' : '— N.v.t'}
+                              </span>
                             </div>
                             {item.comments && (
-                              <div className="ml-6">
+                              <div>
                                 <label className="block text-xs text-gray-400 mb-1">Montage opmerkingen</label>
                                 <p className="text-gray-300 bg-[#2A303C] p-2 rounded text-sm">
                                   {item.comments}
@@ -794,12 +831,18 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                   <div className="space-y-3">
                     {checklist.map((item) => (
                       <div key={item.id} className="bg-[#1E2530] p-3 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-1">
-                          <CheckSquare size={16} className={item.checked ? 'text-green-400' : 'text-gray-400'} />
+                        <div className="flex items-center justify-between mb-1">
                           <span className="text-sm font-medium text-white">{item.question}</span>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            item.checked === true ? 'bg-green-500/20 text-green-400' :
+                            item.checked === false ? 'bg-red-500/20 text-red-400' :
+                            'bg-blue-500/20 text-blue-400'
+                          }`}>
+                            {item.checked === true ? '✓ Ja' : item.checked === false ? '✗ Nee' : '— N.v.t'}
+                          </span>
                         </div>
                         {item.comments && (
-                          <p className="text-xs text-gray-400 ml-6">{item.comments}</p>
+                          <p className="text-xs text-gray-400 mt-2">{item.comments}</p>
                         )}
                       </div>
                     ))}
