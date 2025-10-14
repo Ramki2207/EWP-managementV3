@@ -133,7 +133,7 @@ export const dataService = {
             expected_hours
           )
         `)
-        .order('created_at', { ascending: false })
+        .order('project_number', { ascending: false })
         .order('created_at', { referencedTable: 'distributors', ascending: true });
       
       if (error) {
