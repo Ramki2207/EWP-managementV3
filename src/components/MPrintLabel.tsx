@@ -221,7 +221,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
             display: 'grid',
             gridTemplateColumns: '360px 320px 280px',
             gap: '25px',
-            marginTop: '50px'
+            marginTop: '20px'
           }}>
             {/* First Column */}
             <div style={{
