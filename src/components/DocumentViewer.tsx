@@ -326,20 +326,29 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
 
     const processFile = async (file: File): Promise<any> => {
+      console.log(`📁 Processing file: ${file.name}, size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
+
       // Check file size (limit to 15MB to match storage limit)
       if (file.size > 15 * 1024 * 1024) {
-        throw new Error(`Bestand ${file.name} is te groot. Maximum grootte is 15MB`);
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const errorMsg = `Bestand ${file.name} is te groot (${sizeMB}MB). Maximum grootte is 15MB`;
+        console.error('❌ File too large:', errorMsg);
+        throw new Error(errorMsg);
       }
 
       try {
         // Upload file to Supabase Storage
         console.log('📤 Uploading file to storage:', file.name);
+        toast.loading(`Uploaden ${file.name}...`, { id: file.name });
+
         const storagePath = await dataService.uploadFileToStorage(file, projectId, distributorId, folder);
         console.log('✅ File uploaded to storage:', storagePath);
 
         // Get public URL for the file (bucket is public)
         const publicUrl = dataService.getStorageUrl(storagePath);
         console.log('📎 Public URL:', publicUrl);
+
+        toast.success(`${file.name} geüpload!`, { id: file.name });
 
         return {
           projectId,
@@ -352,14 +361,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           content: publicUrl, // Store public URL as content for immediate display
         };
       } catch (error) {
-        console.error('Error processing file:', error);
+        console.error('❌ Error processing file:', file.name, error);
+        toast.error(`Fout: ${error.message}`, { id: file.name });
         throw new Error(`Fout bij het verwerken van bestand ${file.name}: ${error.message}`);
       }
     };
 
     try {
       console.log('🚀 UPLOAD: Starting file upload process with revision management...');
-      console.log('🚀 UPLOAD: Files to process:', files.map(f => f.name));
+      console.log('🚀 UPLOAD: Files to process:', files.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`));
       console.log('🚀 UPLOAD: Target folder:', folder);
       
       // CRITICAL: Load ALL current documents (main + subfolders) BEFORE processing revisions
@@ -612,9 +622,14 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   );
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('📂 File input changed');
     const files = event.target.files;
+    console.log('📂 Files selected:', files?.length || 0);
     if (files && files.length > 0) {
+      console.log('📂 Calling handleFileSave with', files.length, 'files');
       handleFileSave(Array.from(files));
+    } else {
+      console.warn('⚠️ No files selected');
     }
     // Reset the input value to allow uploading the same file again
     event.target.value = '';
@@ -637,9 +652,14 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     e.stopPropagation();
     setIsDragging(false);
 
+    console.log('📂 Files dropped');
     const files = Array.from(e.dataTransfer.files);
+    console.log('📂 Dropped files:', files.length, files.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`));
     if (files.length > 0) {
+      console.log('📂 Calling handleFileSave with', files.length, 'dropped files');
       handleFileSave(files);
+    } else {
+      console.warn('⚠️ No files dropped');
     }
   };
 
