@@ -14,6 +14,8 @@ interface MPrintLabelProps {
 const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
   const labelRef = useRef<HTMLDivElement>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string>('');
+  const [showSerialDialog, setShowSerialDialog] = useState(false);
+  const [serialNumber, setSerialNumber] = useState('');
 
   // Convert logo to base64 data URL on mount
   useEffect(() => {
@@ -47,14 +49,22 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
   // Create URL for maintenance report (same as VerdelerLabel)
   const maintenanceUrl = `${window.location.origin}/maintenance-report?verdeler_id=${encodeURIComponent(verdeler.distributor_id || verdeler.distributorId)}&project_number=${encodeURIComponent(projectNumber)}&kast_naam=${encodeURIComponent(verdeler.kast_naam || verdeler.kastNaam || '')}`;
 
-  const handleDownload = async () => {
+  const handlePrintClick = () => {
+    setShowSerialDialog(true);
+  };
+
+  const handleDownload = async (continueWithoutSerial: boolean = false) => {
     if (!labelRef.current || !logoDataUrl) {
       toast.error('Logo is nog aan het laden, probeer opnieuw');
       return;
     }
 
+    // Close the dialog
+    setShowSerialDialog(false);
+
     console.log('Verdeler data:', verdeler);
     console.log('Project number:', projectNumber);
+    console.log('Serial number:', serialNumber);
 
     try {
       // Wait for everything to be ready
@@ -85,6 +95,9 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
         URL.revokeObjectURL(url);
 
         toast.success('Label gedownload als PNG!');
+
+        // Reset serial number after download
+        setSerialNumber('');
       }, 'image/png');
     } catch (error) {
       console.error('Error generating label:', error);
@@ -95,13 +108,50 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
   return (
     <>
       <button
-        onClick={handleDownload}
+        onClick={handlePrintClick}
         className="btn-secondary w-full flex items-center space-x-2"
         title="Download label als PNG voor M-Print"
       >
         <Download size={16} />
         <span>Print voor M-Print</span>
       </button>
+
+      {/* Serial Number Dialog */}
+      {showSerialDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Vul het serienummer in</h3>
+            <input
+              type="text"
+              value={serialNumber}
+              onChange={(e) => setSerialNumber(e.target.value)}
+              placeholder="Serienummer (optioneel)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleDownload(true)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Doorgaan zonder serienummer
+              </button>
+              <button
+                onClick={() => handleDownload(false)}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Download
+              </button>
+            </div>
+            <button
+              onClick={() => setShowSerialDialog(false)}
+              className="w-full mt-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Annuleren
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hidden label for rendering */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
@@ -288,6 +338,30 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                   fontSize: '24px'
                 }}>{verdeler.stuurspanning || '-'}</span>
               </div>
+
+              {/* Serienummer - Only show if entered */}
+              {serialNumber && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '25px',
+                  fontSize: '25px',
+                  color: '#000000',
+                  lineHeight: '1.2'
+                }}>
+                  <span style={{ fontWeight: 'bold', color: '#000000', width: '220px', flexShrink: 0 }}>SERIENUMMER:</span>
+                  <span style={{
+                    fontWeight: 'normal',
+                    color: '#000000',
+                    backgroundColor: '#FFFFFF',
+                    border: '2px solid #000000',
+                    padding: '9px 15px',
+                    minWidth: '130px',
+                    textAlign: 'center',
+                    fontSize: '24px'
+                  }}>{serialNumber}</span>
+                </div>
+              )}
             </div>
 
             {/* Second Column */}
