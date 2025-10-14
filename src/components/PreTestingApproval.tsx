@@ -16,7 +16,7 @@ interface ChecklistItem {
   question: string;
   checked: boolean;
   comments: string;
-  approved?: boolean | null; // For tester review: true = approved, false = declined, null = not reviewed
+  approved?: boolean | null | 'n.v.t'; // For tester review: true = approved, false = declined, 'n.v.t' = not applicable, null = not reviewed
   testerComments?: string;
 }
 
@@ -140,8 +140,8 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
     ));
   };
 
-  const handleTesterReview = (id: string, approved: boolean, testerComments: string) => {
-    setChecklist(prev => prev.map(item => 
+  const handleTesterReview = (id: string, approved: boolean | 'n.v.t', testerComments: string) => {
+    setChecklist(prev => prev.map(item =>
       item.id === id ? { ...item, approved, testerComments } : item
     ));
   };
@@ -214,9 +214,9 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
       return;
     }
 
-    const allApproved = checklist.every(item => item.approved === true);
-    
-    if (!allApproved && approvalData.overallApproval === true) {
+    const allApprovedOrNvt = checklist.every(item => item.approved === true || item.approved === 'n.v.t');
+
+    if (!allApprovedOrNvt && approvalData.overallApproval === true) {
       toast.error('Je kunt niet goedkeuren als er afgekeurde items zijn!');
       return;
     }
@@ -258,15 +258,17 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
     }
   };
 
-  const getApprovalIcon = (approved: boolean | null) => {
+  const getApprovalIcon = (approved: boolean | null | 'n.v.t') => {
     if (approved === true) return <span className="text-green-400 text-lg">✓</span>;
     if (approved === false) return <span className="text-red-400 text-lg">✗</span>;
+    if (approved === 'n.v.t') return <span className="text-blue-400 text-lg">—</span>;
     return <span className="text-gray-400 text-lg">?</span>;
   };
 
-  const getApprovalColor = (approved: boolean | null) => {
+  const getApprovalColor = (approved: boolean | null | 'n.v.t') => {
     if (approved === true) return 'bg-green-500/20 text-green-400';
     if (approved === false) return 'bg-red-500/20 text-red-400';
+    if (approved === 'n.v.t') return 'bg-blue-500/20 text-blue-400';
     return 'bg-gray-500/20 text-gray-400';
   };
 
@@ -484,10 +486,10 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                       <div className="text-sm text-gray-400">Afgekeurd</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-400">
-                        {checklist.filter(item => item.approved === null).length}
+                      <div className="text-2xl font-bold text-blue-400">
+                        {checklist.filter(item => item.approved === 'n.v.t').length}
                       </div>
-                      <div className="text-sm text-gray-400">Niet beoordeeld</div>
+                      <div className="text-sm text-gray-400">N.v.t</div>
                     </div>
                   </div>
                   
@@ -674,6 +676,16 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
                                   }`}
                                 >
                                   ✗ Afkeuren
+                                </button>
+                                <button
+                                  onClick={() => handleTesterReview(item.id, 'n.v.t', item.testerComments || '')}
+                                  className={`px-3 py-2 rounded-lg text-sm transition ${
+                                    item.approved === 'n.v.t'
+                                      ? 'bg-blue-500 text-white'
+                                      : 'bg-gray-700 hover:bg-blue-500/20 text-gray-300'
+                                  }`}
+                                >
+                                  — N.v.t
                                 </button>
                               </div>
                             </div>
