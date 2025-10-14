@@ -66,8 +66,11 @@ const CreateProject = () => {
             distributorId: verdeler.distributorId,
             projectId: savedProject.id,
             kastNaam: verdeler.kastNaam,
+            toegewezenMonteur: verdeler.toegewezenMonteur,
             systeem: verdeler.systeem,
             voeding: verdeler.voeding,
+            stuurspanning: verdeler.stuurspanning,
+            kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde,
             bouwjaar: verdeler.bouwjaar,
             keuringDatum: verdeler.keuringDatum,
             getestDoor: verdeler.getestDoor,
@@ -79,7 +82,9 @@ const CreateProject = () => {
             typeNrHs: verdeler.typeNrHs,
             fabrikant: verdeler.fabrikant,
             profilePhoto: verdeler.profilePhoto,
-            status: verdeler.status
+            status: verdeler.status,
+            expectedHours: verdeler.expectedHours || verdeler.expected_hours,
+            gewensteLeverDatum: verdeler.deliveryDate || verdeler.gewenste_lever_datum
           };
 
           console.log('🔍 SAVE: Mapped distributor data:', distributorData);
