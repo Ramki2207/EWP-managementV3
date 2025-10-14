@@ -28,22 +28,21 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
   currentUser
 }) => {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
-    { id: '1', question: 'Zit de aarde erin? Rail/deur/paneel?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '2', question: 'Kamrailen in?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '3', question: 'eindkapjes kamrailen?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '4', question: 'Slot gemonteerd in deur?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '5', question: 'Wartels / invoerbak gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '6', question: 'Nummertjes rijgklemmen/eindsteun?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '7', question: 'Pootje afdekappen gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '8', question: 'Codeerstroken gemaakt?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '9', question: 'Stofzuigen?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '10', question: 'Moet de tekening aangepast worden?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '11', question: 'Alles vast gedraaid?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '12', question: 'Materiaal t.b.v. Kast, deksels erbij zetten.', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '13', question: 'Juiste kabel dikte?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '14', question: 'Draad goed in componenten gezet?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '15', question: 'Overige opmerkingen?', checked: false, comments: '', approved: null, testerComments: '' },
-    { id: '16', question: 'OSB Contact aangesloten', checked: false, comments: '', approved: null, testerComments: '' }
+    { id: '1', question: 'Zijn de Kamrailen correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '2', question: 'Zijn de eindkappen van de Kamrailen correct geplaatst?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '3', question: 'Is het deurslot correct gemonteerd en functioneel?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '4', question: 'Zijn de wartels en/of invoerplaten correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '5', question: 'Zijn de rijgklemmen en eindsteunen voorzien van correcte nummering?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '6', question: 'Zijn de pootjes van Hager correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '7', question: 'Zijn de Recepals en de codeer- of markeerstroken correct aangebracht?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '8', question: 'Is de werkruimte en kast stofvrij en gereinigd?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '9', question: 'Dient het schema aangepast of bijgewerkt te worden?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '10', question: 'Zijn alle bevestigingen en verbindingen met het juiste moment vastgedraaid?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '11', question: 'Is al het benodigde materiaal voor de kast aanwezig, inclusief deksels?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '12', question: 'Is de Juiste kabel dikte gebruikt?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '13', question: 'Zijn de aders correct aangesloten in de componenten?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '14', question: 'Zijn er aanvullende opmerkingen of bijzonderheden te vermelden?', checked: false, comments: '', approved: null, testerComments: '' },
+    { id: '15', question: 'Is het OSB-contact correct aangesloten en getest?', checked: false, comments: '', approved: null, testerComments: '' }
   ]);
 
   const [approvalData, setApprovalData] = useState({
