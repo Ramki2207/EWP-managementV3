@@ -84,6 +84,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const [error, setError] = useState<string | null>(null);
   const [loadingTimeout, setLoadingTimeout] = useState<NodeJS.Timeout | null>(null);
   const [loadingContent, setLoadingContent] = useState<Record<string, boolean>>({});
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // Helper function to load document content on-demand
   const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
@@ -337,18 +339,40 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       }
 
       try {
-        // Upload file to Supabase Storage
+        // Initialize progress
+        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
         console.log('📤 Uploading file to storage:', file.name);
-        toast.loading(`Uploaden ${file.name}...`, { id: file.name });
+
+        // Simulate progress for better UX (since Supabase doesn't provide real progress)
+        const progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            const currentProgress = prev[file.name] || 0;
+            if (currentProgress < 90) {
+              return { ...prev, [file.name]: currentProgress + 10 };
+            }
+            return prev;
+          });
+        }, 200);
 
         const storagePath = await dataService.uploadFileToStorage(file, projectId, distributorId, folder);
         console.log('✅ File uploaded to storage:', storagePath);
+
+        // Clear progress interval and set to 100%
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
 
         // Get public URL for the file (bucket is public)
         const publicUrl = dataService.getStorageUrl(storagePath);
         console.log('📎 Public URL:', publicUrl);
 
-        toast.success(`${file.name} geüpload!`, { id: file.name });
+        // Remove progress after a short delay
+        setTimeout(() => {
+          setUploadProgress(prev => {
+            const newProgress = { ...prev };
+            delete newProgress[file.name];
+            return newProgress;
+          });
+        }, 1000);
 
         return {
           projectId,
@@ -362,12 +386,18 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         };
       } catch (error) {
         console.error('❌ Error processing file:', file.name, error);
+        setUploadProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[file.name];
+          return newProgress;
+        });
         toast.error(`Fout: ${error.message}`, { id: file.name });
         throw new Error(`Fout bij het verwerken van bestand ${file.name}: ${error.message}`);
       }
     };
 
     try {
+      setIsUploading(true);
       console.log('🚀 UPLOAD: Starting file upload process with revision management...');
       console.log('🚀 UPLOAD: Files to process:', files.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`));
       console.log('🚀 UPLOAD: Target folder:', folder);
@@ -433,6 +463,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     } catch (error) {
       console.error('Error processing files:', error);
       toast.error(typeof error === 'string' ? error : 'Er is een fout opgetreden bij het uploaden van de bestanden');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress({});
     }
   }, [projectId, distributorId, folder, loadDocuments, handleRevisionManagement]);
 
@@ -897,7 +930,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       <div
         className={`border-2 border-dashed ${
           isDragging ? 'border-blue-400 bg-blue-400/10' : 'border-gray-600'
-        } rounded-xl p-8 text-center transition-colors`}
+        } rounded-xl p-8 text-center transition-colors relative`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -909,10 +942,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           id="file-upload"
           accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
           multiple
+          disabled={isUploading}
         />
         <label
           htmlFor="file-upload"
-          className="cursor-pointer flex flex-col items-center space-y-4"
+          className={`${isUploading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} flex flex-col items-center space-y-4`}
         >
           <Upload size={48} className="text-gray-400" />
           <div>
@@ -921,6 +955,26 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
             <p className="text-sm text-gray-400 mt-2">Maximum bestandsgrootte: 50MB</p>
           </div>
         </label>
+
+        {/* Upload Progress */}
+        {isUploading && Object.keys(uploadProgress).length > 0 && (
+          <div className="mt-6 space-y-3">
+            {Object.entries(uploadProgress).map(([fileName, progress]) => (
+              <div key={fileName} className="bg-[#1E2530] rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300 truncate flex-1 text-left">{fileName}</span>
+                  <span className="text-sm text-blue-400 ml-2">{progress}%</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Documents grid */}
