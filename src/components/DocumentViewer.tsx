@@ -527,8 +527,18 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       onClick={async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        await loadDocumentContent(doc);
-        setSelectedDocument(doc);
+
+        // Load content first, then open modal
+        try {
+          const content = await loadDocumentContent(doc);
+          // Find the updated document in state (it may have been updated with content)
+          const updatedDoc = documents.find(d => d.id === doc.id) || doc;
+          // Ensure the document has content before opening modal
+          setSelectedDocument({ ...updatedDoc, content });
+        } catch (error) {
+          console.error('Error loading document content:', error);
+          toast.error('Kan document niet laden');
+        }
       }}
     >
       <div className="aspect-video bg-[#1E2530] flex items-center justify-center relative">
