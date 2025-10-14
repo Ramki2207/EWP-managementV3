@@ -264,11 +264,21 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
   // Update portal access tracking
   async trackPortalAccess(portalId: string): Promise<void> {
     try {
+      // First get the current access count
+      const { data: currentData, error: fetchError } = await supabase
+        .from('client_portals')
+        .select('access_count')
+        .eq('id', portalId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Then update with incremented count
       const { error } = await supabase
         .from('client_portals')
         .update({
           last_accessed: new Date().toISOString(),
-          access_count: supabase.sql`access_count + 1`
+          access_count: (currentData?.access_count || 0) + 1
         })
         .eq('id', portalId);
 
