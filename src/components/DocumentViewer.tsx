@@ -16,7 +16,7 @@ interface Document {
 
 interface DocumentViewerProps {
   projectId: string;
-  distributorId: string;
+  distributorId: string | null;
   folder: string;
 }
 
@@ -149,9 +149,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       setError(null);
       
       console.log('Loading documents for:', { projectId, distributorId, folder });
-      
-      // Add validation
-      if (!projectId || !distributorId || !folder) {
+
+      // Add validation (distributorId can be null for project-level documents)
+      if (!projectId || !folder) {
         throw new Error('Missing required parameters for document loading');
       }
       
@@ -322,7 +322,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     };
   }, [loadingTimeout]);
   const handleFileSave = useCallback(async (files: File[]) => {
-    if (!projectId || !distributorId || !folder) {
+    if (!projectId || !folder) {
       toast.error('Kan documenten niet uploaden: ontbrekende project informatie');
       return;
     }

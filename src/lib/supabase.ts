@@ -473,7 +473,7 @@ export const dataService = {
   },
 
   // Documents
-  async getDocuments(projectId?: string, distributorId?: string, folder?: string) {
+  async getDocuments(projectId?: string, distributorId?: string | null, folder?: string) {
     try {
       console.log('getDocuments called with:', { projectId, distributorId, folder });
 
@@ -491,7 +491,10 @@ export const dataService = {
       if (projectId) {
         query = query.eq('project_id', projectId);
       }
-      if (distributorId) {
+      // Handle null distributorId for project-level documents
+      if (distributorId === null) {
+        query = query.is('distributor_id', null);
+      } else if (distributorId) {
         query = query.eq('distributor_id', distributorId);
       }
       if (folder) {
@@ -559,12 +562,14 @@ export const dataService = {
   },
 
   // Upload file to Supabase Storage
-  async uploadFileToStorage(file: File, projectId: string, distributorId: string, folder: string): Promise<string> {
+  async uploadFileToStorage(file: File, projectId: string, distributorId: string | null, folder: string): Promise<string> {
     try {
       // Create a path: projectId/distributorId/folder/filename
+      // For project-level docs (no distributorId), use: projectId/project/folder/filename
       const timestamp = Date.now();
       const sanitizedFolder = folder.replace(/\//g, '_');
-      const storagePath = `${projectId}/${distributorId}/${sanitizedFolder}/${timestamp}_${file.name}`;
+      const distributorPath = distributorId || 'project';
+      const storagePath = `${projectId}/${distributorPath}/${sanitizedFolder}/${timestamp}_${file.name}`;
 
       console.log('📤 Uploading file to storage:', storagePath);
 

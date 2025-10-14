@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Folder, ChevronRight, ChevronDown, Server, Building } from 'lucide-react';
+import { Folder, ChevronRight, ChevronDown, Server, Building, FileText } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
 
 interface ProjectDocumentManagerProps {
@@ -18,7 +18,19 @@ const defaultFolders = [
   'Klant informatie',
 ];
 
+const projectLevelFolders = [
+  'Project documenten',
+  'Offertes',
+  'Contracten',
+  'Correspondentie',
+  'Technische tekeningen',
+  'Planningen',
+  'Foto\'s',
+  'Overige documenten',
+];
+
 const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project }) => {
+  const [viewMode, setViewMode] = useState<'project' | 'verdelers'>('project');
   const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
@@ -40,6 +52,12 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
+  };
+
+  const handleSelectProjectFolder = (folder: string) => {
+    setViewMode('project');
+    setSelectedDistributor(null);
+    setSelectedFolder(folder);
   };
 
   const toggleDistributorExpansion = (distributorId: string) => {
@@ -67,24 +85,115 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   };
 
   return (
-    <div className="flex gap-6 h-[600px]">
-      {/* Navigation Sidebar */}
-      <div className="w-80 bg-[#2A303C] rounded-lg p-4 overflow-y-auto">
-        <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Document Explorer</h3>
-        <div className="space-y-2">
-          {/* Project Level */}
-          <div className="flex items-center p-2 rounded-lg bg-blue-500/20 text-blue-400">
-            <Building size={16} className="mr-2 flex-shrink-0" />
-            <div className="min-w-0 flex-1">
-              <div className="text-sm font-medium truncate">{project.project_number}</div>
-              {project.client && (
-                <div className="text-xs opacity-75 truncate">{project.client}</div>
-              )}
-            </div>
-            <div className="text-xs opacity-60 ml-2 flex-shrink-0">
-              {project.distributors?.length || 0} verdelers
+    <div className="space-y-4">
+      {/* Tab Navigation */}
+      <div className="flex gap-2 border-b border-gray-700">
+        <button
+          onClick={() => {
+            setViewMode('project');
+            setSelectedDistributor(null);
+            setSelectedFolder(null);
+          }}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            viewMode === 'project'
+              ? 'border-blue-500 text-blue-400'
+              : 'border-transparent text-gray-400 hover:text-gray-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <FileText size={16} />
+            <span>Project documenten</span>
+          </div>
+        </button>
+        <button
+          onClick={() => {
+            setViewMode('verdelers');
+            setSelectedDistributor(null);
+            setSelectedFolder(null);
+          }}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            viewMode === 'verdelers'
+              ? 'border-green-500 text-green-400'
+              : 'border-transparent text-gray-400 hover:text-gray-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <Server size={16} />
+            <span>Verdeler documenten ({project.distributors?.length || 0})</span>
+          </div>
+        </button>
+      </div>
+
+      {/* Content Area */}
+      {viewMode === 'project' ? (
+        <div className="flex gap-6 h-[600px]">
+          {/* Project Folders Sidebar */}
+          <div className="w-80 bg-[#2A303C] rounded-lg p-4 overflow-y-auto">
+            <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Project Mappen</h3>
+            <div className="space-y-1">
+              {projectLevelFolders.map((folder) => (
+                <div
+                  key={folder}
+                  className={`flex items-center p-3 rounded-lg transition-all cursor-pointer group ${
+                    selectedFolder === folder
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
+                      : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
+                  }`}
+                  onClick={() => handleSelectProjectFolder(folder)}
+                >
+                  <Folder size={16} className="mr-3 flex-shrink-0 text-blue-400" />
+                  <span className="text-sm font-medium truncate">{folder}</span>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Document Viewer */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedFolder ? (
+              <div>
+                <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
+                  <span>Locatie:</span>
+                  <span className="text-blue-400">{project.project_number}</span>
+                  <ChevronRight size={14} />
+                  <span className="text-blue-400">{selectedFolder}</span>
+                </div>
+                <DocumentViewer
+                  projectId={project.id}
+                  distributorId={null}
+                  folder={selectedFolder}
+                />
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Folder size={48} className="mx-auto text-gray-600 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer een map</h3>
+                <p className="text-gray-400">
+                  Kies een map uit de lijst om project documenten te beheren
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex gap-6 h-[600px]">
+          {/* Navigation Sidebar */}
+          <div className="w-80 bg-[#2A303C] rounded-lg p-4 overflow-y-auto">
+            <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Verdelers</h3>
+            <div className="space-y-2">
+              {/* Project Level */}
+              <div className="flex items-center p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                <Building size={16} className="mr-2 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium truncate">{project.project_number}</div>
+                  {project.client && (
+                    <div className="text-xs opacity-75 truncate">{project.client}</div>
+                  )}
+                </div>
+                <div className="text-xs opacity-60 ml-2 flex-shrink-0">
+                  {project.distributors?.length || 0} verdelers
+                </div>
+              </div>
 
           {/* Distributors Level */}
           {project.distributors && project.distributors.length > 0 ? (
@@ -151,73 +260,75 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
               <p className="text-gray-500 text-xs mt-1">Voeg verdelers toe om documenten te beheren</p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto">
-        {selectedDistributor && selectedFolder ? (
-          <div>
-            {/* Breadcrumb */}
-            <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
-              <span>Locatie:</span>
-              <div className="flex items-center space-x-2">
-                {getBreadcrumb().split(' / ').map((part, index, array) => (
-                  <React.Fragment key={index}>
-                    <span className="text-blue-400">{part}</span>
-                    {index < array.length - 1 && <ChevronRight size={14} />}
-                  </React.Fragment>
-                ))}
-              </div>
             </div>
-
-            {/* Use the actual DocumentViewer component */}
-            <DocumentViewer
-              projectId={project.id}
-              distributorId={selectedDistributor}
-              folder={selectedFolder}
-            />
           </div>
-        ) : selectedDistributor ? (
-          /* Folder Grid View */
-          <div>
-            <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
-              <span>Selecteer een map voor:</span>
-              <span className="text-green-400">
-                {project.distributors?.find((d: any) => d.id === selectedDistributor)?.distributor_id}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {defaultFolders.map((folderName) => (
-                <div
-                  key={folderName}
-                  onClick={() => handleSelectFolder(selectedDistributor, folderName)}
-                  className="bg-[#1E2530] rounded-lg p-6 flex flex-col items-center justify-center space-y-3 hover:bg-[#2A303C] transition-colors cursor-pointer group min-h-[120px]"
-                >
-                  <Folder
-                    size={40}
-                    className="text-gray-400 group-hover:text-purple-400 transition-colors"
-                  />
-                  <span className="text-sm text-center font-medium group-hover:text-white transition-colors">
-                    {folderName}
+
+          {/* Main Content Area */}
+          <div className="flex-1 overflow-y-auto">
+            {selectedDistributor && selectedFolder ? (
+              <div>
+                {/* Breadcrumb */}
+                <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
+                  <span>Locatie:</span>
+                  <div className="flex items-center space-x-2">
+                    {getBreadcrumb().split(' / ').map((part, index, array) => (
+                      <React.Fragment key={index}>
+                        <span className="text-blue-400">{part}</span>
+                        {index < array.length - 1 && <ChevronRight size={14} />}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Use the actual DocumentViewer component */}
+                <DocumentViewer
+                  projectId={project.id}
+                  distributorId={selectedDistributor}
+                  folder={selectedFolder}
+                />
+              </div>
+            ) : selectedDistributor ? (
+              /* Folder Grid View */
+              <div>
+                <div className="flex items-center text-sm text-gray-400 space-x-2 mb-4">
+                  <span>Selecteer een map voor:</span>
+                  <span className="text-green-400">
+                    {project.distributors?.find((d: any) => d.id === selectedDistributor)?.distributor_id}
                   </span>
                 </div>
-              ))}
-            </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {defaultFolders.map((folderName) => (
+                    <div
+                      key={folderName}
+                      onClick={() => handleSelectFolder(selectedDistributor, folderName)}
+                      className="bg-[#1E2530] rounded-lg p-6 flex flex-col items-center justify-center space-y-3 hover:bg-[#2A303C] transition-colors cursor-pointer group min-h-[120px]"
+                    >
+                      <Folder
+                        size={40}
+                        className="text-gray-400 group-hover:text-purple-400 transition-colors"
+                      />
+                      <span className="text-sm text-center font-medium group-hover:text-white transition-colors">
+                        {folderName}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Distributor Selection */
+              <div>
+                <div className="text-center py-8">
+                  <Server size={48} className="mx-auto text-gray-600 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer een verdeler</h3>
+                  <p className="text-gray-400">
+                    Kies een verdeler uit de lijst om documenten te beheren
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          /* Distributor Selection */
-          <div>
-            <div className="text-center py-8">
-              <Server size={48} className="mx-auto text-gray-600 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer een verdeler</h3>
-              <p className="text-gray-400">
-                Kies een verdeler uit de lijst om documenten te beheren
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
