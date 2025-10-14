@@ -183,7 +183,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
                 fontSize: '25px',
                 color: '#000000',
                 lineHeight: '1.2'
@@ -205,7 +205,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
                 fontSize: '25px',
                 color: '#000000',
                 lineHeight: '1.2'
@@ -227,7 +227,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
                 fontSize: '25px',
                 color: '#000000',
                 lineHeight: '1.2'
@@ -249,7 +249,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
                 fontSize: '25px',
                 color: '#000000',
                 lineHeight: '1.2'
@@ -271,7 +271,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '25px',
                 fontSize: '25px',
                 color: '#000000',
                 lineHeight: '1.2'
