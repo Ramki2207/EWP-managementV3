@@ -40,11 +40,15 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
 
   const handleGenerateDeliveryNotification = async () => {
     try {
+      console.log('Starting notification generation for project:', project.id);
       setIsGenerating(true);
 
       // Check if portal already exists for this project
+      console.log('Fetching existing portals...');
       const existingPortals = await clientPortalService.getAllClientPortals();
+      console.log('Existing portals:', existingPortals);
       const existingPortal = existingPortals.find(p => p.project_id === project.id && p.is_active);
+      console.log('Found existing portal:', existingPortal);
 
       if (existingPortal) {
         // Load existing folder selection
@@ -53,18 +57,23 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         }
 
         // Use existing portal
+        console.log('Loading verdelers for existing portal...');
         const verdelers = await dataService.getDistributorsByProject(project.id);
+        console.log('Verdelers:', verdelers);
         setVerdelers(verdelers);
         const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
 
         setPortal(existingPortal);
         setEmailTemplate(template);
+        console.log('Setting showPreview to true');
         setShowPreview(true);
 
         toast.success('Bestaande portal geladen voor dit project!');
       } else {
         // Get project verdelers
+        console.log('Creating new portal, loading verdelers...');
         const verdelers = await dataService.getDistributorsByProject(project.id);
+        console.log('Verdelers:', verdelers);
 
         if (verdelers.length === 0) {
           toast.error('Geen verdelers gevonden voor dit project');
@@ -73,15 +82,19 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         }
 
         // Find client for this project
+        console.log('Finding client...');
         const clients = await dataService.getClients();
         const client = clients.find((c: any) => c.name === project.client);
+        console.log('Client:', client);
 
         // Create client portal with default folders (will be updated later)
+        console.log('Creating new portal...');
         const newPortal = await clientPortalService.createClientPortal(
           project.id,
           client?.id,
           selectedFolders
         );
+        console.log('New portal created:', newPortal);
 
         // Generate email template
         const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
@@ -89,13 +102,14 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         setPortal(newPortal);
         setVerdelers(verdelers);
         setEmailTemplate(template);
+        console.log('Setting showPreview to true');
         setShowPreview(true);
 
         toast.success('Nieuwe portal aangemaakt voor dit project!');
       }
     } catch (error) {
       console.error('Error generating delivery notification:', error);
-      toast.error('Er is een fout opgetreden bij het genereren van de notificatie');
+      toast.error(`Fout: ${error.message || 'Er is een fout opgetreden bij het genereren van de notificatie'}`);
     } finally {
       setIsGenerating(false);
     }
