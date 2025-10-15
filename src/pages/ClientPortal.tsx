@@ -88,10 +88,23 @@ const ClientPortal = () => {
     try {
       setDocumentsLoading(true);
       console.log('Loading documents for client portal:', { projectId, distributorId, folder });
-      
+
       const docs = await dataService.getDocuments(projectId, distributorId, folder);
       console.log('Loaded documents:', docs?.length || 0);
-      setDocuments(docs || []);
+
+      // Generate public URLs for storage-based documents
+      const docsWithUrls = (docs || []).map(doc => {
+        if (doc.storage_path && !doc.content) {
+          return {
+            ...doc,
+            content: dataService.getStorageUrl(doc.storage_path)
+          };
+        }
+        return doc;
+      });
+
+      console.log('Documents with URLs prepared:', docsWithUrls.length);
+      setDocuments(docsWithUrls);
     } catch (error) {
       console.error('Error loading documents:', error);
       setDocuments([]);
@@ -122,11 +135,11 @@ const ClientPortal = () => {
     setExpandedDistributors(newExpanded);
   };
 
-  const handleDownload = (document: any) => {
+  const handleDownload = async (document: any) => {
     try {
       console.log('Attempting to download document:', document.name);
+      console.log('Document storage_path:', document.storage_path);
       console.log('Document content type:', typeof document.content);
-      console.log('Content starts with data:', document.content?.startsWith('data:'));
 
       // Check if document has valid content
       if (!document.content) {
@@ -135,103 +148,62 @@ const ClientPortal = () => {
         return;
       }
 
-      // Handle different content formats
-      let downloadUrl = '';
+      toast.loading('Document downloaden...', { id: 'download' });
 
+      // Handle different content formats
       if (document.content.startsWith('data:')) {
-        // Already a data URL
-        downloadUrl = document.content;
+        // For data URLs (base64), use download attribute
+        const linkElement = document.createElement('a');
+        linkElement.href = document.content;
+        linkElement.download = document.name;
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        toast.success('Document gedownload!', { id: 'download' });
       } else if (document.content.startsWith('http')) {
-        // External URL
-        downloadUrl = document.content;
+        // For storage URLs, fetch as blob to avoid CORS and download issues
+        try {
+          const response = await fetch(document.content);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+
+          const linkElement = document.createElement('a');
+          linkElement.href = blobUrl;
+          linkElement.download = document.name;
+          document.body.appendChild(linkElement);
+          linkElement.click();
+          document.body.removeChild(linkElement);
+
+          // Clean up the blob URL after a short delay
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
+          toast.success('Document gedownload!', { id: 'download' });
+        } catch (fetchError) {
+          console.error('Error fetching storage file:', fetchError);
+          toast.error('Download mislukt - probeer het opnieuw', { id: 'download' });
+        }
       } else {
         // Assume it's base64 without data URL prefix
         const mimeType = document.type || 'application/octet-stream';
-        downloadUrl = `data:${mimeType};base64,${document.content}`;
+        const dataUrl = `data:${mimeType};base64,${document.content}`;
+
+        const linkElement = document.createElement('a');
+        linkElement.href = dataUrl;
+        linkElement.download = document.name;
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        toast.success('Document gedownload!', { id: 'download' });
       }
 
-      console.log('Download URL created:', downloadUrl.substring(0, 50) + '...');
-
-      // Use a more robust download approach
-      try {
-        // Method 1: Try using window.open for simple download
-        if (downloadUrl.startsWith('data:')) {
-          // For data URLs, use the download attribute approach with error handling
-          const linkElement = globalThis.document?.createElement('a');
-          if (!linkElement) {
-            throw new Error('Cannot create download link element');
-          }
-
-          linkElement.href = downloadUrl;
-          linkElement.download = document.name || 'download';
-          linkElement.style.display = 'none';
-
-          // Safely add to DOM
-          const body = globalThis.document?.body;
-          if (!body) {
-            throw new Error('Cannot access document body');
-          }
-
-          body.appendChild(linkElement);
-          linkElement.click();
-
-          // Clean up
-          setTimeout(() => {
-            try {
-              body.removeChild(linkElement);
-            } catch (cleanupError) {
-              console.warn('Cleanup error (non-critical):', cleanupError);
-            }
-          }, 100);
-        } else {
-          // For external URLs, open in new tab
-          window.open(downloadUrl, '_blank');
-        }
-      } catch (downloadError) {
-        console.error('Primary download method failed:', downloadError);
-
-        // Fallback method: Try using URL.createObjectURL
-        try {
-          // Convert data URL to blob
-          const response = fetch(downloadUrl);
-          response.then(res => res.blob()).then(blob => {
-            const url = URL.createObjectURL(blob);
-            const fallbackLink = globalThis.document?.createElement('a');
-
-            if (fallbackLink && globalThis.document?.body) {
-              fallbackLink.href = url;
-              fallbackLink.download = document.name || 'download';
-              fallbackLink.style.display = 'none';
-
-              globalThis.document.body.appendChild(fallbackLink);
-              fallbackLink.click();
-
-              setTimeout(() => {
-                try {
-                  globalThis.document?.body?.removeChild(fallbackLink);
-                  URL.revokeObjectURL(url);
-                } catch (cleanupError) {
-                  console.warn('Fallback cleanup error (non-critical):', cleanupError);
-                }
-              }, 100);
-            } else {
-              throw new Error('Fallback method also failed');
-            }
-          }).catch(blobError => {
-            console.error('Blob conversion failed:', blobError);
-            toast.error('Download niet mogelijk - bestand formaat probleem');
-          });
-        } catch (fallbackError) {
-          console.error('Fallback download method failed:', fallbackError);
-          toast.error('Download niet mogelijk - probeer het later opnieuw');
-        }
-      }
-
-      console.log('Download triggered for:', document.name);
-      toast.success('Document gedownload!');
+      console.log('Download completed for:', document.name);
     } catch (error) {
       console.error('Error downloading document:', error);
-      toast.error(`Download fout: ${error.message || 'Onbekende fout'}`);
+      toast.error(`Download fout: ${error.message || 'Onbekende fout'}`, { id: 'download' });
     }
   };
 
