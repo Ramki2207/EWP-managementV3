@@ -87,6 +87,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const [loadingContent, setLoadingContent] = useState<Record<string, boolean>>({});
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   // Helper function to load document content on-demand
   const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
@@ -808,9 +809,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         );
       }
 
-      const [imageError, setImageError] = React.useState(false);
-
-      if (imageError) {
+      if (imageErrors[doc.id]) {
         return (
           <div className="flex flex-col items-center justify-center p-8">
             <FileText size={64} className="text-gray-400 mb-4" />
@@ -838,7 +837,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           loading="lazy"
           onError={(e) => {
             console.error('Image failed to load:', doc.name);
-            setImageError(true);
+            setImageErrors(prev => ({ ...prev, [doc.id]: true }));
           }}
         />
       );
