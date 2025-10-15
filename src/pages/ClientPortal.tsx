@@ -135,15 +135,15 @@ const ClientPortal = () => {
     setExpandedDistributors(newExpanded);
   };
 
-  const handleDownload = async (document: any) => {
+  const handleDownload = async (doc: any) => {
     try {
-      console.log('Attempting to download document:', document.name);
-      console.log('Document storage_path:', document.storage_path);
-      console.log('Document content type:', typeof document.content);
+      console.log('Attempting to download document:', doc.name);
+      console.log('Document storage_path:', doc.storage_path);
+      console.log('Document content type:', typeof doc.content);
 
       // Check if document has valid content
-      if (!document.content) {
-        console.error('No content found for document:', document.name);
+      if (!doc.content) {
+        console.error('No content found for document:', doc.name);
         toast.error('Document inhoud niet beschikbaar voor download');
         return;
       }
@@ -151,19 +151,19 @@ const ClientPortal = () => {
       toast.loading('Document downloaden...', { id: 'download' });
 
       // Handle different content formats
-      if (document.content.startsWith('data:')) {
+      if (doc.content.startsWith('data:')) {
         // For data URLs (base64), use download attribute
-        const linkElement = document.createElement('a');
-        linkElement.href = document.content;
-        linkElement.download = document.name;
-        document.body.appendChild(linkElement);
+        const linkElement = window.document.createElement('a');
+        linkElement.href = doc.content;
+        linkElement.download = doc.name;
+        window.document.body.appendChild(linkElement);
         linkElement.click();
-        document.body.removeChild(linkElement);
+        window.document.body.removeChild(linkElement);
         toast.success('Document gedownload!', { id: 'download' });
-      } else if (document.content.startsWith('http')) {
+      } else if (doc.content.startsWith('http')) {
         // For storage URLs, fetch as blob to avoid CORS and download issues
         try {
-          const response = await fetch(document.content);
+          const response = await fetch(doc.content);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -171,12 +171,12 @@ const ClientPortal = () => {
           const blob = await response.blob();
           const blobUrl = URL.createObjectURL(blob);
 
-          const linkElement = document.createElement('a');
+          const linkElement = window.document.createElement('a');
           linkElement.href = blobUrl;
-          linkElement.download = document.name;
-          document.body.appendChild(linkElement);
+          linkElement.download = doc.name;
+          window.document.body.appendChild(linkElement);
           linkElement.click();
-          document.body.removeChild(linkElement);
+          window.document.body.removeChild(linkElement);
 
           // Clean up the blob URL after a short delay
           setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
@@ -188,19 +188,19 @@ const ClientPortal = () => {
         }
       } else {
         // Assume it's base64 without data URL prefix
-        const mimeType = document.type || 'application/octet-stream';
-        const dataUrl = `data:${mimeType};base64,${document.content}`;
+        const mimeType = doc.type || 'application/octet-stream';
+        const dataUrl = `data:${mimeType};base64,${doc.content}`;
 
-        const linkElement = document.createElement('a');
+        const linkElement = window.document.createElement('a');
         linkElement.href = dataUrl;
-        linkElement.download = document.name;
-        document.body.appendChild(linkElement);
+        linkElement.download = doc.name;
+        window.document.body.appendChild(linkElement);
         linkElement.click();
-        document.body.removeChild(linkElement);
+        window.document.body.removeChild(linkElement);
         toast.success('Document gedownload!', { id: 'download' });
       }
 
-      console.log('Download completed for:', document.name);
+      console.log('Download completed for:', doc.name);
     } catch (error) {
       console.error('Error downloading document:', error);
       toast.error(`Download fout: ${error.message || 'Onbekende fout'}`, { id: 'download' });
