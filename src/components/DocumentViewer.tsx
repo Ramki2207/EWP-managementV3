@@ -12,6 +12,7 @@ interface Document {
   content?: string;
   storage_path?: string;
   uploaded_at: string;
+  folder?: string;
 }
 
 interface DocumentViewerProps {
