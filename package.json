@@ -1,8 +1,16 @@
 {
+  "name": "ewp-management",
+  "version": "1.0.0",
+  "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=18.17"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "start": "vite preview --port 4173 --strictPort"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.3",
