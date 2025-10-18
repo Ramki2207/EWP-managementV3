@@ -94,10 +94,13 @@ const ClientPortal = () => {
 
       // Generate public URLs for storage-based documents
       const docsWithUrls = (docs || []).map(doc => {
-        if (doc.storage_path && !doc.content) {
+        // If document uses storage, always generate the public URL
+        if (doc.storage_path) {
+          const storageUrl = dataService.getStorageUrl(doc.storage_path);
+          console.log('Generated storage URL for document:', doc.name, storageUrl);
           return {
             ...doc,
-            content: dataService.getStorageUrl(doc.storage_path)
+            content: storageUrl
           };
         }
         return doc;
@@ -137,13 +140,17 @@ const ClientPortal = () => {
 
   const handleDownload = async (doc: any) => {
     try {
-      console.log('Attempting to download document:', doc.name);
+      console.log('=== Download Debug Info ===');
+      console.log('Document name:', doc.name);
       console.log('Document storage_path:', doc.storage_path);
+      console.log('Document content:', doc.content ? (doc.content.substring(0, 50) + '...') : 'NULL');
       console.log('Document content type:', typeof doc.content);
+      console.log('Document object:', doc);
 
       // Check if document has valid content
       if (!doc.content) {
-        console.error('No content found for document:', doc.name);
+        console.error('❌ No content found for document:', doc.name);
+        console.error('Document has storage_path but no content URL was generated');
         toast.error('Document inhoud niet beschikbaar voor download');
         return;
       }
