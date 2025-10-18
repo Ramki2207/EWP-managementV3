@@ -93,30 +93,45 @@ const ClientPortal = () => {
       console.log('📦 Raw documents loaded from database:', docs?.length || 0);
       console.log('📦 First document example:', docs?.[0]);
 
-      // Generate public URLs for storage-based documents
-      const docsWithUrls = (docs || []).map(doc => {
-        console.log('🔄 Processing document:', doc.name);
-        console.log('  - Has storage_path:', !!doc.storage_path);
-        console.log('  - storage_path value:', doc.storage_path);
+      // Process documents and load their content
+      const docsWithContent = await Promise.all(
+        (docs || []).map(async (doc) => {
+          console.log('🔄 Processing document:', doc.name);
+          console.log('  - Has storage_path:', !!doc.storage_path);
+          console.log('  - Has content field:', !!doc.content);
 
-        // If document uses storage, always generate the public URL
-        if (doc.storage_path) {
-          const storageUrl = dataService.getStorageUrl(doc.storage_path);
-          console.log('✅ Generated storage URL for:', doc.name);
-          console.log('  - URL:', storageUrl);
-          return {
-            ...doc,
-            content: storageUrl
-          };
-        }
+          // If document uses storage, generate public URL
+          if (doc.storage_path) {
+            const storageUrl = dataService.getStorageUrl(doc.storage_path);
+            console.log('✅ Generated storage URL for:', doc.name);
+            return {
+              ...doc,
+              content: storageUrl
+            };
+          }
 
-        console.log('⚠️ Document has no storage_path:', doc.name);
-        return doc;
-      });
+          // If document has base64 content in metadata, fetch it
+          if (!doc.content) {
+            try {
+              console.log('📥 Fetching content for legacy document:', doc.name);
+              const content = await dataService.getDocumentContent(doc.id);
+              console.log('✅ Content fetched for:', doc.name);
+              return {
+                ...doc,
+                content
+              };
+            } catch (error) {
+              console.error('❌ Failed to fetch content for:', doc.name, error);
+              return doc;
+            }
+          }
 
-      console.log('✨ Documents with URLs prepared:', docsWithUrls.length);
-      console.log('✨ First processed document:', docsWithUrls?.[0]);
-      setDocuments(docsWithUrls);
+          return doc;
+        })
+      );
+
+      console.log('✨ Documents with content prepared:', docsWithContent.length);
+      setDocuments(docsWithContent);
     } catch (error) {
       console.error('❌ Error loading documents:', error);
       setDocuments([]);
