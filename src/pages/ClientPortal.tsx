@@ -87,29 +87,38 @@ const ClientPortal = () => {
   const loadDocuments = async (projectId: string, distributorId?: string, folder?: string) => {
     try {
       setDocumentsLoading(true);
-      console.log('Loading documents for client portal:', { projectId, distributorId, folder });
+      console.log('🔍 Loading documents for client portal:', { projectId, distributorId, folder });
 
       const docs = await dataService.getDocuments(projectId, distributorId, folder);
-      console.log('Loaded documents:', docs?.length || 0);
+      console.log('📦 Raw documents loaded from database:', docs?.length || 0);
+      console.log('📦 First document example:', docs?.[0]);
 
       // Generate public URLs for storage-based documents
       const docsWithUrls = (docs || []).map(doc => {
+        console.log('🔄 Processing document:', doc.name);
+        console.log('  - Has storage_path:', !!doc.storage_path);
+        console.log('  - storage_path value:', doc.storage_path);
+
         // If document uses storage, always generate the public URL
         if (doc.storage_path) {
           const storageUrl = dataService.getStorageUrl(doc.storage_path);
-          console.log('Generated storage URL for document:', doc.name, storageUrl);
+          console.log('✅ Generated storage URL for:', doc.name);
+          console.log('  - URL:', storageUrl);
           return {
             ...doc,
             content: storageUrl
           };
         }
+
+        console.log('⚠️ Document has no storage_path:', doc.name);
         return doc;
       });
 
-      console.log('Documents with URLs prepared:', docsWithUrls.length);
+      console.log('✨ Documents with URLs prepared:', docsWithUrls.length);
+      console.log('✨ First processed document:', docsWithUrls?.[0]);
       setDocuments(docsWithUrls);
     } catch (error) {
-      console.error('Error loading documents:', error);
+      console.error('❌ Error loading documents:', error);
       setDocuments([]);
       toast.error('Er is een fout opgetreden bij het laden van de documenten');
     } finally {
@@ -147,10 +156,18 @@ const ClientPortal = () => {
       console.log('Document content type:', typeof doc.content);
       console.log('Document object:', doc);
 
+      // If no content but has storage_path, generate URL as fallback
+      let contentUrl = doc.content;
+      if (!contentUrl && doc.storage_path) {
+        console.log('⚠️ No content URL found, generating from storage_path...');
+        contentUrl = dataService.getStorageUrl(doc.storage_path);
+        console.log('✅ Generated fallback URL:', contentUrl);
+      }
+
       // Check if document has valid content
-      if (!doc.content) {
+      if (!contentUrl) {
         console.error('❌ No content found for document:', doc.name);
-        console.error('Document has storage_path but no content URL was generated');
+        console.error('Document has no content and no storage_path');
         toast.error('Document inhoud niet beschikbaar voor download');
         return;
       }
@@ -158,24 +175,26 @@ const ClientPortal = () => {
       toast.loading('Document downloaden...', { id: 'download' });
 
       // Handle different content formats
-      if (doc.content.startsWith('data:')) {
+      if (contentUrl.startsWith('data:')) {
         // For data URLs (base64), use download attribute
         const linkElement = window.document.createElement('a');
-        linkElement.href = doc.content;
+        linkElement.href = contentUrl;
         linkElement.download = doc.name;
         window.document.body.appendChild(linkElement);
         linkElement.click();
         window.document.body.removeChild(linkElement);
         toast.success('Document gedownload!', { id: 'download' });
-      } else if (doc.content.startsWith('http')) {
+      } else if (contentUrl.startsWith('http')) {
         // For storage URLs, fetch as blob to avoid CORS and download issues
         try {
-          const response = await fetch(doc.content);
+          console.log('📥 Fetching file from storage URL:', contentUrl);
+          const response = await fetch(contentUrl);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           const blob = await response.blob();
+          console.log('✅ File fetched, size:', blob.size, 'bytes');
           const blobUrl = URL.createObjectURL(blob);
 
           const linkElement = window.document.createElement('a');
@@ -190,13 +209,13 @@ const ClientPortal = () => {
 
           toast.success('Document gedownload!', { id: 'download' });
         } catch (fetchError) {
-          console.error('Error fetching storage file:', fetchError);
+          console.error('❌ Error fetching storage file:', fetchError);
           toast.error('Download mislukt - probeer het opnieuw', { id: 'download' });
         }
       } else {
         // Assume it's base64 without data URL prefix
         const mimeType = doc.type || 'application/octet-stream';
-        const dataUrl = `data:${mimeType};base64,${doc.content}`;
+        const dataUrl = `data:${mimeType};base64,${contentUrl}`;
 
         const linkElement = window.document.createElement('a');
         linkElement.href = dataUrl;
