@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Upload, X } from 'lucide-react';
 import { dataService } from '../lib/supabase';
 
 // Generate UUID for new contacts
@@ -18,6 +19,8 @@ const ClientDetails = () => {
 
   const [client, setClient] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   useEffect(() => {
     loadClient();
@@ -28,6 +31,9 @@ const ClientDetails = () => {
       const data = await dataService.getClients();
       const foundClient = data.find((c: any) => c.id === clientId);
       setClient(foundClient || null);
+      if (foundClient?.logo_url) {
+        setLogoPreview(foundClient.logo_url);
+      }
     } catch (error) {
       console.error('Error loading client:', error);
       toast.error('Er is een fout opgetreden bij het laden van de klant');
@@ -51,13 +57,13 @@ const ClientDetails = () => {
   };
 
   const handleAddContact = () => {
-    const newContact = { 
+    const newContact = {
       id: generateUUID(),
       client_id: client.id,
-      first_name: "", 
-      last_name: "", 
-      email: "", 
-      phone: "", 
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
       department: "",
       function: "",
       created_at: new Date().toISOString()
@@ -65,11 +71,42 @@ const ClientDetails = () => {
     setClient({ ...client, contacts: [...client.contacts, newContact] });
   };
 
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview("");
+    setClient({ ...client, logo_url: "" });
+  };
+
   const handleSaveChanges = async () => {
     try {
-      await dataService.updateClient(client.id, client);
+      let logoUrl = client.logo_url;
+
+      if (logoFile) {
+        const uploadResult = await dataService.uploadClientLogo(logoFile);
+        if (uploadResult) {
+          logoUrl = uploadResult;
+        }
+      }
+
+      await dataService.updateClient(client.id, {
+        ...client,
+        logo_url: logoUrl
+      });
       toast.success("Wijzigingen opgeslagen!");
       setIsEditing(false);
+      setLogoFile(null);
     } catch (error) {
       console.error('Error updating client:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van de wijzigingen');
@@ -106,6 +143,51 @@ const ClientDetails = () => {
       {/* Klant info */}
       <div className="bg-[#1E2530] rounded-xl p-6 shadow-lg space-y-6 mb-8">
         <h2 className="text-lg text-[#4169e1] mb-4">Klantgegevens</h2>
+
+        {/* Logo Section */}
+        <div className="flex items-start mb-6 pb-6 border-b border-gray-700">
+          <label className="w-48 text-right mr-4 mt-2">Logo:</label>
+          <div className="flex-1">
+            {logoPreview ? (
+              <div className="relative inline-block">
+                <img
+                  src={logoPreview}
+                  alt="Client logo"
+                  className="h-24 w-auto object-contain bg-white p-2 rounded"
+                />
+                {isEditing && (
+                  <button
+                    onClick={handleRemoveLogo}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-400 mt-2">Geen logo geüpload</p>
+            )}
+            {isEditing && (
+              <div className="mt-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoChange}
+                  className="hidden"
+                  id="logo-upload"
+                />
+                <label
+                  htmlFor="logo-upload"
+                  className="btn-secondary flex items-center space-x-2 cursor-pointer inline-flex bg-[#4169e1] hover:bg-blue-600 transition text-white px-4 py-2 rounded"
+                >
+                  <Upload size={20} />
+                  <span>Upload Logo</span>
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+
         {[
           { label: "Organisatienaam", name: "name" },
           { label: "Bezoekadres Straat", name: "visit_street" },

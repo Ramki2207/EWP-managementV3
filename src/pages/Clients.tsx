@@ -459,6 +459,7 @@ const Clients = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">
+                <th className="table-header text-left">Logo</th>
                 <th className="table-header text-left">Naam</th>
                 <th className="table-header text-left">Status</th>
                 <th className="table-header text-left">Aangemaakt op</th>
@@ -468,11 +469,24 @@ const Clients = () => {
             </thead>
             <tbody>
               {filteredClients.map((client) => (
-                <tr 
-                  key={client.id} 
+                <tr
+                  key={client.id}
                   className="table-row cursor-pointer"
                   onClick={() => navigate(`/client/${client.id}`)}
                 >
+                  <td className="py-4">
+                    {client.logo_url ? (
+                      <img
+                        src={client.logo_url}
+                        alt={`${client.name} logo`}
+                        className="h-10 w-auto object-contain bg-white p-1 rounded"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 bg-gray-700 rounded flex items-center justify-center">
+                        <Building size={20} className="text-gray-500" />
+                      </div>
+                    )}
+                  </td>
                   <td className="py-4">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
