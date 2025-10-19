@@ -518,8 +518,20 @@ const ClientPortal = () => {
                 <User size={24} className="text-purple-400" />
                 <h2 className="text-xl font-semibent text-white">Contactgegevens</h2>
               </div>
-              
+
               <div className="space-y-4">
+                {portalData?.clients?.logo_url && (
+                  <div className="flex justify-center mb-4">
+                    <img
+                      src={portalData.clients.logo_url}
+                      alt={portalData.clients.name || 'Client logo'}
+                      className="max-h-20 w-auto object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Bedrijf</label>
                   <p className="text-white font-medium">{portalData?.clients?.name || portalData?.projects?.client}</p>

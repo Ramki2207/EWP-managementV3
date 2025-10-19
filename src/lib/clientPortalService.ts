@@ -237,7 +237,8 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
             name,
             visit_street,
             visit_city,
-            visit_postcode
+            visit_postcode,
+            logo_url
           )
         `)
         .eq('access_code', accessCode)
