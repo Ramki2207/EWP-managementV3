@@ -330,7 +330,7 @@ const ClientPortal = () => {
       case 'preparing':
         return 'Wordt voorbereid';
       case 'ready':
-        return 'Gereed voor levering';
+        return 'Gereed voor facturatie';
       case 'in_transit':
         return 'Onderweg';
       case 'delivered':
@@ -502,7 +502,7 @@ const ClientPortal = () => {
                   <label className="block text-sm text-gray-400 mb-1">Status</label>
                   <div className="flex items-center space-x-2">
                     <CheckCircle size={16} className="text-green-400" />
-                    <span className="text-green-400 font-medium">Gereed voor levering</span>
+                    <span className="text-green-400 font-medium">Gereed voor facturatie</span>
                   </div>
                 </div>
                 <div className="col-span-2">

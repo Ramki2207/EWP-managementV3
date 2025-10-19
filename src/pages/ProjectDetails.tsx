@@ -12,6 +12,7 @@ import DeliveryNotificationManager from '../components/DeliveryNotificationManag
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import ProductionTracking from '../components/ProductionTracking';
 import PreTestingApproval from '../components/PreTestingApproval';
+import InvoiceReportPDF from '../components/InvoiceReportPDF';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -666,14 +667,25 @@ const ProjectDetails = () => {
               })}
             </div>
 
-            {/* Delivery Notification Section - Only show when status is "Levering" */}
-            {project?.status?.toLowerCase() === 'levering' && (
-              <div className="mt-8 pt-6 border-t border-gray-700">
-                <h3 className="text-lg font-semibold text-green-400 mb-4">🚚 Levering Proces</h3>
-                <DeliveryNotificationManager 
-                  project={project}
-                  onStatusChange={loadProject}
-                />
+            {/* Invoice & Delivery Section - Only show when status is "Gereed voor facturatie" */}
+            {project?.status === 'Gereed voor facturatie' && (
+              <div className="mt-8 pt-6 border-t border-gray-700 space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-400 mb-4">💼 Factuurrapport</h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Download een overzicht van alle gewerkte uren en gebruikte materialen voor dit project.
+                    Dit rapport is bedoeld voor administratie en facturatie.
+                  </p>
+                  <InvoiceReportPDF project={project} />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-green-400 mb-4">🚚 Levering Proces</h3>
+                  <DeliveryNotificationManager
+                    project={project}
+                    onStatusChange={loadProject}
+                  />
+                </div>
               </div>
             )}
           </div>
