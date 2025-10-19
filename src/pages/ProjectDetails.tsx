@@ -613,7 +613,7 @@ const ProjectDetails = () => {
                   label: "Status",
                   field: "status",
                   type: "select",
-                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
+                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Gereed voor facturatie", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
                 },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
               ].map((field) => {
