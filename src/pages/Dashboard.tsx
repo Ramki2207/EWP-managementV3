@@ -1261,7 +1261,7 @@ const Dashboard = () => {
           <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
             <h3 className="font-semibold text-purple-400 mb-4">Status Verdeling</h3>
             <div className="space-y-3">
-              {['Intake', 'Offerte', 'Order', 'Testen', 'Gereed voor facturatie', 'Opgeleverd'].map((status) => {
+              {['Intake', 'Offerte', 'Order', 'Testen', 'Levering', 'Gereed voor facturatie', 'Opgeleverd', 'Verloren'].map((status) => {
                 const count = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase()).length;
                 const percentage = projects.length > 0 ? (count / projects.length) * 100 : 0;
                 const colors = {
@@ -1269,8 +1269,10 @@ const Dashboard = () => {
                   'Offerte': 'from-yellow-500 to-yellow-400',
                   'Order': 'from-indigo-500 to-indigo-400',
                   'Testen': 'from-orange-500 to-orange-400',
+                  'Levering': 'from-teal-500 to-teal-400',
                   'Gereed voor facturatie': 'from-cyan-500 to-cyan-400',
-                  'Opgeleverd': 'from-green-500 to-green-400'
+                  'Opgeleverd': 'from-green-500 to-green-400',
+                  'Verloren': 'from-red-500 to-red-400'
                 };
                 
                 return (

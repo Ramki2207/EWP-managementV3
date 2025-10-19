@@ -43,7 +43,7 @@ class ClientPortalService {
     return `${baseUrl}/client-portal/${accessCode}`;
   }
 
-  // Create client portal when project status changes to "Gereed voor facturatie"
+  // Create client portal when project status changes to "Levering"
   async createClientPortal(projectId: string, clientId?: string, sharedFolders?: string[]): Promise<ClientPortal> {
     try {
       // First check if portal already exists for this project

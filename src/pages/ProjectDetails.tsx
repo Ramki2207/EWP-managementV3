@@ -613,7 +613,7 @@ const ProjectDetails = () => {
                   label: "Status",
                   field: "status",
                   type: "select",
-                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Gereed voor facturatie", "Gereed voor oplevering", "Opgeleverd", "Verloren"]
+                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor facturatie", "Opgeleverd", "Verloren"]
                 },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
               ].map((field) => {
@@ -667,25 +667,26 @@ const ProjectDetails = () => {
               })}
             </div>
 
-            {/* Invoice & Delivery Section - Only show when status is "Gereed voor facturatie" */}
-            {project?.status === 'Gereed voor facturatie' && (
-              <div className="mt-8 pt-6 border-t border-gray-700 space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-400 mb-4">💼 Factuurrapport</h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Download een overzicht van alle gewerkte uren en gebruikte materialen voor dit project.
-                    Dit rapport is bedoeld voor administratie en facturatie.
-                  </p>
-                  <InvoiceReportPDF project={project} />
-                </div>
+            {/* Delivery Notification Section - Only show when status is "Levering" */}
+            {project?.status === 'Levering' && (
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-semibold text-green-400 mb-4">🚚 Levering Proces</h3>
+                <DeliveryNotificationManager
+                  project={project}
+                  onStatusChange={loadProject}
+                />
+              </div>
+            )}
 
-                <div>
-                  <h3 className="text-lg font-semibold text-green-400 mb-4">🚚 Levering Proces</h3>
-                  <DeliveryNotificationManager
-                    project={project}
-                    onStatusChange={loadProject}
-                  />
-                </div>
+            {/* Invoice Report Section - Only show when status is "Gereed voor facturatie" */}
+            {project?.status === 'Gereed voor facturatie' && (
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-semibold text-blue-400 mb-4">💼 Factuurrapport</h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  Download een overzicht van alle gewerkte uren en gebruikte materialen voor dit project.
+                  Dit rapport is bedoeld voor administratie en facturatie.
+                </p>
+                <InvoiceReportPDF project={project} />
               </div>
             )}
           </div>
