@@ -191,12 +191,18 @@ export default function MyWorksheet() {
   };
 
   const saveWeekstaat = async (submit = false) => {
-    if (!selectedWeekstaat) return;
+    console.log('saveWeekstaat called with submit:', submit);
+    if (!selectedWeekstaat) {
+      console.log('No selected weekstaat');
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) throw new Error('Not authenticated');
+
+      console.log('User authenticated:', authUser.id);
 
       const weekstaatData = {
         user_id: authUser.id,
@@ -207,33 +213,46 @@ export default function MyWorksheet() {
         updated_at: new Date().toISOString()
       };
 
+      console.log('Weekstaat data:', weekstaatData);
+
       let weekstaatId = selectedWeekstaat.id;
 
       if (weekstaatId) {
+        console.log('Updating existing weekstaat:', weekstaatId);
         const { error } = await supabase
           .from('weekstaten')
           .update(weekstaatData)
           .eq('id', weekstaatId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
       } else {
+        console.log('Creating new weekstaat');
         const { data, error } = await supabase
           .from('weekstaten')
           .insert([weekstaatData])
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
         weekstaatId = data.id;
+        console.log('New weekstaat created with id:', weekstaatId);
         setSelectedWeekstaat({ ...selectedWeekstaat, id: weekstaatId });
       }
 
+      console.log('Deleting old entries for weekstaat:', weekstaatId);
       await supabase
         .from('weekstaat_entries')
         .delete()
         .eq('weekstaat_id', weekstaatId);
 
       if (entries.length > 0) {
+        console.log('Inserting entries:', entries.length);
         const entriesData = entries.map(entry => ({
           weekstaat_id: weekstaatId,
           activity_code: entry.activity_code,
@@ -248,29 +267,43 @@ export default function MyWorksheet() {
           saturday: entry.saturday || 0,
           sunday: entry.sunday || 0
         }));
+        console.log('Entries data to insert:', entriesData);
         const { error: entriesError } = await supabase.from('weekstaat_entries').insert(entriesData);
-        if (entriesError) throw entriesError;
+        if (entriesError) {
+          console.error('Entries insert error:', entriesError);
+          throw entriesError;
+        }
+        console.log('Entries inserted successfully');
       }
 
       toast.success(submit ? 'Weekstaat ingediend!' : 'Weekstaat opgeslagen!');
-      loadWeekstaten();
+      await loadWeekstaten();
       if (submit) {
         setSelectedWeekstaat(null);
         setEntries([]);
       }
     } catch (error: any) {
+      console.error('Save weekstaat error:', error);
       toast.error(error.message || 'Er is een fout opgetreden');
     } finally {
       setLoading(false);
     }
   };
 
-  const submitWeekstaat = () => {
+  const submitWeekstaat = async () => {
+    console.log('Submit button clicked');
+    console.log('Entries:', entries);
+
     if (entries.length === 0) {
       toast.error('Voeg minimaal één activiteit toe');
       return;
     }
-    saveWeekstaat(true);
+
+    try {
+      await saveWeekstaat(true);
+    } catch (error) {
+      console.error('Submit error:', error);
+    }
   };
 
   if (!selectedWeekstaat) {
@@ -357,13 +390,21 @@ export default function MyWorksheet() {
         </div>
         {isDraft && (
           <div className="flex space-x-2">
-            <button onClick={() => saveWeekstaat(false)} className="btn-secondary flex items-center space-x-2">
+            <button
+              onClick={() => saveWeekstaat(false)}
+              disabled={loading}
+              className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Save size={20} />
-              <span>Opslaan</span>
+              <span>{loading ? 'Bezig...' : 'Opslaan'}</span>
             </button>
-            <button onClick={submitWeekstaat} className="btn-primary flex items-center space-x-2">
+            <button
+              onClick={submitWeekstaat}
+              disabled={loading}
+              className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Send size={20} />
-              <span>Indienen</span>
+              <span>{loading ? 'Bezig...' : 'Indienen'}</span>
             </button>
           </div>
         )}
