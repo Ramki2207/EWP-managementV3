@@ -459,7 +459,7 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
                   minWidth: '130px',
                   textAlign: 'center',
                   fontSize: '24px'
-                }}>65</span>
+                }}>{verdeler.ip_waarde || verdeler.ipWaarde || '65'}</span>
               </div>
 
               {/* kA Waarde */}

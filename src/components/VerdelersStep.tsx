@@ -56,6 +56,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     voedingCustom: '',
     stuurspanning: '',
     kaWaarde: '',
+    ipWaarde: '65',
     bouwjaar: new Date().getFullYear().toString(),
     status: 'Offerte',
     fabrikant: '',
@@ -124,6 +125,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         stuurspanning: dist.stuurspanning,
         kaWaarde: dist.ka_waarde,
         ka_waarde: dist.ka_waarde, // Keep snake_case for compatibility
+        ipWaarde: dist.ip_waarde || '65',
+        ip_waarde: dist.ip_waarde || '65', // Keep snake_case for compatibility
         bouwjaar: dist.bouwjaar,
         status: dist.status,
         fabrikant: dist.fabrikant,
@@ -264,6 +267,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       voedingCustom: isCustomVoeding ? verdeler.voeding : '',
       stuurspanning: verdeler.stuurspanning || '',
       kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde || '',
+      ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde || '65',
       bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
       status: verdeler.status,
       fabrikant: verdeler.fabrikant,
@@ -436,6 +440,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             voeding: finalVoeding,
             stuurspanning: verdelerData.stuurspanning,
             kaWaarde: verdelerData.kaWaarde,
+            ipWaarde: verdelerData.ipWaarde || '65',
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -468,6 +473,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             stuurspanning: verdelerData.stuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ka_waarde: verdelerData.kaWaarde, // Keep snake_case
+            ipWaarde: verdelerData.ipWaarde || '65',
+            ip_waarde: verdelerData.ipWaarde || '65', // Keep snake_case
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
             fabrikant: verdelerData.fabrikant,
@@ -1399,6 +1406,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       placeholder="Bijv. 25"
                     />
                     <p className="text-xs text-gray-500 mt-1">Waarde wordt automatisch aangevuld met 'kA'</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">IP-Waarde</label>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={verdelerData.ipWaarde}
+                      onChange={(e) => handleInputChange('ipWaarde', e.target.value)}
+                      placeholder="Bijv. 65"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Standaard waarde is 65</p>
                   </div>
 
                   <div>
