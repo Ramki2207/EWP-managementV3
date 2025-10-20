@@ -217,33 +217,24 @@ export default function MyWorksheet() {
 
       let weekstaatId = selectedWeekstaat.id;
 
-      if (weekstaatId) {
-        console.log('Updating existing weekstaat:', weekstaatId);
-        const { error } = await supabase
-          .from('weekstaten')
-          .update(weekstaatData)
-          .eq('id', weekstaatId);
+      // Use upsert to handle both insert and update cases
+      console.log('Upserting weekstaat');
+      const { data, error } = await supabase
+        .from('weekstaten')
+        .upsert(weekstaatId ? { ...weekstaatData, id: weekstaatId } : weekstaatData, {
+          onConflict: 'user_id,week_number,year'
+        })
+        .select()
+        .single();
 
-        if (error) {
-          console.error('Update error:', error);
-          throw error;
-        }
-      } else {
-        console.log('Creating new weekstaat');
-        const { data, error } = await supabase
-          .from('weekstaten')
-          .insert([weekstaatData])
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Insert error:', error);
-          throw error;
-        }
-        weekstaatId = data.id;
-        console.log('New weekstaat created with id:', weekstaatId);
-        setSelectedWeekstaat({ ...selectedWeekstaat, id: weekstaatId });
+      if (error) {
+        console.error('Upsert error:', error);
+        throw error;
       }
+
+      weekstaatId = data.id;
+      console.log('Weekstaat upserted with id:', weekstaatId);
+      setSelectedWeekstaat({ ...selectedWeekstaat, id: weekstaatId });
 
       console.log('Deleting old entries for weekstaat:', weekstaatId);
       await supabase
