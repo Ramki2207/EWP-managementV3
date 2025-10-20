@@ -50,7 +50,7 @@ export default function WorksheetManagement() {
       if (error) throw error;
       setWorksheets(data || []);
     } catch (error: any) {
-      toast.error('Fout bij het laden van werkbonnen');
+      toast.error('Fout bij het laden van weekstaten');
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export default function WorksheetManagement() {
 
       if (error) throw error;
 
-      toast.success(status === 'approved' ? 'Werkbon goedgekeurd!' : 'Werkbon afgekeurd!');
+      toast.success(status === 'approved' ? 'Weekstaat goedgekeurd!' : 'Weekstaat afgekeurd!');
       loadWorksheets();
       setSelectedWorksheet(null);
     } catch (error: any) {
@@ -173,7 +173,7 @@ export default function WorksheetManagement() {
             >
               Terug
             </button>
-            <h1 className="text-3xl font-bold">Werkbon Details</h1>
+            <h1 className="text-3xl font-bold">Weekstaat Details</h1>
           </div>
           {selectedWorksheet.status === 'submitted' && (
             <div className="flex space-x-2">
@@ -197,7 +197,7 @@ export default function WorksheetManagement() {
 
         <div className="card p-6 mb-6">
           <div className="flex justify-between items-start mb-4">
-            <h2 className="text-xl font-semibold">Werkbon Informatie</h2>
+            <h2 className="text-xl font-semibold">Weekstaat Informatie</h2>
             {getStatusBadge(selectedWorksheet.status)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -354,7 +354,7 @@ export default function WorksheetManagement() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Werkbonnen Beheer</h1>
+        <h1 className="text-3xl font-bold">Weekstaat Beheer</h1>
       </div>
 
       <div className="card p-6 mb-6">
@@ -448,7 +448,7 @@ export default function WorksheetManagement() {
       {filteredWorksheets.length === 0 && (
         <div className="card p-12 text-center">
           <FileText size={64} className="mx-auto text-gray-600 mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Geen werkbonnen gevonden</h2>
+          <h2 className="text-xl font-semibold mb-2">Geen weekstaten gevonden</h2>
           <p className="text-gray-400">Pas de filters aan om resultaten te zien</p>
         </div>
       )}

@@ -286,7 +286,7 @@ export default function MyWorksheet() {
         await supabase.from('worksheet_materials').insert(materialsData);
       }
 
-      toast.success(submit ? 'Werkbon ingediend!' : 'Werkbon opgeslagen!');
+      toast.success(submit ? 'Weekstaat ingediend!' : 'Weekstaat opgeslagen!');
       loadWorksheets();
       if (submit) {
         setSelectedWorksheet(null);
@@ -312,10 +312,10 @@ export default function MyWorksheet() {
     return (
       <div className="p-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Mijn Werkbonnen</h1>
+          <h1 className="text-3xl font-bold">Mijn Weekstaten</h1>
           <button onClick={createNewWorksheet} className="btn-primary flex items-center space-x-2">
             <Plus size={20} />
-            <span>Nieuwe Werkbon</span>
+            <span>Nieuwe Weekstaat</span>
           </button>
         </div>
 
@@ -359,10 +359,10 @@ export default function MyWorksheet() {
         {worksheets.length === 0 && (
           <div className="card p-12 text-center">
             <FileText size={64} className="mx-auto text-gray-600 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Geen werkbonnen</h2>
-            <p className="text-gray-400 mb-6">Maak je eerste werkbon aan om te beginnen</p>
+            <h2 className="text-xl font-semibold mb-2">Geen weekstaten</h2>
+            <p className="text-gray-400 mb-6">Maak je eerste weekstaat aan om te beginnen</p>
             <button onClick={createNewWorksheet} className="btn-primary">
-              Nieuwe Werkbon
+              Nieuwe Weekstaat
             </button>
           </div>
         )}
@@ -385,7 +385,7 @@ export default function MyWorksheet() {
             Terug
           </button>
           <h1 className="text-3xl font-bold">
-            {selectedWorksheet.id ? 'Werkbon Bewerken' : 'Nieuwe Werkbon'}
+            {selectedWorksheet.id ? 'Weekstaat Bewerken' : 'Nieuwe Weekstaat'}
           </h1>
         </div>
         {isDraft && (
@@ -403,7 +403,7 @@ export default function MyWorksheet() {
       </div>
 
       <div className="card p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Werkbon Informatie</h2>
+        <h2 className="text-xl font-semibold mb-4">Weekstaat Informatie</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
             <label className="block text-sm text-gray-400 mb-2">Bonnummer *</label>
