@@ -25,6 +25,8 @@ import { useEnhancedPermissions } from "./hooks/useEnhancedPermissions";
 import Help from "./pages/Help";
 import ClientPortal from "./pages/ClientPortal";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
+import MyWorksheet from "./pages/MyWorksheet";
+import WorksheetManagement from "./pages/WorksheetManagement";
 import { requestNotificationPermission, subscribeToNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
 
@@ -87,6 +89,8 @@ const App = () => {
             <Route path="/account" element={<PermissionRoute><Account /></PermissionRoute>} />
             <Route path="/meldingen" element={<PermissionRoute><Meldingen /></PermissionRoute>} />
             <Route path="/help" element={<PermissionRoute><Help /></PermissionRoute>} />
+            <Route path="/my-worksheet" element={<PermissionRoute><MyWorksheet /></PermissionRoute>} />
+            <Route path="/worksheet-management" element={<PermissionRoute requiredPermission={{ module: 'worksheets', permission: 'read' }}><WorksheetManagement /></PermissionRoute>} />
             <Route path="/maintenance-report" element={<MaintenanceReport />} />
             <Route path="/client-portal/:accessCode" element={<ClientPortal />} />
             <Route path="*" element={<Navigate to="/404" replace />} />

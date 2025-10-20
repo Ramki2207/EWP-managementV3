@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Users, Bell, Upload, LayoutDashboard, UserCircle,
   HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe,
-  Calendar, Crown, Package, Truck, Wrench, DollarSign
+  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList
 } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
@@ -16,6 +16,8 @@ const navItems = [
   { path: '/verdelers', icon: Server, label: 'Verdelers', module: 'verdelers' as SystemModule },
   { path: '/clients', icon: Building, label: 'Klanten', module: 'clients' as SystemModule },
   { path: '/meldingen', icon: Bell, label: 'Meldingen', module: 'meldingen' as SystemModule },
+  { path: '/my-worksheet', icon: FileText, label: 'Mijn Werkbon', module: undefined },
+  { path: '/worksheet-management', icon: ClipboardList, label: 'Werkbonnen Beheer', module: 'worksheets' as SystemModule },
   { path: '/uploads', icon: Upload, label: 'Uploads', module: 'uploads' as SystemModule },
   { path: '/gebruikers', icon: Users, label: 'Gebruikers', module: 'gebruikers' as SystemModule },
   { path: '/access-codes', icon: Key, label: 'Toegangscodes', module: 'access_codes' as SystemModule },
