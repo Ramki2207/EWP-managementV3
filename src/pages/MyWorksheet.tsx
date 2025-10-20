@@ -61,26 +61,26 @@ export default function MyWorksheet() {
   }, []);
 
   const loadUser = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUserId) return;
 
     const { data: userData } = await supabase
       .from('users')
       .select('*')
-      .eq('id', authUser.id)
+      .eq('id', currentUserId)
       .maybeSingle();
 
     setUser(userData);
   };
 
   const loadWeekstaten = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUserId) return;
 
     const { data, error } = await supabase
       .from('weekstaten')
       .select('*')
-      .eq('user_id', authUser.id)
+      .eq('user_id', currentUserId)
       .order('year', { ascending: false })
       .order('week_number', { ascending: false });
 
@@ -199,13 +199,13 @@ export default function MyWorksheet() {
 
     setLoading(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (!authUser) throw new Error('Not authenticated');
+      const currentUserId = localStorage.getItem('currentUserId');
+      if (!currentUserId) throw new Error('Not authenticated');
 
-      console.log('User authenticated:', authUser.id);
+      console.log('User authenticated:', currentUserId);
 
       const weekstaatData = {
-        user_id: authUser.id,
+        user_id: currentUserId,
         week_number: selectedWeekstaat.week_number,
         year: selectedWeekstaat.year,
         status: submit ? 'submitted' : 'draft',
