@@ -32,7 +32,6 @@ interface WeekstaatEntry {
   activity_description: string;
   workorder_number: string;
   overtime_start_time: string;
-  overtime_end_time: string;
   monday: number;
   tuesday: number;
   wednesday: number;
@@ -136,7 +135,6 @@ export default function MyWorksheet() {
       activity_description: 'Montage verdelers',
       workorder_number: '',
       overtime_start_time: '',
-      overtime_end_time: '',
       monday: 0,
       tuesday: 0,
       wednesday: 0,
@@ -238,9 +236,20 @@ export default function MyWorksheet() {
       if (entries.length > 0) {
         const entriesData = entries.map(entry => ({
           weekstaat_id: weekstaatId,
-          ...entry
+          activity_code: entry.activity_code,
+          activity_description: entry.activity_description,
+          workorder_number: entry.workorder_number || null,
+          overtime_start_time: entry.overtime_start_time || null,
+          monday: entry.monday || 0,
+          tuesday: entry.tuesday || 0,
+          wednesday: entry.wednesday || 0,
+          thursday: entry.thursday || 0,
+          friday: entry.friday || 0,
+          saturday: entry.saturday || 0,
+          sunday: entry.sunday || 0
         }));
-        await supabase.from('weekstaat_entries').insert(entriesData);
+        const { error: entriesError } = await supabase.from('weekstaat_entries').insert(entriesData);
+        if (entriesError) throw entriesError;
       }
 
       toast.success(submit ? 'Weekstaat ingediend!' : 'Weekstaat opgeslagen!');
