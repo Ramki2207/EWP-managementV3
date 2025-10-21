@@ -871,6 +871,28 @@ export const dataService = {
     }
   },
 
+  async checkRequiredDocuments(projectId: string, distributorIds: string[]) {
+    try {
+      const requiredFolders = ['Verdeler aanzicht', 'Installatie schema'];
+      const results: Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }> = {};
+
+      for (const distributorId of distributorIds) {
+        const verdelerAanzichtDocs = await this.getDocuments(projectId, distributorId, 'Verdeler aanzicht');
+        const installatieSchemaDocsResult = await this.getDocuments(projectId, distributorId, 'Installatie schema');
+
+        results[distributorId] = {
+          verdelerAanzicht: (verdelerAanzichtDocs?.length || 0) > 0,
+          installatieSchema: (installatieSchemaDocsResult?.length || 0) > 0
+        };
+      }
+
+      return results;
+    } catch (err) {
+      console.error('Error checking required documents:', err);
+      throw new Error(`Failed to check required documents: ${getErrorMessage(err)}`);
+    }
+  },
+
   // Clients
   async getClients() {
     try {

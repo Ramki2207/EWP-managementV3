@@ -31,6 +31,9 @@ const ProjectDetails = () => {
   const [showWerkvoorbereidingModal, setShowWerkvoorbereidingModal] = useState(false);
   const [tempProjectDeliveryDate, setTempProjectDeliveryDate] = useState('');
   const [tempVerdelerDates, setTempVerdelerDates] = useState<{[key: string]: string}>({});
+  const [documentStatus, setDocumentStatus] = useState<Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }>>({});
+  const [checkingDocuments, setCheckingDocuments] = useState(false);
+  const [uploadingFor, setUploadingFor] = useState<{ distributorId: string; folder: string } | null>(null);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -252,7 +255,7 @@ const ProjectDetails = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = async (field: string, value: string) => {
     // Special handling for status change from Order to Werkvoorbereiding
     if (field === 'status' && value === 'Werkvoorbereiding' && editedProject?.status === 'Order') {
       setTempProjectDeliveryDate(editedProject?.expected_delivery_date || '');
@@ -261,6 +264,20 @@ const ProjectDetails = () => {
         verdelerDates[v.id] = v.gewenste_lever_datum || '';
       });
       setTempVerdelerDates(verdelerDates);
+
+      // Check document status for all verdelers
+      setCheckingDocuments(true);
+      try {
+        const distributorIds = editedProject?.distributors?.map((d: any) => d.id) || [];
+        const docStatus = await dataService.checkRequiredDocuments(editedProject.id, distributorIds);
+        setDocumentStatus(docStatus);
+      } catch (error) {
+        console.error('Error checking documents:', error);
+        toast.error('Fout bij controleren van documenten');
+      } finally {
+        setCheckingDocuments(false);
+      }
+
       setShowWerkvoorbereidingModal(true);
       return;
     }
@@ -318,6 +335,16 @@ const ProjectDetails = () => {
 
   const handleWerkvoorbereidingConfirm = async () => {
     try {
+      // Check if all required documents are uploaded
+      const allDocsUploaded = Object.values(documentStatus).every(
+        status => status.verdelerAanzicht && status.installatieSchema
+      );
+
+      if (!allDocsUploaded) {
+        toast.error('Upload eerst alle verplichte documenten (Verdeler aanzicht en Installatie schema) voor elke verdeler!');
+        return;
+      }
+
       const updateData = {
         status: 'Werkvoorbereiding',
         expectedDeliveryDate: tempProjectDeliveryDate
@@ -1005,19 +1032,91 @@ const ProjectDetails = () => {
                 </div>
               )}
 
-              {/* Document Upload Reminder */}
-              <div className="card p-4 bg-yellow-500/10 border border-yellow-500/30">
-                <h3 className="text-lg font-semibold text-yellow-400 mb-4">⚠️ Documentatie Controle</h3>
-                <p className="text-gray-300 mb-3">
-                  Controleer of de volgende documenten zijn geüpload:
-                </p>
-                <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
-                  <li>Verdeleraanzichten</li>
-                  <li>Installatie schema's</li>
-                </ul>
-                <p className="text-sm text-gray-400 mt-4">
-                  U kunt deze documenten uploaden via het "Documenten" tabblad.
-                </p>
+              {/* Document Upload Section */}
+              <div className="card p-4">
+                <h3 className="text-lg font-semibold text-white mb-4">📄 Verplichte Documentatie</h3>
+                {checkingDocuments ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto"></div>
+                    <p className="text-gray-400 mt-2">Documenten controleren...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {editedProject?.distributors?.map((verdeler: any) => {
+                      const status = documentStatus[verdeler.id] || { verdelerAanzicht: false, installatieSchema: false };
+                      const allComplete = status.verdelerAanzicht && status.installatieSchema;
+
+                      return (
+                        <div key={verdeler.id} className={`p-4 rounded-lg border ${allComplete ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'}`}>
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-white">
+                                {verdeler.distributorId || verdeler.distributor_id} - {verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'}
+                              </h4>
+                            </div>
+                            {allComplete && (
+                              <span className="text-green-400 text-sm flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                </svg>
+                                Documenten compleet
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            {/* Verdeler aanzicht */}
+                            <div className={`p-3 rounded border ${status.verdelerAanzicht ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800 border-gray-700'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-300">Verdeler aanzicht</span>
+                                {status.verdelerAanzicht ? (
+                                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              {!status.verdelerAanzicht && (
+                                <button
+                                  onClick={() => setUploadingFor({ distributorId: verdeler.id, folder: 'Verdeler aanzicht' })}
+                                  className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 w-full"
+                                >
+                                  Upload
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Installatie schema */}
+                            <div className={`p-3 rounded border ${status.installatieSchema ? 'bg-green-500/10 border-green-500/30' : 'bg-gray-800 border-gray-700'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-300">Installatie schema</span>
+                                {status.installatieSchema ? (
+                                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              {!status.installatieSchema && (
+                                <button
+                                  onClick={() => setUploadingFor({ distributorId: verdeler.id, folder: 'Installatie schema' })}
+                                  className="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 w-full"
+                                >
+                                  Upload
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1033,6 +1132,50 @@ const ProjectDetails = () => {
                 className="btn-primary"
               >
                 Bevestigen en doorgaan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Upload Modal */}
+      {uploadingFor && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-700">
+              <h2 className="text-xl font-bold text-white">Upload Document</h2>
+              <p className="text-gray-400 mt-2">
+                {uploadingFor.folder}
+              </p>
+            </div>
+
+            <div className="p-6">
+              <DocumentViewer
+                projectId={editedProject.id}
+                distributorId={uploadingFor.distributorId}
+                folder={uploadingFor.folder}
+              />
+            </div>
+
+            <div className="p-6 border-t border-gray-700 flex justify-end space-x-4">
+              <button
+                onClick={async () => {
+                  setUploadingFor(null);
+                  // Refresh document status
+                  setCheckingDocuments(true);
+                  try {
+                    const distributorIds = editedProject?.distributors?.map((d: any) => d.id) || [];
+                    const docStatus = await dataService.checkRequiredDocuments(editedProject.id, distributorIds);
+                    setDocumentStatus(docStatus);
+                  } catch (error) {
+                    console.error('Error refreshing document status:', error);
+                  } finally {
+                    setCheckingDocuments(false);
+                  }
+                }}
+                className="btn-primary"
+              >
+                Sluiten en vernieuwen
               </button>
             </div>
           </div>
