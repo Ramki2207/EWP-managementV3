@@ -180,6 +180,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   }, [showVerdelerForm, editingVerdeler, projectData?.expectedDeliveryDate]);
 
+  // Update selectedVerdeler when verdelers list changes (to refresh details view after save)
+  useEffect(() => {
+    if (showVerdelerDetails && selectedVerdeler) {
+      const updatedVerdeler = verdelers.find(v => v.id === selectedVerdeler.id);
+      if (updatedVerdeler) {
+        setSelectedVerdeler(updatedVerdeler);
+      }
+    }
+  }, [verdelers]);
+
   const loadUsers = async () => {
     try {
       const localUsers = JSON.parse(localStorage.getItem('users') || '[]');
@@ -506,7 +516,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         await loadVerdelersFromDatabase();
         await loadAccessCodes(); // Also reload access codes
       }
-      
+
       handleCancelForm();
     } catch (error) {
       console.error('Error saving verdeler:', error);
