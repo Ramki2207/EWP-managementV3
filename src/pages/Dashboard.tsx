@@ -9,6 +9,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
+import HoursTrafficLight from '../components/HoursTrafficLight';
 
 interface Project {
   id: string;
@@ -929,6 +930,7 @@ const Dashboard = () => {
                 <th className="table-header text-left">Status</th>
                 <th className="table-header text-left">Vergrendeling</th>
                 <th className="table-header text-left">Verdelers</th>
+                <th className="table-header text-left">Uren</th>
                 <th className="table-header text-left">Omschrijving</th>
                 <th className="table-header text-left">Acties</th>
               </tr>
@@ -991,6 +993,9 @@ const Dashboard = () => {
                       </div>
                       <span className="text-sm text-gray-400">verdelers</span>
                     </div>
+                  </td>
+                  <td className="py-4" onClick={(e) => e.stopPropagation()}>
+                    <HoursTrafficLight projectId={project.id} />
                   </td>
                   <td className="py-4 max-w-xs">
                     <p className="text-sm text-gray-300 truncate" title={project.description}>

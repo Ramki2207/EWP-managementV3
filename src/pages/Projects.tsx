@@ -9,6 +9,7 @@ import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
+import HoursTrafficLight from '../components/HoursTrafficLight';
 
 // Component to show approval status in project table
 const ProjectApprovalStatus: React.FC<{ project: any }> = ({ project }) => {
@@ -738,6 +739,7 @@ const Projects = () => {
                 <th className="table-header text-left">Status</th>
                 <th className="table-header text-left">Vergrendeling</th>
                 <th className="table-header text-left">Verdelers</th>
+                <th className="table-header text-left">Uren</th>
                 <th className="table-header text-left">Omschrijving</th>
                 <th className="table-header text-right">Acties</th>
               </tr>
@@ -801,6 +803,9 @@ const Projects = () => {
                       </div>
                       <span className="text-sm text-gray-400">verdelers</span>
                     </div>
+                  </td>
+                  <td className="py-4" onClick={(e) => e.stopPropagation()}>
+                    <HoursTrafficLight projectId={project.id} />
                   </td>
                   <td className="py-4 max-w-xs">
                     <p className="text-sm text-gray-300 truncate" title={project.description}>

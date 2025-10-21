@@ -813,7 +813,7 @@ export const dataService = {
         .from('work_entries')
         .delete()
         .eq('id', id);
-      
+
       if (error) {
         console.error('Database error in deleteWorkEntry:', error);
         throw error;
@@ -821,6 +821,53 @@ export const dataService = {
     } catch (err) {
       console.error('Network error in deleteWorkEntry:', err);
       throw new Error(`Failed to delete work entry: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async getProjectHoursData(projectId: string) {
+    try {
+      // Get all distributors for this project with their expected hours
+      const { data: distributors, error: distError } = await supabase
+        .from('distributors')
+        .select('id, expected_hours')
+        .eq('project_id', projectId);
+
+      if (distError) throw distError;
+      if (!distributors || distributors.length === 0) {
+        return { totalExpected: 0, totalWorked: 0, percentage: 0 };
+      }
+
+      // Calculate total expected hours
+      const totalExpected = distributors.reduce((sum, dist) => {
+        return sum + (parseFloat(dist.expected_hours || 0));
+      }, 0);
+
+      // Get all work entries for these distributors
+      const distributorIds = distributors.map(d => d.id);
+      const { data: workEntries, error: workError } = await supabase
+        .from('work_entries')
+        .select('hours')
+        .in('distributor_id', distributorIds);
+
+      if (workError) throw workError;
+
+      // Calculate total worked hours
+      const totalWorked = workEntries?.reduce((sum, entry) => {
+        return sum + (parseFloat(entry.hours || 0));
+      }, 0) || 0;
+
+      // Calculate percentage used
+      const percentage = totalExpected > 0 ? (totalWorked / totalExpected) * 100 : 0;
+
+      return {
+        totalExpected,
+        totalWorked,
+        percentage,
+        remaining: totalExpected - totalWorked
+      };
+    } catch (err) {
+      console.error('Error getting project hours data:', err);
+      throw new Error(`Failed to get project hours data: ${getErrorMessage(err)}`);
     }
   },
 
