@@ -68,15 +68,21 @@ const DeliveryChecklist: React.FC<DeliveryChecklistProps> = ({ project, onConfir
         }
 
         try {
-          // Upload to project documents with folder "Verzend foto's"
-          const result = await dataService.uploadDocument({
+          // Upload file to storage
+          const storagePath = await dataService.uploadFileToStorage(file, project.id, null, 'Verzend foto\'s');
+
+          // Create document record in database
+          await dataService.createDocument({
             projectId: project.id,
             distributorId: null,
             folder: 'Verzend foto\'s',
-            file
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            storagePath: storagePath
           });
 
-          return result.storage_path;
+          return storagePath;
         } catch (error) {
           console.error('Error uploading file:', error);
           toast.error(`Fout bij uploaden van ${file.name}`);
