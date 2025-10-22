@@ -13,6 +13,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import ProductionTracking from '../components/ProductionTracking';
 import PreTestingApproval from '../components/PreTestingApproval';
 import InvoiceReportPDF from '../components/InvoiceReportPDF';
+import DeliveryChecklist from '../components/DeliveryChecklist';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -34,6 +35,7 @@ const ProjectDetails = () => {
   const [documentStatus, setDocumentStatus] = useState<Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }>>({});
   const [checkingDocuments, setCheckingDocuments] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<{ distributorId: string; folder: string } | null>(null);
+  const [showDeliveryChecklist, setShowDeliveryChecklist] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -292,6 +294,12 @@ const ProjectDetails = () => {
       // If already approved, allow direct status change
     }
 
+    // Special handling for status change to Levering
+    if (field === 'status' && value === 'Levering' && editedProject?.status !== 'Levering') {
+      setShowDeliveryChecklist(true);
+      return;
+    }
+
     setEditedProject({
       ...editedProject,
       [field]: value
@@ -382,6 +390,34 @@ const ProjectDetails = () => {
 
   const handleWerkvoorbereidingCancel = () => {
     setShowWerkvoorbereidingModal(false);
+  };
+
+  const handleDeliveryChecklistConfirm = async () => {
+    try {
+      // Update project status to Levering
+      const updateData = {
+        status: 'Levering'
+      };
+
+      await dataService.updateProject(editedProject.id, updateData);
+
+      const updatedProject = {
+        ...editedProject,
+        status: 'Levering'
+      };
+
+      setProject(updatedProject);
+      setEditedProject(updatedProject);
+      setShowDeliveryChecklist(false);
+      toast.success('Project status bijgewerkt naar Levering!');
+    } catch (error) {
+      console.error('Error updating to Levering:', error);
+      toast.error('Er is een fout opgetreden bij het bijwerken van de status');
+    }
+  };
+
+  const handleDeliveryChecklistCancel = () => {
+    setShowDeliveryChecklist(false);
   };
 
   const handleVerdelersChange = (verdelers: any[]) => {
@@ -1180,6 +1216,15 @@ const ProjectDetails = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Delivery Checklist Modal */}
+      {showDeliveryChecklist && editedProject && (
+        <DeliveryChecklist
+          project={editedProject}
+          onConfirm={handleDeliveryChecklistConfirm}
+          onCancel={handleDeliveryChecklistCancel}
+        />
       )}
     </div>
   );

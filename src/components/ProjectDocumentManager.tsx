@@ -26,6 +26,7 @@ const projectLevelFolders = [
   'Offerte',
   'Opdracht',
   'Ondersteuning',
+  'Verzend foto\'s',
 ];
 
 const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project }) => {
