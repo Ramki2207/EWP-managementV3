@@ -19,6 +19,7 @@ export default function Personeelsbeheer() {
   const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [vacationRequests, setVacationRequests] = useState<any[]>([]);
   const [workEntries, setWorkEntries] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -46,26 +47,40 @@ export default function Personeelsbeheer() {
   };
 
   const loadWeekstaten = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('weekstaten')
       .select(`
         *,
         user:users(id, name, email)
       `)
       .order('created_at', { ascending: false });
-    
+
+    if (error) {
+      console.error('Error loading weekstaten:', error);
+      toast.error('Fout bij laden weekstaten');
+      return;
+    }
+
+    console.log('Loaded weekstaten:', data);
     setWeekstaten(data || []);
   };
 
   const loadLeaveRequests = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('leave_requests')
       .select(`
         *,
         user:users(id, name, email)
       `)
       .order('created_at', { ascending: false });
-    
+
+    if (error) {
+      console.error('Error loading leave requests:', error);
+      toast.error('Fout bij laden verlofaanvragen');
+      return;
+    }
+
+    console.log('Loaded leave requests:', data);
     setLeaveRequests(data || []);
   };
 
@@ -86,7 +101,8 @@ export default function Personeelsbeheer() {
       loadWeekstaten(),
       loadLeaveRequests(),
       loadVacationRequests(),
-      loadWorkEntries()
+      loadWorkEntries(),
+      loadProjects()
     ]);
   };
 
@@ -103,8 +119,22 @@ export default function Personeelsbeheer() {
       `)
       .gte('date', startOfMonth.toISOString().split('T')[0])
       .lte('date', endOfMonth.toISOString().split('T')[0]);
-    
+
     setWorkEntries(data || []);
+  };
+
+  const loadProjects = async () => {
+    const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
+    const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
+
+    const { data } = await supabase
+      .from('projects')
+      .select('id, name, verwachte_leverdatum, client:clients(name)')
+      .not('verwachte_leverdatum', 'is', null)
+      .gte('verwachte_leverdatum', startOfMonth.toISOString().split('T')[0])
+      .lte('verwachte_leverdatum', endOfMonth.toISOString().split('T')[0]);
+
+    setProjects(data || []);
   };
 
   const approveWeekstaat = async (id: string) => {
@@ -312,6 +342,20 @@ export default function Personeelsbeheer() {
       }
     });
 
+    // Add project delivery dates
+    projects.forEach(project => {
+      if (project.verwachte_leverdatum === dateStr) {
+        events.push({
+          type: 'project',
+          user: null,
+          data: {
+            ...project,
+            isDeliveryDate: true
+          }
+        });
+      }
+    });
+
     return events;
   };
 
@@ -454,16 +498,25 @@ export default function Personeelsbeheer() {
                               ? 'bg-yellow-500/20 text-yellow-300'
                               : event.type === 'vakantie'
                               ? 'bg-blue-500/20 text-blue-300'
+                              : event.data?.isDeliveryDate
+                              ? 'bg-purple-500/20 text-purple-300'
                               : 'bg-green-500/20 text-green-300'
                           }`}
-                          title={`${event.user?.name || 'Unknown'}: ${
-                            event.type === 'project' 
-                              ? `${event.data.distributor?.distributor_id || 'Project'} (${event.hours}u)`
-                              : event.type
-                          }`}
+                          title={
+                            event.data?.isDeliveryDate
+                              ? `Leverdatum: ${event.data.name} (${event.data.client?.name})`
+                              : `${event.user?.name || 'Unknown'}: ${
+                                  event.type === 'project'
+                                    ? `${event.data.distributor?.distributor_id || 'Project'} (${event.hours}u)`
+                                    : event.type
+                                }`
+                          }
                         >
                           <div className="truncate">
-                            {event.user?.name?.split(' ')[0]}
+                            {event.data?.isDeliveryDate
+                              ? `📦 ${event.data.name}`
+                              : event.user?.name?.split(' ')[0]
+                            }
                             {event.type === 'project' && event.hours ? ` (${event.hours}u)` : ''}
                           </div>
                         </div>
@@ -486,7 +539,11 @@ export default function Personeelsbeheer() {
               </div>
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 rounded bg-green-500/20"></div>
-                <span className="text-gray-400">Project/Verdeler</span>
+                <span className="text-gray-400">Werkopdracht</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded bg-purple-500/20"></div>
+                <span className="text-gray-400">Leverdatum</span>
               </div>
             </div>
           </div>

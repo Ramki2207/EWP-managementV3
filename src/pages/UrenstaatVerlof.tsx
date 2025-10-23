@@ -369,7 +369,7 @@ export default function UrenstaatVerlof() {
 
     const currentYear = new Date().getFullYear();
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('user_vacation_balance')
       .select('*')
       .eq('user_id', user.id)
@@ -379,6 +379,27 @@ export default function UrenstaatVerlof() {
     if (error) {
       console.error('Error loading vacation balance:', error);
       return;
+    }
+
+    if (!data) {
+      const { data: newBalance, error: createError } = await supabase
+        .from('user_vacation_balance')
+        .insert([{
+          user_id: user.id,
+          year: currentYear,
+          total_days: 25.0,
+          used_days: 0,
+          pending_days: 0
+        }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('Error creating vacation balance:', createError);
+        return;
+      }
+
+      data = newBalance;
     }
 
     setVacationBalance(data);
