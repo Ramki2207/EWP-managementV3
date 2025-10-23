@@ -142,6 +142,11 @@ export default function UrenstaatVerlof() {
   };
 
   const createNewWeekstaat = async () => {
+    console.log('Creating new weekstaat...', { user });
+    if (!user) {
+      toast.error('Gebruiker niet geladen');
+      return;
+    }
     const currentDate = new Date();
     const weekNumber = getISOWeek(currentDate);
     const year = currentDate.getFullYear();
@@ -278,6 +283,11 @@ export default function UrenstaatVerlof() {
   };
 
   const submitLeaveRequest = async () => {
+    console.log('Submitting leave request...', { user, leaveForm });
+    if (!user) {
+      toast.error('Gebruiker niet geladen');
+      return;
+    }
     if (!leaveForm.start_date || !leaveForm.end_date) {
       toast.error('Vul alle verplichte velden in');
       return;
@@ -364,6 +374,11 @@ export default function UrenstaatVerlof() {
   };
 
   const submitVacationRequest = async () => {
+    console.log('Submitting vacation request...', { user, vacationForm });
+    if (!user) {
+      toast.error('Gebruiker niet geladen');
+      return;
+    }
     if (!vacationForm.start_date || !vacationForm.end_date) {
       toast.error('Vul alle verplichte velden in');
       return;
