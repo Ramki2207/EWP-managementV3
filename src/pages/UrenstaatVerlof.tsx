@@ -165,6 +165,17 @@ export default function UrenstaatVerlof() {
     if (error) {
       if (error.code === '23505') {
         toast.error('Er bestaat al een weekstaat voor deze week');
+        const { data: existing } = await supabase
+          .from('weekstaten')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('week_number', weekNumber)
+          .eq('year', year)
+          .maybeSingle();
+
+        if (existing) {
+          await loadWeekstaatDetails(existing.id);
+        }
       } else {
         toast.error('Fout bij aanmaken weekstaat');
       }
