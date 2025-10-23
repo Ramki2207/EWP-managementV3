@@ -42,7 +42,7 @@ export default function Personeelsbeheer() {
     const { data } = await supabase
       .from('users')
       .select('*')
-      .order('name');
+      .order('username');
     setUsers(data || []);
   };
 
@@ -51,7 +51,7 @@ export default function Personeelsbeheer() {
       .from('weekstaten')
       .select(`
         *,
-        user:users(id, name, email)
+        user:users!weekstaten_user_id_fkey(id, username, email)
       `)
       .order('created_at', { ascending: false });
 
@@ -70,7 +70,7 @@ export default function Personeelsbeheer() {
       .from('leave_requests')
       .select(`
         *,
-        user:users(id, name, email)
+        user:users!leave_requests_user_id_fkey(id, username, email)
       `)
       .order('created_at', { ascending: false });
 
@@ -85,14 +85,21 @@ export default function Personeelsbeheer() {
   };
 
   const loadVacationRequests = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('vacation_requests')
       .select(`
         *,
-        user:users(id, name, email)
+        user:users!vacation_requests_user_id_fkey(id, username, email)
       `)
       .order('created_at', { ascending: false});
-    
+
+    if (error) {
+      console.error('Error loading vacation requests:', error);
+      toast.error('Fout bij laden vakantieaanvragen');
+      return;
+    }
+
+    console.log('Loaded vacation requests:', data);
     setVacationRequests(data || []);
   };
 
@@ -110,15 +117,19 @@ export default function Personeelsbeheer() {
     const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
     const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('work_entries')
       .select(`
         *,
-        user:users(id, name),
+        user:users(id, username),
         distributor:distributors(id, distributor_id, kast_naam)
       `)
       .gte('date', startOfMonth.toISOString().split('T')[0])
       .lte('date', endOfMonth.toISOString().split('T')[0]);
+
+    if (error) {
+      console.error('Error loading work entries:', error);
+    }
 
     setWorkEntries(data || []);
   };
@@ -127,13 +138,18 @@ export default function Personeelsbeheer() {
     const startOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth(), 1);
     const endOfMonth = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 0);
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('projects')
-      .select('id, name, verwachte_leverdatum, client:clients(name)')
-      .not('verwachte_leverdatum', 'is', null)
-      .gte('verwachte_leverdatum', startOfMonth.toISOString().split('T')[0])
-      .lte('verwachte_leverdatum', endOfMonth.toISOString().split('T')[0]);
+      .select('id, project_number, client, expected_delivery_date')
+      .not('expected_delivery_date', 'is', null)
+      .gte('expected_delivery_date', startOfMonth.toISOString().split('T')[0])
+      .lte('expected_delivery_date', endOfMonth.toISOString().split('T')[0]);
 
+    if (error) {
+      console.error('Error loading projects:', error);
+    }
+
+    console.log('Loaded projects:', data);
     setProjects(data || []);
   };
 
@@ -344,7 +360,7 @@ export default function Personeelsbeheer() {
 
     // Add project delivery dates
     projects.forEach(project => {
-      if (project.verwachte_leverdatum === dateStr) {
+      if (project.expected_delivery_date === dateStr) {
         events.push({
           type: 'project',
           user: null,
@@ -504,8 +520,8 @@ export default function Personeelsbeheer() {
                           }`}
                           title={
                             event.data?.isDeliveryDate
-                              ? `Leverdatum: ${event.data.name} (${event.data.client?.name})`
-                              : `${event.user?.name || 'Unknown'}: ${
+                              ? `Leverdatum: ${event.data.project_number} (${event.data.client})`
+                              : `${event.user?.username || 'Unknown'}: ${
                                   event.type === 'project'
                                     ? `${event.data.distributor?.distributor_id || 'Project'} (${event.hours}u)`
                                     : event.type
@@ -514,8 +530,8 @@ export default function Personeelsbeheer() {
                         >
                           <div className="truncate">
                             {event.data?.isDeliveryDate
-                              ? `📦 ${event.data.name}`
-                              : event.user?.name?.split(' ')[0]
+                              ? `📦 ${event.data.project_number}`
+                              : event.user?.username?.split(' ')[0]
                             }
                             {event.type === 'project' && event.hours ? ` (${event.hours}u)` : ''}
                           </div>
@@ -568,7 +584,7 @@ export default function Personeelsbeheer() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <Users className="w-5 h-5 text-purple-400" />
-                          <span className="font-medium text-white">{weekstaat.user?.name}</span>
+                          <span className="font-medium text-white">{weekstaat.user?.username}</span>
                           <span className="text-sm text-gray-400">
                             Week {weekstaat.week_number} - {weekstaat.year}
                           </span>
@@ -649,7 +665,7 @@ export default function Personeelsbeheer() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <Users className="w-5 h-5 text-purple-400" />
-                          <span className="font-medium text-white">{request.user?.name}</span>
+                          <span className="font-medium text-white">{request.user?.username}</span>
                         </div>
                         <div className="flex space-x-2">
                           <button
@@ -695,7 +711,7 @@ export default function Personeelsbeheer() {
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(request.status)}`}>
                       {getStatusLabel(request.status)}
                     </span>
-                    <span className="font-medium text-white">{request.user?.name}</span>
+                    <span className="font-medium text-white">{request.user?.username}</span>
                   </div>
                   <p className="text-sm text-gray-400 ml-3">
                     {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
@@ -737,7 +753,7 @@ export default function Personeelsbeheer() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <Users className="w-5 h-5 text-purple-400" />
-                          <span className="font-medium text-white">{request.user?.name}</span>
+                          <span className="font-medium text-white">{request.user?.username}</span>
                         </div>
                         <div className="flex space-x-2">
                           <button
@@ -783,7 +799,7 @@ export default function Personeelsbeheer() {
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(request.status)}`}>
                       {getStatusLabel(request.status)}
                     </span>
-                    <span className="font-medium text-white">{request.user?.name}</span>
+                    <span className="font-medium text-white">{request.user?.username}</span>
                   </div>
                   <p className="text-sm text-gray-400 ml-3">
                     {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
