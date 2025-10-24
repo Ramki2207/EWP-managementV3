@@ -24,6 +24,8 @@ export default function Personeelsbeheer() {
   const [loading, setLoading] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [hoveredProject, setHoveredProject] = useState<any>(null);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     loadUsers();
@@ -140,7 +142,7 @@ export default function Personeelsbeheer() {
 
     const { data, error } = await supabase
       .from('projects')
-      .select('id, project_number, client, expected_delivery_date')
+      .select('id, project_number, client, location, status, description, contact_person, expected_delivery_date')
       .not('expected_delivery_date', 'is', null)
       .gte('expected_delivery_date', startOfMonth.toISOString().split('T')[0])
       .lte('expected_delivery_date', endOfMonth.toISOString().split('T')[0]);
@@ -509,24 +511,27 @@ export default function Personeelsbeheer() {
                       {events.map((event, idx) => (
                         <div
                           key={idx}
-                          className={`text-xs p-1 rounded ${
+                          className={`text-xs p-1 rounded cursor-pointer transition-all ${
                             event.type === 'verlof'
-                              ? 'bg-yellow-500/20 text-yellow-300'
+                              ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
                               : event.type === 'vakantie'
-                              ? 'bg-blue-500/20 text-blue-300'
+                              ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
                               : event.data?.isDeliveryDate
-                              ? 'bg-purple-500/20 text-purple-300'
-                              : 'bg-green-500/20 text-green-300'
+                              ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                              : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
                           }`}
-                          title={
-                            event.data?.isDeliveryDate
-                              ? `Leverdatum: ${event.data.project_number} (${event.data.client})`
-                              : `${event.user?.username || 'Unknown'}: ${
-                                  event.type === 'project'
-                                    ? `${event.data.distributor?.distributor_id || 'Project'} (${event.hours}u)`
-                                    : event.type
-                                }`
-                          }
+                          onMouseEnter={(e) => {
+                            if (event.data?.isDeliveryDate) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setHoverPosition({ x: rect.left, y: rect.bottom + 5 });
+                              setHoveredProject(event.data);
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (event.data?.isDeliveryDate) {
+                              setHoveredProject(null);
+                            }
+                          }}
                         >
                           <div className="truncate">
                             {event.data?.isDeliveryDate
@@ -563,6 +568,70 @@ export default function Personeelsbeheer() {
               </div>
             </div>
           </div>
+
+          {/* Project Hover Popup */}
+          {hoveredProject && (
+            <div
+              className="fixed z-50 bg-[#1E2530] border border-purple-500/30 rounded-lg shadow-2xl p-4 max-w-md"
+              style={{
+                left: `${hoverPosition.x}px`,
+                top: `${hoverPosition.y}px`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              <div className="space-y-3">
+                <div className="flex items-start justify-between border-b border-gray-700 pb-2">
+                  <div>
+                    <h3 className="text-lg font-bold text-white">{hoveredProject.project_number}</h3>
+                    <p className="text-sm text-purple-400">{hoveredProject.client}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    hoveredProject.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                    hoveredProject.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                    hoveredProject.status === 'planning' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>
+                    {hoveredProject.status === 'completed' ? 'Afgerond' :
+                     hoveredProject.status === 'in_progress' ? 'In Uitvoering' :
+                     hoveredProject.status === 'planning' ? 'Planning' : 'Pending'}
+                  </span>
+                </div>
+
+                {hoveredProject.location && (
+                  <div>
+                    <p className="text-xs text-gray-400">Locatie</p>
+                    <p className="text-sm text-white">{hoveredProject.location}</p>
+                  </div>
+                )}
+
+                {hoveredProject.contact_person && (
+                  <div>
+                    <p className="text-xs text-gray-400">Contactpersoon</p>
+                    <p className="text-sm text-white">{hoveredProject.contact_person}</p>
+                  </div>
+                )}
+
+                {hoveredProject.description && (
+                  <div>
+                    <p className="text-xs text-gray-400">Beschrijving</p>
+                    <p className="text-sm text-white line-clamp-3">{hoveredProject.description}</p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-gray-400">Verwachte Leverdatum</p>
+                  <p className="text-sm text-purple-400 font-medium">
+                    {new Date(hoveredProject.expected_delivery_date).toLocaleDateString('nl-NL', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
