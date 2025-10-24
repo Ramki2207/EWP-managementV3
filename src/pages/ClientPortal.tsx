@@ -10,6 +10,51 @@ import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import ewpLogo from '../assets/ewp-logo.png';
 
+// Helper function to filter documents and show only the most actual versions
+const filterActualDocuments = (docs: any[]) => {
+  // Group documents by base name (removing extensions and version numbers)
+  const docGroups = new Map<string, any[]>();
+
+  docs.forEach(doc => {
+    // Extract base name without extension
+    const baseName = doc.name.replace(/\.(pdf|jpg|jpeg|png|doc|docx|xls|xlsx)$/i, '');
+    // Remove common version patterns like "rev.3", "v2", "V1.2", etc.
+    const normalizedName = baseName.replace(/\s*(rev\.?\s*\d+|v\.?\s*\d+(\.\d+)?|versie\s*\d+)$/i, '').trim();
+
+    if (!docGroups.has(normalizedName)) {
+      docGroups.set(normalizedName, []);
+    }
+    docGroups.get(normalizedName)!.push(doc);
+  });
+
+  // For each group, prioritize documents in "Actueel" subfolder or most recent
+  const filteredDocs: any[] = [];
+
+  docGroups.forEach((group, baseName) => {
+    if (group.length === 1) {
+      // Only one document with this name, include it
+      filteredDocs.push(group[0]);
+    } else {
+      // Multiple versions exist
+      // First, check if there's a version in an "Actueel" subfolder
+      const actueleDoc = group.find(doc => doc.folder?.includes('/Actueel'));
+
+      if (actueleDoc) {
+        // If there's an "Actueel" version, only show that one
+        filteredDocs.push(actueleDoc);
+      } else {
+        // Otherwise, show the most recently uploaded document
+        const sortedGroup = [...group].sort((a, b) =>
+          new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime()
+        );
+        filteredDocs.push(sortedGroup[0]);
+      }
+    }
+  });
+
+  return filteredDocs;
+};
+
 const ClientPortal = () => {
   const { accessCode } = useParams<{ accessCode: string }>();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -131,7 +176,12 @@ const ClientPortal = () => {
       );
 
       console.log('✨ Documents with content prepared:', docsWithContent.length);
-      setDocuments(docsWithContent);
+
+      // Filter documents: prioritize "Actueel" subfolder versions over main folder versions
+      const filteredDocs = filterActualDocuments(docsWithContent);
+      console.log('✅ After filtering for actual versions:', filteredDocs.length);
+
+      setDocuments(filteredDocs);
     } catch (error) {
       console.error('❌ Error loading documents:', error);
       setDocuments([]);
