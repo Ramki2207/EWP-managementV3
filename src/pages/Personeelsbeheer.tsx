@@ -755,10 +755,21 @@ export default function Personeelsbeheer() {
                       </div>
                       <div className="ml-8 space-y-1">
                         <p className="text-sm text-gray-300">
-                          {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
-                          <span className="ml-2 text-gray-400">
-                            ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
-                          </span>
+                          {request.is_partial_day ? (
+                            <>
+                              {new Date(request.start_date).toLocaleDateString('nl-NL')} van {request.start_time?.substring(0, 5)} tot {request.end_time?.substring(0, 5)}
+                              <span className="ml-2 text-gray-400">
+                                ({request.hours_count} uur)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
+                              <span className="ml-2 text-gray-400">
+                                ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
+                              </span>
+                            </>
+                          )}
                         </p>
                         {request.description && (
                           <p className="text-sm text-gray-400">{request.description}</p>
@@ -843,10 +854,21 @@ export default function Personeelsbeheer() {
                       </div>
                       <div className="ml-8 space-y-1">
                         <p className="text-sm text-gray-300">
-                          {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
-                          <span className="ml-2 text-gray-400">
-                            ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
-                          </span>
+                          {request.is_partial_day ? (
+                            <>
+                              {new Date(request.start_date).toLocaleDateString('nl-NL')} van {request.start_time?.substring(0, 5)} tot {request.end_time?.substring(0, 5)}
+                              <span className="ml-2 text-gray-400">
+                                ({request.hours_count} uur)
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
+                              <span className="ml-2 text-gray-400">
+                                ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
+                              </span>
+                            </>
+                          )}
                         </p>
                         {request.description && (
                           <p className="text-sm text-gray-400">{request.description}</p>

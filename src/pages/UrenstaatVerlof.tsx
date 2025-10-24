@@ -59,6 +59,9 @@ export default function UrenstaatVerlof() {
     leave_type: 'sick',
     start_date: '',
     end_date: '',
+    is_partial_day: false,
+    start_time: '',
+    end_time: '',
     description: ''
   });
 
@@ -299,12 +302,43 @@ export default function UrenstaatVerlof() {
       toast.error('Gebruiker niet geladen');
       return;
     }
-    if (!leaveForm.start_date || !leaveForm.end_date) {
-      toast.error('Vul alle verplichte velden in');
+    if (!leaveForm.start_date) {
+      toast.error('Vul een startdatum in');
       return;
     }
 
-    const daysCount = calculateDays(leaveForm.start_date, leaveForm.end_date);
+    if (leaveForm.is_partial_day) {
+      if (!leaveForm.start_time || !leaveForm.end_time) {
+        toast.error('Vul start- en eindtijd in voor gedeeltelijke afwezigheid');
+        return;
+      }
+      if (!leaveForm.end_date) {
+        leaveForm.end_date = leaveForm.start_date;
+      }
+    } else {
+      if (!leaveForm.end_date) {
+        toast.error('Vul een einddatum in');
+        return;
+      }
+    }
+
+    let daysCount = 0;
+    let hoursCount = null;
+
+    if (leaveForm.is_partial_day) {
+      const startTime = leaveForm.start_time.split(':');
+      const endTime = leaveForm.end_time.split(':');
+      const startMinutes = parseInt(startTime[0]) * 60 + parseInt(startTime[1]);
+      const endMinutes = parseInt(endTime[0]) * 60 + parseInt(endTime[1]);
+      hoursCount = (endMinutes - startMinutes) / 60;
+
+      if (hoursCount <= 0) {
+        toast.error('Eindtijd moet na de starttijd zijn');
+        return;
+      }
+    } else {
+      daysCount = calculateDays(leaveForm.start_date, leaveForm.end_date);
+    }
 
     const { error } = await supabase
       .from('leave_requests')
@@ -313,20 +347,25 @@ export default function UrenstaatVerlof() {
         leave_type: leaveForm.leave_type,
         start_date: leaveForm.start_date,
         end_date: leaveForm.end_date,
+        is_partial_day: leaveForm.is_partial_day,
+        start_time: leaveForm.is_partial_day ? leaveForm.start_time : null,
+        end_time: leaveForm.is_partial_day ? leaveForm.end_time : null,
         days_count: daysCount,
+        hours_count: hoursCount,
         description: leaveForm.description,
         status: 'pending',
         submitted_at: new Date().toISOString()
       }]);
 
     if (error) {
+      console.error('Error submitting leave request:', error);
       toast.error('Fout bij indienen verlofaanvraag');
       return;
     }
 
     toast.success('Verlofaanvraag ingediend');
     setShowLeaveForm(false);
-    setLeaveForm({ leave_type: 'sick', start_date: '', end_date: '', description: '' });
+    setLeaveForm({ leave_type: 'sick', start_date: '', end_date: '', is_partial_day: false, start_time: '', end_time: '', description: '' });
     loadLeaveRequests();
   };
 
@@ -822,8 +861,17 @@ export default function UrenstaatVerlof() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-400">
-                      {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
-                      ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
+                      {request.is_partial_day ? (
+                        <>
+                          {new Date(request.start_date).toLocaleDateString('nl-NL')} van {request.start_time?.substring(0, 5)} tot {request.end_time?.substring(0, 5)}
+                          {request.hours_count && ` (${request.hours_count} uur)`}
+                        </>
+                      ) : (
+                        <>
+                          {new Date(request.start_date).toLocaleDateString('nl-NL')} - {new Date(request.end_date).toLocaleDateString('nl-NL')}
+                          ({request.days_count} {request.days_count === 1 ? 'dag' : 'dagen'})
+                        </>
+                      )}
                     </p>
                     {request.description && (
                       <p className="text-sm text-gray-500 mt-1">{request.description}</p>
@@ -872,9 +920,24 @@ export default function UrenstaatVerlof() {
                     </select>
                   </div>
 
+                  <div className="flex items-center space-x-3 p-3 bg-[#2A303C] rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="partial-day"
+                      checked={leaveForm.is_partial_day}
+                      onChange={(e) => setLeaveForm({ ...leaveForm, is_partial_day: e.target.checked })}
+                      className="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500"
+                    />
+                    <label htmlFor="partial-day" className="text-sm text-gray-300 cursor-pointer">
+                      Gedeeltelijke dag (bijv. tandarts, doktersafspraak)
+                    </label>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-400 mb-2">Startdatum</label>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        {leaveForm.is_partial_day ? 'Datum' : 'Startdatum'}
+                      </label>
                       <input
                         type="date"
                         value={leaveForm.start_date}
@@ -882,16 +945,41 @@ export default function UrenstaatVerlof() {
                         className="input-field"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">Einddatum</label>
-                      <input
-                        type="date"
-                        value={leaveForm.end_date}
-                        onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
-                        className="input-field"
-                      />
-                    </div>
+                    {!leaveForm.is_partial_day && (
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Einddatum</label>
+                        <input
+                          type="date"
+                          value={leaveForm.end_date}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })}
+                          className="input-field"
+                        />
+                      </div>
+                    )}
                   </div>
+
+                  {leaveForm.is_partial_day && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Van (tijd)</label>
+                        <input
+                          type="time"
+                          value={leaveForm.start_time}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, start_time: e.target.value })}
+                          className="input-field"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-2">Tot (tijd)</label>
+                        <input
+                          type="time"
+                          value={leaveForm.end_time}
+                          onChange={(e) => setLeaveForm({ ...leaveForm, end_time: e.target.value })}
+                          className="input-field"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Toelichting (optioneel)</label>
@@ -909,7 +997,7 @@ export default function UrenstaatVerlof() {
                   <button
                     onClick={() => {
                       setShowLeaveForm(false);
-                      setLeaveForm({ leave_type: 'sick', start_date: '', end_date: '', description: '' });
+                      setLeaveForm({ leave_type: 'sick', start_date: '', end_date: '', is_partial_day: false, start_time: '', end_time: '', description: '' });
                     }}
                     className="btn-secondary"
                   >
