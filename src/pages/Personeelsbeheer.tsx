@@ -28,6 +28,8 @@ export default function Personeelsbeheer() {
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [projectVerdelers, setProjectVerdelers] = useState<any[]>([]);
+  const [selectedWorkEntry, setSelectedWorkEntry] = useState<any>(null);
+  const [workEntryDetails, setWorkEntryDetails] = useState<any>(null);
 
   useEffect(() => {
     loadUsers();
@@ -180,6 +182,43 @@ export default function Personeelsbeheer() {
     console.log('📦 Project clicked:', project);
     setSelectedProject(project);
     await loadProjectVerdelers(project.id);
+  };
+
+  const loadWorkEntryDetails = async (workEntry: any) => {
+    console.log('👷 Loading work entry details:', workEntry);
+
+    // Load project details
+    const { data: projectData, error: projectError } = await supabase
+      .from('projects')
+      .select('id, project_number, client, location, contact_person, description')
+      .eq('id', workEntry.distributor?.project_id)
+      .maybeSingle();
+
+    if (projectError) {
+      console.error('Error loading project:', projectError);
+    }
+
+    // Load verdeler details
+    const { data: verdelerData, error: verdelerError } = await supabase
+      .from('distributors')
+      .select('*')
+      .eq('id', workEntry.distributor_id)
+      .maybeSingle();
+
+    if (verdelerError) {
+      console.error('Error loading verdeler:', verdelerError);
+    }
+
+    setWorkEntryDetails({
+      workEntry,
+      project: projectData,
+      verdeler: verdelerData
+    });
+  };
+
+  const handleWorkEntryClick = async (workEntry: any) => {
+    setSelectedWorkEntry(workEntry);
+    await loadWorkEntryDetails(workEntry);
   };
 
   const approveWeekstaat = async (id: string) => {
@@ -550,6 +589,8 @@ export default function Personeelsbeheer() {
                           onClick={() => {
                             if (event.data?.isDeliveryDate) {
                               handleProjectClick(event.data);
+                            } else if (event.type === 'project' && !event.data?.isDeliveryDate) {
+                              handleWorkEntryClick(event.data);
                             }
                           }}
                           onMouseEnter={(e) => {
@@ -740,6 +781,137 @@ export default function Personeelsbeheer() {
                       </div>
                     )}
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Work Entry Details Modal */}
+          {selectedWorkEntry && workEntryDetails && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedWorkEntry(null)}>
+              <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="sticky top-0 bg-[#1e2836] border-b border-gray-700 p-6 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Werkdetails</h2>
+                    <p className="text-purple-400">{workEntryDetails.workEntry.user?.username}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedWorkEntry(null)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Work Entry Info */}
+                  <div className="bg-[#2A303C] rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-white mb-3">Werk Informatie</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Datum:</span>
+                        <span className="text-white">
+                          {new Date(workEntryDetails.workEntry.date).toLocaleDateString('nl-NL', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Uren:</span>
+                        <span className="text-white font-medium">{workEntryDetails.workEntry.hours || '0'} uur</span>
+                      </div>
+                      {workEntryDetails.workEntry.notes && (
+                        <div className="mt-3 pt-3 border-t border-gray-700">
+                          <p className="text-gray-400 text-sm mb-1">Notities:</p>
+                          <p className="text-white text-sm">{workEntryDetails.workEntry.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Project Info */}
+                  {workEntryDetails.project && (
+                    <div className="bg-[#2A303C] rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-white mb-3">Project Informatie</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Projectnummer:</span>
+                          <span className="text-white font-medium">{workEntryDetails.project.project_number}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Klant:</span>
+                          <span className="text-white">{workEntryDetails.project.client}</span>
+                        </div>
+                        {workEntryDetails.project.location && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Locatie:</span>
+                            <span className="text-white">{workEntryDetails.project.location}</span>
+                          </div>
+                        )}
+                        {workEntryDetails.project.contact_person && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Contactpersoon:</span>
+                            <span className="text-white">{workEntryDetails.project.contact_person}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Verdeler Info */}
+                  {workEntryDetails.verdeler && (
+                    <div className="bg-[#2A303C] rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-white mb-3">Verdeler Informatie</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Verdeler ID:</span>
+                          <span className="text-white font-medium">{workEntryDetails.verdeler.distributor_id}</span>
+                        </div>
+                        {workEntryDetails.verdeler.kast_naam && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Kast Naam:</span>
+                            <span className="text-white">{workEntryDetails.verdeler.kast_naam}</span>
+                          </div>
+                        )}
+                        {workEntryDetails.verdeler.systeem && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Systeem:</span>
+                            <span className="text-white">{workEntryDetails.verdeler.systeem}</span>
+                          </div>
+                        )}
+                        {workEntryDetails.verdeler.voeding && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Voeding:</span>
+                            <span className="text-white">{workEntryDetails.verdeler.voeding}</span>
+                          </div>
+                        )}
+                        {workEntryDetails.verdeler.toegewezen_monteur && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Toegewezen Monteur:</span>
+                            <span className="text-green-400">{workEntryDetails.verdeler.toegewezen_monteur}</span>
+                          </div>
+                        )}
+                        {workEntryDetails.verdeler.status && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Status:</span>
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              workEntryDetails.verdeler.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                              workEntryDetails.verdeler.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                              'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              {workEntryDetails.verdeler.status === 'completed' ? 'Voltooid' :
+                               workEntryDetails.verdeler.status === 'in_progress' ? 'Bezig' :
+                               workEntryDetails.verdeler.status === 'testing' ? 'Testen' :
+                               workEntryDetails.verdeler.status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
