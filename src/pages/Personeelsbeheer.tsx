@@ -26,6 +26,8 @@ export default function Personeelsbeheer() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [hoveredProject, setHoveredProject] = useState<any>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [projectVerdelers, setProjectVerdelers] = useState<any[]>([]);
 
   useEffect(() => {
     loadUsers();
@@ -153,6 +155,33 @@ export default function Personeelsbeheer() {
 
     console.log('Loaded projects:', data);
     setProjects(data || []);
+  };
+
+  const loadProjectVerdelers = async (projectId: string) => {
+    const { data, error } = await supabase
+      .from('distributors')
+      .select(`
+        id,
+        distributor_id,
+        kast_naam,
+        monteur_id,
+        monteur:users!distributors_monteur_id_fkey(id, username)
+      `)
+      .eq('project_id', projectId)
+      .order('distributor_id');
+
+    if (error) {
+      console.error('Error loading project verdelers:', error);
+      toast.error('Fout bij laden verdelers');
+      return;
+    }
+
+    setProjectVerdelers(data || []);
+  };
+
+  const handleProjectClick = async (project: any) => {
+    setSelectedProject(project);
+    await loadProjectVerdelers(project.id);
   };
 
   const approveWeekstaat = async (id: string) => {
@@ -520,6 +549,11 @@ export default function Personeelsbeheer() {
                               ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
                               : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
                           }`}
+                          onClick={() => {
+                            if (event.data?.isDeliveryDate) {
+                              handleProjectClick(event.data);
+                            }
+                          }}
                           onMouseEnter={(e) => {
                             if (event.data?.isDeliveryDate) {
                               const rect = e.currentTarget.getBoundingClientRect();
@@ -628,6 +662,86 @@ export default function Personeelsbeheer() {
                       day: 'numeric'
                     })}
                   </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Project Details Side Panel */}
+          {selectedProject && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedProject(null)}>
+              <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
+                <div className="sticky top-0 bg-[#1e2836] border-b border-gray-700 p-6 flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1">{selectedProject.project_number}</h2>
+                    <p className="text-purple-400">{selectedProject.client}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedProject(null)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="p-6 space-y-6">
+                  {/* Project Info */}
+                  <div className="space-y-3">
+                    {selectedProject.location && (
+                      <div>
+                        <p className="text-sm text-gray-400">Locatie</p>
+                        <p className="text-white">{selectedProject.location}</p>
+                      </div>
+                    )}
+
+                    {selectedProject.expected_delivery_date && (
+                      <div>
+                        <p className="text-sm text-gray-400">Verwachte Leverdatum</p>
+                        <p className="text-white">
+                          {new Date(selectedProject.expected_delivery_date).toLocaleDateString('nl-NL', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Verdelers List */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4">Verdelers & Monteurs</h3>
+                    {projectVerdelers.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">Geen verdelers gevonden voor dit project</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {projectVerdelers.map((verdeler) => (
+                          <div key={verdeler.id} className="bg-[#2A303C] rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-white font-medium">
+                                  {verdeler.distributor_id} {verdeler.kast_naam && `- ${verdeler.kast_naam}`}
+                                </p>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Monteur: {verdeler.monteur ? (
+                                    <span className="text-green-400">{verdeler.monteur.username}</span>
+                                  ) : (
+                                    <span className="text-yellow-400">Niet toegewezen</span>
+                                  )}
+                                </p>
+                              </div>
+                              {!verdeler.monteur && (
+                                <span className="text-xs text-gray-500 italic">
+                                  Navigeer naar project om monteur toe te wijzen
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
