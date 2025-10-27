@@ -184,12 +184,20 @@ const Insights = () => {
         return distributorDate >= monthStart && distributorDate <= monthEnd;
       }).length;
 
+      const monthWorkEntries = workEntries.filter((w: any) => {
+        const workDate = new Date(w.date);
+        return workDate >= monthStart && workDate <= monthEnd;
+      });
+
+      const monthHours = monthWorkEntries.reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+
       monthlyData.push({
         month: format(currentDate, 'MMM yyyy', { locale: nl }),
         monthShort: format(currentDate, 'MMM', { locale: nl }),
         projects: monthProjects,
         clients: monthClients,
         distributors: monthDistributors,
+        hours: Math.round(monthHours * 10) / 10,
         total: monthProjects + monthClients + monthDistributors
       });
 
@@ -948,7 +956,10 @@ const Insights = () => {
               <div className="p-2 rounded-lg bg-orange-500/20">
                 <Target size={20} className="text-orange-400" />
               </div>
-              <h2 className="text-lg font-semibold">Project & Uren Overzicht</h2>
+              <div>
+                <h2 className="text-lg font-semibold">Projecten vs Uren</h2>
+                <p className="text-xs text-gray-400">Vergelijking van nieuwe projecten en gewerkte uren per maand</p>
+              </div>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={250}>
@@ -959,7 +970,19 @@ const Insights = () => {
                 stroke="#9CA3AF"
                 tick={{ fill: '#9CA3AF', fontSize: 12 }}
               />
-              <YAxis stroke="#9CA3AF" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+              <YAxis
+                yAxisId="left"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                label={{ value: 'Projecten', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                label={{ value: 'Uren', angle: 90, position: 'insideRight', fill: '#9CA3AF' }}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#1E2530',
@@ -969,7 +992,8 @@ const Insights = () => {
                 }}
               />
               <Legend />
-              <Bar dataKey="projects" fill="#3B82F6" name="Projecten" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="left" dataKey="projects" fill="#3B82F6" name="Nieuwe Projecten" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="hours" fill="#06B6D4" name="Gewerkte Uren" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
