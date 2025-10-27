@@ -128,7 +128,7 @@ export default function Personeelsbeheer() {
       .select(`
         *,
         user:users(id, username),
-        distributor:distributors(id, distributor_id, kast_naam)
+        distributor:distributors(id, distributor_id, kast_naam, project_id)
       `)
       .gte('date', startOfMonth.toISOString().split('T')[0])
       .lte('date', endOfMonth.toISOString().split('T')[0]);
@@ -186,19 +186,10 @@ export default function Personeelsbeheer() {
 
   const loadWorkEntryDetails = async (workEntry: any) => {
     console.log('👷 Loading work entry details:', workEntry);
+    console.log('📋 Distributor:', workEntry.distributor);
+    console.log('🆔 Project ID from distributor:', workEntry.distributor?.project_id);
 
-    // Load project details
-    const { data: projectData, error: projectError } = await supabase
-      .from('projects')
-      .select('id, project_number, client, location, contact_person, description')
-      .eq('id', workEntry.distributor?.project_id)
-      .maybeSingle();
-
-    if (projectError) {
-      console.error('Error loading project:', projectError);
-    }
-
-    // Load verdeler details
+    // Load verdeler details first to get project_id
     const { data: verdelerData, error: verdelerError } = await supabase
       .from('distributors')
       .select('*')
@@ -206,7 +197,31 @@ export default function Personeelsbeheer() {
       .maybeSingle();
 
     if (verdelerError) {
-      console.error('Error loading verdeler:', verdelerError);
+      console.error('❌ Error loading verdeler:', verdelerError);
+    }
+
+    console.log('📦 Verdeler data with project_id:', verdelerData);
+
+    // Load project details using the project_id from verdeler
+    const projectId = workEntry.distributor?.project_id || verdelerData?.project_id;
+    console.log('🔍 Using project ID:', projectId);
+
+    let projectData = null;
+    if (projectId) {
+      const { data, error: projectError } = await supabase
+        .from('projects')
+        .select('id, project_number, client, location, contact_person, description')
+        .eq('id', projectId)
+        .maybeSingle();
+
+      if (projectError) {
+        console.error('❌ Error loading project:', projectError);
+      } else {
+        projectData = data;
+        console.log('✅ Project data loaded:', projectData);
+      }
+    } else {
+      console.warn('⚠️ No project_id found for this work entry');
     }
 
     setWorkEntryDetails({
