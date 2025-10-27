@@ -158,28 +158,26 @@ export default function Personeelsbeheer() {
   };
 
   const loadProjectVerdelers = async (projectId: string) => {
+    console.log('🔍 Loading verdelers for project ID:', projectId);
+
     const { data, error } = await supabase
       .from('distributors')
-      .select(`
-        id,
-        distributor_id,
-        kast_naam,
-        monteur_id,
-        monteur:users!distributors_monteur_id_fkey(id, username)
-      `)
+      .select('id, distributor_id, kast_naam, toegewezen_monteur')
       .eq('project_id', projectId)
       .order('distributor_id');
 
     if (error) {
-      console.error('Error loading project verdelers:', error);
+      console.error('❌ Error loading project verdelers:', error);
       toast.error('Fout bij laden verdelers');
       return;
     }
 
+    console.log('✅ Loaded verdelers:', data?.length, data);
     setProjectVerdelers(data || []);
   };
 
   const handleProjectClick = async (project: any) => {
+    console.log('📦 Project clicked:', project);
     setSelectedProject(project);
     await loadProjectVerdelers(project.id);
   };
@@ -724,14 +722,14 @@ export default function Personeelsbeheer() {
                                   {verdeler.distributor_id} {verdeler.kast_naam && `- ${verdeler.kast_naam}`}
                                 </p>
                                 <p className="text-sm text-gray-400 mt-1">
-                                  Monteur: {verdeler.monteur ? (
-                                    <span className="text-green-400">{verdeler.monteur.username}</span>
+                                  Monteur: {verdeler.toegewezen_monteur ? (
+                                    <span className="text-green-400">{verdeler.toegewezen_monteur}</span>
                                   ) : (
                                     <span className="text-yellow-400">Niet toegewezen</span>
                                   )}
                                 </p>
                               </div>
-                              {!verdeler.monteur && (
+                              {!verdeler.toegewezen_monteur && (
                                 <span className="text-xs text-gray-500 italic">
                                   Navigeer naar project om monteur toe te wijzen
                                 </span>
