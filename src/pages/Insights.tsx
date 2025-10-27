@@ -32,6 +32,9 @@ const Insights = () => {
   const [clients, setClients] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [distributors, setDistributors] = useState<any[]>([]);
+  const [workEntries, setWorkEntries] = useState<any[]>([]);
+  const [hoursData, setHoursData] = useState<any[]>([]);
+  const [employeeData, setEmployeeData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [kpiData, setKpiData] = useState({
@@ -43,6 +46,10 @@ const Insights = () => {
     projectsThisMonth: 0,
     distributorsThisMonth: 0,
     clientsThisMonth: 0,
+    totalHours: 0,
+    totalHoursThisMonth: 0,
+    avgHoursPerProject: 0,
+    activeEmployees: 0,
   });
 
   useEffect(() => {
@@ -50,17 +57,27 @@ const Insights = () => {
   }, []);
 
   useEffect(() => {
-    if (projects.length > 0 || distributors.length > 0 || clients.length > 0) {
+    if (projects.length > 0 || distributors.length > 0 || clients.length > 0 || workEntries.length > 0) {
       processChartData();
+      processHoursData();
       calculateKPIs();
     }
-  }, [timeRange, selectedClient, startDate, endDate, projects, distributors, clients]);
+  }, [timeRange, selectedClient, startDate, endDate, projects, distributors, clients, workEntries]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       
       // Load data from Supabase
+      const { data: workEntriesData } = await dataService.supabase
+        .from('work_entries')
+        .select(`
+          *,
+          worker:users!work_entries_worker_id_fkey(id, username),
+          distributor:distributors(id, distributor_id, project_id)
+        `)
+        .order('date', { ascending: false });
+
       const [projectsData, distributorsData, clientsData] = await Promise.all([
         dataService.getProjects(),
         dataService.getDistributors(),
@@ -70,6 +87,7 @@ const Insights = () => {
       setProjects(projectsData || []);
       setDistributors(distributorsData || []);
       setClients(clientsData || []);
+      setWorkEntries(workEntriesData || []);
       
     } catch (error) {
       console.error('Error loading data:', error);
@@ -181,6 +199,73 @@ const Insights = () => {
     setChartData(monthlyData);
   };
 
+  const processHoursData = () => {
+    // Calculate hours per month
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+
+    const monthlyHours = [];
+    let currentDate = start;
+
+    while (currentDate <= end) {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+
+      const monthWorkEntries = workEntries.filter((w: any) => {
+        const workDate = new Date(w.date);
+        return workDate >= monthStart && workDate <= monthEnd;
+      });
+
+      const totalHours = monthWorkEntries.reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+      const uniqueWorkers = new Set(monthWorkEntries.map((w: any) => w.worker_id)).size;
+      const avgHoursPerWorker = uniqueWorkers > 0 ? totalHours / uniqueWorkers : 0;
+
+      monthlyHours.push({
+        month: format(currentDate, 'MMM yyyy', { locale: nl }),
+        monthShort: format(currentDate, 'MMM', { locale: nl }),
+        hours: Math.round(totalHours * 10) / 10,
+        workers: uniqueWorkers,
+        avgHours: Math.round(avgHoursPerWorker * 10) / 10
+      });
+
+      currentDate = subMonths(currentDate, -1);
+    }
+
+    setHoursData(monthlyHours);
+
+    // Calculate employee productivity
+    const employeeStats = workEntries.reduce((acc: any, entry: any) => {
+      const workerName = entry.worker?.username || 'Onbekend';
+      if (!acc[workerName]) {
+        acc[workerName] = {
+          name: workerName,
+          hours: 0,
+          entries: 0,
+          verdelers: new Set()
+        };
+      }
+      acc[workerName].hours += parseFloat(entry.hours) || 0;
+      acc[workerName].entries += 1;
+      if (entry.distributor_id) {
+        acc[workerName].verdelers.add(entry.distributor_id);
+      }
+      return acc;
+    }, {});
+
+    const employeeArray = Object.values(employeeStats)
+      .map((emp: any) => ({
+        name: emp.name,
+        hours: Math.round(emp.hours * 10) / 10,
+        entries: emp.entries,
+        verdelers: emp.verdelers.size,
+        avgHoursPerEntry: emp.entries > 0 ? Math.round((emp.hours / emp.entries) * 10) / 10 : 0
+      }))
+      .sort((a: any, b: any) => b.hours - a.hours)
+      .slice(0, 10);
+
+    setEmployeeData(employeeArray);
+  };
+
   const calculateKPIs = () => {
     const now = new Date();
     const thisMonthStart = startOfMonth(now);
@@ -208,6 +293,15 @@ const Insights = () => {
       return clientDate >= thisMonthStart;
     }).length;
 
+    // Calculate hours KPIs
+    const totalHours = workEntries.reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+    const hoursThisMonth = workEntries
+      .filter((w: any) => new Date(w.date) >= thisMonthStart)
+      .reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+
+    const activeEmployees = new Set(workEntries.map((w: any) => w.worker_id)).size;
+    const avgHoursPerProject = projects.length > 0 ? totalHours / projects.length : 0;
+
     setKpiData({
       totalProjects: projects.length,
       totalClients: clients.length,
@@ -217,6 +311,10 @@ const Insights = () => {
       projectsThisMonth,
       distributorsThisMonth,
       clientsThisMonth,
+      totalHours: Math.round(totalHours * 10) / 10,
+      totalHoursThisMonth: Math.round(hoursThisMonth * 10) / 10,
+      avgHoursPerProject: Math.round(avgHoursPerProject * 10) / 10,
+      activeEmployees,
     });
   };
 
@@ -543,38 +641,40 @@ const Insights = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         {[
           {
-            title: 'Totale Projecten',
-            value: kpiData.totalProjects,
-            change: kpiData.projectsThisMonth,
+            title: 'Totale Uren',
+            value: kpiData.totalHours,
+            change: kpiData.totalHoursThisMonth,
             changeLabel: 'deze maand',
-            icon: Building,
+            icon: Activity,
             color: 'blue',
-            gradient: 'from-blue-500 to-blue-600'
+            gradient: 'from-blue-500 to-blue-600',
+            suffix: 'u'
+          },
+          {
+            title: 'Actieve Medewerkers',
+            value: kpiData.activeEmployees,
+            change: Math.round((kpiData.activeEmployees / Math.max(kpiData.activeEmployees, 1)) * 100),
+            changeLabel: 'werkzaam',
+            icon: Users,
+            color: 'green',
+            gradient: 'from-green-500 to-green-600'
+          },
+          {
+            title: 'Gem. Uren/Project',
+            value: kpiData.avgHoursPerProject,
+            change: kpiData.totalProjects,
+            changeLabel: 'projecten',
+            icon: Target,
+            color: 'purple',
+            gradient: 'from-purple-500 to-purple-600',
+            suffix: 'u'
           },
           {
             title: 'Actieve Projecten',
             value: kpiData.activeProjects,
             change: Math.round((kpiData.activeProjects / Math.max(kpiData.totalProjects, 1)) * 100),
             changeLabel: 'van totaal',
-            icon: Activity,
-            color: 'green',
-            gradient: 'from-green-500 to-green-600'
-          },
-          {
-            title: 'Totale Klanten',
-            value: kpiData.totalClients,
-            change: kpiData.clientsThisMonth,
-            changeLabel: 'deze maand',
-            icon: Users,
-            color: 'purple',
-            gradient: 'from-purple-500 to-purple-600'
-          },
-          {
-            title: 'Verdelers',
-            value: kpiData.totalDistributors,
-            change: kpiData.distributorsThisMonth,
-            changeLabel: 'deze maand',
-            icon: Server,
+            icon: Building,
             color: 'orange',
             gradient: 'from-orange-500 to-orange-600'
           }
@@ -609,7 +709,7 @@ const Insights = () => {
                 </div>
                 <div>
                   <h3 className="text-sm text-gray-400 mb-1">{kpi.title}</h3>
-                  <p className="text-3xl font-bold text-white">{kpi.value}</p>
+                  <p className="text-3xl font-bold text-white">{kpi.value}{kpi.suffix || ''}</p>
                 </div>
               </div>
             </div>
@@ -750,47 +850,160 @@ const Insights = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Growth Metrics */}
+        {/* Hours Tracking */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-cyan-500/20">
+                <Activity size={20} className="text-cyan-400" />
+              </div>
+              <h2 className="text-lg font-semibold">Uren Tracking</h2>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={hoursData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis
+                dataKey="monthShort"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              />
+              <YAxis stroke="#9CA3AF" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1E2530',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: '#fff'
+                }}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="hours"
+                stroke="#06B6D4"
+                strokeWidth={3}
+                name="Totale Uren"
+                dot={{ fill: '#06B6D4', r: 4 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="avgHours"
+                stroke="#8B5CF6"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                name="Gem. Uren/Werker"
+                dot={{ fill: '#8B5CF6', r: 3 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Employee Productivity */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-emerald-500/20">
+                <Users size={20} className="text-emerald-400" />
+              </div>
+              <h2 className="text-lg font-semibold">Medewerker Productiviteit</h2>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={employeeData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis
+                type="number"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 11 }}
+                width={120}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1E2530',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: '#fff'
+                }}
+              />
+              <Legend />
+              <Bar dataKey="hours" fill="#10B981" name="Totale Uren" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Additional Insights Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        {/* Project vs Hours Comparison */}
         <div className="card p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <div className="p-2 rounded-lg bg-orange-500/20">
                 <Target size={20} className="text-orange-400" />
               </div>
-              <h2 className="text-lg font-semibold">Groei Metrics</h2>
+              <h2 className="text-lg font-semibold">Project & Uren Overzicht</h2>
             </div>
           </div>
-          <div className="space-y-6">
-            {[
-              {
-                label: 'Project Voltooiingspercentage',
-                value: Math.round((kpiData.completedProjects / Math.max(kpiData.totalProjects, 1)) * 100),
-                max: 100,
-                color: 'bg-green-500'
-              },
-              {
-                label: 'Actieve Projecten',
-                value: Math.round((kpiData.activeProjects / Math.max(kpiData.totalProjects, 1)) * 100),
-                max: 100,
-                color: 'bg-blue-500'
-              },
-              {
-                label: 'Verdelers per Project',
-                value: Math.round((kpiData.totalDistributors / Math.max(kpiData.totalProjects, 1)) * 10) * 10,
-                max: 100,
-                color: 'bg-purple-500'
-              }
-            ].map((metric, index) => (
-              <div key={index}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-400">{metric.label}</span>
-                  <span className="text-sm font-semibold text-white">{metric.value}%</span>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis
+                dataKey="monthShort"
+                stroke="#9CA3AF"
+                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+              />
+              <YAxis stroke="#9CA3AF" tick={{ fill: '#9CA3AF', fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#1E2530',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  color: '#fff'
+                }}
+              />
+              <Legend />
+              <Bar dataKey="projects" fill="#3B82F6" name="Projecten" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Top Performers */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 rounded-lg bg-yellow-500/20">
+                <TrendingUp size={20} className="text-yellow-400" />
+              </div>
+              <h2 className="text-lg font-semibold">Top Performers</h2>
+            </div>
+          </div>
+          <div className="space-y-4">
+            {employeeData.slice(0, 5).map((emp, index) => (
+              <div key={index} className="bg-[#2A303C] rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                      index === 1 ? 'bg-gray-400/20 text-gray-300' :
+                      index === 2 ? 'bg-orange-500/20 text-orange-400' :
+                      'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <span className="text-white font-medium">{emp.name}</span>
+                  </div>
+                  <span className="text-emerald-400 font-bold">{emp.hours}u</span>
                 </div>
-                <div className="w-full bg-[#2A303C] rounded-full h-2">
-                  <div 
-                    className={`${metric.color} h-2 rounded-full transition-all duration-500`}
-                    style={{ width: `${Math.min(metric.value, 100)}%` }}
-                  ></div>
+                <div className="flex items-center justify-between text-sm text-gray-400">
+                  <span>{emp.entries} werk entries</span>
+                  <span>{emp.verdelers} verdelers</span>
                 </div>
               </div>
             ))}
