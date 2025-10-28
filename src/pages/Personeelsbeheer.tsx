@@ -818,7 +818,7 @@ export default function Personeelsbeheer() {
                       <button
                         onClick={() => {
                           setSelectedProject(null);
-                          navigate(`/projects/${selectedProject.id}`);
+                          navigate(`/project/${selectedProject.id}`);
                         }}
                         className="w-full btn-primary flex items-center justify-center space-x-2"
                       >
