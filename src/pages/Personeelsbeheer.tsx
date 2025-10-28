@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, ExternalLink } from 'lucide-react';
 
 type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie';
 
@@ -13,6 +14,7 @@ interface DayEvent {
 }
 
 export default function Personeelsbeheer() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('agenda');
   const [users, setUsers] = useState<any[]>([]);
   const [weekstaten, setWeekstaten] = useState<any[]>([]);
@@ -28,6 +30,7 @@ export default function Personeelsbeheer() {
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [selectedProject, setSelectedProject] = useState<any>(null);
   const [projectVerdelers, setProjectVerdelers] = useState<any[]>([]);
+  const [draggedProject, setDraggedProject] = useState<any>(null);
   const [selectedWorkEntry, setSelectedWorkEntry] = useState<any>(null);
   const [workEntryDetails, setWorkEntryDetails] = useState<any>(null);
 
@@ -399,9 +402,17 @@ export default function Personeelsbeheer() {
     return days;
   };
 
+  // Helper function to format dates without timezone issues
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getEventsForDay = (date: Date): DayEvent[] => {
     const events: DayEvent[] = [];
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatDateLocal(date);
 
     // Add leave requests
     leaveRequests.forEach(request => {
@@ -464,6 +475,42 @@ export default function Personeelsbeheer() {
 
   const nextMonth = () => {
     setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
+  };
+
+  const handleDragStart = (e: React.DragEvent, project: any) => {
+    setDraggedProject(project);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropDate: Date) => {
+    e.preventDefault();
+
+    if (!draggedProject) return;
+
+    const newDeliveryDate = formatDateLocal(dropDate);
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .update({ expected_delivery_date: newDeliveryDate })
+        .eq('id', draggedProject.id);
+
+      if (error) throw error;
+
+      toast.success(`Project ${draggedProject.project_number} verplaatst naar ${dropDate.toLocaleDateString('nl-NL')}`);
+
+      // Reload projects to reflect the change
+      loadProjects();
+      setDraggedProject(null);
+    } catch (error) {
+      console.error('Error updating project delivery date:', error);
+      toast.error('Fout bij het bijwerken van de leverdatum');
+    }
   };
 
   const pendingCount = {
@@ -584,6 +631,8 @@ export default function Personeelsbeheer() {
                           : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
                         : 'bg-[#1a1f2a] border-gray-800 opacity-50'
                     }`}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, day)}
                   >
                     <div className="text-sm font-medium text-gray-400 mb-1">
                       {day.getDate()}
@@ -592,15 +641,17 @@ export default function Personeelsbeheer() {
                       {events.map((event, idx) => (
                         <div
                           key={idx}
-                          className={`text-xs p-1 rounded cursor-pointer transition-all ${
+                          draggable={event.data?.isDeliveryDate}
+                          onDragStart={(e) => event.data?.isDeliveryDate && handleDragStart(e, event.data)}
+                          className={`text-xs p-1 rounded transition-all ${
                             event.type === 'verlof'
                               ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
                               : event.type === 'vakantie'
                               ? 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
                               : event.data?.isDeliveryDate
-                              ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30'
+                              ? 'bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 cursor-move'
                               : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
-                          }`}
+                          } ${event.data?.isDeliveryDate ? '' : 'cursor-pointer'}`}
                           onClick={() => {
                             if (event.data?.isDeliveryDate) {
                               handleProjectClick(event.data);
@@ -761,6 +812,20 @@ export default function Personeelsbeheer() {
                         </p>
                       </div>
                     )}
+
+                    {/* View Project Details Button */}
+                    <div className="pt-4 border-t border-gray-700">
+                      <button
+                        onClick={() => {
+                          setSelectedProject(null);
+                          navigate(`/projects/${selectedProject.id}`);
+                        }}
+                        className="w-full btn-primary flex items-center justify-center space-x-2"
+                      >
+                        <ExternalLink size={18} />
+                        <span>Bekijk Projectdetails</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Verdelers List */}
