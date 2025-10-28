@@ -51,10 +51,14 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
 
         // Check permissions
         let hasAccess = false;
-        
+
         if (currentUser.role === 'admin') {
           hasAccess = true;
           console.log('🔐 ROUTE: Admin user - access granted to', requiredPermission.module);
+        } else if (currentUser.username === 'Annemieke' && requiredPermission.module === 'worksheets') {
+          // Special access for Annemieke to Personeelsbeheer
+          hasAccess = true;
+          console.log('🔐 ROUTE: Special access granted to Annemieke for worksheets');
         } else {
           const modulePerms = currentUser.permissions?.[requiredPermission.module];
           hasAccess = modulePerms?.[requiredPermission.permission] || false;

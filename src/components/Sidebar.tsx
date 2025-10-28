@@ -75,19 +75,25 @@ const Sidebar = () => {
       console.log('❌ SIDEBAR: No current user available for module access check', { userLoading });
       return false;
     }
-    
+
     // Admin users have access to everything
     if (currentUser.role === 'admin') {
       console.log('✅ SIDEBAR: Admin user - access granted to', module);
       return true;
     }
-    
+
+    // Special access for Annemieke to worksheets (Personeelsbeheer)
+    if (currentUser.username === 'Annemieke' && module === 'worksheets') {
+      console.log('✅ SIDEBAR: Special access granted to Annemieke for worksheets');
+      return true;
+    }
+
     // Check specific module permissions
     const modulePermissions = currentUser.permissions?.[module];
     const hasAccess = modulePermissions?.read || false;
     console.log(`🔍 SIDEBAR: Module access check for ${module}:`, hasAccess, 'User:', currentUser.username);
     console.log(`🔍 SIDEBAR: Module permissions:`, modulePermissions);
-    
+
     return hasAccess;
   };
 
