@@ -332,8 +332,14 @@ const Projects = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
-      // Role-based filtering for Montage users
-      if (currentUser?.role === 'montage') {
+      // Special access for Annemieke - can see all projects (skip role/location filtering, but apply search/status filters)
+      const isAnnemieke = currentUser?.username === 'Annemieke';
+      if (isAnnemieke) {
+        console.log(`💼 ANNEMIEKE FILTER: Annemieke has special access - skipping role/location filters for ${project.project_number}`);
+      }
+
+      // Role-based filtering for Montage users (skip for Annemieke)
+      if (!isAnnemieke && currentUser?.role === 'montage') {
         // Exception for Zouhair Taha - can see all projects (montage + tester role)
         if (currentUser.username === 'Zouhair Taha') {
           console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS (MONTAGE + TESTER)`);
@@ -353,8 +359,8 @@ const Projects = () => {
         }
       }
 
-      // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
+      // Role-based filtering for Tester users (skip for Annemieke)
+      if (!isAnnemieke && currentUser?.role === 'tester') {
         const isTestingStatus = project.status?.toLowerCase() === 'testen';
 
         // For production projects, we need to check database for pending approvals
@@ -373,11 +379,11 @@ const Projects = () => {
         }
       }
 
-      // Location filter based on user's assigned locations
+      // Location filter based on user's assigned locations (skip for Annemieke)
       console.log('🌍 FILTER: Checking project:', project.project_number, 'Location:', project.location);
       console.log('🌍 FILTER: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
-      
-      if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+
+      if (!isAnnemieke && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // Debug user's location data
         console.log('🔍 LOCATION DEBUG: User assignedLocations type:', typeof currentUser.assignedLocations);
         console.log('🔍 LOCATION DEBUG: User assignedLocations value:', currentUser.assignedLocations);
@@ -722,6 +728,87 @@ const Projects = () => {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Special Section for Annemieke - Gereed voor facturatie */}
+      {currentUser?.username === 'Annemieke' && (
+        <div className="card p-6 mb-8 border-2 border-green-500/30">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-green-400 flex items-center space-x-2">
+                <span>💰</span>
+                <span>Gereed voor Facturatie</span>
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">
+                Projecten die klaar zijn voor facturering
+              </p>
+            </div>
+            <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg font-semibold">
+              {projects.filter(p => p.status?.toLowerCase() === 'gereed voor facturatie').length} projecten
+            </div>
+          </div>
+
+          <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+            {projects.filter(p => p.status?.toLowerCase() === 'gereed voor facturatie').length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                Geen projecten gereed voor facturatie
+              </div>
+            ) : (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="table-header text-left">Projectnummer</th>
+                    <th className="table-header text-left">Datum</th>
+                    <th className="table-header text-left">Klant</th>
+                    <th className="table-header text-left">Locatie</th>
+                    <th className="table-header text-left">Verdelers</th>
+                    <th className="table-header text-left">Omschrijving</th>
+                    <th className="table-header text-right">Acties</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects
+                    .filter(p => p.status?.toLowerCase() === 'gereed voor facturatie')
+                    .map((project) => (
+                      <tr
+                        key={project.id}
+                        className="table-row cursor-pointer hover:bg-green-500/10"
+                        onClick={() => handleProjectClick(project)}
+                      >
+                        <td className="table-cell text-blue-400 font-medium">
+                          {project.project_number}
+                        </td>
+                        <td className="table-cell">
+                          {new Date(project.date).toLocaleDateString('nl-NL')}
+                        </td>
+                        <td className="table-cell">{project.client || '-'}</td>
+                        <td className="table-cell">{project.location || '-'}</td>
+                        <td className="table-cell">
+                          <span className="text-gray-400">
+                            {project.distributors?.length || 0} verdeler{project.distributors?.length !== 1 ? 's' : ''}
+                          </span>
+                        </td>
+                        <td className="table-cell max-w-xs truncate">
+                          {project.description || '-'}
+                        </td>
+                        <td className="table-cell text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProjectClick(project);
+                            }}
+                            className="btn-secondary px-3 py-1 text-sm"
+                          >
+                            Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
