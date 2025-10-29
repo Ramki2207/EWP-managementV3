@@ -340,10 +340,10 @@ const Projects = () => {
 
       // Role-based filtering for Montage users (skip for Annemieke)
       if (!isAnnemieke && currentUser?.role === 'montage') {
-        // Exception for Zouhair Taha - can see all projects (montage + tester role)
-        if (currentUser.username === 'Zouhair Taha') {
+        // Exception for Zouhair Taha and Ibrahim Abdalla - can see all projects (montage + tester role)
+        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla') {
           console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS (MONTAGE + TESTER)`);
-          // Skip the montage filtering for Zouhair - he can see all projects
+          // Skip the montage filtering - they can see all projects
         } else {
           // Check if this project has any verdelers assigned to this monteur
           const hasAssignedVerdelers = project.distributors?.some(
