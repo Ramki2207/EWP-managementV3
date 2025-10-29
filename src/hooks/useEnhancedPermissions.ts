@@ -63,19 +63,32 @@ export const useEnhancedPermissions = () => {
   };
 
   const hasPermission = useCallback((
-    module: SystemModule, 
+    module: SystemModule,
     permission: keyof ModulePermissions
   ): boolean => {
     console.log(`🔍 PERMISSION CHECK: ${module}.${permission} for user:`, currentUser?.username, 'Role:', currentUser?.role);
-    
+
     if (!currentUser) return false;
-    
+
     // Admins have all permissions
     if (currentUser.role === 'admin') {
       console.log('✅ PERMISSION: Admin user - all permissions granted for', module, permission);
       return true;
     }
-    
+
+    // Special access for Zouhair Taha - montage + tester role
+    if (currentUser.username === 'Zouhair Taha') {
+      // Grant tester permissions to Zouhair
+      if (module === 'projects' && (permission === 'update' || permission === 'read' || permission === 'approve')) {
+        console.log('✅ PERMISSION: Zouhair Taha - special tester access granted for', module, permission);
+        return true;
+      }
+      if (module === 'verdelers' && (permission === 'update' || permission === 'read')) {
+        console.log('✅ PERMISSION: Zouhair Taha - special tester access granted for', module, permission);
+        return true;
+      }
+    }
+
     // Check specific permission
     const modulePermissions = currentUser.permissions?.[module];
     const hasAccess = modulePermissions?.[permission] || false;
@@ -137,6 +150,34 @@ export const useEnhancedPermissions = () => {
         export: true,
         assign: true
       };
+    }
+
+    // Special access for Zouhair Taha - montage + tester role
+    if (currentUser.username === 'Zouhair Taha') {
+      if (module === 'projects') {
+        return {
+          create: false,
+          read: true,
+          update: true,
+          delete: false,
+          approve: true,
+          configure: false,
+          export: false,
+          assign: false
+        };
+      }
+      if (module === 'verdelers') {
+        return {
+          create: false,
+          read: true,
+          update: true,
+          delete: false,
+          approve: false,
+          configure: false,
+          export: false,
+          assign: false
+        };
+      }
     }
 
     return currentUser.permissions?.[module] || {
