@@ -10,6 +10,7 @@ import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
+import AdminDashboard from '../components/AdminDashboard';
 
 interface Project {
   id: string;
@@ -600,6 +601,17 @@ const Dashboard = () => {
     );
   }
 
+  // Render Admin Dashboard for admin role
+  if (currentUser?.role === 'admin') {
+    return (
+      <div className="min-h-screen p-8">
+        <Toaster position="top-right" />
+        <AdminDashboard />
+      </div>
+    );
+  }
+
+  // Regular Dashboard for other roles
   return (
     <div className="min-h-screen p-8">
       <Toaster position="top-right" />
