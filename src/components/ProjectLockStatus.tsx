@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Lock, CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 
@@ -20,17 +21,29 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
   compact = false
 }) => {
   const [showPopup, setShowPopup] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const popupRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node) &&
+          triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
         setShowPopup(false);
       }
     };
 
     if (showPopup) {
       document.addEventListener('mousedown', handleClickOutside);
+
+      // Calculate position
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPopupPosition({
+          top: rect.top - 10,
+          left: rect.left
+        });
+      }
     }
 
     return () => {
@@ -74,8 +87,9 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
   if (isStale) {
     // Stale lock
     return (
-      <div className="relative" ref={popupRef}>
+      <>
         <div
+          ref={triggerRef}
           onClick={() => !compact && setShowPopup(!showPopup)}
           className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'} ${!compact ? 'cursor-pointer' : ''}`}
         >
@@ -85,9 +99,23 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
           </span>
         </div>
 
-        {!compact && showPopup && (
-          <div className="absolute bottom-full left-0 mb-2 z-[9999]" style={{ isolation: 'isolate' }}>
-            <div className="border-2 border-yellow-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#111827', backdropFilter: 'none', opacity: 1 }}>
+        {!compact && showPopup && createPortal(
+          <div
+            ref={popupRef}
+            className="fixed z-[9999]"
+            style={{
+              top: `${popupPosition.top}px`,
+              left: `${popupPosition.left}px`,
+              transform: 'translateY(-100%)'
+            }}
+          >
+            <div
+              className="border-2 border-yellow-500 rounded-lg p-4 shadow-2xl min-w-64"
+              style={{
+                backgroundColor: '#1f2937',
+                opacity: 1
+              }}
+            >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle size={16} className="text-yellow-400" />
@@ -112,22 +140,24 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
                     onForceUnlock();
                     setShowPopup(false);
                   }}
-                  className="w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-2 rounded-lg text-sm transition-colors font-medium"
+                  className="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded-lg text-sm transition-colors font-medium"
                 >
                   Forceer ontgrendelen
                 </button>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
-      </div>
+      </>
     );
   }
 
   // Active lock by another user
   return (
-    <div className="relative" ref={popupRef}>
+    <>
       <div
+        ref={triggerRef}
         onClick={() => !compact && setShowPopup(!showPopup)}
         className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'} ${!compact ? 'cursor-pointer' : ''}`}
       >
@@ -137,9 +167,23 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
         </span>
       </div>
 
-      {!compact && showPopup && (
-        <div className="absolute bottom-full left-0 mb-2 z-[9999]" style={{ isolation: 'isolate' }}>
-          <div className="border-2 border-red-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#111827', backdropFilter: 'none', opacity: 1 }}>
+      {!compact && showPopup && createPortal(
+        <div
+          ref={popupRef}
+          className="fixed z-[9999]"
+          style={{
+            top: `${popupPosition.top}px`,
+            left: `${popupPosition.left}px`,
+            transform: 'translateY(-100%)'
+          }}
+        >
+          <div
+            className="border-2 border-red-500 rounded-lg p-4 shadow-2xl min-w-64"
+            style={{
+              backgroundColor: '#1f2937',
+              opacity: 1
+            }}
+          >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
                 <Lock size={16} className="text-red-400" />
@@ -164,15 +208,16 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
                   onForceUnlock();
                   setShowPopup(false);
                 }}
-                className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm transition-colors font-medium"
+                className="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm transition-colors font-medium"
               >
                 Forceer ontgrendelen
               </button>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
