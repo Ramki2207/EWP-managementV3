@@ -675,10 +675,87 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-      {/* Info cards */}
-      {/* Enhanced Project Table Section - Top Priority Position */}
+
+      {/* Quick Actions Hub - Moved to Top */}
+      <div className="card p-6 mb-8">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <Plus size={20} className="text-blue-400" />
+          </div>
+          <h2 className="text-xl font-semibold">Snelle Acties</h2>
+          <span className="text-sm text-gray-400">Veelgebruikte functies</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <button
+            onClick={() => navigate('/create-project')}
+            className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+          >
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
+                <Plus size={24} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">Nieuw Project</h3>
+                <p className="text-xs text-gray-400 mt-1">Start een nieuw project</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/verdelers')}
+            className="group bg-gradient-to-br from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 border border-green-500/20 hover:border-green-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+          >
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
+                <Upload size={24} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">Verdelers</h3>
+                <p className="text-xs text-gray-400 mt-1">Beheer verdelers</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/uploads')}
+            className="group bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 hover:border-purple-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+          >
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
+                <FolderOpen size={24} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold text-white group-hover:text-purple-400 transition-colors">Documenten</h3>
+                <p className="text-xs text-gray-400 mt-1">Bekijk uploads</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/meldingen')}
+            className="group bg-gradient-to-br from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 hover:border-orange-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg relative"
+          >
+            <div className="flex flex-col items-center space-y-3">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
+                <Bell size={24} className="text-white" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Meldingen</h3>
+                <p className="text-xs text-gray-400 mt-1">Service desk</p>
+              </div>
+            </div>
+            {notifications.some(n => !n.read) && (
+              <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                {notifications.filter(n => !n.read).length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* Project Activity Banner */}
-      <ProjectLockBanner 
+      <ProjectLockBanner
         projectLocks={projectLocks}
         currentUserId={currentUser?.id || ''}
       />
@@ -1369,86 +1446,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions Hub */}
-      <div className="card p-6 mb-8">
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="p-2 bg-blue-500/20 rounded-lg">
-            <Plus size={20} className="text-blue-400" />
-          </div>
-          <h2 className="text-xl font-semibold">Snelle Acties</h2>
-          <span className="text-sm text-gray-400">Veelgebruikte functies</span>
-        </div>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button
-            onClick={() => navigate('/create-project')}
-            className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-          >
-            <div className="flex flex-col items-center space-y-3">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
-                <Plus size={24} className="text-white" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">Nieuw Project</h3>
-                <p className="text-xs text-gray-400 mt-1">Start een nieuw project</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/verdelers')}
-            className="group bg-gradient-to-br from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 border border-green-500/20 hover:border-green-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-          >
-            <div className="flex flex-col items-center space-y-3">
-              <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
-                <Upload size={24} className="text-white" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">Verdelers</h3>
-                <p className="text-xs text-gray-400 mt-1">Beheer verdelers</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/uploads')}
-            className="group bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 hover:border-purple-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-          >
-            <div className="flex flex-col items-center space-y-3">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
-                <FolderOpen size={24} className="text-white" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-white group-hover:text-purple-400 transition-colors">Documenten</h3>
-                <p className="text-xs text-gray-400 mt-1">Bekijk uploads</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/meldingen')}
-            className="group bg-gradient-to-br from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 hover:border-orange-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg relative"
-          >
-            <div className="flex flex-col items-center space-y-3">
-              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
-                <Bell size={24} className="text-white" />
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Meldingen</h3>
-                <p className="text-xs text-gray-400 mt-1">Service desk</p>
-              </div>
-            </div>
-            {notifications.some(n => !n.read) && (
-              <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
-                {notifications.filter(n => !n.read).length}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-      </div>
 
       {/* Delete Confirmation Modal */}
       {projectToDelete && (
