@@ -54,6 +54,7 @@ const Dashboard = () => {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   
   const loadData = async () => {
     try {
@@ -1276,9 +1277,11 @@ const Dashboard = () => {
                     const deliveryDate = new Date(p.expected_delivery_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
                     const nextWeek = new Date(today);
                     nextWeek.setDate(today.getDate() + 7);
-                    return deliveryDate > today && deliveryDate <= nextWeek;
+                    return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
                   }).length}
                 </div>
               </div>
@@ -1290,9 +1293,11 @@ const Dashboard = () => {
                     const deliveryDate = new Date(p.expected_delivery_date);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
                     const nextWeek = new Date(today);
                     nextWeek.setDate(today.getDate() + 7);
-                    return deliveryDate > today && deliveryDate <= nextWeek;
+                    return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
                   })
                   .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
                   .map((project) => {
@@ -1319,9 +1324,9 @@ const Dashboard = () => {
                           </div>
                           <div className="text-right flex-shrink-0">
                             <div className="text-xs text-orange-400 font-medium whitespace-nowrap">
-                              {deliveryDate.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric' })}
+                              {deliveryDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })}
                             </div>
-                            <div className="text-xs text-gray-500">{daysUntil}d</div>
+                            <div className="text-xs text-gray-500">{daysUntil} {daysUntil === 1 ? 'dag' : 'dagen'}</div>
                           </div>
                         </div>
                       </div>
@@ -1332,9 +1337,11 @@ const Dashboard = () => {
                   const deliveryDate = new Date(p.expected_delivery_date);
                   const today = new Date();
                   today.setHours(0, 0, 0, 0);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(today.getDate() + 1);
                   const nextWeek = new Date(today);
                   nextWeek.setDate(today.getDate() + 7);
-                  return deliveryDate > today && deliveryDate <= nextWeek;
+                  return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
                 }).length === 0 && (
                   <div className="text-center py-12 text-gray-500">
                     <Clock size={28} className="mx-auto mb-2 opacity-30" />
@@ -1392,7 +1399,11 @@ const Dashboard = () => {
                     .sort((a: any, b: any) => b.verdelerCount - a.verdelerCount);
 
                   return workload.length > 0 ? workload.map((item: any) => (
-                    <div key={item.user.id} className="p-3 bg-[#2A303C] rounded-lg border border-blue-500/20 hover:border-blue-500/40 transition-all">
+                    <div
+                      key={item.user.id}
+                      onClick={() => setSelectedUserWorkload(item)}
+                      className="p-3 bg-[#2A303C] rounded-lg border border-blue-500/20 hover:border-blue-500/60 cursor-pointer transition-all hover:shadow-lg"
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2 flex-1 min-w-0">
                           {item.user.profilePicture ? (
@@ -1826,6 +1837,150 @@ const Dashboard = () => {
           onCancel={handleCancelDelete}
           isDeleting={isDeleting}
         />
+      )}
+
+      {/* User Workload Detail Modal */}
+      {selectedUserWorkload && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-gray-700">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-700 bg-gradient-to-br from-blue-500/10 to-blue-600/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  {selectedUserWorkload.user.profilePicture ? (
+                    <img
+                      src={selectedUserWorkload.user.profilePicture}
+                      alt={selectedUserWorkload.user.username}
+                      className="w-16 h-16 rounded-full object-cover ring-4 ring-blue-500/30"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30">
+                      <span className="text-2xl font-bold text-white">
+                        {selectedUserWorkload.user.username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{selectedUserWorkload.user.username}</h3>
+                    <p className="text-sm text-gray-400">{selectedUserWorkload.user.role}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span className="text-sm text-blue-400">{selectedUserWorkload.projectCount} projecten</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-sm text-green-400">{selectedUserWorkload.verdelerCount} verdelers</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedUserWorkload(null)}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X size={24} className="text-gray-400 hover:text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
+              <h4 className="text-lg font-semibold text-white mb-4">Toegewezen Projecten</h4>
+              <div className="space-y-3">
+                {selectedUserWorkload.projects.length > 0 ? (
+                  selectedUserWorkload.projects.map((project: any) => {
+                    const userVerdelers = project.distributors?.filter(
+                      (d: any) => d.toegewezen_monteur === selectedUserWorkload.user.username
+                    ) || [];
+
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => {
+                          setSelectedUserWorkload(null);
+                          handleProjectNavigation(project.id);
+                        }}
+                        className="p-4 bg-[#2A303C] rounded-lg border border-gray-700 hover:border-blue-500/60 cursor-pointer transition-all hover:shadow-lg group"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <span className="font-semibold text-blue-400 group-hover:text-blue-300">
+                                {project.project_number}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-300 mb-1">{project.client}</p>
+                            {project.location && (
+                              <p className="text-xs text-gray-400">{project.location}</p>
+                            )}
+                            {project.expected_delivery_date && (
+                              <p className="text-xs text-orange-400 mt-2">
+                                Leverdatum: {new Date(project.expected_delivery_date).toLocaleDateString('nl-NL', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="bg-green-500/20 px-3 py-1 rounded-lg">
+                              <div className="text-lg font-bold text-green-400">{userVerdelers.length}</div>
+                              <div className="text-xs text-gray-400">verdelers</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* List verdelers for this user */}
+                        {userVerdelers.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-700">
+                            <p className="text-xs text-gray-400 mb-2">Toegewezen verdelers:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {userVerdelers.map((verdeler: any) => (
+                                <span
+                                  key={verdeler.id}
+                                  className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs"
+                                >
+                                  {verdeler.kast_naam}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Click indicator */}
+                        <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-end">
+                          <span className="text-xs text-gray-500 group-hover:text-blue-400 transition-colors">
+                            Klik om project te openen →
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <FolderOpen size={48} className="mx-auto mb-4 opacity-50" />
+                    <p>Geen projecten toegewezen</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-700 bg-[#2A303C] flex justify-end">
+              <button
+                onClick={() => setSelectedUserWorkload(null)}
+                className="btn-secondary px-6 py-2"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
