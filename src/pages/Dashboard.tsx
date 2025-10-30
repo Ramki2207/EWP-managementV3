@@ -675,10 +675,91 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Admin-Only: Quick Actions at Top */}
+      {currentUser?.role === 'admin' && (
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Plus size={20} className="text-blue-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Snelle Acties</h2>
+            <span className="text-sm text-gray-400">Veelgebruikte functies</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button
+              onClick={() => navigate('/create-project')}
+              className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
+                  <Plus size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">Nieuw Project</h3>
+                  <p className="text-xs text-gray-400 mt-1">Start een nieuw project</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/verdelers')}
+              className="group bg-gradient-to-br from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 border border-green-500/20 hover:border-green-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
+                  <Upload size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">Verdelers</h3>
+                  <p className="text-xs text-gray-400 mt-1">Beheer verdelers</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/uploads')}
+              className="group bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 hover:border-purple-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
+                  <FolderOpen size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-purple-400 transition-colors">Documenten</h3>
+                  <p className="text-xs text-gray-400 mt-1">Bekijk uploads</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/meldingen')}
+              className="group bg-gradient-to-br from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 hover:border-orange-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg relative"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
+                  <Bell size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Meldingen</h3>
+                  <p className="text-xs text-gray-400 mt-1">Service desk</p>
+                </div>
+              </div>
+              {notifications.some(n => !n.read) && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Info cards */}
       {/* Enhanced Project Table Section - Top Priority Position */}
       {/* Project Activity Banner */}
-      <ProjectLockBanner 
+      <ProjectLockBanner
         projectLocks={projectLocks}
         currentUserId={currentUser?.id || ''}
       />
@@ -1073,73 +1154,180 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin-Only: Today's Priority Dashboard */}
+      {/* Admin-Only: Project Status Overview with Drill-through - Moved to Top */}
       {currentUser?.role === 'admin' && (
-        <>
-          {/* Today's Deliveries */}
-          <div className="card p-6 mb-8">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <Calendar size={20} className="text-green-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Verwachte Leveringen Vandaag</h2>
-                <p className="text-sm text-gray-400">Projecten die vandaag geleverd moeten worden</p>
-              </div>
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <CheckCircle2 size={20} className="text-purple-400" />
             </div>
-
-            <div className="space-y-3">
-              {projects
-                .filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0])
-                .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
-                .map((project) => (
-                  <div
-                    key={project.id}
-                    onClick={() => handleProjectNavigation(project.id)}
-                    className="p-4 bg-[#2A303C] rounded-lg border border-green-500/20 hover:border-green-500/40 cursor-pointer transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <span className="font-medium text-blue-400">{project.project_number}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
-                            {project.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-300">{project.client}</p>
-                        <p className="text-xs text-gray-400">{project.location}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-green-400 font-medium">Vandaag</div>
-                        <div className="text-xs text-gray-400">{project.distributors?.length || 0} verdelers</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <Calendar size={32} className="mx-auto mb-2 opacity-50" />
-                  <p>Geen leveringen gepland voor vandaag</p>
-                </div>
-              )}
+            <div>
+              <h2 className="text-xl font-semibold">Projecten per Status</h2>
+              <p className="text-sm text-gray-400">Klik op een status om projecten te bekijken</p>
             </div>
           </div>
 
-          {/* Upcoming Deliveries - Next 7 Days */}
-          <div className="card p-6 mb-8">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-orange-500/20 rounded-lg">
-                <Clock size={20} className="text-orange-400" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Opgeleverd'].map((status) => {
+              const statusProjects = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase());
+              const count = statusProjects.length;
+
+              return (
+                <div
+                  key={status}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setShowFilters(true);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="p-4 bg-gradient-to-br from-[#2A303C] to-[#1E2530] rounded-lg border border-gray-700 hover:border-blue-500/40 cursor-pointer transition-all transform hover:scale-105"
+                >
+                  <div className="text-center">
+                    <div className={`text-3xl font-bold mb-2 ${getStatusColor(status).split(' ')[1]}`}>
+                      {count}
+                    </div>
+                    <div className="text-sm text-gray-300 font-medium mb-1">{status}</div>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                      <div
+                        className={`h-1.5 rounded-full ${getStatusColor(status).replace('text-', 'bg-').replace('/20', '/60')}`}
+                        style={{ width: `${projects.length > 0 ? (count / projects.length) * 100 : 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Admin-Only: Compact Dashboard Sections */}
+      {currentUser?.role === 'admin' && (
+        <>
+          {/* Three Column Layout for Key Metrics */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Today's Deliveries - Compact Card */}
+            <div className="card p-6 bg-gradient-to-br from-green-500/5 to-green-600/5 border-green-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <Calendar size={18} className="text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Vandaag</h3>
+                    <p className="text-xs text-gray-400">Leveringen</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-green-400">
+                  {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length}
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">Komende Leveringen (7 Dagen)</h2>
-                <p className="text-sm text-gray-400">Projecten met leverdatum in de komende week</p>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {projects
+                  .filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0])
+                  .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                  .map((project) => (
+                    <div
+                      key={project.id}
+                      onClick={() => handleProjectNavigation(project.id)}
+                      className="p-3 bg-[#2A303C] rounded-lg border border-green-500/20 hover:border-green-500/60 cursor-pointer transition-all hover:shadow-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="font-medium text-blue-400 text-sm truncate">{project.project_number}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-300 truncate">{project.client}</p>
+                        </div>
+                        <div className="text-xs text-green-400 ml-2 bg-green-500/10 px-2 py-1 rounded">
+                          {project.distributors?.length || 0}x
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Calendar size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Geen leveringen vandaag</p>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
-              {projects
-                .filter(p => {
+            {/* Upcoming Deliveries - Next 7 Days - Timeline Style */}
+            <div className="card p-6 bg-gradient-to-br from-orange-500/5 to-orange-600/5 border-orange-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-orange-500/20 rounded-lg">
+                    <Clock size={18} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Deze Week</h3>
+                    <p className="text-xs text-gray-400">7 Dagen</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-orange-400">
+                  {projects.filter(p => {
+                    if (!p.expected_delivery_date) return false;
+                    const deliveryDate = new Date(p.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(today.getDate() + 7);
+                    return deliveryDate > today && deliveryDate <= nextWeek;
+                  }).length}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {projects
+                  .filter(p => {
+                    if (!p.expected_delivery_date) return false;
+                    const deliveryDate = new Date(p.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(today.getDate() + 7);
+                    return deliveryDate > today && deliveryDate <= nextWeek;
+                  })
+                  .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                  .map((project) => {
+                    const deliveryDate = new Date(project.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => handleProjectNavigation(project.id)}
+                        className="p-3 bg-[#2A303C] rounded-lg border border-orange-500/20 hover:border-orange-500/60 cursor-pointer transition-all hover:shadow-lg"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="font-medium text-blue-400 text-sm truncate">{project.project_number}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-300 truncate">{project.client}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-xs text-orange-400 font-medium whitespace-nowrap">
+                              {deliveryDate.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric' })}
+                            </div>
+                            <div className="text-xs text-gray-500">{daysUntil}d</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {projects.filter(p => {
                   if (!p.expected_delivery_date) return false;
                   const deliveryDate = new Date(p.expected_delivery_date);
                   const today = new Date();
@@ -1147,196 +1335,103 @@ const Dashboard = () => {
                   const nextWeek = new Date(today);
                   nextWeek.setDate(today.getDate() + 7);
                   return deliveryDate > today && deliveryDate <= nextWeek;
-                })
-                .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
-                .map((project) => {
-                  const deliveryDate = new Date(project.expected_delivery_date);
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                }).length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Clock size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Geen leveringen deze week</p>
+                  </div>
+                )}
+              </div>
+            </div>
 
-                  return (
-                    <div
-                      key={project.id}
-                      onClick={() => handleProjectNavigation(project.id)}
-                      className="p-4 bg-[#2A303C] rounded-lg border border-orange-500/20 hover:border-orange-500/40 cursor-pointer transition-all"
-                    >
+            {/* User Workload Overview - Compact Grid */}
+            <div className="card p-6 bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <FolderOpen size={18} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Werkbelasting</h3>
+                    <p className="text-xs text-gray-400">Medewerkers</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-blue-400">
+                  {(() => {
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    return users.filter((user: any) => {
+                      const hasWork = projects.some(p =>
+                        p.distributors?.some((d: any) => d.toegewezen_monteur === user.username)
+                      );
+                      return hasWork;
+                    }).length;
+                  })()}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {(() => {
+                  const users = JSON.parse(localStorage.getItem('users') || '[]');
+                  const workload = users.map((user: any) => {
+                    const userProjects = projects.filter(p => {
+                      return p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                    });
+
+                    const verdelerCount = projects.reduce((total, p) => {
+                      const userVerdelers = p.distributors?.filter((d: any) => d.toegewezen_monteur === user.username) || [];
+                      return total + userVerdelers.length;
+                    }, 0);
+
+                    return {
+                      user,
+                      projectCount: userProjects.length,
+                      verdelerCount,
+                      projects: userProjects
+                    };
+                  }).filter((w: any) => w.projectCount > 0 || w.verdelerCount > 0)
+                    .sort((a: any, b: any) => b.verdelerCount - a.verdelerCount);
+
+                  return workload.length > 0 ? workload.map((item: any) => (
+                    <div key={item.user.id} className="p-3 bg-[#2A303C] rounded-lg border border-blue-500/20 hover:border-blue-500/40 transition-all">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="font-medium text-blue-400">{project.project_number}</span>
-                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
-                              {project.status}
-                            </span>
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          {item.user.profilePicture ? (
+                            <img
+                              src={item.user.profilePicture}
+                              alt={item.user.username}
+                              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-white">
+                                {item.user.username.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-white text-sm truncate">{item.user.username}</p>
+                            <p className="text-xs text-gray-400">{item.user.role}</p>
                           </div>
-                          <p className="text-sm text-gray-300">{project.client}</p>
-                          <p className="text-xs text-gray-400">{project.location}</p>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm text-orange-400 font-medium">
-                            {deliveryDate.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-center bg-blue-500/10 px-2 py-1 rounded">
+                            <div className="text-sm text-blue-400 font-medium">{item.projectCount}</div>
+                            <div className="text-xs text-gray-500">proj</div>
                           </div>
-                          <div className="text-xs text-gray-400">Over {daysUntil} {daysUntil === 1 ? 'dag' : 'dagen'}</div>
-                          <div className="text-xs text-gray-500">{project.distributors?.length || 0} verdelers</div>
+                          <div className="text-center bg-green-500/10 px-2 py-1 rounded">
+                            <div className="text-sm text-green-400 font-medium">{item.verdelerCount}</div>
+                            <div className="text-xs text-gray-500">verd</div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <p className="text-xs">Geen toegewezen werk</p>
                     </div>
                   );
-                })}
-              {projects.filter(p => {
-                if (!p.expected_delivery_date) return false;
-                const deliveryDate = new Date(p.expected_delivery_date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const nextWeek = new Date(today);
-                nextWeek.setDate(today.getDate() + 7);
-                return deliveryDate > today && deliveryDate <= nextWeek;
-              }).length === 0 && (
-                <div className="text-center py-8 text-gray-400">
-                  <Clock size={32} className="mx-auto mb-2 opacity-50" />
-                  <p>Geen leveringen gepland in de komende 7 dagen</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* User Workload Overview */}
-          <div className="card p-6 mb-8">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <FolderOpen size={20} className="text-blue-400" />
+                })()}
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">Werkbelasting per Medewerker</h2>
-                <p className="text-sm text-gray-400">Overzicht van toegewezen projecten en verdelers</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {(() => {
-                const users = JSON.parse(localStorage.getItem('users') || '[]');
-                const workload = users.map((user: any) => {
-                  const userProjects = projects.filter(p => {
-                    return p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
-                  });
-
-                  const verdelerCount = projects.reduce((total, p) => {
-                    const userVerdelers = p.distributors?.filter((d: any) => d.toegewezen_monteur === user.username) || [];
-                    return total + userVerdelers.length;
-                  }, 0);
-
-                  return {
-                    user,
-                    projectCount: userProjects.length,
-                    verdelerCount,
-                    projects: userProjects
-                  };
-                }).filter((w: any) => w.projectCount > 0 || w.verdelerCount > 0)
-                  .sort((a: any, b: any) => b.projectCount - a.projectCount);
-
-                return workload.length > 0 ? workload.map((item: any) => (
-                  <div key={item.user.id} className="p-4 bg-[#2A303C] rounded-lg border border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        {item.user.profilePicture ? (
-                          <img
-                            src={item.user.profilePicture}
-                            alt={item.user.username}
-                            className="w-10 h-10 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <span className="text-sm font-bold text-white">
-                              {item.user.username.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-white">{item.user.username}</p>
-                          <p className="text-xs text-gray-400">{item.user.role}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <div className="text-sm text-blue-400 font-medium">{item.projectCount}</div>
-                          <div className="text-xs text-gray-400">projecten</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm text-green-400 font-medium">{item.verdelerCount}</div>
-                          <div className="text-xs text-gray-400">verdelers</div>
-                        </div>
-                      </div>
-                    </div>
-                    {item.projects.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {item.projects.slice(0, 3).map((p: any) => (
-                          <span
-                            key={p.id}
-                            onClick={() => handleProjectNavigation(p.id)}
-                            className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs cursor-pointer hover:bg-blue-500/30 transition-colors"
-                          >
-                            {p.project_number}
-                          </span>
-                        ))}
-                        {item.projects.length > 3 && (
-                          <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs">
-                            +{item.projects.length - 3} meer
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )) : (
-                  <div className="text-center py-8 text-gray-400">
-                    <p>Geen toegewezen werk</p>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-
-          {/* Project Status Overview with Drill-through */}
-          <div className="card p-6 mb-8">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <CheckCircle2 size={20} className="text-purple-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold">Projecten per Status</h2>
-                <p className="text-sm text-gray-400">Klik op een status om projecten te bekijken</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Opgeleverd'].map((status) => {
-                const statusProjects = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase());
-                const count = statusProjects.length;
-
-                return (
-                  <div
-                    key={status}
-                    onClick={() => {
-                      setStatusFilter(status);
-                      setShowFilters(true);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }}
-                    className="p-4 bg-gradient-to-br from-[#2A303C] to-[#1E2530] rounded-lg border border-gray-700 hover:border-blue-500/40 cursor-pointer transition-all transform hover:scale-105"
-                  >
-                    <div className="text-center">
-                      <div className={`text-3xl font-bold mb-2 ${getStatusColor(status).split(' ')[1]}`}>
-                        {count}
-                      </div>
-                      <div className="text-sm text-gray-300 font-medium mb-1">{status}</div>
-                      <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
-                        <div
-                          className={`h-1.5 rounded-full ${getStatusColor(status).replace('text-', 'bg-').replace('/20', '/60')}`}
-                          style={{ width: `${projects.length > 0 ? (count / projects.length) * 100 : 0}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </>
