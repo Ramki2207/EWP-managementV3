@@ -1737,6 +1737,216 @@ const Dashboard = () => {
               })()}
             </div>
           </div>
+
+          {/* Project & Verdeler Timeline Agenda */}
+          <div className="card p-6 mt-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
+                  <Calendar className="text-blue-400" size={24} />
+                  <span>Project Planning & Status Overzicht</span>
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Realtime inzicht in projectstatus en verwachte leverdata</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-400">Op schema</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span className="text-gray-400">Waarschuwing</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="text-gray-400">Urgent</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Timeline View */}
+            <div className="space-y-4">
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const upcomingProjects = projects
+                  .filter(p => p.expected_delivery_date)
+                  .sort((a, b) => {
+                    const dateA = new Date(a.expected_delivery_date!);
+                    const dateB = new Date(b.expected_delivery_date!);
+                    return dateA.getTime() - dateB.getTime();
+                  })
+                  .slice(0, 10);
+
+                if (upcomingProjects.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <Calendar className="mx-auto text-gray-600 mb-4" size={48} />
+                      <p className="text-gray-400">Geen projecten met verwachte leverdatum gevonden</p>
+                    </div>
+                  );
+                }
+
+                return upcomingProjects.map((project, idx) => {
+                  const deliveryDate = new Date(project.expected_delivery_date!);
+                  const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                  let statusColor = 'green';
+                  let statusText = 'Op schema';
+                  let urgencyClass = 'border-green-500/20 hover:border-green-400/40';
+                  let bgClass = 'bg-green-500/5';
+
+                  if (daysUntil < 0) {
+                    statusColor = 'red';
+                    statusText = 'Verlopen';
+                    urgencyClass = 'border-red-500/40 hover:border-red-400/60';
+                    bgClass = 'bg-red-500/10';
+                  } else if (daysUntil <= 2) {
+                    statusColor = 'red';
+                    statusText = 'Urgent';
+                    urgencyClass = 'border-red-500/40 hover:border-red-400/60';
+                    bgClass = 'bg-red-500/10';
+                  } else if (daysUntil <= 5) {
+                    statusColor = 'yellow';
+                    statusText = 'Binnenkort';
+                    urgencyClass = 'border-yellow-500/30 hover:border-yellow-400/50';
+                    bgClass = 'bg-yellow-500/5';
+                  }
+
+                  const verdelerCount = project.distributors?.length || 0;
+                  const completedVerdelers = project.distributors?.filter((d: any) =>
+                    d.testing_status === 'completed'
+                  ).length || 0;
+                  const progressPercent = verdelerCount > 0 ? (completedVerdelers / verdelerCount) * 100 : 0;
+
+                  return (
+                    <div
+                      key={project.id}
+                      className={`border ${urgencyClass} ${bgClass} rounded-xl p-5 transition-all duration-300 hover:shadow-lg cursor-pointer`}
+                      onClick={() => handleProjectClick(project.id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <div className={`w-3 h-3 bg-${statusColor}-500 rounded-full animate-pulse`}></div>
+                            <h3 className="text-lg font-semibold text-white">{project.project_number}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${statusColor}-500/20 text-${statusColor}-400 border border-${statusColor}-500/30`}>
+                              {statusText}
+                            </span>
+                            {daysUntil >= 0 && (
+                              <span className="text-sm text-gray-400">
+                                {daysUntil === 0 ? 'Vandaag' : daysUntil === 1 ? 'Morgen' : `Over ${daysUntil} dagen`}
+                              </span>
+                            )}
+                            {daysUntil < 0 && (
+                              <span className="text-sm text-red-400 font-medium">
+                                {Math.abs(daysUntil)} {Math.abs(daysUntil) === 1 ? 'dag' : 'dagen'} verlopen
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Klant</p>
+                              <p className="text-sm text-gray-300">{project.client || 'Niet opgegeven'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Locatie</p>
+                              <p className="text-sm text-gray-300">{project.location || 'Niet opgegeven'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Verwachte leverdatum</p>
+                              <p className="text-sm text-white font-medium">
+                                {deliveryDate.toLocaleDateString('nl-NL', {
+                                  weekday: 'short',
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Status</p>
+                              <p className="text-sm text-gray-300 capitalize">{project.status}</p>
+                            </div>
+                          </div>
+
+                          {/* Verdelers Overview */}
+                          {verdelerCount > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-700/50">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-gray-400">Verdelers voortgang</p>
+                                <p className="text-xs font-medium text-gray-300">
+                                  {completedVerdelers} van {verdelerCount} voltooid
+                                </p>
+                              </div>
+                              <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
+                                <div
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    progressPercent === 100 ? 'bg-green-500' :
+                                    progressPercent > 50 ? 'bg-blue-500' : 'bg-yellow-500'
+                                  }`}
+                                  style={{ width: `${progressPercent}%` }}
+                                ></div>
+                              </div>
+
+                              {/* Verdeler List */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {project.distributors?.map((verdeler: any, vIdx: number) => {
+                                  const isCompleted = verdeler.testing_status === 'completed';
+                                  const isInProgress = verdeler.testing_status === 'in_progress';
+
+                                  return (
+                                    <div
+                                      key={vIdx}
+                                      className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 text-xs"
+                                    >
+                                      <div className="flex items-center space-x-2">
+                                        <div className={`w-2 h-2 rounded-full ${
+                                          isCompleted ? 'bg-green-500' :
+                                          isInProgress ? 'bg-blue-500' : 'bg-gray-500'
+                                        }`}></div>
+                                        <span className="text-gray-300 font-medium">{verdeler.kast_naam}</span>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        {verdeler.toegewezen_monteur && (
+                                          <span className="text-gray-500">{verdeler.toegewezen_monteur}</span>
+                                        )}
+                                        <span className={`px-2 py-0.5 rounded ${
+                                          isCompleted ? 'bg-green-500/20 text-green-400' :
+                                          isInProgress ? 'bg-blue-500/20 text-blue-400' :
+                                          'bg-gray-500/20 text-gray-400'
+                                        }`}>
+                                          {isCompleted ? 'Klaar' : isInProgress ? 'Bezig' : 'Open'}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {projects.filter(p => p.expected_delivery_date).length > 10 && (
+              <div className="text-center mt-6 pt-6 border-t border-gray-700">
+                <button
+                  onClick={() => navigate('/projects')}
+                  className="btn-secondary"
+                >
+                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date).length})
+                </button>
+              </div>
+            )}
+          </div>
         </>
       )}
 
