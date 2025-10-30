@@ -370,6 +370,10 @@ const Dashboard = () => {
     return isLocked;
   };
 
+  const handleProjectClick = (projectId: string) => {
+    handleProjectNavigation(projectId);
+  };
+
   const handleProjectNavigation = async (projectId: string) => {
     if (!currentUser?.id) {
       console.log(`❌ DASHBOARD: No current user ID available`);
