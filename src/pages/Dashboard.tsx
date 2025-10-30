@@ -1766,123 +1766,116 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Timeline View */}
-            <div className="space-y-4">
-              {(() => {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const upcomingProjects = projects
-                  .filter(p => p.expected_delivery_date)
-                  .sort((a, b) => {
-                    const dateA = new Date(a.expected_delivery_date!);
-                    const dateB = new Date(b.expected_delivery_date!);
-                    return dateA.getTime() - dateB.getTime();
-                  })
-                  .slice(0, 10);
+            {/* Compact Timeline View */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Status</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Project</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Klant</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Leverdatum</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Verdelers</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Voortgang</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const upcomingProjects = projects
+                      .filter(p => p.expected_delivery_date && p.status !== 'opgeleverd')
+                      .sort((a, b) => {
+                        const dateA = new Date(a.expected_delivery_date!);
+                        const dateB = new Date(b.expected_delivery_date!);
+                        return dateA.getTime() - dateB.getTime();
+                      })
+                      .slice(0, 10);
 
-                if (upcomingProjects.length === 0) {
-                  return (
-                    <div className="text-center py-12">
-                      <Calendar className="mx-auto text-gray-600 mb-4" size={48} />
-                      <p className="text-gray-400">Geen projecten met verwachte leverdatum gevonden</p>
-                    </div>
-                  );
-                }
+                    if (upcomingProjects.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} className="text-center py-12">
+                            <Calendar className="mx-auto text-gray-600 mb-4" size={48} />
+                            <p className="text-gray-400">Geen actieve projecten met verwachte leverdatum</p>
+                          </td>
+                        </tr>
+                      );
+                    }
 
-                return upcomingProjects.map((project, idx) => {
-                  const deliveryDate = new Date(project.expected_delivery_date!);
-                  const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    return upcomingProjects.map((project) => {
+                      const deliveryDate = new Date(project.expected_delivery_date!);
+                      const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
-                  let statusColor = 'green';
-                  let statusText = 'Op schema';
-                  let urgencyClass = 'border-green-500/20 hover:border-green-400/40';
-                  let bgClass = 'bg-green-500/5';
+                      let statusColor = 'green';
+                      let statusText = 'Op schema';
 
-                  if (daysUntil < 0) {
-                    statusColor = 'red';
-                    statusText = 'Verlopen';
-                    urgencyClass = 'border-red-500/40 hover:border-red-400/60';
-                    bgClass = 'bg-red-500/10';
-                  } else if (daysUntil <= 2) {
-                    statusColor = 'red';
-                    statusText = 'Urgent';
-                    urgencyClass = 'border-red-500/40 hover:border-red-400/60';
-                    bgClass = 'bg-red-500/10';
-                  } else if (daysUntil <= 5) {
-                    statusColor = 'yellow';
-                    statusText = 'Binnenkort';
-                    urgencyClass = 'border-yellow-500/30 hover:border-yellow-400/50';
-                    bgClass = 'bg-yellow-500/5';
-                  }
+                      if (daysUntil < 0) {
+                        statusColor = 'red';
+                        statusText = 'Verlopen';
+                      } else if (daysUntil <= 2) {
+                        statusColor = 'red';
+                        statusText = 'Urgent';
+                      } else if (daysUntil <= 5) {
+                        statusColor = 'yellow';
+                        statusText = 'Binnenkort';
+                      }
 
-                  const verdelerCount = project.distributors?.length || 0;
-                  const completedVerdelers = project.distributors?.filter((d: any) =>
-                    d.testing_status === 'completed'
-                  ).length || 0;
-                  const progressPercent = verdelerCount > 0 ? (completedVerdelers / verdelerCount) * 100 : 0;
+                      const verdelerCount = project.distributors?.length || 0;
+                      const completedVerdelers = project.distributors?.filter((d: any) =>
+                        d.testing_status === 'completed'
+                      ).length || 0;
+                      const progressPercent = verdelerCount > 0 ? (completedVerdelers / verdelerCount) * 100 : 0;
 
-                  return (
-                    <div
-                      key={project.id}
-                      className={`border ${urgencyClass} ${bgClass} rounded-xl p-5 transition-all duration-300 hover:shadow-lg cursor-pointer`}
-                      onClick={() => handleProjectClick(project.id)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-3">
-                            <div className={`w-3 h-3 bg-${statusColor}-500 rounded-full animate-pulse`}></div>
-                            <h3 className="text-lg font-semibold text-white">{project.project_number}</h3>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${statusColor}-500/20 text-${statusColor}-400 border border-${statusColor}-500/30`}>
-                              {statusText}
-                            </span>
-                            {daysUntil >= 0 && (
-                              <span className="text-sm text-gray-400">
-                                {daysUntil === 0 ? 'Vandaag' : daysUntil === 1 ? 'Morgen' : `Over ${daysUntil} dagen`}
+                      return (
+                        <tr
+                          key={project.id}
+                          className="border-b border-gray-800 hover:bg-gray-800/30 cursor-pointer transition-colors"
+                          onClick={() => handleProjectClick(project.id)}
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full bg-${statusColor}-500 animate-pulse`}></div>
+                              <span className={`text-xs font-medium text-${statusColor}-400`}>
+                                {statusText}
                               </span>
-                            )}
-                            {daysUntil < 0 && (
-                              <span className="text-sm text-red-400 font-medium">
-                                {Math.abs(daysUntil)} {Math.abs(daysUntil) === 1 ? 'dag' : 'dagen'} verlopen
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Klant</p>
-                              <p className="text-sm text-gray-300">{project.client || 'Niet opgegeven'}</p>
                             </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Locatie</p>
-                              <p className="text-sm text-gray-300">{project.location || 'Niet opgegeven'}</p>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm font-medium text-white">{project.project_number}</div>
+                            <div className="text-xs text-gray-500 capitalize">{project.status}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-gray-300">{project.client || '-'}</div>
+                            <div className="text-xs text-gray-500">{project.location || '-'}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-white">
+                              {deliveryDate.toLocaleDateString('nl-NL', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
                             </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Verwachte leverdatum</p>
-                              <p className="text-sm text-white font-medium">
-                                {deliveryDate.toLocaleDateString('nl-NL', {
-                                  weekday: 'short',
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric'
-                                })}
-                              </p>
+                            <div className="text-xs text-gray-500">
+                              {daysUntil < 0 ? (
+                                <span className="text-red-400">{Math.abs(daysUntil)}d verlopen</span>
+                              ) : daysUntil === 0 ? (
+                                <span className="text-yellow-400">Vandaag</span>
+                              ) : daysUntil === 1 ? (
+                                <span className="text-yellow-400">Morgen</span>
+                              ) : (
+                                <span>Over {daysUntil}d</span>
+                              )}
                             </div>
-                            <div>
-                              <p className="text-xs text-gray-500 mb-1">Status</p>
-                              <p className="text-sm text-gray-300 capitalize">{project.status}</p>
-                            </div>
-                          </div>
-
-                          {/* Verdelers Overview */}
-                          {verdelerCount > 0 && (
-                            <div className="mt-4 pt-4 border-t border-gray-700/50">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="text-xs text-gray-400">Verdelers voortgang</p>
-                                <p className="text-xs font-medium text-gray-300">
-                                  {completedVerdelers} van {verdelerCount} voltooid
-                                </p>
-                              </div>
-                              <div className="w-full bg-gray-700 rounded-full h-2 mb-3">
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-gray-300">{verdelerCount} verdelers</div>
+                            <div className="text-xs text-gray-500">{completedVerdelers} voltooid</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-1 bg-gray-700 rounded-full h-2 min-w-[80px]">
                                 <div
                                   className={`h-2 rounded-full transition-all duration-500 ${
                                     progressPercent === 100 ? 'bg-green-500' :
@@ -1891,58 +1884,26 @@ const Dashboard = () => {
                                   style={{ width: `${progressPercent}%` }}
                                 ></div>
                               </div>
-
-                              {/* Verdeler List */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                {project.distributors?.map((verdeler: any, vIdx: number) => {
-                                  const isCompleted = verdeler.testing_status === 'completed';
-                                  const isInProgress = verdeler.testing_status === 'in_progress';
-
-                                  return (
-                                    <div
-                                      key={vIdx}
-                                      className="flex items-center justify-between bg-gray-800/50 rounded-lg px-3 py-2 text-xs"
-                                    >
-                                      <div className="flex items-center space-x-2">
-                                        <div className={`w-2 h-2 rounded-full ${
-                                          isCompleted ? 'bg-green-500' :
-                                          isInProgress ? 'bg-blue-500' : 'bg-gray-500'
-                                        }`}></div>
-                                        <span className="text-gray-300 font-medium">{verdeler.kast_naam}</span>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        {verdeler.toegewezen_monteur && (
-                                          <span className="text-gray-500">{verdeler.toegewezen_monteur}</span>
-                                        )}
-                                        <span className={`px-2 py-0.5 rounded ${
-                                          isCompleted ? 'bg-green-500/20 text-green-400' :
-                                          isInProgress ? 'bg-blue-500/20 text-blue-400' :
-                                          'bg-gray-500/20 text-gray-400'
-                                        }`}>
-                                          {isCompleted ? 'Klaar' : isInProgress ? 'Bezig' : 'Open'}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                              <span className="text-xs text-gray-400 min-w-[35px]">
+                                {Math.round(progressPercent)}%
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
             </div>
 
-            {projects.filter(p => p.expected_delivery_date).length > 10 && (
-              <div className="text-center mt-6 pt-6 border-t border-gray-700">
+            {projects.filter(p => p.expected_delivery_date && p.status !== 'opgeleverd').length > 10 && (
+              <div className="text-center mt-4 pt-4 border-t border-gray-700">
                 <button
                   onClick={() => navigate('/projects')}
-                  className="btn-secondary"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date).length})
+                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date && p.status !== 'opgeleverd').length})
                 </button>
               </div>
             )}
