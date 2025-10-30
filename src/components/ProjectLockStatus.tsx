@@ -56,17 +56,17 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
   if (isStale) {
     // Stale lock
     return (
-      <div className="group relative">
-        <div className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+      <div className="group/lock relative">
+        <div className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'} cursor-pointer`}>
           <AlertTriangle size={compact ? 14 : 16} className="text-yellow-400" />
           <span className="text-yellow-400 font-medium">
             {compact ? projectLock.username.split(' ')[0] : `Inactief (${timeSinceActivity})`}
           </span>
         </div>
-        
+
         {!compact && (
-          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50">
-            <div className="bg-[#1E2530] border border-gray-700 rounded-lg p-4 shadow-lg min-w-64">
+          <div className="absolute bottom-full left-0 mb-2 opacity-0 invisible group-hover/lock:opacity-100 group-hover/lock:visible transition-all duration-200 z-50 pointer-events-none group-hover/lock:pointer-events-auto">
+            <div className="bg-[#1E2530] border border-gray-700 rounded-lg p-4 shadow-xl min-w-64">
               <div className="flex items-center space-x-2 mb-2">
                 <AlertTriangle size={16} className="text-yellow-400" />
                 <span className="font-medium text-yellow-400">Inactieve vergrendeling</span>
@@ -82,7 +82,7 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
                     e.stopPropagation();
                     onForceUnlock();
                   }}
-                  className="mt-3 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-2 rounded-lg text-sm transition-colors"
+                  className="mt-3 w-full bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-400 px-3 py-2 rounded-lg text-sm transition-colors font-medium"
                 >
                   Forceer ontgrendelen
                 </button>
@@ -96,17 +96,17 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
 
   // Active lock by another user
   return (
-    <div className="group relative">
-      <div className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'}`}>
+    <div className="group/lock relative">
+      <div className={`flex items-center space-x-2 ${compact ? 'text-xs' : 'text-sm'} cursor-pointer`}>
         <Lock size={compact ? 14 : 16} className="text-red-400" />
         <span className="text-red-400 font-medium">
           {compact ? projectLock.username.split(' ')[0] : `Vergrendeld door ${projectLock.username}`}
         </span>
       </div>
-      
+
       {!compact && (
-        <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-50">
-          <div className="bg-[#1E2530] border border-gray-700 rounded-lg p-4 shadow-lg min-w-64">
+        <div className="absolute bottom-full left-0 mb-2 opacity-0 invisible group-hover/lock:opacity-100 group-hover/lock:visible transition-all duration-200 z-50 pointer-events-none group-hover/lock:pointer-events-auto">
+          <div className="bg-[#1E2530] border border-gray-700 rounded-lg p-4 shadow-xl min-w-64">
             <div className="flex items-center space-x-2 mb-2">
               <Lock size={16} className="text-red-400" />
               <span className="font-medium text-red-400">Project vergrendeld</span>
@@ -122,7 +122,7 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
                   e.stopPropagation();
                   onForceUnlock();
                 }}
-                className="mt-3 w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm transition-colors"
+                className="mt-3 w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-2 rounded-lg text-sm transition-colors font-medium"
               >
                 Forceer ontgrendelen
               </button>
