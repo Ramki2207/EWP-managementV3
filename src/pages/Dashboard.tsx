@@ -1474,26 +1474,25 @@ const Dashboard = () => {
                     date.setDate(today.getDate() + i);
                     const dateStr = date.toISOString().split('T')[0];
 
-                    const deliveriesCount = projects.filter(p =>
-                      p.expected_delivery_date === dateStr
-                    ).length;
+                    const dayProjects = projects.filter(p => p.expected_delivery_date === dateStr);
+                    const deliveriesCount = dayProjects.length;
 
-                    const verdelersCount = projects
-                      .filter(p => p.expected_delivery_date === dateStr)
-                      .reduce((total, p) => total + (p.distributors?.length || 0), 0);
+                    const verdelersCount = dayProjects.reduce((total, p) => total + (p.distributors?.length || 0), 0);
+
+                    const allVerdelers = dayProjects.flatMap(p =>
+                      (p.distributors || []).map((d: any) => ({
+                        kast_naam: d.kast_naam,
+                        project_number: p.project_number,
+                        toegewezen_monteur: d.toegewezen_monteur
+                      }))
+                    );
 
                     const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    const workloadCount = users.reduce((total: number, user: any) => {
-                      const userVerdelers = projects
-                        .filter(p => p.expected_delivery_date === dateStr)
-                        .reduce((count, p) => {
-                          const userVerd = p.distributors?.filter(
-                            (d: any) => d.toegewezen_monteur === user.username
-                          ) || [];
-                          return count + userVerd.length;
-                        }, 0);
-                      return total + (userVerdelers > 0 ? 1 : 0);
-                    }, 0);
+                    const activeUsers = users.filter((user: any) => {
+                      return dayProjects.some(p =>
+                        p.distributors?.some((d: any) => d.toegewezen_monteur === user.username)
+                      );
+                    });
 
                     chartData.push({
                       date: date.toLocaleDateString('nl-NL', {
@@ -1504,8 +1503,18 @@ const Dashboard = () => {
                       fullDate: dateStr,
                       Projecten: deliveriesCount,
                       Verdelers: verdelersCount,
-                      Medewerkers: workloadCount,
-                      isToday: i === 0
+                      Medewerkers: activeUsers.length,
+                      isToday: i === 0,
+                      projectDetails: dayProjects.map(p => ({
+                        project_number: p.project_number,
+                        client: p.client,
+                        location: p.location
+                      })),
+                      verdelerDetails: allVerdelers,
+                      employeeDetails: activeUsers.map((u: any) => ({
+                        username: u.username,
+                        verdelerCount: allVerdelers.filter((v: any) => v.toegewezen_monteur === u.username).length
+                      }))
                     });
                   }
 
@@ -1540,19 +1549,90 @@ const Dashboard = () => {
                   }}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #374151',
-                    borderRadius: '8px',
-                    color: '#fff'
-                  }}
-                  labelStyle={{ color: '#fff', fontWeight: 'bold', marginBottom: '8px' }}
-                  itemStyle={{ color: '#fff' }}
-                  formatter={(value: any, name: string) => {
-                    if (name === 'Projecten') return [`${value} projecten`, name];
-                    if (name === 'Verdelers') return [`${value} verdelers`, name];
-                    if (name === 'Medewerkers') return [`${value} medewerkers`, name];
-                    return [value, name];
+                  content={({ active, payload }: any) => {
+                    if (!active || !payload || !payload.length) return null;
+
+                    const data = payload[0].payload;
+
+                    return (
+                      <div className="bg-[#1e293b] border border-gray-700 rounded-lg p-4 shadow-2xl max-w-md">
+                        <div className="font-bold text-white mb-3 pb-2 border-b border-gray-700">
+                          {data.date}
+                        </div>
+
+                        {/* Summary */}
+                        <div className="grid grid-cols-3 gap-3 mb-3">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-400">{data.Projecten}</div>
+                            <div className="text-xs text-gray-400">Projecten</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-400">{data.Verdelers}</div>
+                            <div className="text-xs text-gray-400">Verdelers</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-400">{data.Medewerkers}</div>
+                            <div className="text-xs text-gray-400">Medewerkers</div>
+                          </div>
+                        </div>
+
+                        {/* Project Details */}
+                        {data.projectDetails && data.projectDetails.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-xs font-semibold text-green-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                              Projecten:
+                            </div>
+                            <div className="space-y-1 ml-4">
+                              {data.projectDetails.map((p: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300">
+                                  <span className="font-medium text-white">{p.project_number}</span>
+                                  {p.client && <span className="text-gray-400"> - {p.client}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Verdeler Details */}
+                        {data.verdelerDetails && data.verdelerDetails.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-xs font-semibold text-orange-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
+                              Verdelers:
+                            </div>
+                            <div className="space-y-1 ml-4 max-h-32 overflow-y-auto">
+                              {data.verdelerDetails.map((v: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300">
+                                  <span className="font-medium text-white">{v.kast_naam}</span>
+                                  <span className="text-gray-400"> ({v.project_number})</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Employee Details */}
+                        {data.employeeDetails && data.employeeDetails.length > 0 && (
+                          <div>
+                            <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                              Medewerkers:
+                            </div>
+                            <div className="space-y-1 ml-4">
+                              {data.employeeDetails.map((e: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300 flex justify-between items-center">
+                                  <span className="font-medium text-white">{e.username}</span>
+                                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+                                    {e.verdelerCount} {e.verdelerCount === 1 ? 'verdeler' : 'verdelers'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
                   }}
                 />
                 <Legend
