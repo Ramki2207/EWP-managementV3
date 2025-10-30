@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X } from 'lucide-react';
+import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
@@ -10,6 +10,10 @@ import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
+import {
+  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 interface Project {
   id: string;
@@ -1442,6 +1446,212 @@ const Dashboard = () => {
                     </div>
                   );
                 })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Combined Deliveries & Workload Chart */}
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg">
+                <BarChart3 size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Werkbelasting & Levering Overzicht</h2>
+                <p className="text-sm text-gray-400">Dagelijkse distributie van leveringen en werkbelasting</p>
+              </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={400}>
+              <ComposedChart
+                data={(() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const chartData = [];
+
+                  for (let i = 0; i < 7; i++) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+
+                    const deliveriesCount = projects.filter(p =>
+                      p.expected_delivery_date === dateStr
+                    ).length;
+
+                    const verdelersCount = projects
+                      .filter(p => p.expected_delivery_date === dateStr)
+                      .reduce((total, p) => total + (p.distributors?.length || 0), 0);
+
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const workloadCount = users.reduce((total: number, user: any) => {
+                      const userVerdelers = projects
+                        .filter(p => p.expected_delivery_date === dateStr)
+                        .reduce((count, p) => {
+                          const userVerd = p.distributors?.filter(
+                            (d: any) => d.toegewezen_monteur === user.username
+                          ) || [];
+                          return count + userVerd.length;
+                        }, 0);
+                      return total + (userVerdelers > 0 ? 1 : 0);
+                    }, 0);
+
+                    chartData.push({
+                      date: date.toLocaleDateString('nl-NL', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short'
+                      }),
+                      fullDate: dateStr,
+                      Projecten: deliveriesCount,
+                      Verdelers: verdelersCount,
+                      Medewerkers: workloadCount,
+                      isToday: i === 0
+                    });
+                  }
+
+                  return chartData;
+                })()}
+                margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+              >
+                <defs>
+                  <linearGradient id="colorProjecten" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.3}/>
+                  </linearGradient>
+                  <linearGradient id="colorVerdelers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis
+                  dataKey="date"
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  label={{
+                    value: 'Aantal',
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: { fill: '#9ca3af', fontSize: 12 }
+                  }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1e293b',
+                    border: '1px solid #374151',
+                    borderRadius: '8px',
+                    color: '#fff'
+                  }}
+                  labelStyle={{ color: '#fff', fontWeight: 'bold', marginBottom: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  formatter={(value: any, name: string) => {
+                    if (name === 'Projecten') return [`${value} projecten`, name];
+                    if (name === 'Verdelers') return [`${value} verdelers`, name];
+                    if (name === 'Medewerkers') return [`${value} medewerkers`, name];
+                    return [value, name];
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                    color: '#fff'
+                  }}
+                  iconType="circle"
+                />
+                <Bar
+                  dataKey="Projecten"
+                  fill="url(#colorProjecten)"
+                  radius={[8, 8, 0, 0]}
+                  name="Projecten"
+                />
+                <Bar
+                  dataKey="Verdelers"
+                  fill="url(#colorVerdelers)"
+                  radius={[8, 8, 0, 0]}
+                  name="Verdelers"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Medewerkers"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 5 }}
+                  activeDot={{ r: 7 }}
+                  name="Medewerkers"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+
+            {/* Chart Legend with Details */}
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-300">Projecten</span>
+                </div>
+                <p className="text-2xl font-bold text-green-400">
+                  {projects.filter(p => {
+                    if (!p.expected_delivery_date) return false;
+                    const deliveryDate = new Date(p.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(today.getDate() + 7);
+                    return deliveryDate >= today && deliveryDate < nextWeek;
+                  }).length}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Komende 7 dagen</p>
+              </div>
+
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-300">Verdelers</span>
+                </div>
+                <p className="text-2xl font-bold text-orange-400">
+                  {projects
+                    .filter(p => {
+                      if (!p.expected_delivery_date) return false;
+                      const deliveryDate = new Date(p.expected_delivery_date);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const nextWeek = new Date(today);
+                      nextWeek.setDate(today.getDate() + 7);
+                      return deliveryDate >= today && deliveryDate < nextWeek;
+                    })
+                    .reduce((total, p) => total + (p.distributors?.length || 0), 0)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Te leveren verdelers</p>
+              </div>
+
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-300">Medewerkers</span>
+                </div>
+                <p className="text-2xl font-bold text-blue-400">
+                  {(() => {
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    return users.filter((user: any) => {
+                      const hasWork = projects.some(p => {
+                        if (!p.expected_delivery_date) return false;
+                        const deliveryDate = new Date(p.expected_delivery_date);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const nextWeek = new Date(today);
+                        nextWeek.setDate(today.getDate() + 7);
+                        return deliveryDate >= today && deliveryDate < nextWeek &&
+                          p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                      });
+                      return hasWork;
+                    }).length;
+                  })()}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">Actieve medewerkers</p>
               </div>
             </div>
           </div>
