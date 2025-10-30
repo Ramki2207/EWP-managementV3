@@ -1784,7 +1784,7 @@ const Dashboard = () => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
                     const upcomingProjects = projects
-                      .filter(p => p.expected_delivery_date && p.status !== 'opgeleverd')
+                      .filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd')
                       .sort((a, b) => {
                         const dateA = new Date(a.expected_delivery_date!);
                         const dateB = new Date(b.expected_delivery_date!);
@@ -1897,13 +1897,13 @@ const Dashboard = () => {
               </table>
             </div>
 
-            {projects.filter(p => p.expected_delivery_date && p.status !== 'opgeleverd').length > 10 && (
+            {projects.filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd').length > 10 && (
               <div className="text-center mt-4 pt-4 border-t border-gray-700">
                 <button
                   onClick={() => navigate('/projects')}
                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date && p.status !== 'opgeleverd').length})
+                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd').length})
                 </button>
               </div>
             )}
