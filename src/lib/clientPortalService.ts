@@ -70,7 +70,7 @@ class ClientPortalService {
       expiresAt.setDate(expiresAt.getDate() + 30);
 
       // Use provided shared folders or default ones
-      const defaultFolders = ['Verdeler aanzicht', 'Test certificaat', 'Installatie schema'];
+      const defaultFolders = ['Verdeler aanzicht', 'Test certificaat', 'Installatie schema', 'Warmte berekening', 'RVS behuizing'];
       const folders = sharedFolders && sharedFolders.length > 0 ? sharedFolders : defaultFolders;
 
       const portalData = {

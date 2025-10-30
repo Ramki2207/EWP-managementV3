@@ -75,7 +75,9 @@ const ClientPortal = () => {
   const sharedFolders = portalData?.shared_folders || [
     'Verdeler aanzicht',
     'Test certificaat',
-    'Installatie schema'
+    'Installatie schema',
+    'Warmte berekening',
+    'RVS behuizing'
   ];
 
   console.log('Current portalData:', portalData);

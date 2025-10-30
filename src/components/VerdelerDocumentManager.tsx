@@ -10,6 +10,8 @@ const defaultFolders = [
   'Test certificaat',
   'Algemene informatie',
   'Installatie schema',
+  'Warmte berekening',
+  'RVS behuizing',
   'Onderdelen',
   'Handleidingen',
   'Documentatie',
