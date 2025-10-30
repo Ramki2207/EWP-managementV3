@@ -82,6 +82,7 @@ const Projects = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [monteurFilter, setMonteurFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [projectLocks, setProjectLocks] = useState<ProjectLock[]>([]);
@@ -330,6 +331,18 @@ const Projects = () => {
     }
   };
 
+  const getUniqueMonteurs = () => {
+    const monteurs = new Set<string>();
+    projects.forEach(project => {
+      project.distributors?.forEach((dist: any) => {
+        if (dist.toegewezen_monteur && dist.toegewezen_monteur !== 'Vrij') {
+          monteurs.add(dist.toegewezen_monteur);
+        }
+      });
+    });
+    return Array.from(monteurs).sort();
+  };
+
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
       // Special access for Annemieke - can see all projects (skip role/location filtering, but apply search/status filters)
@@ -431,6 +444,12 @@ const Projects = () => {
       // Client filter
       const matchesClient = clientFilter === 'all' || project.client === clientFilter;
 
+      // Monteur filter
+      const matchesMonteur = monteurFilter === 'all' ||
+        project.distributors?.some(
+          (dist: any) => dist.toegewezen_monteur === monteurFilter
+        );
+
       // Date filter
       let matchesDate = true;
       if (dateFilter !== 'all') {
@@ -441,7 +460,7 @@ const Projects = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesClient && matchesDate;
+      return matchesSearch && matchesStatus && matchesClient && matchesMonteur && matchesDate;
     });
   };
 
@@ -462,6 +481,7 @@ const Projects = () => {
     setStatusFilter('all');
     setClientFilter('all');
     setDateFilter('all');
+    setMonteurFilter('all');
   };
 
   const getActiveFilterCount = () => {
@@ -470,6 +490,7 @@ const Projects = () => {
     if (statusFilter !== 'all') count++;
     if (clientFilter !== 'all') count++;
     if (dateFilter !== 'all') count++;
+    if (monteurFilter !== 'all') count++;
     return count;
   };
 
@@ -633,7 +654,7 @@ const Projects = () => {
             </div>
 
             {/* Advanced Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Status filter</label>
                 <select
@@ -658,6 +679,20 @@ const Projects = () => {
                   <option value="all">Alle klanten</option>
                   {getUniqueClients().map(client => (
                     <option key={client} value={client}>{client}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
+                <select
+                  className="input-field"
+                  value={monteurFilter}
+                  onChange={(e) => setMonteurFilter(e.target.value)}
+                >
+                  <option value="all">Alle monteurs</option>
+                  {getUniqueMonteurs().map(monteur => (
+                    <option key={monteur} value={monteur}>{monteur}</option>
                   ))}
                 </select>
               </div>
@@ -707,6 +742,11 @@ const Projects = () => {
                     {clientFilter !== 'all' && (
                       <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs">
                         {clientFilter}
+                      </span>
+                    )}
+                    {monteurFilter !== 'all' && (
+                      <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
+                        {monteurFilter}
                       </span>
                     )}
                     {dateFilter !== 'all' && (
