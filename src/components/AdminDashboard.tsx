@@ -11,15 +11,16 @@ import {
   Folder,
   ChevronRight,
   Calendar,
-  User,
   Building2,
   Package,
+  FileText,
+  LogOut,
   Activity,
-  ArrowUpRight,
+  BarChart3,
   Search,
-  FileText
+  Filter
 } from 'lucide-react';
-import { dataService } from '../lib/supabase';
+import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { format, isToday, parseISO } from 'date-fns';
 
@@ -53,10 +54,27 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [username, setUsername] = useState('');
 
   useEffect(() => {
     loadData();
+    loadUserInfo();
   }, []);
+
+  const loadUserInfo = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const users = await dataService.getUsers();
+        const currentUser = users.find((u: any) => u.email === user.email);
+        if (currentUser) {
+          setUsername(currentUser.username);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user info:', error);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -73,6 +91,17 @@ const AdminDashboard: React.FC = () => {
       toast.error('Fout bij laden dashboard');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/login');
+      toast.success('Succesvol uitgelogd');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Fout bij uitloggen');
     }
   };
 
@@ -136,13 +165,13 @@ const AdminDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('afgerond') || statusLower.includes('compleet')) return 'text-green-600 bg-green-50 border-green-200';
-    if (statusLower.includes('levering') || statusLower.includes('verzonden')) return 'text-blue-600 bg-blue-50 border-blue-200';
-    if (statusLower.includes('testen')) return 'text-purple-600 bg-purple-50 border-purple-200';
-    if (statusLower.includes('productie')) return 'text-amber-600 bg-amber-50 border-amber-200';
-    if (statusLower.includes('engineering')) return 'text-orange-600 bg-orange-50 border-orange-200';
-    if (statusLower.includes('calculatie') || statusLower.includes('offerte')) return 'text-cyan-600 bg-cyan-50 border-cyan-200';
-    return 'text-gray-600 bg-gray-50 border-gray-200';
+    if (statusLower.includes('afgerond') || statusLower.includes('compleet')) return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+    if (statusLower.includes('levering') || statusLower.includes('verzonden')) return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+    if (statusLower.includes('testen')) return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+    if (statusLower.includes('productie')) return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+    if (statusLower.includes('engineering')) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+    if (statusLower.includes('calculatie') || statusLower.includes('offerte')) return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
+    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
   const getVerdelerProgress = (project: Project) => {
@@ -170,9 +199,9 @@ const AdminDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#0F1419]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Dashboard laden...</p>
         </div>
       </div>
@@ -180,298 +209,351 @@ const AdminDashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overzicht</h1>
-          <p className="text-gray-400">Beheer al uw projecten, teams en leveringen op één plek</p>
+    <div className="min-h-screen bg-[#0F1419] p-6">
+      <div className="max-w-[1800px] mx-auto space-y-6">
+        {/* Top Header Bar */}
+        <div className="bg-[#1A1F28] rounded-xl border border-gray-800 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Activity className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Admin Dashboard</h1>
+                  <p className="text-sm text-gray-400">Welkom terug, {username}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate('/create-project')}
+                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all"
+              >
+                <Plus className="w-5 h-5" />
+                Nieuw Project
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-medium rounded-lg transition-all border border-red-500/30"
+              >
+                <LogOut className="w-5 h-5" />
+                Uitloggen
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-[#1A1F28] rounded-xl border border-gray-800 p-6 hover:border-blue-500/50 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-blue-500/10 rounded-lg">
+                <Folder className="w-6 h-6 text-blue-400" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-white">{projects.length}</p>
+                <p className="text-sm text-gray-400 mt-1">Totaal Projecten</p>
+              </div>
+            </div>
+            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 w-3/4"></div>
+            </div>
+          </div>
+
+          <div className="bg-[#1A1F28] rounded-xl border border-gray-800 p-6 hover:border-emerald-500/50 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-emerald-500/10 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-white">{statusCounts['Afgerond'] || 0}</p>
+                <p className="text-sm text-gray-400 mt-1">Afgerond</p>
+              </div>
+            </div>
+            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 w-2/3"></div>
+            </div>
+          </div>
+
+          <div className="bg-[#1A1F28] rounded-xl border border-gray-800 p-6 hover:border-orange-500/50 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-orange-500/10 rounded-lg">
+                <Truck className="w-6 h-6 text-orange-400" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-white">{todayDeliveries.length}</p>
+                <p className="text-sm text-gray-400 mt-1">Levering Vandaag</p>
+              </div>
+            </div>
+            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-orange-500" style={{ width: `${Math.min((todayDeliveries.length / projects.length) * 100, 100)}%` }}></div>
+            </div>
+          </div>
+
+          <div className="bg-[#1A1F28] rounded-xl border border-gray-800 p-6 hover:border-purple-500/50 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 bg-purple-500/10 rounded-lg">
+                <Users className="w-6 h-6 text-purple-400" />
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-white">{userWorkload.length}</p>
+                <p className="text-sm text-gray-400 mt-1">Actieve Medewerkers</p>
+              </div>
+            </div>
+            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+              <div className="h-full bg-purple-500 w-1/2"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Today's Deliveries Alert */}
+        {todayDeliveries.length > 0 && (
+          <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/10 border border-orange-500/30 rounded-xl p-5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-orange-500/20 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-orange-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {todayDeliveries.length} Levering{todayDeliveries.length !== 1 ? 'en' : ''} Gepland Vandaag
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {todayDeliveries.map(project => (
+                    <button
+                      key={project.id}
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="px-3 py-1.5 bg-[#1A1F28] hover:bg-[#252D3A] text-orange-400 text-sm font-medium rounded-lg border border-orange-500/30 transition-all"
+                    >
+                      {project.project_number}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Actions Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button
-            onClick={() => navigate('/create-project')}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40"
+            onClick={() => navigate('/projects')}
+            className="flex items-center justify-center gap-3 bg-[#1A1F28] hover:bg-[#252D3A] border border-gray-800 hover:border-blue-500/50 rounded-xl p-4 transition-all group"
           >
-            <Plus className="w-5 h-5" />
-            Nieuw Project
+            <FileText className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-medium">Alle Projecten</span>
           </button>
           <button
             onClick={() => navigate('/clients')}
-            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
+            className="flex items-center justify-center gap-3 bg-[#1A1F28] hover:bg-[#252D3A] border border-gray-800 hover:border-emerald-500/50 rounded-xl p-4 transition-all group"
           >
-            <Building2 className="w-5 h-5" />
-            Klanten
+            <Building2 className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-medium">Klanten</span>
           </button>
           <button
             onClick={() => navigate('/verdelers')}
-            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
+            className="flex items-center justify-center gap-3 bg-[#1A1F28] hover:bg-[#252D3A] border border-gray-800 hover:border-purple-500/50 rounded-xl p-4 transition-all group"
           >
-            <Package className="w-5 h-5" />
-            Verdelers
+            <Package className="w-5 h-5 text-purple-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-medium">Verdelers</span>
           </button>
           <button
-            onClick={() => navigate('/projects')}
-            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
+            onClick={() => navigate('/insights')}
+            className="flex items-center justify-center gap-3 bg-[#1A1F28] hover:bg-[#252D3A] border border-gray-800 hover:border-cyan-500/50 rounded-xl p-4 transition-all group"
           >
-            <FileText className="w-5 h-5" />
-            Alle Projecten
+            <BarChart3 className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+            <span className="text-white font-medium">Inzichten</span>
           </button>
         </div>
-      </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Folder className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-500">+12%</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{projects.length}</h3>
-          <p className="text-sm text-gray-600">Totaal Projecten</p>
-        </div>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Projects Table - 2 columns */}
+          <div className="xl:col-span-2">
+            <div className="bg-[#1A1F28] rounded-xl border border-gray-800">
+              {/* Table Header */}
+              <div className="p-6 border-b border-gray-800">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                  <h2 className="text-xl font-bold text-white">Project Overzicht</h2>
 
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-500">Afgerond</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">
-            {statusCounts['Afgerond'] || 0}
-          </h3>
-          <p className="text-sm text-gray-600">Voltooide projecten</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Truck className="w-6 h-6 text-orange-600" />
-            </div>
-            <span className="text-sm font-medium text-orange-600">Vandaag</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{todayDeliveries.length}</h3>
-          <p className="text-sm text-gray-600">Leveringen gepland</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Users className="w-6 h-6 text-purple-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-500">Actief</span>
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900 mb-1">{userWorkload.length}</h3>
-          <p className="text-sm text-gray-600">Team leden bezig</p>
-        </div>
-      </div>
-
-      {/* Today's Deliveries Alert */}
-      {todayDeliveries.length > 0 && (
-        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {todayDeliveries.length} levering{todayDeliveries.length !== 1 ? 'en' : ''} gepland voor vandaag
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {todayDeliveries.map(project => (
-                  <button
-                    key={project.id}
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                    className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-900 text-sm font-medium rounded-lg border border-orange-200 transition-colors"
-                  >
-                    {project.project_number}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Projects Overview - Takes 2 columns */}
-        <div className="xl:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200">
-            {/* Header */}
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">Alle Projecten</h2>
-
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Zoek projecten..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
+                  <div className="relative flex-1 lg:max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="text"
+                      placeholder="Zoek projecten..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#0F1419] border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Status Filter */}
-              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
-                <button
-                  onClick={() => setSelectedStatus('all')}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
-                    selectedStatus === 'all'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  Alle ({projects.length})
-                </button>
-                {Object.entries(statusCounts).map(([status, count]) => (
+                {/* Status Filters */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
                   <button
-                    key={status}
-                    onClick={() => setSelectedStatus(status)}
+                    onClick={() => setSelectedStatus('all')}
                     className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
-                      selectedStatus === status
+                      selectedStatus === 'all'
                         ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-[#0F1419] text-gray-400 hover:text-white hover:bg-[#252D3A]'
                     }`}
                   >
-                    {status} ({count})
+                    Alle <span className="ml-1 opacity-70">({projects.length})</span>
                   </button>
-                ))}
+                  {Object.entries(statusCounts).slice(0, 5).map(([status, count]) => (
+                    <button
+                      key={status}
+                      onClick={() => setSelectedStatus(status)}
+                      className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
+                        selectedStatus === status
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-[#0F1419] text-gray-400 hover:text-white hover:bg-[#252D3A]'
+                      }`}
+                    >
+                      {status} <span className="ml-1 opacity-70">({count})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Projects List */}
+              <div className="max-h-[600px] overflow-y-auto">
+                {filteredProjects.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <Folder className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                    <p className="text-gray-500">Geen projecten gevonden</p>
+                  </div>
+                ) : (
+                  <table className="w-full">
+                    <thead className="bg-[#0F1419] sticky top-0 z-10">
+                      <tr>
+                        <th className="text-left p-4 text-sm font-semibold text-gray-400">Project</th>
+                        <th className="text-left p-4 text-sm font-semibold text-gray-400">Klant</th>
+                        <th className="text-left p-4 text-sm font-semibold text-gray-400">Status</th>
+                        <th className="text-left p-4 text-sm font-semibold text-gray-400">Voortgang</th>
+                        <th className="text-left p-4 text-sm font-semibold text-gray-400">Levering</th>
+                        <th className="text-right p-4 text-sm font-semibold text-gray-400">Actie</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {filteredProjects.map(project => {
+                        const progress = getVerdelerProgress(project);
+                        return (
+                          <tr
+                            key={project.id}
+                            className="hover:bg-[#252D3A] transition-colors cursor-pointer"
+                            onClick={() => navigate(`/projects/${project.id}`)}
+                          >
+                            <td className="p-4">
+                              <span className="text-white font-semibold">{project.project_number}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-gray-300">{project.client || 'Geen klant'}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-3 py-1 text-xs font-medium rounded-md border ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              {progress.total > 0 ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden max-w-[100px]">
+                                    <div
+                                      className="h-full bg-blue-500 transition-all"
+                                      style={{ width: `${progress.percentage}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                                    {progress.completed}/{progress.total}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-500">-</span>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              {project.verwachte_leverdatum ? (
+                                <span className="text-sm text-gray-400">
+                                  {format(parseISO(project.verwachte_leverdatum), 'dd-MM-yyyy')}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-600">-</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-right">
+                              <button className="text-blue-400 hover:text-blue-300">
+                                <ChevronRight className="w-5 h-5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
-
-            {/* Projects List */}
-            <div className="divide-y divide-gray-100 max-h-[700px] overflow-y-auto">
-              {filteredProjects.length === 0 ? (
-                <div className="p-12 text-center">
-                  <Folder className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">Geen projecten gevonden</p>
-                </div>
-              ) : (
-                filteredProjects.map(project => {
-                  const progress = getVerdelerProgress(project);
-                  return (
-                    <div
-                      key={project.id}
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      className="p-4 hover:bg-gray-50 cursor-pointer transition-colors group"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="text-base font-semibold text-gray-900">
-                              {project.project_number}
-                            </span>
-                            <span className={`px-2.5 py-1 text-xs font-medium rounded-md border ${getStatusColor(project.status)}`}>
-                              {project.status}
-                            </span>
-                          </div>
-
-                          <div className="space-y-1">
-                            <p className="text-sm text-gray-700 font-medium truncate">
-                              {project.client || 'Geen klant'}
-                            </p>
-                            {project.location && (
-                              <p className="text-xs text-gray-500">📍 {project.location}</p>
-                            )}
-                            {project.verwachte_leverdatum && (
-                              <p className="text-xs text-gray-500">
-                                📅 Verwacht: {format(parseISO(project.verwachte_leverdatum), 'dd-MM-yyyy')}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Progress Bar */}
-                          {progress.total > 0 && (
-                            <div className="mt-3">
-                              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                                <span className="font-medium">Verdelers: {progress.completed} / {progress.total}</span>
-                                <span>{progress.percentage}%</span>
-                              </div>
-                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-blue-600 transition-all duration-300"
-                                  style={{ width: `${progress.percentage}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
           </div>
-        </div>
 
-        {/* Team Workload Sidebar */}
-        <div className="xl:col-span-1">
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Team Werkzaamheden</h2>
-              <p className="text-sm text-gray-600 mt-1">Huidige toewijzingen</p>
-            </div>
+          {/* Team Workload Sidebar */}
+          <div className="xl:col-span-1">
+            <div className="bg-[#1A1F28] rounded-xl border border-gray-800">
+              <div className="p-6 border-b border-gray-800">
+                <h2 className="text-xl font-bold text-white mb-1">Team Werkzaamheden</h2>
+                <p className="text-sm text-gray-400">Huidige toewijzingen</p>
+              </div>
 
-            <div className="divide-y divide-gray-100 max-h-[700px] overflow-y-auto">
-              {userWorkload.length === 0 ? (
-                <div className="p-8 text-center">
-                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">Geen actieve toewijzingen</p>
-                </div>
-              ) : (
-                userWorkload.map(userTask => (
-                  <div key={userTask.username} className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {userTask.username.substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">{userTask.username}</p>
-                        <p className="text-xs text-gray-600">
-                          {userTask.projectCount} project{userTask.projectCount !== 1 ? 'en' : ''} · {userTask.verdelerCount} verdeler{userTask.verdelerCount !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 ml-13">
-                      {userTask.projects.map(project => (
-                        <div
-                          key={project.project_id}
-                          onClick={() => navigate(`/projects/${project.project_id}`)}
-                          className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors group"
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-900">{project.project_number}</span>
-                            <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
-                          </div>
-                          <div className="flex flex-wrap gap-1">
-                            {project.verdelers.map((verdeler, idx) => (
-                              <span
-                                key={idx}
-                                className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium"
-                              >
-                                {verdeler}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+              <div className="max-h-[600px] overflow-y-auto p-4 space-y-4">
+                {userWorkload.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Users className="w-16 h-16 text-gray-700 mx-auto mb-4" />
+                    <p className="text-gray-500">Geen actieve toewijzingen</p>
                   </div>
-                ))
-              )}
+                ) : (
+                  userWorkload.map(userTask => (
+                    <div key={userTask.username} className="bg-[#0F1419] rounded-lg border border-gray-800 p-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
+                          {userTask.username.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-semibold">{userTask.username}</p>
+                          <p className="text-xs text-gray-400">
+                            {userTask.projectCount} project{userTask.projectCount !== 1 ? 'en' : ''} · {userTask.verdelerCount} verdeler{userTask.verdelerCount !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {userTask.projects.map(project => (
+                          <div
+                            key={project.project_id}
+                            onClick={() => navigate(`/projects/${project.project_id}`)}
+                            className="bg-[#1A1F28] hover:bg-[#252D3A] rounded-lg p-3 cursor-pointer transition-all border border-gray-800 hover:border-blue-500/50"
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-sm font-medium text-white">{project.project_number}</span>
+                              <ChevronRight className="w-4 h-4 text-gray-500" />
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {project.verdelers.map((verdeler, idx) => (
+                                <span
+                                  key={idx}
+                                  className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30"
+                                >
+                                  {verdeler}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
