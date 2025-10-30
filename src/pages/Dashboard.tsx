@@ -1073,7 +1073,277 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Enhanced KPI Dashboard */}
+      {/* Admin-Only: Today's Priority Dashboard */}
+      {currentUser?.role === 'admin' && (
+        <>
+          {/* Today's Deliveries */}
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-green-500/20 rounded-lg">
+                <Calendar size={20} className="text-green-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Verwachte Leveringen Vandaag</h2>
+                <p className="text-sm text-gray-400">Projecten die vandaag geleverd moeten worden</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {projects
+                .filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0])
+                .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                .map((project) => (
+                  <div
+                    key={project.id}
+                    onClick={() => handleProjectNavigation(project.id)}
+                    className="p-4 bg-[#2A303C] rounded-lg border border-green-500/20 hover:border-green-500/40 cursor-pointer transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span className="font-medium text-blue-400">{project.project_number}</span>
+                          <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                            {project.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300">{project.client}</p>
+                        <p className="text-xs text-gray-400">{project.location}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-green-400 font-medium">Vandaag</div>
+                        <div className="text-xs text-gray-400">{project.distributors?.length || 0} verdelers</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <Calendar size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>Geen leveringen gepland voor vandaag</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Upcoming Deliveries - Next 7 Days */}
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-orange-500/20 rounded-lg">
+                <Clock size={20} className="text-orange-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Komende Leveringen (7 Dagen)</h2>
+                <p className="text-sm text-gray-400">Projecten met leverdatum in de komende week</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+              {projects
+                .filter(p => {
+                  if (!p.expected_delivery_date) return false;
+                  const deliveryDate = new Date(p.expected_delivery_date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const nextWeek = new Date(today);
+                  nextWeek.setDate(today.getDate() + 7);
+                  return deliveryDate > today && deliveryDate <= nextWeek;
+                })
+                .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                .map((project) => {
+                  const deliveryDate = new Date(project.expected_delivery_date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                  return (
+                    <div
+                      key={project.id}
+                      onClick={() => handleProjectNavigation(project.id)}
+                      className="p-4 bg-[#2A303C] rounded-lg border border-orange-500/20 hover:border-orange-500/40 cursor-pointer transition-all"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <span className="font-medium text-blue-400">{project.project_number}</span>
+                            <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-300">{project.client}</p>
+                          <p className="text-xs text-gray-400">{project.location}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-orange-400 font-medium">
+                            {deliveryDate.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </div>
+                          <div className="text-xs text-gray-400">Over {daysUntil} {daysUntil === 1 ? 'dag' : 'dagen'}</div>
+                          <div className="text-xs text-gray-500">{project.distributors?.length || 0} verdelers</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              {projects.filter(p => {
+                if (!p.expected_delivery_date) return false;
+                const deliveryDate = new Date(p.expected_delivery_date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const nextWeek = new Date(today);
+                nextWeek.setDate(today.getDate() + 7);
+                return deliveryDate > today && deliveryDate <= nextWeek;
+              }).length === 0 && (
+                <div className="text-center py-8 text-gray-400">
+                  <Clock size={32} className="mx-auto mb-2 opacity-50" />
+                  <p>Geen leveringen gepland in de komende 7 dagen</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* User Workload Overview */}
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <FolderOpen size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Werkbelasting per Medewerker</h2>
+                <p className="text-sm text-gray-400">Overzicht van toegewezen projecten en verdelers</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {(() => {
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const workload = users.map((user: any) => {
+                  const userProjects = projects.filter(p => {
+                    return p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                  });
+
+                  const verdelerCount = projects.reduce((total, p) => {
+                    const userVerdelers = p.distributors?.filter((d: any) => d.toegewezen_monteur === user.username) || [];
+                    return total + userVerdelers.length;
+                  }, 0);
+
+                  return {
+                    user,
+                    projectCount: userProjects.length,
+                    verdelerCount,
+                    projects: userProjects
+                  };
+                }).filter((w: any) => w.projectCount > 0 || w.verdelerCount > 0)
+                  .sort((a: any, b: any) => b.projectCount - a.projectCount);
+
+                return workload.length > 0 ? workload.map((item: any) => (
+                  <div key={item.user.id} className="p-4 bg-[#2A303C] rounded-lg border border-gray-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        {item.user.profilePicture ? (
+                          <img
+                            src={item.user.profilePicture}
+                            alt={item.user.username}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                            <span className="text-sm font-bold text-white">
+                              {item.user.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-white">{item.user.username}</p>
+                          <p className="text-xs text-gray-400">{item.user.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="text-right">
+                          <div className="text-sm text-blue-400 font-medium">{item.projectCount}</div>
+                          <div className="text-xs text-gray-400">projecten</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm text-green-400 font-medium">{item.verdelerCount}</div>
+                          <div className="text-xs text-gray-400">verdelers</div>
+                        </div>
+                      </div>
+                    </div>
+                    {item.projects.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {item.projects.slice(0, 3).map((p: any) => (
+                          <span
+                            key={p.id}
+                            onClick={() => handleProjectNavigation(p.id)}
+                            className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs cursor-pointer hover:bg-blue-500/30 transition-colors"
+                          >
+                            {p.project_number}
+                          </span>
+                        ))}
+                        {item.projects.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-700 text-gray-400 rounded text-xs">
+                            +{item.projects.length - 3} meer
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <p>Geen toegewezen werk</p>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          {/* Project Status Overview with Drill-through */}
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-purple-500/20 rounded-lg">
+                <CheckCircle2 size={20} className="text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Projecten per Status</h2>
+                <p className="text-sm text-gray-400">Klik op een status om projecten te bekijken</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Opgeleverd'].map((status) => {
+                const statusProjects = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase());
+                const count = statusProjects.length;
+
+                return (
+                  <div
+                    key={status}
+                    onClick={() => {
+                      setStatusFilter(status);
+                      setShowFilters(true);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className="p-4 bg-gradient-to-br from-[#2A303C] to-[#1E2530] rounded-lg border border-gray-700 hover:border-blue-500/40 cursor-pointer transition-all transform hover:scale-105"
+                  >
+                    <div className="text-center">
+                      <div className={`text-3xl font-bold mb-2 ${getStatusColor(status).split(' ')[1]}`}>
+                        {count}
+                      </div>
+                      <div className="text-sm text-gray-300 font-medium mb-1">{status}</div>
+                      <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                        <div
+                          className={`h-1.5 rounded-full ${getStatusColor(status).replace('text-', 'bg-').replace('/20', '/60')}`}
+                          style={{ width: `${projects.length > 0 ? (count / projects.length) * 100 : 0}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Enhanced KPI Dashboard - Hidden for Admin */}
+      {currentUser?.role !== 'admin' && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Total Projects KPI */}
         <div className="group relative overflow-hidden">
@@ -1217,9 +1487,11 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Activity Feed Section */}
-      {/* Status Overview Section */}
+      {/* Status Overview Section - Hidden for Admin */}
+      {currentUser?.role !== 'admin' && (
       <div className="card p-6 mb-8">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-green-500/20 rounded-lg">
@@ -1368,8 +1640,9 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      )}
 
-      {/* Quick Actions Hub */}
+      {/* Quick Actions Hub - Visible for All */}
       <div className="card p-6 mb-8">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-blue-500/20 rounded-lg">
