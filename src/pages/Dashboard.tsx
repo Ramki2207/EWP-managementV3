@@ -1668,71 +1668,73 @@ const Dashboard = () => {
 
             {/* Chart Legend with Details */}
             <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-300">Projecten</span>
-                </div>
-                <p className="text-2xl font-bold text-green-400">
-                  {projects.filter(p => {
-                    if (!p.expected_delivery_date) return false;
-                    const deliveryDate = new Date(p.expected_delivery_date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const nextWeek = new Date(today);
-                    nextWeek.setDate(today.getDate() + 7);
-                    return deliveryDate >= today && deliveryDate < nextWeek;
-                  }).length}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Komende 7 dagen</p>
-              </div>
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const chartData = [];
 
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-300">Verdelers</span>
-                </div>
-                <p className="text-2xl font-bold text-orange-400">
-                  {projects
-                    .filter(p => {
-                      if (!p.expected_delivery_date) return false;
-                      const deliveryDate = new Date(p.expected_delivery_date);
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const nextWeek = new Date(today);
-                      nextWeek.setDate(today.getDate() + 7);
-                      return deliveryDate >= today && deliveryDate < nextWeek;
-                    })
-                    .reduce((total, p) => total + (p.distributors?.length || 0), 0)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Te leveren verdelers</p>
-              </div>
+                for (let i = 0; i < 7; i++) {
+                  const date = new Date(today);
+                  date.setDate(today.getDate() + i);
+                  const dateStr = date.toISOString().split('T')[0];
 
-              <div className="text-center">
-                <div className="flex items-center justify-center space-x-2 mb-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-300">Medewerkers</span>
-                </div>
-                <p className="text-2xl font-bold text-blue-400">
-                  {(() => {
-                    const users = JSON.parse(localStorage.getItem('users') || '[]');
-                    return users.filter((user: any) => {
-                      const hasWork = projects.some(p => {
-                        if (!p.expected_delivery_date) return false;
-                        const deliveryDate = new Date(p.expected_delivery_date);
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
-                        const nextWeek = new Date(today);
-                        nextWeek.setDate(today.getDate() + 7);
-                        return deliveryDate >= today && deliveryDate < nextWeek &&
-                          p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
-                      });
-                      return hasWork;
-                    }).length;
-                  })()}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">Actieve medewerkers</p>
-              </div>
+                  const dayProjects = projects.filter(p => p.expected_delivery_date === dateStr);
+                  chartData.push({
+                    projectCount: dayProjects.length,
+                    verdelerCount: dayProjects.reduce((total, p) => total + (p.distributors?.length || 0), 0),
+                    verdelers: dayProjects.flatMap(p => (p.distributors || []))
+                  });
+                }
+
+                const totalProjects = chartData.reduce((sum, day) => sum + day.projectCount, 0);
+                const totalVerdelers = chartData.reduce((sum, day) => sum + day.verdelerCount, 0);
+
+                const allAssignedUsers = new Set();
+                chartData.forEach(day => {
+                  day.verdelers.forEach((v: any) => {
+                    if (v.toegewezen_monteur) {
+                      allAssignedUsers.add(v.toegewezen_monteur);
+                    }
+                  });
+                });
+
+                return (
+                  <>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Projecten</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-400">
+                        {totalProjects}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Komende 7 dagen</p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Verdelers</span>
+                      </div>
+                      <p className="text-2xl font-bold text-orange-400">
+                        {totalVerdelers}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Te leveren verdelers</p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Medewerkers</span>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-400">
+                        {allAssignedUsers.size}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Actieve medewerkers</p>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </>
