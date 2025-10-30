@@ -86,8 +86,8 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
         </div>
 
         {!compact && showPopup && (
-          <div className="absolute bottom-full left-0 mb-2 z-50">
-            <div className="bg-[#0f1419] border-2 border-yellow-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#0f1419', opacity: 1 }}>
+          <div className="absolute bottom-full left-0 mb-2 z-[9999]" style={{ isolation: 'isolate' }}>
+            <div className="border-2 border-yellow-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#111827', backdropFilter: 'none', opacity: 1 }}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">
                   <AlertTriangle size={16} className="text-yellow-400" />
@@ -138,8 +138,8 @@ const ProjectLockStatus: React.FC<ProjectLockStatusProps> = ({
       </div>
 
       {!compact && showPopup && (
-        <div className="absolute bottom-full left-0 mb-2 z-50">
-          <div className="bg-[#0f1419] border-2 border-red-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#0f1419', opacity: 1 }}>
+        <div className="absolute bottom-full left-0 mb-2 z-[9999]" style={{ isolation: 'isolate' }}>
+          <div className="border-2 border-red-500 rounded-lg p-4 shadow-2xl min-w-64" style={{ backgroundColor: '#111827', backdropFilter: 'none', opacity: 1 }}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center space-x-2">
                 <Lock size={16} className="text-red-400" />
