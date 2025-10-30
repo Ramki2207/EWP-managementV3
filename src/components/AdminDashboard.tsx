@@ -11,7 +11,13 @@ import {
   Folder,
   ChevronRight,
   Calendar,
-  User
+  User,
+  Building2,
+  Package,
+  Activity,
+  ArrowUpRight,
+  Search,
+  FileText
 } from 'lucide-react';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -46,6 +52,7 @@ const AdminDashboard: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     loadData();
@@ -129,13 +136,13 @@ const AdminDashboard: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     const statusLower = status?.toLowerCase() || '';
-    if (statusLower.includes('afgerond') || statusLower.includes('compleet')) return 'bg-green-500';
-    if (statusLower.includes('levering') || statusLower.includes('verzonden')) return 'bg-blue-500';
-    if (statusLower.includes('testen')) return 'bg-purple-500';
-    if (statusLower.includes('productie')) return 'bg-yellow-500';
-    if (statusLower.includes('engineering')) return 'bg-orange-500';
-    if (statusLower.includes('calculatie') || statusLower.includes('offerte')) return 'bg-cyan-500';
-    return 'bg-gray-500';
+    if (statusLower.includes('afgerond') || statusLower.includes('compleet')) return 'text-green-600 bg-green-50 border-green-200';
+    if (statusLower.includes('levering') || statusLower.includes('verzonden')) return 'text-blue-600 bg-blue-50 border-blue-200';
+    if (statusLower.includes('testen')) return 'text-purple-600 bg-purple-50 border-purple-200';
+    if (statusLower.includes('productie')) return 'text-amber-600 bg-amber-50 border-amber-200';
+    if (statusLower.includes('engineering')) return 'text-orange-600 bg-orange-50 border-orange-200';
+    if (statusLower.includes('calculatie') || statusLower.includes('offerte')) return 'text-cyan-600 bg-cyan-50 border-cyan-200';
+    return 'text-gray-600 bg-gray-50 border-gray-200';
   };
 
   const getVerdelerProgress = (project: Project) => {
@@ -151,139 +158,176 @@ const AdminDashboard: React.FC = () => {
   const statusCounts = getStatusCounts();
   const todayDeliveries = getTodayDeliveries();
   const userWorkload = getUserWorkload();
-  const filteredProjects = selectedStatus === 'all'
-    ? projects
-    : projects.filter(p => p.status === selectedStatus);
+
+  const filteredProjects = projects.filter(p => {
+    const matchesStatus = selectedStatus === 'all' || p.status === selectedStatus;
+    const matchesSearch = !searchTerm ||
+      p.project_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-400">Dashboard laden...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Header with Quick Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gradient">Admin Dashboard</h1>
-          <p className="text-gray-400 mt-1">Volledig overzicht van alle projecten en activiteiten</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overzicht</h1>
+          <p className="text-gray-400">Beheer al uw projecten, teams en leveringen op één plek</p>
         </div>
-        <div className="flex gap-3">
+
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-3">
           <button
             onClick={() => navigate('/create-project')}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-700 hover:to-blue-600 transition-all"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40"
           >
             <Plus className="w-5 h-5" />
             Nieuw Project
           </button>
           <button
-            onClick={() => navigate('/projects')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#2A303C] text-white rounded-lg hover:bg-[#1E2530] transition-all"
+            onClick={() => navigate('/clients')}
+            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
           >
-            <Folder className="w-5 h-5" />
+            <Building2 className="w-5 h-5" />
+            Klanten
+          </button>
+          <button
+            onClick={() => navigate('/verdelers')}
+            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
+          >
+            <Package className="w-5 h-5" />
+            Verdelers
+          </button>
+          <button
+            onClick={() => navigate('/projects')}
+            className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-lg transition-all border border-gray-200"
+          >
+            <FileText className="w-5 h-5" />
             Alle Projecten
           </button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">Totaal Projecten</p>
-              <p className="text-3xl font-bold mt-1">{projects.length}</p>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Folder className="w-6 h-6 text-blue-600" />
             </div>
-            <Folder className="w-12 h-12 opacity-20" />
+            <span className="text-sm font-medium text-gray-500">+12%</span>
           </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">{projects.length}</h3>
+          <p className="text-sm text-gray-600">Totaal Projecten</p>
         </div>
 
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm">Afgerond</p>
-              <p className="text-3xl font-bold mt-1">
-                {statusCounts['Afgerond'] || 0}
-              </p>
+        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
             </div>
-            <CheckCircle2 className="w-12 h-12 opacity-20" />
+            <span className="text-sm font-medium text-gray-500">Afgerond</span>
           </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">
+            {statusCounts['Afgerond'] || 0}
+          </h3>
+          <p className="text-sm text-gray-600">Voltooide projecten</p>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-100 text-sm">Levering Vandaag</p>
-              <p className="text-3xl font-bold mt-1">{todayDeliveries.length}</p>
+        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <Truck className="w-6 h-6 text-orange-600" />
             </div>
-            <Truck className="w-12 h-12 opacity-20" />
+            <span className="text-sm font-medium text-orange-600">Vandaag</span>
           </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">{todayDeliveries.length}</h3>
+          <p className="text-sm text-gray-600">Leveringen gepland</p>
         </div>
 
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm">Actieve Gebruikers</p>
-              <p className="text-3xl font-bold mt-1">{userWorkload.length}</p>
+        <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Users className="w-6 h-6 text-purple-600" />
             </div>
-            <Users className="w-12 h-12 opacity-20" />
+            <span className="text-sm font-medium text-gray-500">Actief</span>
           </div>
+          <h3 className="text-2xl font-bold text-gray-900 mb-1">{userWorkload.length}</h3>
+          <p className="text-sm text-gray-600">Team leden bezig</p>
         </div>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content - Project Overview (2 columns) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's Deliveries */}
-          {todayDeliveries.length > 0 && (
-            <div className="bg-[#2A303C] rounded-xl p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Calendar className="w-6 h-6 text-orange-400" />
-                <h2 className="text-xl font-semibold text-white">Leveringen Vandaag</h2>
-                <span className="ml-auto bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                  {todayDeliveries.length}
-                </span>
-              </div>
-              <div className="space-y-3">
+      {/* Today's Deliveries Alert */}
+      {todayDeliveries.length > 0 && (
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {todayDeliveries.length} levering{todayDeliveries.length !== 1 ? 'en' : ''} gepland voor vandaag
+              </h3>
+              <div className="flex flex-wrap gap-2">
                 {todayDeliveries.map(project => (
-                  <div
+                  <button
                     key={project.id}
                     onClick={() => navigate(`/projects/${project.id}`)}
-                    className="bg-[#1E2530] rounded-lg p-4 hover:bg-[#252D3A] cursor-pointer transition-all group"
+                    className="px-3 py-1.5 bg-white hover:bg-orange-50 text-gray-900 text-sm font-medium rounded-lg border border-orange-200 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-white">{project.project_number}</span>
-                          <span className={`${getStatusColor(project.status)} text-white text-xs px-2 py-1 rounded`}>
-                            {project.status}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-400 mt-1">{project.client || 'Geen klant'}</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
-                    </div>
-                  </div>
+                    {project.project_number}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          {/* Project Status Overview */}
-          <div className="bg-[#2A303C] rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Project Overzicht</h2>
-              <div className="flex gap-2 overflow-x-auto">
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Projects Overview - Takes 2 columns */}
+        <div className="xl:col-span-2">
+          <div className="bg-white rounded-xl border border-gray-200">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h2 className="text-xl font-semibold text-gray-900">Alle Projecten</h2>
+
+                {/* Search */}
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Zoek projecten..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  />
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
                 <button
                   onClick={() => setSelectedStatus('all')}
-                  className={`px-3 py-1 text-sm rounded-lg transition-all whitespace-nowrap ${
+                  className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
                     selectedStatus === 'all'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-[#1E2530] text-gray-400 hover:bg-[#252D3A]'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
                   Alle ({projects.length})
@@ -292,10 +336,10 @@ const AdminDashboard: React.FC = () => {
                   <button
                     key={status}
                     onClick={() => setSelectedStatus(status)}
-                    className={`px-3 py-1 text-sm rounded-lg transition-all whitespace-nowrap ${
+                    className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
                       selectedStatus === status
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-[#1E2530] text-gray-400 hover:bg-[#252D3A]'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
                     {status} ({count})
@@ -304,107 +348,119 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {filteredProjects.map(project => {
-                const progress = getVerdelerProgress(project);
-                return (
-                  <div
-                    key={project.id}
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                    className="bg-[#1E2530] rounded-lg p-4 hover:bg-[#252D3A] cursor-pointer transition-all group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="font-semibold text-white">{project.project_number}</span>
-                          <span className={`${getStatusColor(project.status)} text-white text-xs px-2 py-1 rounded`}>
-                            {project.status}
-                          </span>
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-300">{project.client || 'Geen klant'}</p>
-                          {project.location && (
-                            <p className="text-xs text-gray-400">📍 {project.location}</p>
-                          )}
-                          {project.verwachte_leverdatum && (
-                            <p className="text-xs text-gray-400">
-                              📅 Verwacht: {format(parseISO(project.verwachte_leverdatum), 'dd-MM-yyyy')}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors flex-shrink-0" />
-                    </div>
+            {/* Projects List */}
+            <div className="divide-y divide-gray-100 max-h-[700px] overflow-y-auto">
+              {filteredProjects.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Folder className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500">Geen projecten gevonden</p>
+                </div>
+              ) : (
+                filteredProjects.map(project => {
+                  const progress = getVerdelerProgress(project);
+                  return (
+                    <div
+                      key={project.id}
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                      className="p-4 hover:bg-gray-50 cursor-pointer transition-colors group"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-base font-semibold text-gray-900">
+                              {project.project_number}
+                            </span>
+                            <span className={`px-2.5 py-1 text-xs font-medium rounded-md border ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </div>
 
-                    {/* Verdeler Progress */}
-                    {progress.total > 0 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-xs text-gray-400">
-                          <span>Verdelers: {progress.completed} / {progress.total}</span>
-                          <span>{progress.percentage}%</span>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-700 font-medium truncate">
+                              {project.client || 'Geen klant'}
+                            </p>
+                            {project.location && (
+                              <p className="text-xs text-gray-500">📍 {project.location}</p>
+                            )}
+                            {project.verwachte_leverdatum && (
+                              <p className="text-xs text-gray-500">
+                                📅 Verwacht: {format(parseISO(project.verwachte_leverdatum), 'dd-MM-yyyy')}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Progress Bar */}
+                          {progress.total > 0 && (
+                            <div className="mt-3">
+                              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                                <span className="font-medium">Verdelers: {progress.completed} / {progress.total}</span>
+                                <span>{progress.percentage}%</span>
+                              </div>
+                              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-blue-600 transition-all duration-300"
+                                  style={{ width: `${progress.percentage}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="h-2 bg-[#0F1419] rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-300"
-                            style={{ width: `${progress.percentage}%` }}
-                          />
-                        </div>
+
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
 
-        {/* Sidebar - User Workload (1 column) */}
-        <div className="space-y-6">
-          <div className="bg-[#2A303C] rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Users className="w-6 h-6 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">Team Werkzaamheden</h2>
+        {/* Team Workload Sidebar */}
+        <div className="xl:col-span-1">
+          <div className="bg-white rounded-xl border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Team Werkzaamheden</h2>
+              <p className="text-sm text-gray-600 mt-1">Huidige toewijzingen</p>
             </div>
 
-            <div className="space-y-3 max-h-[800px] overflow-y-auto">
+            <div className="divide-y divide-gray-100 max-h-[700px] overflow-y-auto">
               {userWorkload.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-8">
-                  Geen toegewezen werkzaamheden
-                </p>
+                <div className="p-8 text-center">
+                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">Geen actieve toewijzingen</p>
+                </div>
               ) : (
                 userWorkload.map(userTask => (
-                  <div
-                    key={userTask.username}
-                    className="bg-[#1E2530] rounded-lg p-4"
-                  >
+                  <div key={userTask.username} className="p-4">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                         {userTask.username.substring(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1">
-                        <p className="text-white font-medium">{userTask.username}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-semibold text-gray-900">{userTask.username}</p>
+                        <p className="text-xs text-gray-600">
                           {userTask.projectCount} project{userTask.projectCount !== 1 ? 'en' : ''} · {userTask.verdelerCount} verdeler{userTask.verdelerCount !== 1 ? 's' : ''}
                         </p>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-2 ml-13">
                       {userTask.projects.map(project => (
                         <div
                           key={project.project_id}
                           onClick={() => navigate(`/projects/${project.project_id}`)}
-                          className="bg-[#0F1419] rounded p-3 hover:bg-[#1A1F28] cursor-pointer transition-all group"
+                          className="p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors group"
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm text-white font-medium">{project.project_number}</span>
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-900">{project.project_number}</span>
+                            <ArrowUpRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition-colors" />
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {project.verdelers.map((verdeler, idx) => (
                               <span
                                 key={idx}
-                                className="text-xs bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded"
+                                className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-medium"
                               >
                                 {verdeler}
                               </span>
