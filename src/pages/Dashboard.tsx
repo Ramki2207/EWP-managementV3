@@ -1767,9 +1767,9 @@ const Dashboard = () => {
             </div>
 
             {/* Compact Timeline View */}
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
               <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 bg-gray-900 z-10">
                   <tr className="border-b border-gray-700">
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Status</th>
                     <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Project</th>
@@ -1789,8 +1789,7 @@ const Dashboard = () => {
                         const dateA = new Date(a.expected_delivery_date!);
                         const dateB = new Date(b.expected_delivery_date!);
                         return dateA.getTime() - dateB.getTime();
-                      })
-                      .slice(0, 10);
+                      });
 
                     if (upcomingProjects.length === 0) {
                       return (
@@ -1896,17 +1895,6 @@ const Dashboard = () => {
                 </tbody>
               </table>
             </div>
-
-            {projects.filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd').length > 10 && (
-              <div className="text-center mt-4 pt-4 border-t border-gray-700">
-                <button
-                  onClick={() => navigate('/projects')}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  Bekijk alle projecten ({projects.filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd').length})
-                </button>
-              </div>
-            )}
           </div>
         </>
       )}
