@@ -498,7 +498,7 @@ const ProjectDetails = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <button
-              onClick={() => navigate("/projects")}
+              onClick={() => navigate(-1)}
               className="btn-secondary p-2"
             >
               <ArrowLeft size={20} />
