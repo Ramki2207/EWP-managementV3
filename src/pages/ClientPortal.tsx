@@ -637,41 +637,37 @@ const ClientPortal = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {verdelers.map((distributor: any) => (
                 <div key={distributor.id} className="bg-[#2A303C]/50 rounded-xl p-6 border border-gray-700">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-green-400">
-                      {distributor.distributor_id}
+                  <div className="mb-6">
+                    <label className="block text-sm text-gray-400 mb-1">Kastnaam</label>
+                    <h3 className="text-2xl font-bold text-white">
+                      {distributor.kast_naam || distributor.distributor_id}
                     </h3>
-                    <span className="px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400">
-                      ✓ Goedgekeurd
-                    </span>
                   </div>
-                  
-                  <div className="space-y-3">
+
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-6">
                     <div>
-                      <label className="block text-xs text-gray-400">Kastnaam</label>
-                      <p className="text-white font-medium">{distributor.kast_naam || '-'}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-gray-400">Systeem</label>
-                        <p className="text-white text-sm">{distributor.systeem || '-'}</p>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400">Voeding</label>
-                        <p className="text-white text-sm">{distributor.voeding || '-'}</p>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400">Spanning</label>
-                        <p className="text-white text-sm">{distributor.un_in_v ? `${distributor.un_in_v}V` : '-'}</p>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400">Stroom</label>
-                        <p className="text-white text-sm">{distributor.in_in_a ? `${distributor.in_in_a}A` : '-'}</p>
-                      </div>
+                      <label className="block text-sm text-gray-400 mb-1">Stelsel:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.systeem || '-'}</p>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-400">Fabrikant</label>
-                      <p className="text-white text-sm">{distributor.fabrikant || '-'}</p>
+                      <label className="block text-sm text-gray-400 mb-1">Voeding:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.voeding ? `${distributor.voeding}A` : '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Stuurspanning:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.stuurspanning || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">kA Waarde:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.ka_waarde || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Bouwjaar:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.bouwjaar || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-1">Fabrikant:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.fabrikant || '-'}</p>
                     </div>
                   </div>
                 </div>
