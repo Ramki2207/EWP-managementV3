@@ -679,6 +679,13 @@ const ProjectDetails = () => {
                   options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor facturatie", "Opgeleverd", "Verloren"]
                 },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
+                { label: "Referentie EWP Paneelbouw", field: "referentie_ewp" },
+                { label: "Referentie klant", field: "referentie_klant" },
+                { label: "Afleveradres", field: "aflever_adres", colSpan: 2 },
+                { label: "Contactpersoon op locatie - Voornaam", field: "contactpersoon_voornaam" },
+                { label: "Contactpersoon op locatie - Achternaam", field: "contactpersoon_achternaam" },
+                { label: "Contactpersoon telefoon", field: "contactpersoon_telefoon" },
+                { label: "Contactpersoon e-mail", field: "contactpersoon_email" },
               ].map((field) => {
                 const currentValue = isEditing ? editedProject?.[field.field] : project?.[field.field];
                 

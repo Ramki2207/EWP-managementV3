@@ -623,6 +623,89 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
             />
           </div>
         </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Referentie EWP Paneelbouw</label>
+          <input
+            type="text"
+            className="input-field"
+            value={projectData.referentieEwp || ''}
+            onChange={(e) => handleInputChange('referentieEwp', e.target.value)}
+            placeholder="EWP referentienummer"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Referentie klant</label>
+          <input
+            type="text"
+            className="input-field"
+            value={projectData.referentieKlant || ''}
+            onChange={(e) => handleInputChange('referentieKlant', e.target.value)}
+            placeholder="Klant referentienummer"
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block text-sm text-gray-400 mb-2">Afleveradres</label>
+          <input
+            type="text"
+            className="input-field"
+            value={projectData.afleverAdres || ''}
+            onChange={(e) => handleInputChange('afleverAdres', e.target.value)}
+            placeholder="Straat + huisnummer, postcode, plaats"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Contactpersoon op locatie - Voornaam</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              className="input-field pl-10"
+              value={projectData.contactpersoonVoornaam || ''}
+              onChange={(e) => handleInputChange('contactpersoonVoornaam', e.target.value)}
+              placeholder="Voornaam"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Contactpersoon op locatie - Achternaam</label>
+          <div className="relative">
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              className="input-field pl-10"
+              value={projectData.contactpersoonAchternaam || ''}
+              onChange={(e) => handleInputChange('contactpersoonAchternaam', e.target.value)}
+              placeholder="Achternaam"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Contactpersoon telefoon</label>
+          <input
+            type="tel"
+            className="input-field"
+            value={projectData.contactpersoonTelefoon || ''}
+            onChange={(e) => handleInputChange('contactpersoonTelefoon', e.target.value)}
+            placeholder="06 12345678"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm text-gray-400 mb-2">Contactpersoon e-mail</label>
+          <input
+            type="email"
+            className="input-field"
+            value={projectData.contactpersoonEmail || ''}
+            onChange={(e) => handleInputChange('contactpersoonEmail', e.target.value)}
+            placeholder="email@bedrijf.nl"
+          />
+        </div>
       </div>
 
       {/* Intake Form Toggle */}

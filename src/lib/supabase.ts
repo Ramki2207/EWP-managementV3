@@ -164,7 +164,14 @@ export const dataService = {
           status: project.status,
           description: project.description,
           intake_form: project.intakeForm || project.intakeFormData,
-          expected_delivery_date: project.expectedDeliveryDate
+          expected_delivery_date: project.expectedDeliveryDate,
+          referentie_ewp: project.referentieEwp,
+          referentie_klant: project.referentieKlant,
+          aflever_adres: project.afleverAdres,
+          contactpersoon_voornaam: project.contactpersoonVoornaam,
+          contactpersoon_achternaam: project.contactpersoonAchternaam,
+          contactpersoon_telefoon: project.contactpersoonTelefoon,
+          contactpersoon_email: project.contactpersoonEmail
         }])
         .select()
         .single();
@@ -196,7 +203,14 @@ export const dataService = {
           status: updates.status,
           description: updates.description,
           intake_form: updates.intakeForm || null,
-          expected_delivery_date: updates.expectedDeliveryDate
+          expected_delivery_date: updates.expectedDeliveryDate,
+          referentie_ewp: updates.referentie_ewp,
+          referentie_klant: updates.referentie_klant,
+          aflever_adres: updates.aflever_adres,
+          contactpersoon_voornaam: updates.contactpersoon_voornaam,
+          contactpersoon_achternaam: updates.contactpersoon_achternaam,
+          contactpersoon_telefoon: updates.contactpersoon_telefoon,
+          contactpersoon_email: updates.contactpersoon_email
         })
         .eq('id', id)
         .select()
