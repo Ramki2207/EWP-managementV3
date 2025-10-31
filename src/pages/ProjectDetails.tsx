@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
@@ -14,6 +14,7 @@ import ProductionTracking from '../components/ProductionTracking';
 import PreTestingApproval from '../components/PreTestingApproval';
 import InvoiceReportPDF from '../components/InvoiceReportPDF';
 import DeliveryChecklist from '../components/DeliveryChecklist';
+import PakbonManager from '../components/PakbonManager';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -36,6 +37,7 @@ const ProjectDetails = () => {
   const [checkingDocuments, setCheckingDocuments] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<{ distributorId: string; folder: string } | null>(null);
   const [showDeliveryChecklist, setShowDeliveryChecklist] = useState(false);
+  const [showPakbonManager, setShowPakbonManager] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -737,6 +739,24 @@ const ProjectDetails = () => {
               })}
             </div>
 
+            {/* Pakbon Section - Only show when status is "Levering" */}
+            {project?.status === 'Levering' && (
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-semibold text-blue-400 mb-4">📦 Pakbon Beheer</h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  Genereer pakbonnen voor de verdelers die afgeleverd worden.
+                  De pakbon wordt automatisch opgeslagen in de verdeler documenten.
+                </p>
+                <button
+                  onClick={() => setShowPakbonManager(true)}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Package size={20} />
+                  <span>Genereer Pakbon</span>
+                </button>
+              </div>
+            )}
+
             {/* Delivery Notification Section - Only show when status is "Levering" */}
             {project?.status === 'Levering' && (
               <div className="mt-8 pt-6 border-t border-gray-700">
@@ -1231,6 +1251,14 @@ const ProjectDetails = () => {
           project={editedProject}
           onConfirm={handleDeliveryChecklistConfirm}
           onCancel={handleDeliveryChecklistCancel}
+        />
+      )}
+
+      {/* Pakbon Manager Modal */}
+      {showPakbonManager && project && (
+        <PakbonManager
+          project={project}
+          onClose={() => setShowPakbonManager(false)}
         />
       )}
     </div>
