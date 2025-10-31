@@ -28,6 +28,12 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
   };
 
   const handleSignatureConfirm = async () => {
+    console.log('🔍 PAKBON: Starting pakbon generation with signature');
+    console.log('🔍 PAKBON: Project:', project);
+    console.log('🔍 PAKBON: Selected Verdeler:', selectedVerdeler);
+    console.log('🔍 PAKBON: Pickup person name:', pickupPersonName);
+    console.log('🔍 PAKBON: Has signature:', !!signature);
+
     if (!pickupPersonName.trim()) {
       toast.error('Vul de naam van de ontvanger in');
       return;
@@ -41,13 +47,18 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
     try {
       setGenerating(true);
 
+      console.log('🔍 PAKBON: Generating PDF...');
       const blob = await generatePakbonPDF(project, selectedVerdeler, {
         name: pickupPersonName,
         signature: signature
       });
+      console.log('🔍 PAKBON: PDF generated, blob size:', blob.size);
 
-      const fileName = `Pakbon_${project.project_number}_${selectedVerdeler.kast_naam}_${new Date().getTime()}.pdf`;
+      const verdelerName = selectedVerdeler.kast_naam || selectedVerdeler.kastNaam || 'verdeler';
+      const fileName = `Pakbon_${project.project_number}_${verdelerName}_${new Date().getTime()}.pdf`;
       const filePath = `project-files/${project.id}/${selectedVerdeler.id}/Pakbon/${fileName}`;
+
+      console.log('🔍 PAKBON: Uploading to:', filePath);
 
       const { error: uploadError } = await supabase.storage
         .from('documents')
@@ -57,26 +68,44 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
         });
 
       if (uploadError) {
-        console.error('Upload error:', uploadError);
+        console.error('❌ PAKBON: Upload error:', uploadError);
         throw uploadError;
       }
 
+      console.log('✅ PAKBON: Upload successful!');
       toast.success('Pakbon succesvol gegenereerd en opgeslagen!');
       setShowSignatureModal(false);
       setSelectedVerdeler(null);
     } catch (error) {
-      console.error('Error generating pakbon:', error);
-      toast.error('Er is een fout opgetreden bij het genereren van de pakbon');
+      console.error('❌ PAKBON: Error generating pakbon:', error);
+      toast.error('Er is een fout opgetreden bij het genereren van de pakbon: ' + (error as Error).message);
     } finally {
       setGenerating(false);
     }
   };
 
   const handlePrintPakbon = async (verdeler: any) => {
-    setSelectedVerdeler(verdeler);
-    setShowSignatureModal(true);
-    setPickupPersonName('');
-    setSignature('');
+    try {
+      setGenerating(true);
+
+      const blob = await generatePakbonPDF(project, verdeler, null);
+
+      const url = URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+
+      toast.success('Pakbon wordt afgedrukt...');
+    } catch (error) {
+      console.error('Error printing pakbon:', error);
+      toast.error('Er is een fout opgetreden bij het afdrukken van de pakbon');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const handlePrint = async () => {
@@ -102,9 +131,9 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
       const printWindow = window.open(url, '_blank');
 
       if (printWindow) {
-        printWindow.addEventListener('load', () => {
+        printWindow.onload = () => {
           printWindow.print();
-        });
+        };
       }
 
       toast.success('Pakbon wordt afgedrukt...');

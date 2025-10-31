@@ -8,15 +8,20 @@ interface PakbonPDFProps {
   pickupPerson: {
     name: string;
     signature: string;
-  };
+  } | null;
   onGenerated?: (pdfBlob: Blob) => void;
 }
 
 export const generatePakbonPDF = async (
   project: any,
   verdeler: any,
-  pickupPerson: { name: string; signature: string }
+  pickupPerson: { name: string; signature: string } | null
 ): Promise<Blob> => {
+  console.log('📄 PDF: Starting PDF generation');
+  console.log('📄 PDF: Project data:', project);
+  console.log('📄 PDF: Verdeler data:', verdeler);
+  console.log('📄 PDF: Pickup person:', pickupPerson);
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -24,6 +29,7 @@ export const generatePakbonPDF = async (
   let yPosition = 20;
 
   try {
+    console.log('📄 PDF: Loading logo...');
     const logoImg = new Image();
     logoImg.src = '/EWP-logo-zwart.png';
 
@@ -171,24 +177,42 @@ export const generatePakbonPDF = async (
   doc.text('Ik bevestig hierbij de ontvangst van bovengenoemde verdeler in goede staat.', margin, yPosition);
   yPosition += 15;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Naam ontvanger:', margin, yPosition);
-  doc.setFont('helvetica', 'normal');
-  doc.text(pickupPerson.name, margin + 35, yPosition);
-  yPosition += 15;
+  if (pickupPerson) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Naam ontvanger:', margin, yPosition);
+    doc.setFont('helvetica', 'normal');
+    doc.text(pickupPerson.name, margin + 35, yPosition);
+    yPosition += 15;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Handtekening:', margin, yPosition);
-  yPosition += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.text('Handtekening:', margin, yPosition);
+    yPosition += 5;
 
-  if (pickupPerson.signature) {
-    try {
-      doc.addImage(pickupPerson.signature, 'PNG', margin, yPosition, 50, 20);
-    } catch (error) {
-      console.error('Error adding signature:', error);
+    if (pickupPerson.signature) {
+      try {
+        doc.addImage(pickupPerson.signature, 'PNG', margin, yPosition, 50, 20);
+      } catch (error) {
+        console.error('Error adding signature:', error);
+      }
     }
+    yPosition += 25;
+  } else {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Naam ontvanger:', margin, yPosition);
+    yPosition += 2;
+
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin + 35, yPosition, pageWidth - margin, yPosition);
+    yPosition += 15;
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('Handtekening:', margin, yPosition);
+    yPosition += 5;
+
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(margin, yPosition, 80, 30);
+    yPosition += 35;
   }
-  yPosition += 25;
 
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
@@ -199,7 +223,10 @@ export const generatePakbonPDF = async (
     { align: 'center' }
   );
 
-  return doc.output('blob');
+  console.log('📄 PDF: PDF generation complete');
+  const blob = doc.output('blob');
+  console.log('📄 PDF: Blob created, size:', blob.size);
+  return blob;
 };
 
 const PakbonPDF: React.FC<PakbonPDFProps> = ({ project, verdeler, pickupPerson, onGenerated }) => {
