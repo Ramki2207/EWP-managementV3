@@ -267,10 +267,22 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     const isCustomSysteem = verdeler.systeem && !systeemOptions.includes(verdeler.systeem);
     const isCustomVoeding = verdeler.voeding && !voedingOptions.includes(verdeler.voeding);
 
+    // Handle date formatting - convert timestamp to date string for input field
+    let deliveryDateValue = '';
+    const rawDeliveryDate = verdeler.deliveryDate || verdeler.gewenste_lever_datum;
+    if (rawDeliveryDate) {
+      try {
+        const date = new Date(rawDeliveryDate);
+        deliveryDateValue = date.toISOString().split('T')[0];
+      } catch (e) {
+        console.error('Error parsing delivery date:', e);
+      }
+    }
+
     setVerdelerData({
-      distributorId: verdeler.distributorId,
-      kastNaam: verdeler.kastNaam,
-      toegewezenMonteur: verdeler.toegewezenMonteur || 'Vrij',
+      distributorId: verdeler.distributorId || verdeler.distributor_id,
+      kastNaam: verdeler.kastNaam || verdeler.kast_naam,
+      toegewezenMonteur: verdeler.toegewezenMonteur || verdeler.toegewezen_monteur || 'Vrij',
       systeem: isCustomSysteem ? 'custom' : (verdeler.systeem || ''),
       systeemCustom: isCustomSysteem ? verdeler.systeem : '',
       voeding: isCustomVoeding ? 'custom' : (verdeler.voeding || ''),
@@ -281,19 +293,22 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
       status: verdeler.status,
       fabrikant: verdeler.fabrikant,
-      unInV: verdeler.unInV,
-      inInA: verdeler.inInA,
-      ikThInKA1s: verdeler.ikThInKA1s,
-      ikDynInKA: verdeler.ikDynInKA,
-      freqInHz: verdeler.freqInHz || '50 Hz',
-      typeNrHs: verdeler.typeNrHs,
+      unInV: verdeler.unInV || verdeler.un_in_v,
+      inInA: verdeler.inInA || verdeler.in_in_a,
+      ikThInKA1s: verdeler.ikThInKA1s || verdeler.ik_th_in_ka_1s,
+      ikDynInKA: verdeler.ikDynInKA || verdeler.ik_dyn_in_ka,
+      freqInHz: verdeler.freqInHz || verdeler.freq_in_hz || '50 Hz',
+      typeNrHs: verdeler.typeNrHs || verdeler.type_nr_hs,
       profilePhoto: null,
       expectedHours: verdeler.expectedHours || verdeler.expected_hours || '',
-      deliveryDate: verdeler.deliveryDate || verdeler.gewenste_lever_datum || '',
+      deliveryDate: deliveryDateValue,
     });
     setShowVerdelerDetails(false);
     setShowVerdelerForm(true);
-    console.log('🔧 EDIT: Form data set:', verdelerData);
+    console.log('🔧 EDIT: Form data set with values:', {
+      toegewezenMonteur: verdeler.toegewezenMonteur || verdeler.toegewezen_monteur,
+      deliveryDate: deliveryDateValue
+    });
   };
 
   const handleGenerateAccessCode = (verdeler: any) => {
