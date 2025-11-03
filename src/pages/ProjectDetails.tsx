@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
@@ -15,6 +15,7 @@ import PreTestingApproval from '../components/PreTestingApproval';
 import InvoiceReportPDF from '../components/InvoiceReportPDF';
 import DeliveryChecklist from '../components/DeliveryChecklist';
 import PakbonManager from '../components/PakbonManager';
+import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -38,6 +39,7 @@ const ProjectDetails = () => {
   const [uploadingFor, setUploadingFor] = useState<{ distributorId: string; folder: string } | null>(null);
   const [showDeliveryChecklist, setShowDeliveryChecklist] = useState(false);
   const [showPakbonManager, setShowPakbonManager] = useState(false);
+  const [showStickerGenerator, setShowStickerGenerator] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -754,13 +756,22 @@ const ProjectDetails = () => {
                   Genereer pakbonnen voor de verdelers die afgeleverd worden.
                   De pakbon wordt automatisch opgeslagen in de verdeler documenten.
                 </p>
-                <button
-                  onClick={() => setShowPakbonManager(true)}
-                  className="btn-primary flex items-center space-x-2"
-                >
-                  <Package size={20} />
-                  <span>Genereer Pakbon</span>
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowPakbonManager(true)}
+                    className="btn-primary flex items-center space-x-2"
+                  >
+                    <Package size={20} />
+                    <span>Genereer Pakbon</span>
+                  </button>
+                  <button
+                    onClick={() => setShowStickerGenerator(true)}
+                    className="btn-secondary flex items-center space-x-2"
+                  >
+                    <Sticker size={20} />
+                    <span>Levering Sticker</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -1266,6 +1277,14 @@ const ProjectDetails = () => {
         <PakbonManager
           project={project}
           onClose={() => setShowPakbonManager(false)}
+        />
+      )}
+
+      {/* Delivery Sticker Generator Modal */}
+      {showStickerGenerator && project && (
+        <DeliveryStickerGenerator
+          project={project}
+          onClose={() => setShowStickerGenerator(false)}
         />
       )}
     </div>
