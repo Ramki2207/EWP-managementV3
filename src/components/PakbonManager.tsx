@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { X, FileText, Printer, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SignaturePad from './SignaturePad';
@@ -16,7 +16,6 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
   const [pickupPersonName, setPickupPersonName] = useState('');
   const [signature, setSignature] = useState('');
   const [generating, setGenerating] = useState(false);
-  const signaturePadRef = useRef<any>(null);
 
   const verdelers = project?.distributors || [];
 
@@ -28,26 +27,22 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
   };
 
   const handleSignatureConfirm = async () => {
-    console.log('🔍 PAKBON: Starting pakbon generation with signature');
-    console.log('🔍 PAKBON: Project:', project);
-    console.log('🔍 PAKBON: Selected Verdeler:', selectedVerdeler);
-    console.log('🔍 PAKBON: Pickup person name:', pickupPersonName);
-    console.log('🔍 PAKBON: Has signature:', !!signature);
-
-    if (!pickupPersonName.trim()) {
-      toast.error('Vul de naam van de ontvanger in');
-      return;
-    }
-
-    if (!signature) {
-      toast.error('Plaats een handtekening');
-      return;
-    }
-
     try {
-      setGenerating(true);
+      console.log('🔍 PAKBON: Button clicked - Starting pakbon generation');
 
-      console.log('🔍 PAKBON: Generating PDF...');
+      if (!pickupPersonName.trim()) {
+        toast.error('Vul de naam van de ontvanger in');
+        return;
+      }
+
+      if (!signature) {
+        toast.error('Plaats een handtekening');
+        return;
+      }
+
+      setGenerating(true);
+      console.log('🔍 PAKBON: Generating PDF with project:', project?.id, 'verdeler:', selectedVerdeler?.id);
+
       const blob = await generatePakbonPDF(project, selectedVerdeler, {
         name: pickupPersonName,
         signature: signature
@@ -60,7 +55,7 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
 
       console.log('🔍 PAKBON: Uploading to:', filePath);
 
-      const { error: uploadError } = await supabase.storage
+      const { data, error: uploadError } = await supabase.storage
         .from('documents')
         .upload(filePath, blob, {
           contentType: 'application/pdf',
@@ -72,13 +67,14 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
         throw uploadError;
       }
 
-      console.log('✅ PAKBON: Upload successful!');
+      console.log('✅ PAKBON: Upload successful! Data:', data);
       toast.success('Pakbon succesvol gegenereerd en opgeslagen!');
       setShowSignatureModal(false);
       setSelectedVerdeler(null);
     } catch (error) {
-      console.error('❌ PAKBON: Error generating pakbon:', error);
-      toast.error('Er is een fout opgetreden bij het genereren van de pakbon: ' + (error as Error).message);
+      console.error('❌ PAKBON: Error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Onbekende fout';
+      toast.error('Fout: ' + errorMsg);
     } finally {
       setGenerating(false);
     }
@@ -147,8 +143,14 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
     }
   };
 
-  const handleSignatureChange = (dataUrl: string) => {
+  const handleSignatureComplete = (dataUrl: string) => {
+    console.log('✍️ Signature received, setting signature state');
     setSignature(dataUrl);
+  };
+
+  const handleSignatureCancel = () => {
+    console.log('❌ Signature cancelled');
+    setSignature('');
   };
 
   return (
@@ -260,8 +262,8 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
                   Handtekening <span className="text-red-400">*</span>
                 </label>
                 <SignaturePad
-                  ref={signaturePadRef}
-                  onSignatureChange={handleSignatureChange}
+                  onSignatureComplete={handleSignatureComplete}
+                  onCancel={handleSignatureCancel}
                 />
               </div>
 
