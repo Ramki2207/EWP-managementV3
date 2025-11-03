@@ -527,6 +527,13 @@ const ProjectDetails = () => {
           </div>
           {activeTab === 'details' && (
             <div className="flex space-x-2">
+              <button
+                onClick={() => setShowStickerGenerator(true)}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Sticker size={20} />
+                <span>Levering Sticker</span>
+              </button>
               {!isEditing ? (
                 hasPermission('projects', 'update') && (
                 <button
@@ -756,22 +763,13 @@ const ProjectDetails = () => {
                   Genereer pakbonnen voor de verdelers die afgeleverd worden.
                   De pakbon wordt automatisch opgeslagen in de verdeler documenten.
                 </p>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={() => setShowPakbonManager(true)}
-                    className="btn-primary flex items-center space-x-2"
-                  >
-                    <Package size={20} />
-                    <span>Genereer Pakbon</span>
-                  </button>
-                  <button
-                    onClick={() => setShowStickerGenerator(true)}
-                    className="btn-secondary flex items-center space-x-2"
-                  >
-                    <Sticker size={20} />
-                    <span>Levering Sticker</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowPakbonManager(true)}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Package size={20} />
+                  <span>Genereer Pakbon</span>
+                </button>
               </div>
             )}
 
