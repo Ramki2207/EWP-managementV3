@@ -246,7 +246,14 @@ const ProjectDetails = () => {
         contact_person: editedProject.contact_person,
         status: editedProject.status,
         description: editedProject.description,
-        expectedDeliveryDate: editedProject.expected_delivery_date
+        expectedDeliveryDate: editedProject.expected_delivery_date,
+        referentie_ewp: editedProject.referentie_ewp,
+        referentie_klant: editedProject.referentie_klant,
+        aflever_adres: editedProject.aflever_adres,
+        contactpersoon_voornaam: editedProject.contactpersoon_voornaam,
+        contactpersoon_achternaam: editedProject.contactpersoon_achternaam,
+        contactpersoon_telefoon: editedProject.contactpersoon_telefoon,
+        contactpersoon_email: editedProject.contactpersoon_email
       };
 
       await dataService.updateProject(editedProject.id, updateData);
