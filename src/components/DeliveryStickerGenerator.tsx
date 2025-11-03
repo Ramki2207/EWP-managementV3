@@ -18,8 +18,8 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
       setGenerating(true);
 
       const canvas = document.createElement('canvas');
-      canvas.width = 800;
-      canvas.height = 600;
+      canvas.width = 1000;
+      canvas.height = 700;
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
@@ -29,9 +29,12 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = '#1E40AF';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      const borderWidth = 3;
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, borderWidth);
+      ctx.fillRect(0, 0, borderWidth, canvas.height);
+      ctx.fillRect(canvas.width - borderWidth, 0, borderWidth, canvas.height);
+      ctx.fillRect(0, canvas.height - borderWidth, canvas.width, borderWidth);
 
       const logo = new Image();
       logo.src = '/EWP-logo-zwart.png';
@@ -41,47 +44,46 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
         logo.onerror = () => reject(new Error('Failed to load logo'));
       });
 
-      ctx.drawImage(logo, 50, 30, 200, 80);
+      const logoWidth = 450;
+      const logoHeight = 180;
+      const logoX = (canvas.width - logoWidth) / 2;
+      const logoY = 40;
+      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
 
-      let yPosition = 150;
-      const leftMargin = 50;
-      const lineHeight = 60;
+      const headerY = logoY + logoHeight + 50;
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(40, headerY, canvas.width - 80, 3);
 
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 24px Arial';
-      ctx.fillText('LEVERING', canvas.width / 2, yPosition);
-      ctx.textAlign = 'center';
-      yPosition += lineHeight;
-
-      ctx.textAlign = 'left';
+      let yPosition = headerY + 50;
+      const leftMargin = 80;
+      const lineHeight = 70;
 
       const fields = [
-        { label: 'Projectnummer:', value: project.project_number || '-' },
-        { label: 'Kastnaam:', value: verdeler.kast_naam || '-' },
-        { label: 'Ref. EWP:', value: project.referentie_ewp || '-' },
-        { label: 'Ref. Klant:', value: project.referentie_klant || '-' },
-        { label: 'Afleveradres:', value: project.aflever_adres || '-' }
+        { label: 'PROJECTNUMMER', value: project.project_number || '-' },
+        { label: 'KASTNAAM', value: verdeler.kast_naam || '-' },
+        { label: 'REFERENTIE EWP', value: project.referentie_ewp || '-' },
+        { label: 'REFERENTIE KLANT', value: project.referentie_klant || '-' },
+        { label: 'AFLEVERADRES', value: project.aflever_adres || '-' }
       ];
 
       fields.forEach(field => {
-        ctx.font = 'bold 20px Arial';
-        ctx.fillStyle = '#1E40AF';
+        ctx.font = '600 18px Arial, sans-serif';
+        ctx.fillStyle = '#4a4a4a';
+        ctx.textAlign = 'left';
         ctx.fillText(field.label, leftMargin, yPosition);
 
-        ctx.font = '20px Arial';
-        ctx.fillStyle = '#000000';
-        const labelWidth = ctx.measureText(field.label).width;
+        const maxWidth = canvas.width - leftMargin - 80;
+        const lines = wrapText(ctx, field.value, maxWidth, '700 28px Arial, sans-serif');
 
-        const maxWidth = canvas.width - leftMargin - 100;
-        const lines = wrapText(ctx, field.value, maxWidth);
+        ctx.font = '700 28px Arial, sans-serif';
+        ctx.fillStyle = '#1a1a1a';
 
         lines.forEach((line, index) => {
-          const xPos = index === 0 ? leftMargin + labelWidth + 10 : leftMargin;
-          const yPos = yPosition + (index * 30);
-          ctx.fillText(line, xPos, yPos);
+          const yPos = yPosition + 30 + (index * 35);
+          ctx.fillText(line, leftMargin, yPos);
         });
 
-        yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 30 : 0);
+        yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 35 : 0);
       });
 
       const dataUrl = canvas.toDataURL('image/png');
@@ -99,7 +101,11 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
     }
   };
 
-  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] => {
+  const wrapText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: number, font?: string): string[] => {
+    if (font) {
+      ctx.font = font;
+    }
+
     const words = text.split(' ');
     const lines: string[] = [];
     let currentLine = words[0];
