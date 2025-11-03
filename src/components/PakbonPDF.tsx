@@ -25,8 +25,8 @@ export const generatePakbonPDF = async (
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
-  let yPosition = 20;
+  const margin = 15;
+  let yPosition = 15;
 
   try {
     console.log('📄 PDF: Loading logo...');
@@ -45,20 +45,26 @@ export const generatePakbonPDF = async (
     if (ctx) {
       ctx.drawImage(logoImg, 0, 0);
       const logoDataUrl = canvas.toDataURL('image/png');
-      doc.addImage(logoDataUrl, 'PNG', margin, yPosition, 50, 20);
+
+      const logoAspectRatio = logoImg.width / logoImg.height;
+      const logoWidth = 60;
+      const logoHeight = logoWidth / logoAspectRatio;
+
+      doc.addImage(logoDataUrl, 'PNG', margin, yPosition, logoWidth, logoHeight);
+      yPosition = Math.max(yPosition + logoHeight + 5, yPosition + 20);
     }
-    yPosition += 30;
   } catch (error) {
     console.error('Error loading logo:', error);
-    yPosition += 10;
+    yPosition += 5;
   }
 
-  doc.setFontSize(22);
+  doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
   doc.text('PAKBON', pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 15;
+  yPosition += 4;
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
   const currentDate = new Date().toLocaleDateString('nl-NL', {
@@ -67,19 +73,22 @@ export const generatePakbonPDF = async (
     day: 'numeric'
   });
   doc.text(`Datum: ${currentDate}`, pageWidth - margin, yPosition, { align: 'right' });
-  yPosition += 15;
-
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
   yPosition += 10;
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 0, 0);
-  doc.text('Project Informatie', margin, yPosition);
+  doc.setDrawColor(26, 26, 26);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
   yPosition += 8;
 
-  doc.setFontSize(10);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 7, 'F');
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Project Informatie', margin + 2, yPosition + 5);
+  yPosition += 10;
+
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
 
   const projectInfo = [
@@ -92,39 +101,44 @@ export const generatePakbonPDF = async (
 
   projectInfo.forEach(info => {
     doc.setFont('helvetica', 'bold');
-    doc.text(info.label, margin, yPosition);
+    doc.setTextColor(80, 80, 80);
+    doc.text(info.label, margin + 2, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(info.value, margin + 45, yPosition);
-    yPosition += 6;
+    doc.setTextColor(0, 0, 0);
+    doc.text(info.value, margin + 42, yPosition);
+    yPosition += 5;
   });
 
-  yPosition += 5;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 3;
+
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 7, 'F');
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Afleveradres', margin + 2, yPosition + 5);
   yPosition += 10;
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Afleveradres', margin, yPosition);
-  yPosition += 8;
-
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   const afleverAdres = project.aflever_adres || '-';
-  const splitAdres = doc.splitTextToSize(afleverAdres, pageWidth - 2 * margin);
-  doc.text(splitAdres, margin, yPosition);
-  yPosition += splitAdres.length * 6 + 5;
+  const splitAdres = doc.splitTextToSize(afleverAdres, pageWidth - 2 * margin - 4);
+  doc.text(splitAdres, margin + 2, yPosition);
+  yPosition += splitAdres.length * 5 + 3;
 
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, yPosition, (pageWidth - 2 * margin) / 2 - 2, 7, 'F');
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text('Contactpersoon op Locatie', margin + 2, yPosition + 5);
+
+  const verdelerStartX = pageWidth / 2 + 2;
+  doc.rect(verdelerStartX, yPosition, (pageWidth - 2 * margin) / 2 - 2, 7, 'F');
+  doc.text('Verdeler Details', verdelerStartX + 2, yPosition + 5);
   yPosition += 10;
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Contactpersoon op Locatie', margin, yPosition);
-  yPosition += 8;
-
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
 
   const contactInfo = [
@@ -132,27 +146,6 @@ export const generatePakbonPDF = async (
     { label: 'Telefoon:', value: project.contactpersoon_telefoon || '-' },
     { label: 'E-mail:', value: project.contactpersoon_email || '-' },
   ];
-
-  contactInfo.forEach(info => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(info.label, margin, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(info.value, margin + 25, yPosition);
-    yPosition += 6;
-  });
-
-  yPosition += 5;
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
-
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Verdeler Details', margin, yPosition);
-  yPosition += 8;
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
 
   const verdelerInfo = [
     { label: 'Kast Naam:', value: verdeler.kast_naam || '-' },
@@ -162,72 +155,99 @@ export const generatePakbonPDF = async (
     { label: 'IP Waarde:', value: verdeler.ip_waarde || '-' },
   ];
 
-  verdelerInfo.forEach(info => {
+  const maxRows = Math.max(contactInfo.length, verdelerInfo.length);
+  const contactStartY = yPosition;
+  const verdelerStartY = yPosition;
+
+  contactInfo.forEach((info, index) => {
+    const y = contactStartY + (index * 5);
     doc.setFont('helvetica', 'bold');
-    doc.text(info.label, margin, yPosition);
+    doc.setTextColor(80, 80, 80);
+    doc.text(info.label, margin + 2, y);
     doc.setFont('helvetica', 'normal');
-    doc.text(info.value, margin + 35, yPosition);
-    yPosition += 6;
+    doc.setTextColor(0, 0, 0);
+    const valueText = doc.splitTextToSize(info.value, (pageWidth - 2 * margin) / 2 - 25);
+    doc.text(valueText, margin + 22, y);
   });
 
-  yPosition += 10;
-  doc.setDrawColor(200, 200, 200);
+  verdelerInfo.forEach((info, index) => {
+    const y = verdelerStartY + (index * 5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(80, 80, 80);
+    doc.text(info.label, verdelerStartX + 2, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const valueText = doc.splitTextToSize(info.value, (pageWidth - 2 * margin) / 2 - 28);
+    doc.text(valueText, verdelerStartX + 26, y);
+  });
+
+  yPosition += maxRows * 5 + 5;
+
+  doc.setDrawColor(26, 26, 26);
+  doc.setLineWidth(0.5);
   doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 15;
+  yPosition += 8;
 
-  doc.setFontSize(12);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, yPosition, pageWidth - 2 * margin, 7, 'F');
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('Ontvangstbevestiging', margin, yPosition);
+  doc.setTextColor(0, 0, 0);
+  doc.text('Ontvangstbevestiging', margin + 2, yPosition + 5);
   yPosition += 10;
 
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text('Ik bevestig hierbij de ontvangst van bovengenoemde verdeler in goede staat.', margin, yPosition);
-  yPosition += 15;
+  doc.text('Ik bevestig hierbij de ontvangst van bovengenoemde verdeler in goede staat.', margin + 2, yPosition);
+  yPosition += 8;
 
   if (pickupPerson) {
     doc.setFont('helvetica', 'bold');
-    doc.text('Naam ontvanger:', margin, yPosition);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Naam ontvanger:', margin + 2, yPosition);
     doc.setFont('helvetica', 'normal');
-    doc.text(pickupPerson.name, margin + 35, yPosition);
-    yPosition += 15;
+    doc.setTextColor(0, 0, 0);
+    doc.text(pickupPerson.name, margin + 32, yPosition);
+    yPosition += 8;
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Handtekening:', margin, yPosition);
-    yPosition += 5;
+    doc.setTextColor(80, 80, 80);
+    doc.text('Handtekening:', margin + 2, yPosition);
+    yPosition += 3;
 
     if (pickupPerson.signature) {
       try {
-        doc.addImage(pickupPerson.signature, 'PNG', margin, yPosition, 50, 20);
+        doc.addImage(pickupPerson.signature, 'PNG', margin + 2, yPosition, 50, 20);
       } catch (error) {
         console.error('Error adding signature:', error);
       }
     }
-    yPosition += 25;
   } else {
     doc.setFont('helvetica', 'bold');
-    doc.text('Naam ontvanger:', margin, yPosition);
-    yPosition += 2;
+    doc.setTextColor(80, 80, 80);
+    doc.text('Naam ontvanger:', margin + 2, yPosition);
+    yPosition += 1;
 
     doc.setDrawColor(200, 200, 200);
-    doc.line(margin + 35, yPosition, pageWidth - margin, yPosition);
-    yPosition += 15;
+    doc.line(margin + 32, yPosition, pageWidth - margin - 2, yPosition);
+    yPosition += 8;
 
     doc.setFont('helvetica', 'bold');
-    doc.text('Handtekening:', margin, yPosition);
-    yPosition += 5;
+    doc.setTextColor(80, 80, 80);
+    doc.text('Handtekening:', margin + 2, yPosition);
+    yPosition += 3;
 
     doc.setDrawColor(200, 200, 200);
-    doc.rect(margin, yPosition, 80, 30);
-    yPosition += 35;
+    doc.setLineWidth(0.3);
+    doc.rect(margin + 2, yPosition, 70, 25);
   }
 
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(150, 150, 150);
   doc.text(
     'EWP Paneelbouw - Dit document is automatisch gegenereerd',
     pageWidth / 2,
-    pageHeight - 10,
+    pageHeight - 8,
     { align: 'center' }
   );
 
