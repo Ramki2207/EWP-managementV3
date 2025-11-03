@@ -3,7 +3,7 @@ import { X, FileText, Printer, Save } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SignaturePad from './SignaturePad';
 import { generatePakbonPDF } from './PakbonPDF';
-import { supabase } from '../lib/supabase';
+import { supabase, dataService } from '../lib/supabase';
 
 interface PakbonManagerProps {
   project: any;
@@ -60,6 +60,8 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
       const filePath = `project-files/${project.id}/${selectedVerdeler.id}/Pakbon/${fileName}`;
 
       console.log('🔍 PAKBON: Uploading to:', filePath);
+      console.log('🔍 PAKBON: Project ID:', project.id);
+      console.log('🔍 PAKBON: Verdeler ID:', selectedVerdeler.id);
 
       const { data, error: uploadError } = await supabase.storage
         .from('documents')
@@ -70,10 +72,37 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
 
       if (uploadError) {
         console.error('❌ PAKBON: Upload error:', uploadError);
+        console.error('❌ PAKBON: Upload error details:', JSON.stringify(uploadError, null, 2));
         throw uploadError;
       }
 
       console.log('✅ PAKBON: Upload successful! Data:', data);
+      console.log('✅ PAKBON: Uploaded path:', data?.path);
+
+      console.log('🔍 PAKBON: Creating database record...');
+      const documentRecord = {
+        project_id: project.id,
+        distributor_id: selectedVerdeler.id,
+        folder: 'Pakbon',
+        name: fileName,
+        type: 'application/pdf',
+        size: blob.size,
+        storage_path: filePath,
+        uploaded_at: new Date().toISOString()
+      };
+      console.log('🔍 PAKBON: Document record:', documentRecord);
+
+      const { data: docData, error: docError } = await supabase
+        .from('documents')
+        .insert([documentRecord])
+        .select();
+
+      if (docError) {
+        console.error('❌ PAKBON: Database insert error:', docError);
+        throw docError;
+      }
+
+      console.log('✅ PAKBON: Database record created:', docData);
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

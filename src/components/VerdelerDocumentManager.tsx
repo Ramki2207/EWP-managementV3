@@ -17,6 +17,7 @@ const defaultFolders = [
   'Documentatie',
   'Oplever foto\'s',
   'Klant informatie',
+  'Pakbon',
 ];
 
 const VerdelerDocumentManager: React.FC<VerdelerDocumentManagerProps> = ({ distributor }) => {
