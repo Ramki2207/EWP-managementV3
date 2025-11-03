@@ -69,7 +69,7 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
       const lineHeight = 110;
 
       const fields = [
-        { label: 'KLANTNAAM', value: project.client_name || '-' },
+        { label: 'KLANTNAAM', value: project.client || '-' },
         { label: 'PROJECTNUMMER', value: project.project_number || '-' },
         { label: 'KASTNAAM', value: verdeler.kast_naam || '-' },
         { label: 'REFERENTIE EWP', value: project.referentie_ewp || '-' },
