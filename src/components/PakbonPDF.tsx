@@ -134,8 +134,9 @@ export const generatePakbonPDF = async (
   doc.text('Contactpersoon op Locatie', margin + 2, yPosition + 5);
 
   const verdelerStartX = pageWidth / 2 + 2;
+  doc.setFillColor(245, 245, 245);
   doc.rect(verdelerStartX, yPosition, (pageWidth - 2 * margin) / 2 - 2, 7, 'F');
-  doc.text('Verdeler Details', verdelerStartX + 2, yPosition + 5);
+  doc.text('Verdeler', verdelerStartX + 2, yPosition + 5);
   yPosition += 10;
 
   doc.setFontSize(9);
@@ -147,17 +148,7 @@ export const generatePakbonPDF = async (
     { label: 'E-mail:', value: project.contactpersoon_email || '-' },
   ];
 
-  const verdelerInfo = [
-    { label: 'Kast Naam:', value: verdeler.kast_naam || '-' },
-    { label: 'Verdeler ID:', value: verdeler.distributor_id || '-' },
-    { label: 'Systeem:', value: verdeler.systeem || '-' },
-    { label: 'Voeding:', value: verdeler.voeding || '-' },
-    { label: 'IP Waarde:', value: verdeler.ip_waarde || '-' },
-  ];
-
-  const maxRows = Math.max(contactInfo.length, verdelerInfo.length);
   const contactStartY = yPosition;
-  const verdelerStartY = yPosition;
 
   contactInfo.forEach((info, index) => {
     const y = contactStartY + (index * 5);
@@ -170,18 +161,14 @@ export const generatePakbonPDF = async (
     doc.text(valueText, margin + 22, y);
   });
 
-  verdelerInfo.forEach((info, index) => {
-    const y = verdelerStartY + (index * 5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(80, 80, 80);
-    doc.text(info.label, verdelerStartX + 2, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    const valueText = doc.splitTextToSize(info.value, (pageWidth - 2 * margin) / 2 - 28);
-    doc.text(valueText, verdelerStartX + 26, y);
-  });
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  const kastNaam = verdeler.kast_naam || '-';
+  const kastNaamLines = doc.splitTextToSize(kastNaam, (pageWidth - 2 * margin) / 2 - 8);
+  doc.text(kastNaamLines, verdelerStartX + 2, contactStartY);
 
-  yPosition += maxRows * 5 + 5;
+  yPosition += contactInfo.length * 5 + 5;
 
   doc.setDrawColor(26, 26, 26);
   doc.setLineWidth(0.5);
