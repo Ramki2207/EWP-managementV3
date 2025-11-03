@@ -29,13 +29,18 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
   const handleSignatureConfirm = async () => {
     try {
       console.log('🔍 PAKBON: Button clicked - Starting pakbon generation');
+      console.log('🔍 PAKBON: pickupPersonName:', pickupPersonName);
+      console.log('🔍 PAKBON: signature exists:', !!signature);
+      console.log('🔍 PAKBON: signature length:', signature?.length);
 
       if (!pickupPersonName.trim()) {
+        console.log('❌ PAKBON: Name validation failed');
         toast.error('Vul de naam van de ontvanger in');
         return;
       }
 
       if (!signature) {
+        console.log('❌ PAKBON: Signature validation failed');
         toast.error('Plaats een handtekening');
         return;
       }
@@ -50,7 +55,8 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
       console.log('🔍 PAKBON: PDF generated, blob size:', blob.size);
 
       const verdelerName = selectedVerdeler.kast_naam || selectedVerdeler.kastNaam || 'verdeler';
-      const fileName = `Pakbon_${project.project_number}_${verdelerName}_${new Date().getTime()}.pdf`;
+      const sanitizedVerdelerName = verdelerName.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `Pakbon_${project.project_number}_${sanitizedVerdelerName}_${new Date().getTime()}.pdf`;
       const filePath = `project-files/${project.id}/${selectedVerdeler.id}/Pakbon/${fileName}`;
 
       console.log('🔍 PAKBON: Uploading to:', filePath);
@@ -68,6 +74,17 @@ const PakbonManager: React.FC<PakbonManagerProps> = ({ project, onClose }) => {
       }
 
       console.log('✅ PAKBON: Upload successful! Data:', data);
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      console.log('✅ PAKBON: Download triggered');
+
       toast.success('Pakbon succesvol gegenereerd en opgeslagen!');
       setShowSignatureModal(false);
       setSelectedVerdeler(null);
