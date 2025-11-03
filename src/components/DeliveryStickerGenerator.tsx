@@ -19,7 +19,7 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
 
       const canvas = document.createElement('canvas');
       canvas.width = 1000;
-      canvas.height = 700;
+      canvas.height = 1200;
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
@@ -29,7 +29,7 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const borderWidth = 3;
+      const borderWidth = 4;
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, 0, canvas.width, borderWidth);
       ctx.fillRect(0, 0, borderWidth, canvas.height);
@@ -44,21 +44,32 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
         logo.onerror = () => reject(new Error('Failed to load logo'));
       });
 
-      const logoWidth = 450;
-      const logoHeight = 180;
+      const maxLogoWidth = 600;
+      const maxLogoHeight = 200;
+      const logoAspectRatio = logo.width / logo.height;
+
+      let logoWidth = maxLogoWidth;
+      let logoHeight = maxLogoWidth / logoAspectRatio;
+
+      if (logoHeight > maxLogoHeight) {
+        logoHeight = maxLogoHeight;
+        logoWidth = maxLogoHeight * logoAspectRatio;
+      }
+
       const logoX = (canvas.width - logoWidth) / 2;
-      const logoY = 40;
+      const logoY = 50;
       ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
 
-      const headerY = logoY + logoHeight + 50;
+      const headerY = logoY + logoHeight + 40;
       ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(40, headerY, canvas.width - 80, 3);
+      ctx.fillRect(60, headerY, canvas.width - 120, 4);
 
-      let yPosition = headerY + 50;
-      const leftMargin = 80;
-      const lineHeight = 70;
+      let yPosition = headerY + 70;
+      const leftMargin = 60;
+      const lineHeight = 110;
 
       const fields = [
+        { label: 'KLANTNAAM', value: project.client_name || '-' },
         { label: 'PROJECTNUMMER', value: project.project_number || '-' },
         { label: 'KASTNAAM', value: verdeler.kast_naam || '-' },
         { label: 'REFERENTIE EWP', value: project.referentie_ewp || '-' },
@@ -66,24 +77,24 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
         { label: 'AFLEVERADRES', value: project.aflever_adres || '-' }
       ];
 
-      fields.forEach(field => {
-        ctx.font = '600 18px Arial, sans-serif';
-        ctx.fillStyle = '#4a4a4a';
+      fields.forEach((field, index) => {
+        ctx.font = '600 24px Arial, sans-serif';
+        ctx.fillStyle = '#555555';
         ctx.textAlign = 'left';
         ctx.fillText(field.label, leftMargin, yPosition);
 
-        const maxWidth = canvas.width - leftMargin - 80;
-        const lines = wrapText(ctx, field.value, maxWidth, '700 28px Arial, sans-serif');
+        const maxWidth = canvas.width - leftMargin - 60;
+        const lines = wrapText(ctx, field.value, maxWidth, '700 40px Arial, sans-serif');
 
-        ctx.font = '700 28px Arial, sans-serif';
+        ctx.font = '700 40px Arial, sans-serif';
         ctx.fillStyle = '#1a1a1a';
 
-        lines.forEach((line, index) => {
-          const yPos = yPosition + 30 + (index * 35);
+        lines.forEach((line, lineIndex) => {
+          const yPos = yPosition + 45 + (lineIndex * 48);
           ctx.fillText(line, leftMargin, yPos);
         });
 
-        yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 35 : 0);
+        yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 48 : 0);
       });
 
       const dataUrl = canvas.toDataURL('image/png');
