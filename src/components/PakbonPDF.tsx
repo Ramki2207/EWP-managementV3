@@ -166,7 +166,7 @@ export const generatePakbonPDF = async (
   doc.setTextColor(0, 0, 0);
   const kastNaam = verdeler.kast_naam || '-';
   const kastNaamLines = doc.splitTextToSize(kastNaam, (pageWidth - 2 * margin) / 2 - 8);
-  doc.text(kastNaamLines, verdelerStartX + 2, contactStartY);
+  doc.text(kastNaamLines, verdelerStartX + 2, contactStartY + 2);
 
   yPosition += contactInfo.length * 5 + 5;
 
