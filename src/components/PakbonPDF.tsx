@@ -33,12 +33,20 @@ export const generatePakbonPDF = async (
     const logoImg = new Image();
     logoImg.src = '/EWP-logo-zwart.png';
 
-    await new Promise((resolve, reject) => {
-      logoImg.onload = resolve;
-      logoImg.onerror = reject;
+    await new Promise<void>((resolve, reject) => {
+      logoImg.onload = () => resolve();
+      logoImg.onerror = () => reject(new Error('Failed to load logo image'));
     });
 
-    doc.addImage(logoImg, 'PNG', margin, yPosition, 50, 20);
+    const canvas = document.createElement('canvas');
+    canvas.width = logoImg.width;
+    canvas.height = logoImg.height;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(logoImg, 0, 0);
+      const logoDataUrl = canvas.toDataURL('image/png');
+      doc.addImage(logoDataUrl, 'PNG', margin, yPosition, 50, 20);
+    }
     yPosition += 30;
   } catch (error) {
     console.error('Error loading logo:', error);
