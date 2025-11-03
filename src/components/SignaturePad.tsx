@@ -94,6 +94,14 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
 
   const stopDrawing = () => {
     setIsDrawing(false);
+
+    if (hasSignature) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const dataURL = canvas.toDataURL('image/png');
+        onSignatureComplete(dataURL);
+      }
+    }
   };
 
   const clearSignature = () => {
@@ -125,6 +133,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
     ctx.lineWidth = 2;
 
     setHasSignature(false);
+    onCancel();
   };
 
   const saveSignature = () => {
@@ -158,39 +167,16 @@ const SignaturePad: React.FC<SignaturePadProps> = ({
         />
       </div>
 
-      <div className="flex justify-between items-center">
-        <div className="flex space-x-2">
-          <button
-            type="button"
-            onClick={clearSignature}
-            className="btn-secondary flex items-center space-x-2"
-            disabled={disabled}
-          >
-            <RotateCcw size={16} />
-            <span>Wissen</span>
-          </button>
-        </div>
-
-        <div className="flex space-x-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="btn-secondary"
-          >
-            Annuleren
-          </button>
-          <button
-            type="button"
-            onClick={saveSignature}
-            className={`btn-primary flex items-center space-x-2 ${
-              !hasSignature || disabled ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            disabled={!hasSignature || disabled}
-          >
-            <Check size={16} />
-            <span>Handtekening opslaan</span>
-          </button>
-        </div>
+      <div className="flex justify-center items-center">
+        <button
+          type="button"
+          onClick={clearSignature}
+          className="btn-secondary flex items-center space-x-2"
+          disabled={disabled}
+        >
+          <RotateCcw size={16} />
+          <span>Wissen</span>
+        </button>
       </div>
 
       <div className="text-xs text-gray-400 text-center">
