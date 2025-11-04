@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Plus, Save, Trash2, FileText, Send, Calendar } from 'lucide-react';
+import { Plus, Save, Trash2, FileText, Send, Calendar, XCircle } from 'lucide-react';
 
 const ACTIVITY_CODES = [
   { code: '100', description: 'Montage verdelers' },
@@ -340,6 +340,12 @@ export default function MyWorksheet() {
                 {weekstaat.submitted_at && (
                   <p>Ingediend: {new Date(weekstaat.submitted_at).toLocaleDateString('nl-NL')}</p>
                 )}
+                {weekstaat.status === 'rejected' && weekstaat.rejection_reason && (
+                  <div className="mt-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <p className="text-red-400 font-medium text-xs mb-1">Reden afkeuring:</p>
+                    <p className="text-red-300 text-xs">{weekstaat.rejection_reason}</p>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -361,6 +367,8 @@ export default function MyWorksheet() {
 
   const totals = calculateTotals();
   const isDraft = selectedWeekstaat.status === 'draft';
+  const isRejected = selectedWeekstaat.status === 'rejected';
+  const canEdit = isDraft || isRejected;
 
   return (
     <div className="p-8">
@@ -379,7 +387,7 @@ export default function MyWorksheet() {
             <p className="text-gray-400 text-sm mt-1">{user?.username}</p>
           </div>
         </div>
-        {isDraft && (
+        {canEdit && (
           <div className="flex space-x-2">
             <button
               onClick={() => saveWeekstaat(false)}
@@ -395,11 +403,23 @@ export default function MyWorksheet() {
               className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Send size={20} />
-              <span>{loading ? 'Bezig...' : 'Indienen'}</span>
+              <span>{loading ? 'Bezig...' : isRejected ? 'Opnieuw indienen' : 'Indienen'}</span>
             </button>
           </div>
         )}
       </div>
+
+      {isRejected && selectedWeekstaat.rejection_reason && (
+        <div className="card p-4 mb-4 bg-red-500/10 border-2 border-red-500/30">
+          <h3 className="text-red-400 font-semibold mb-2 flex items-center">
+            <XCircle className="mr-2" size={20} />
+            Afgekeurd - Aanpassingen vereist
+          </h3>
+          <p className="text-red-300 text-sm mb-2"><strong>Reden:</strong></p>
+          <p className="text-red-200">{selectedWeekstaat.rejection_reason}</p>
+          <p className="text-gray-400 text-sm mt-3">Pas de weekstaat aan en dien deze opnieuw in.</p>
+        </div>
+      )}
 
       <div className="card p-6 mb-4">
         <div className="flex justify-between items-center mb-4">
@@ -409,7 +429,7 @@ export default function MyWorksheet() {
               Vul per activiteit de uren in voor elke dag van de week
             </p>
           </div>
-          {isDraft && (
+          {canEdit && (
             <button onClick={addEntry} className="btn-primary text-sm flex items-center space-x-1">
               <Plus size={16} />
               <span>Activiteit Toevoegen</span>
@@ -437,7 +457,7 @@ export default function MyWorksheet() {
                 <th className="text-left p-2 w-16">Za</th>
                 <th className="text-left p-2 w-16">Zo</th>
                 <th className="text-left p-2 min-w-[80px]">Overwerk</th>
-                {isDraft && <th className="text-left p-2 w-10"></th>}
+                {canEdit && <th className="text-left p-2 w-10"></th>}
               </tr>
             </thead>
             <tbody>
@@ -447,7 +467,7 @@ export default function MyWorksheet() {
                     <select
                       value={entry.activity_code}
                       onChange={(e) => updateEntry(index, 'activity_code', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1"
                     >
                       {ACTIVITY_CODES.map(code => (
@@ -462,7 +482,7 @@ export default function MyWorksheet() {
                       type="text"
                       value={entry.workorder_number}
                       onChange={(e) => updateEntry(index, 'workorder_number', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       placeholder="WB nr"
                       className="input-field text-xs p-1 w-full"
                     />
@@ -473,7 +493,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.monday}
                       onChange={(e) => updateEntry(index, 'monday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -483,7 +503,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.tuesday}
                       onChange={(e) => updateEntry(index, 'tuesday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -493,7 +513,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.wednesday}
                       onChange={(e) => updateEntry(index, 'wednesday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -503,7 +523,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.thursday}
                       onChange={(e) => updateEntry(index, 'thursday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -513,7 +533,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.friday}
                       onChange={(e) => updateEntry(index, 'friday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -523,7 +543,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.saturday}
                       onChange={(e) => updateEntry(index, 'saturday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -533,7 +553,7 @@ export default function MyWorksheet() {
                       step="0.25"
                       value={entry.sunday}
                       onChange={(e) => updateEntry(index, 'sunday', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       className="input-field text-xs p-1 w-16"
                     />
                   </td>
@@ -542,12 +562,12 @@ export default function MyWorksheet() {
                       type="text"
                       value={entry.overtime_start_time}
                       onChange={(e) => updateEntry(index, 'overtime_start_time', e.target.value)}
-                      disabled={!isDraft}
+                      disabled={!canEdit}
                       placeholder="van-tot"
                       className="input-field text-xs p-1 w-20"
                     />
                   </td>
-                  {isDraft && (
+                  {canEdit && (
                     <td className="p-2">
                       <button onClick={() => removeEntry(index)} className="text-red-400 hover:text-red-300">
                         <Trash2 size={16} />
