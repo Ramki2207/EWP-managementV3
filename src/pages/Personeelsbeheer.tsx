@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, ExternalLink } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle } from 'lucide-react';
 
 type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie';
 
@@ -33,6 +33,8 @@ export default function Personeelsbeheer() {
   const [draggedProject, setDraggedProject] = useState<any>(null);
   const [selectedWorkEntry, setSelectedWorkEntry] = useState<any>(null);
   const [workEntryDetails, setWorkEntryDetails] = useState<any>(null);
+  const [selectedWeekstaat, setSelectedWeekstaat] = useState<any>(null);
+  const [weekstaatEntries, setWeekstaatEntries] = useState<any[]>([]);
 
   useEffect(() => {
     loadUsers();
@@ -239,15 +241,29 @@ export default function Personeelsbeheer() {
     await loadWorkEntryDetails(workEntry);
   };
 
-  const approveWeekstaat = async (id: string) => {
+  const loadWeekstaatDetails = async (weekstaat: any) => {
+    const { data: entries } = await supabase
+      .from('weekstaat_entries')
+      .select('*')
+      .eq('weekstaat_id', weekstaat.id)
+      .order('created_at');
+
+    setWeekstaatEntries(entries || []);
+    setSelectedWeekstaat(weekstaat);
+  };
+
+  const approveWeekstaat = async () => {
+    if (!selectedWeekstaat) return;
+
     const { error } = await supabase
       .from('weekstaten')
       .update({
         status: 'approved',
         reviewed_at: new Date().toISOString(),
-        reviewed_by: localStorage.getItem('currentUserId')
+        reviewed_by: localStorage.getItem('currentUserId'),
+        rejection_reason: null
       })
-      .eq('id', id);
+      .eq('id', selectedWeekstaat.id);
 
     if (error) {
       toast.error('Fout bij goedkeuren');
@@ -255,18 +271,26 @@ export default function Personeelsbeheer() {
     }
 
     toast.success('Weekstaat goedgekeurd');
+    setSelectedWeekstaat(null);
+    setWeekstaatEntries([]);
     loadWeekstaten();
   };
 
-  const declineWeekstaat = async (id: string) => {
+  const declineWeekstaat = async () => {
+    if (!selectedWeekstaat || !rejectionReason.trim()) {
+      toast.error('Vul een reden voor afkeuring in');
+      return;
+    }
+
     const { error } = await supabase
       .from('weekstaten')
       .update({
-        status: 'declined',
+        status: 'rejected',
         reviewed_at: new Date().toISOString(),
-        reviewed_by: localStorage.getItem('currentUserId')
+        reviewed_by: localStorage.getItem('currentUserId'),
+        rejection_reason: rejectionReason
       })
-      .eq('id', id);
+      .eq('id', selectedWeekstaat.id);
 
     if (error) {
       toast.error('Fout bij afkeuren');
@@ -274,6 +298,10 @@ export default function Personeelsbeheer() {
     }
 
     toast.success('Weekstaat afgekeurd');
+    setSelectedWeekstaat(null);
+    setWeekstaatEntries([]);
+    setRejectionReason('');
+    setSelectedRequest(null);
     loadWeekstaten();
   };
 
@@ -1016,7 +1044,7 @@ export default function Personeelsbeheer() {
                     <div
                       key={weekstaat.id}
                       className="p-4 rounded-lg bg-[#2A303C] hover:bg-[#353C4A] cursor-pointer transition-colors flex items-center justify-between group"
-                      onClick={() => navigate('/worksheet-management')}
+                      onClick={() => loadWeekstaatDetails(weekstaat)}
                     >
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
@@ -1033,7 +1061,7 @@ export default function Personeelsbeheer() {
                           Klik om te beoordelen →
                         </p>
                       </div>
-                      <ExternalLink className="w-5 h-5 text-gray-500 group-hover:text-blue-400 transition-colors" />
+                      <Eye className="w-5 h-5 text-gray-500 group-hover:text-blue-400 transition-colors" />
                     </div>
                   ))}
               </div>
@@ -1270,8 +1298,162 @@ export default function Personeelsbeheer() {
         </div>
       )}
 
+      {/* Weekstaat Review Modal */}
+      {selectedWeekstaat && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-6xl w-full p-6 my-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-white">Weekstaat Beoordeling</h3>
+                <p className="text-gray-400 mt-1">
+                  {selectedWeekstaat.user?.username} - Week {selectedWeekstaat.week_number}, {selectedWeekstaat.year}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedWeekstaat(null);
+                  setWeekstaatEntries([]);
+                  setRejectionReason('');
+                }}
+                className="text-gray-400 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="bg-[#2A303C] rounded-lg p-4 mb-6">
+              <h4 className="text-lg font-semibold text-white mb-4">Activiteiten</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left p-2 text-gray-400">Code</th>
+                      <th className="text-left p-2 text-gray-400">Activiteit</th>
+                      <th className="text-left p-2 text-gray-400">WB nr</th>
+                      <th className="text-center p-2 text-gray-400">Ma</th>
+                      <th className="text-center p-2 text-gray-400">Di</th>
+                      <th className="text-center p-2 text-gray-400">Wo</th>
+                      <th className="text-center p-2 text-gray-400">Do</th>
+                      <th className="text-center p-2 text-gray-400">Vr</th>
+                      <th className="text-center p-2 text-gray-400">Za</th>
+                      <th className="text-center p-2 text-gray-400">Zo</th>
+                      <th className="text-center p-2 text-gray-400">Totaal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weekstaatEntries.map((entry, index) => {
+                      const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
+                                       (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
+                      return (
+                        <tr key={index} className="border-b border-gray-800">
+                          <td className="p-2 text-white">{entry.activity_code}</td>
+                          <td className="p-2 text-white">{entry.activity_description}</td>
+                          <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.wednesday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.thursday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
+                          <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
+                          <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(1)}</td>
+                        </tr>
+                      );
+                    })}
+                    <tr className="bg-purple-500/10 font-bold">
+                      <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-white">
+                        {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(1)}
+                      </td>
+                      <td className="p-2 text-center text-purple-400 font-bold text-lg">
+                        {weekstaatEntries.reduce((sum, e) =>
+                          sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+                          (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                        ).toFixed(1)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {selectedRequest && selectedRequest.action === 'decline' ? (
+              <div className="mb-6">
+                <label className="block text-gray-400 mb-2 font-medium">Reden voor afkeuring:</label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="input-field w-full"
+                  rows={4}
+                  placeholder="Geef een duidelijke reden waarom deze weekstaat wordt afgekeurd..."
+                  autoFocus
+                />
+              </div>
+            ) : null}
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setSelectedWeekstaat(null);
+                  setWeekstaatEntries([]);
+                  setRejectionReason('');
+                  setSelectedRequest(null);
+                }}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              {selectedRequest && selectedRequest.action === 'decline' ? (
+                <button
+                  onClick={declineWeekstaat}
+                  className="btn-primary bg-red-500/20 border-red-500/30 hover:bg-red-500/30 flex items-center space-x-2"
+                >
+                  <XCircle className="w-5 h-5" />
+                  <span>Afkeuren</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setSelectedRequest({ action: 'decline' })}
+                    className="btn-secondary bg-red-500/20 border-red-500/30 hover:bg-red-500/30 flex items-center space-x-2"
+                  >
+                    <XCircle className="w-5 h-5" />
+                    <span>Afkeuren</span>
+                  </button>
+                  <button
+                    onClick={approveWeekstaat}
+                    className="btn-primary bg-green-500/20 border-green-500/30 hover:bg-green-500/30 flex items-center space-x-2"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    <span>Goedkeuren</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Rejection Modal */}
-      {selectedRequest && selectedRequest.action === 'decline' && (
+      {selectedRequest && selectedRequest.action === 'decline' && !selectedWeekstaat && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
           <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-white mb-4">Reden voor Afwijzing</h3>
