@@ -697,34 +697,43 @@ export default function UrenstaatVerlof() {
                   </button>
                 </div>
 
-                {selectedWeekstaat.status === 'draft' && (
-                  <>
-                    <div className="mb-4 flex items-center justify-between">
-                      <button onClick={addEntry} className="btn-secondary flex items-center space-x-2">
-                        <Plus className="w-4 h-4" />
-                        <span>Regel toevoegen</span>
-                      </button>
-                      <div className="flex space-x-3">
-                        <button
-                          onClick={saveWeekstaat}
-                          disabled={loading}
-                          className="btn-secondary flex items-center space-x-2"
-                        >
-                          <Save className="w-4 h-4" />
-                          <span>Opslaan</span>
-                        </button>
-                        <button
-                          onClick={submitWeekstaat}
-                          disabled={entries.length === 0}
-                          className="btn-primary flex items-center space-x-2"
-                        >
-                          <Send className="w-4 h-4" />
-                          <span>Indienen</span>
-                        </button>
-                      </div>
-                    </div>
+                {selectedWeekstaat.status === 'rejected' && selectedWeekstaat.rejection_reason && (
+                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                    <h3 className="text-red-400 font-semibold mb-2">Afgekeurd - Aanpassingen vereist</h3>
+                    <p className="text-red-300 text-sm mb-1"><strong>Reden:</strong></p>
+                    <p className="text-red-200">{selectedWeekstaat.rejection_reason}</p>
+                    <p className="text-gray-400 text-sm mt-2">Pas de weekstaat aan en dien deze opnieuw in.</p>
+                  </div>
+                )}
 
-                    <div className="overflow-x-auto">
+                {(selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected') && (
+                  <div className="mb-4 flex items-center justify-between">
+                    <button onClick={addEntry} className="btn-secondary flex items-center space-x-2">
+                      <Plus className="w-4 h-4" />
+                      <span>Regel toevoegen</span>
+                    </button>
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={saveWeekstaat}
+                        disabled={loading}
+                        className="btn-secondary flex items-center space-x-2"
+                      >
+                        <Save className="w-4 h-4" />
+                        <span>Opslaan</span>
+                      </button>
+                      <button
+                        onClick={submitWeekstaat}
+                        disabled={entries.length === 0}
+                        className="btn-primary flex items-center space-x-2"
+                      >
+                        <Send className="w-4 h-4" />
+                        <span>{selectedWeekstaat.status === 'rejected' ? 'Opnieuw indienen' : 'Indienen'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-gray-700">
@@ -745,60 +754,78 @@ export default function UrenstaatVerlof() {
                           {entries.map((entry, index) => (
                             <tr key={index} className="border-b border-gray-800">
                               <td className="p-2">
-                                <select
-                                  value={entry.activity_code}
-                                  onChange={(e) => {
-                                    const code = ACTIVITY_CODES.find(c => c.code === e.target.value);
-                                    updateEntry(index, 'activity_code', e.target.value);
-                                    updateEntry(index, 'activity_description', code?.description || '');
-                                  }}
-                                  className="input-field text-sm"
-                                >
-                                  {ACTIVITY_CODES.map(code => (
-                                    <option key={code.code} value={code.code}>
-                                      {code.code}
-                                    </option>
-                                  ))}
-                                </select>
+                                {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
+                                  <select
+                                    value={entry.activity_code}
+                                    onChange={(e) => {
+                                      const code = ACTIVITY_CODES.find(c => c.code === e.target.value);
+                                      updateEntry(index, 'activity_code', e.target.value);
+                                      updateEntry(index, 'activity_description', code?.description || '');
+                                    }}
+                                    className="input-field text-sm"
+                                  >
+                                    {ACTIVITY_CODES.map(code => (
+                                      <option key={code.code} value={code.code}>
+                                        {code.code}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <span className="text-white">{entry.activity_code}</span>
+                                )}
                               </td>
                               <td className="p-2">
-                                <input
-                                  type="text"
-                                  value={entry.activity_description}
-                                  onChange={(e) => updateEntry(index, 'activity_description', e.target.value)}
-                                  className="input-field text-sm"
-                                />
+                                {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
+                                  <input
+                                    type="text"
+                                    value={entry.activity_description}
+                                    onChange={(e) => updateEntry(index, 'activity_description', e.target.value)}
+                                    className="input-field text-sm"
+                                  />
+                                ) : (
+                                  <span className="text-white">{entry.activity_description}</span>
+                                )}
                               </td>
                               <td className="p-2">
-                                <input
-                                  type="text"
-                                  value={entry.workorder_number}
-                                  onChange={(e) => updateEntry(index, 'workorder_number', e.target.value)}
-                                  className="input-field text-sm"
-                                  placeholder="Werknr"
-                                />
+                                {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
+                                  <input
+                                    type="text"
+                                    value={entry.workorder_number}
+                                    onChange={(e) => updateEntry(index, 'workorder_number', e.target.value)}
+                                    className="input-field text-sm"
+                                    placeholder="Werknr"
+                                  />
+                                ) : (
+                                  <span className="text-white">{entry.workorder_number || '-'}</span>
+                                )}
                               </td>
                               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
                                 <td key={day} className="p-2">
-                                  <input
-                                    type="number"
-                                    step="0.5"
-                                    min="0"
-                                    max="24"
-                                    value={entry[day as keyof WeekstaatEntry] || 0}
-                                    onChange={(e) => updateEntry(index, day, parseFloat(e.target.value) || 0)}
-                                    className="input-field text-sm text-center w-16"
-                                  />
+                                  {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
+                                    <input
+                                      type="number"
+                                      step="0.5"
+                                      min="0"
+                                      max="24"
+                                      value={entry[day as keyof WeekstaatEntry] || 0}
+                                      onChange={(e) => updateEntry(index, day, parseFloat(e.target.value) || 0)}
+                                      className="input-field text-sm text-center w-16"
+                                    />
+                                  ) : (
+                                    <span className="text-white text-center block">{entry[day as keyof WeekstaatEntry] || '-'}</span>
+                                  )}
                                 </td>
                               ))}
-                              <td className="p-2 text-center">
-                                <button
-                                  onClick={() => deleteEntry(index)}
-                                  className="text-red-400 hover:text-red-300"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </button>
-                              </td>
+                              {(selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected') && (
+                                <td className="p-2 text-center">
+                                  <button
+                                    onClick={() => deleteEntry(index)}
+                                    className="text-red-400 hover:text-red-300"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </td>
+                              )}
                             </tr>
                           ))}
                           {/* Totals Row */}
@@ -821,14 +848,6 @@ export default function UrenstaatVerlof() {
                         </tbody>
                       </table>
                     </div>
-                  </>
-                )}
-
-                {selectedWeekstaat.status !== 'draft' && (
-                  <div className="text-center py-8 text-gray-400">
-                    Deze weekstaat is ingediend en kan niet meer worden bewerkt.
-                  </div>
-                )}
               </div>
             </div>
           )}

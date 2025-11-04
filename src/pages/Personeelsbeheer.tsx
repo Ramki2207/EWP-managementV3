@@ -1013,11 +1013,15 @@ export default function Personeelsbeheer() {
                 {weekstaten
                   .filter(w => w.status === 'submitted')
                   .map(weekstaat => (
-                    <div key={weekstaat.id} className="p-4 rounded-lg bg-[#2A303C] flex items-center justify-between">
+                    <div
+                      key={weekstaat.id}
+                      className="p-4 rounded-lg bg-[#2A303C] hover:bg-[#353C4A] cursor-pointer transition-colors flex items-center justify-between group"
+                      onClick={() => navigate('/worksheet-management')}
+                    >
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <Users className="w-5 h-5 text-purple-400" />
-                          <span className="font-medium text-white">{weekstaat.user?.username}</span>
+                          <span className="font-medium text-white group-hover:text-blue-400 transition-colors">{weekstaat.user?.username}</span>
                           <span className="text-sm text-gray-400">
                             Week {weekstaat.week_number} - {weekstaat.year}
                           </span>
@@ -1025,23 +1029,11 @@ export default function Personeelsbeheer() {
                         <p className="text-sm text-gray-400">
                           Ingediend: {new Date(weekstaat.submitted_at).toLocaleString('nl-NL')}
                         </p>
+                        <p className="text-xs text-blue-400 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Klik om te beoordelen →
+                        </p>
                       </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => declineWeekstaat(weekstaat.id)}
-                          className="btn-secondary text-red-400 hover:bg-red-500/10 flex items-center space-x-2"
-                        >
-                          <X className="w-4 h-4" />
-                          <span>Afkeuren</span>
-                        </button>
-                        <button
-                          onClick={() => approveWeekstaat(weekstaat.id)}
-                          className="btn-primary flex items-center space-x-2"
-                        >
-                          <Check className="w-4 h-4" />
-                          <span>Goedkeuren</span>
-                        </button>
-                      </div>
+                      <ExternalLink className="w-5 h-5 text-gray-500 group-hover:text-blue-400 transition-colors" />
                     </div>
                   ))}
               </div>
