@@ -186,7 +186,7 @@ export default function Personeelsbeheer() {
   const handleProjectClick = async (project: any) => {
     console.log('📦 Project clicked:', project);
     // Navigate to the project details page instead of showing modal
-    navigate(`/projects/${project.id}`);
+    navigate(`/project/${project.id}`);
   };
 
   const loadWorkEntryDetails = async (workEntry: any) => {
