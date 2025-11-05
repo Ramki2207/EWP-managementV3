@@ -147,7 +147,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
             weekstaat_id: weekstaatId,
             activity_code: activityCode,
             activity_description: activityDescription,
-            workorder_number: projectNumber,
+            workorder_number: weekNumber.toString(),
             [dayColumn]: hours
           });
 
