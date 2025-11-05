@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import jsPDF from 'jspdf';
 
 interface DeliveryStickerGeneratorProps {
   project: any;
@@ -8,101 +9,165 @@ interface DeliveryStickerGeneratorProps {
 }
 
 const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ project, onClose }) => {
-  const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
+  const [selectedVerdelers, setSelectedVerdelers] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
 
   const verdelers = project?.distributors || [];
 
-  const generateSticker = async (verdeler: any) => {
+  const toggleVerdelerSelection = (verdelerId: string) => {
+    const newSelection = new Set(selectedVerdelers);
+    if (newSelection.has(verdelerId)) {
+      newSelection.delete(verdelerId);
+    } else {
+      newSelection.add(verdelerId);
+    }
+    setSelectedVerdelers(newSelection);
+  };
+
+  const selectAll = () => {
+    if (selectedVerdelers.size === verdelers.length) {
+      setSelectedVerdelers(new Set());
+    } else {
+      setSelectedVerdelers(new Set(verdelers.map((v: any) => v.id)));
+    }
+  };
+
+  const generateStickerCanvas = async (verdeler: any): Promise<HTMLCanvasElement> => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1000;
+    canvas.height = 1200;
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) {
+      throw new Error('Canvas context not available');
+    }
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const borderWidth = 4;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, borderWidth);
+    ctx.fillRect(0, 0, borderWidth, canvas.height);
+    ctx.fillRect(canvas.width - borderWidth, 0, borderWidth, canvas.height);
+    ctx.fillRect(0, canvas.height - borderWidth, canvas.width, borderWidth);
+
+    const logo = new Image();
+    logo.src = '/EWP-logo-zwart.png';
+
+    await new Promise<void>((resolve, reject) => {
+      logo.onload = () => resolve();
+      logo.onerror = () => reject(new Error('Failed to load logo'));
+    });
+
+    const maxLogoWidth = 600;
+    const maxLogoHeight = 200;
+    const logoAspectRatio = logo.width / logo.height;
+
+    let logoWidth = maxLogoWidth;
+    let logoHeight = maxLogoWidth / logoAspectRatio;
+
+    if (logoHeight > maxLogoHeight) {
+      logoHeight = maxLogoHeight;
+      logoWidth = maxLogoHeight * logoAspectRatio;
+    }
+
+    const logoX = (canvas.width - logoWidth) / 2;
+    const logoY = 50;
+    ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+
+    const headerY = logoY + logoHeight + 40;
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(60, headerY, canvas.width - 120, 4);
+
+    let yPosition = headerY + 70;
+    const leftMargin = 60;
+    const lineHeight = 110;
+
+    const fields = [
+      { label: 'KLANTNAAM', value: project.client || '-' },
+      { label: 'PROJECTNUMMER', value: project.project_number || '-' },
+      { label: 'KASTNAAM', value: verdeler.kast_naam || '-' },
+      { label: 'REFERENTIE EWP', value: project.referentie_ewp || '-' },
+      { label: 'REFERENTIE KLANT', value: project.referentie_klant || '-' },
+      { label: 'AFLEVERADRES', value: project.aflever_adres || '-' }
+    ];
+
+    fields.forEach((field, index) => {
+      ctx.font = '600 24px Arial, sans-serif';
+      ctx.fillStyle = '#555555';
+      ctx.textAlign = 'left';
+      ctx.fillText(field.label, leftMargin, yPosition);
+
+      const maxWidth = canvas.width - leftMargin - 60;
+      const lines = wrapText(ctx, field.value, maxWidth, '700 40px Arial, sans-serif');
+
+      ctx.font = '700 40px Arial, sans-serif';
+      ctx.fillStyle = '#1a1a1a';
+
+      lines.forEach((line, lineIndex) => {
+        const yPos = yPosition + 45 + (lineIndex * 48);
+        ctx.fillText(line, leftMargin, yPos);
+      });
+
+      yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 48 : 0);
+    });
+
+    return canvas;
+  };
+
+  const generateMultipleStickers = async () => {
+    if (selectedVerdelers.size === 0) {
+      toast.error('Selecteer minimaal één verdeler');
+      return;
+    }
+
     try {
       setGenerating(true);
+      const selectedVerdelersArray = verdelers.filter((v: any) => selectedVerdelers.has(v.id));
 
-      const canvas = document.createElement('canvas');
-      canvas.width = 1000;
-      canvas.height = 1200;
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        throw new Error('Canvas context not available');
-      }
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const borderWidth = 4;
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(0, 0, canvas.width, borderWidth);
-      ctx.fillRect(0, 0, borderWidth, canvas.height);
-      ctx.fillRect(canvas.width - borderWidth, 0, borderWidth, canvas.height);
-      ctx.fillRect(0, canvas.height - borderWidth, canvas.width, borderWidth);
-
-      const logo = new Image();
-      logo.src = '/EWP-logo-zwart.png';
-
-      await new Promise<void>((resolve, reject) => {
-        logo.onload = () => resolve();
-        logo.onerror = () => reject(new Error('Failed to load logo'));
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
       });
 
-      const maxLogoWidth = 600;
-      const maxLogoHeight = 200;
-      const logoAspectRatio = logo.width / logo.height;
+      for (let i = 0; i < selectedVerdelersArray.length; i++) {
+        const verdeler = selectedVerdelersArray[i];
+        const canvas = await generateStickerCanvas(verdeler);
+        const imgData = canvas.toDataURL('image/png');
 
-      let logoWidth = maxLogoWidth;
-      let logoHeight = maxLogoWidth / logoAspectRatio;
+        if (i > 0) {
+          pdf.addPage();
+        }
 
-      if (logoHeight > maxLogoHeight) {
-        logoHeight = maxLogoHeight;
-        logoWidth = maxLogoHeight * logoAspectRatio;
+        const imgWidth = 210;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const yPos = (297 - imgHeight) / 2;
+
+        pdf.addImage(imgData, 'PNG', 0, yPos, imgWidth, imgHeight);
       }
 
-      const logoX = (canvas.width - logoWidth) / 2;
-      const logoY = 50;
-      ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+      pdf.save(`Levering_Stickers_${project.project_number}.pdf`);
+      toast.success(`${selectedVerdelers.size} levering sticker(s) gedownload!`);
+      setSelectedVerdelers(new Set());
+    } catch (error) {
+      console.error('Error generating stickers:', error);
+      toast.error('Fout bij het genereren van de stickers');
+    } finally {
+      setGenerating(false);
+    }
+  };
 
-      const headerY = logoY + logoHeight + 40;
-      ctx.fillStyle = '#1a1a1a';
-      ctx.fillRect(60, headerY, canvas.width - 120, 4);
-
-      let yPosition = headerY + 70;
-      const leftMargin = 60;
-      const lineHeight = 110;
-
-      const fields = [
-        { label: 'KLANTNAAM', value: project.client || '-' },
-        { label: 'PROJECTNUMMER', value: project.project_number || '-' },
-        { label: 'KASTNAAM', value: verdeler.kast_naam || '-' },
-        { label: 'REFERENTIE EWP', value: project.referentie_ewp || '-' },
-        { label: 'REFERENTIE KLANT', value: project.referentie_klant || '-' },
-        { label: 'AFLEVERADRES', value: project.aflever_adres || '-' }
-      ];
-
-      fields.forEach((field, index) => {
-        ctx.font = '600 24px Arial, sans-serif';
-        ctx.fillStyle = '#555555';
-        ctx.textAlign = 'left';
-        ctx.fillText(field.label, leftMargin, yPosition);
-
-        const maxWidth = canvas.width - leftMargin - 60;
-        const lines = wrapText(ctx, field.value, maxWidth, '700 40px Arial, sans-serif');
-
-        ctx.font = '700 40px Arial, sans-serif';
-        ctx.fillStyle = '#1a1a1a';
-
-        lines.forEach((line, lineIndex) => {
-          const yPos = yPosition + 45 + (lineIndex * 48);
-          ctx.fillText(line, leftMargin, yPos);
-        });
-
-        yPosition += lineHeight + (lines.length > 1 ? (lines.length - 1) * 48 : 0);
-      });
-
+  const generateSingleSticker = async (verdeler: any) => {
+    try {
+      setGenerating(true);
+      const canvas = await generateStickerCanvas(verdeler);
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = `Levering_Sticker_${project.project_number}_${verdeler.kast_naam || 'verdeler'}.png`;
       link.href = dataUrl;
       link.click();
-
       toast.success('Levering sticker gedownload!');
     } catch (error) {
       console.error('Error generating sticker:', error);
@@ -150,7 +215,7 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
 
         <div className="mb-4">
           <p className="text-gray-400 text-sm">
-            Selecteer een verdeler om een levering sticker te downloaden.
+            Selecteer één of meerdere verdelers om levering stickers te downloaden.
           </p>
         </div>
 
@@ -160,32 +225,71 @@ const DeliveryStickerGenerator: React.FC<DeliveryStickerGeneratorProps> = ({ pro
             <p className="text-gray-400">Geen verdelers gevonden voor dit project</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {verdelers.map((verdeler: any) => (
-              <div
-                key={verdeler.id}
-                className="bg-[#2A303C] rounded-lg p-4 flex items-center justify-between hover:bg-[#323944] transition-colors"
-              >
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white mb-1">
-                    {verdeler.kast_naam || 'Naamloze Verdeler'}
-                  </h3>
-                  <div className="text-sm text-gray-400 space-y-1">
-                    <p>Verdeler ID: {verdeler.distributor_id || '-'}</p>
-                    <p>Systeem: {verdeler.systeem || '-'}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => generateSticker(verdeler)}
-                  className="btn-primary flex items-center space-x-2"
-                  disabled={generating}
-                >
-                  <Download size={18} />
-                  <span>{generating ? 'Genereren...' : 'Download Sticker'}</span>
-                </button>
+          <>
+            <div className="flex items-center justify-between mb-4 p-3 bg-[#2A303C] rounded-lg">
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={selectedVerdelers.size === verdelers.length && verdelers.length > 0}
+                  onChange={selectAll}
+                  className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                />
+                <span className="text-white font-medium">
+                  {selectedVerdelers.size === verdelers.length ? 'Deselecteer alles' : 'Selecteer alles'}
+                </span>
               </div>
-            ))}
-          </div>
+              <button
+                onClick={generateMultipleStickers}
+                disabled={selectedVerdelers.size === 0 || generating}
+                className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Download size={18} />
+                <span>
+                  {generating
+                    ? 'Genereren...'
+                    : selectedVerdelers.size > 0
+                    ? `Download ${selectedVerdelers.size} Sticker${selectedVerdelers.size > 1 ? 's' : ''} (PDF)`
+                    : 'Download Geselecteerde'
+                  }
+                </span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {verdelers.map((verdeler: any) => (
+                <div
+                  key={verdeler.id}
+                  className="bg-[#2A303C] rounded-lg p-4 flex items-center justify-between hover:bg-[#323944] transition-colors"
+                >
+                  <div className="flex items-center space-x-4 flex-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedVerdelers.has(verdeler.id)}
+                      onChange={() => toggleVerdelerSelection(verdeler.id)}
+                      className="w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-gray-800"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-white mb-1">
+                        {verdeler.kast_naam || 'Naamloze Verdeler'}
+                      </h3>
+                      <div className="text-sm text-gray-400 space-y-1">
+                        <p>Verdeler ID: {verdeler.distributor_id || '-'}</p>
+                        <p>Systeem: {verdeler.systeem || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => generateSingleSticker(verdeler)}
+                    className="btn-secondary flex items-center space-x-2 ml-4"
+                    disabled={generating}
+                  >
+                    <Download size={18} />
+                    <span>{generating ? 'Genereren...' : 'Download'}</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
