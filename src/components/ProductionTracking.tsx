@@ -118,20 +118,20 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       }
 
       const activityCode = projectNumber;
-      const activityDescription = `Productie ${distributorName}`;
+      const activityDescription = `Productie ${distributorName} - ${projectNumber}`;
 
       const { data: existingEntry, error: entryFetchError } = await supabase
         .from('weekstaat_entries')
         .select('*')
         .eq('weekstaat_id', weekstaatId)
         .eq('activity_code', activityCode)
-        .eq('activity_description', activityDescription)
         .maybeSingle();
 
       if (existingEntry) {
         const currentHours = parseFloat(existingEntry[dayColumn] || 0);
         const updateData = {
-          [dayColumn]: currentHours + hours
+          [dayColumn]: currentHours + hours,
+          activity_description: activityDescription
         };
 
         const { error: updateError } = await supabase
