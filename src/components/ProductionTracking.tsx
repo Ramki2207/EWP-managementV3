@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, User, Package, Plus, FileEdit as Edit, Trash2, Save, X, Calendar, DollarSign, Camera, FileText, AlertTriangle, CheckCircle, TrendingUp, Users, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { dataService } from '../lib/supabase';
+import { dataService, supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Material {
@@ -71,6 +71,102 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       }
     }
   }, [formData.start_time, formData.end_time]);
+
+  const syncToWeekstaat = async (workerId: string, date: string, hours: number, projectNumber: string, distributorName: string) => {
+    try {
+      const workDate = new Date(date);
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: existingWeekstaat, error: weekstaatError } = await supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', workerId)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      let weekstaatId = existingWeekstaat?.id;
+
+      if (!weekstaatId) {
+        const { data: newWeekstaat, error: createError } = await supabase
+          .from('weekstaten')
+          .insert({
+            user_id: workerId,
+            week_number: weekNumber,
+            year: year,
+            status: 'draft'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        weekstaatId = newWeekstaat.id;
+      }
+
+      const activityCode = projectNumber;
+      const activityDescription = `Productie ${distributorName}`;
+
+      const { data: existingEntry, error: entryFetchError } = await supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaatId)
+        .eq('activity_code', activityCode)
+        .eq('activity_description', activityDescription)
+        .maybeSingle();
+
+      if (existingEntry) {
+        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const updateData = {
+          [dayColumn]: currentHours + hours
+        };
+
+        const { error: updateError } = await supabase
+          .from('weekstaat_entries')
+          .update(updateData)
+          .eq('id', existingEntry.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('weekstaat_entries')
+          .insert({
+            weekstaat_id: weekstaatId,
+            activity_code: activityCode,
+            activity_description: activityDescription,
+            workorder_number: projectNumber,
+            [dayColumn]: hours
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      console.log('✅ Work entry synced to weekstaat');
+    } catch (error) {
+      console.error('Error syncing to weekstaat:', error);
+    }
+  };
+
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
 
   const loadData = async () => {
     try {
@@ -262,7 +358,19 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         console.log('📝 Creating new work entry...');
         const savedEntry = await dataService.createWorkEntry(workEntryData);
         console.log('✅ New work entry created successfully:', savedEntry);
-        toast.success('Werk registratie toegevoegd!');
+
+        const selectedDistributor = project.distributors?.find((d: any) => d.id === formData.distributor_id);
+        if (selectedDistributor) {
+          await syncToWeekstaat(
+            formData.worker_id,
+            formData.date,
+            formData.hours,
+            project.project_number,
+            selectedDistributor.kast_naam || selectedDistributor.distributor_id
+          );
+        }
+
+        toast.success('Werk registratie toegevoegd en gesynchroniseerd met weekstaat!');
       }
 
       // Save materials and photos as test data if any
