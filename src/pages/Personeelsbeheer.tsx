@@ -35,6 +35,7 @@ export default function Personeelsbeheer() {
   const [workEntryDetails, setWorkEntryDetails] = useState<any>(null);
   const [selectedWeekstaat, setSelectedWeekstaat] = useState<any>(null);
   const [weekstaatEntries, setWeekstaatEntries] = useState<any[]>([]);
+  const [allWeekstaatEntries, setAllWeekstaatEntries] = useState<any[]>([]);
 
   useEffect(() => {
     loadUsers();
@@ -74,6 +75,12 @@ export default function Personeelsbeheer() {
 
     console.log('Loaded weekstaten:', data);
     setWeekstaten(data || []);
+
+    const { data: allEntries } = await supabase
+      .from('weekstaat_entries')
+      .select('*');
+
+    setAllWeekstaatEntries(allEntries || []);
   };
 
   const loadLeaveRequests = async () => {
@@ -1071,27 +1078,62 @@ export default function Personeelsbeheer() {
           {/* All Weekstaten */}
           <div className="card p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Alle Weekstaten</h2>
-            <div className="space-y-3">
-              {weekstaten.map(weekstaat => (
-                <div key={weekstaat.id} className="p-4 rounded-lg bg-[#2A303C] flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(weekstaat.status)}`}>
-                        {getStatusLabel(weekstaat.status)}
-                      </span>
-                      <span className="font-medium text-white">{weekstaat.user?.name}</span>
-                      <span className="text-sm text-gray-400">
-                        Week {weekstaat.week_number} - {weekstaat.year}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-400">
-                      {weekstaat.submitted_at 
-                        ? `Ingediend: ${new Date(weekstaat.submitted_at).toLocaleDateString('nl-NL')}`
-                        : 'Nog niet ingediend'}
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left p-3 text-gray-400 font-medium">Medewerker</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Week</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Jaar</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Ingediend</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Beoordeeld</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Status</th>
+                    <th className="text-left p-3 text-gray-400 font-medium">Uren</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekstaten.map(weekstaat => {
+                    const totalHours = allWeekstaatEntries
+                      .filter(e => e.weekstaat_id === weekstaat.id)
+                      .reduce((sum, e) =>
+                        sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+                        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                      );
+
+                    return (
+                      <tr
+                        key={weekstaat.id}
+                        className="border-b border-gray-700/50 hover:bg-[#2A303C] cursor-pointer transition-colors"
+                        onClick={() => loadWeekstaatDetails(weekstaat)}
+                      >
+                        <td className="p-3 text-white font-medium">{weekstaat.user?.username || 'Onbekend'}</td>
+                        <td className="p-3 text-gray-300">{weekstaat.week_number}</td>
+                        <td className="p-3 text-gray-300">{weekstaat.year}</td>
+                        <td className="p-3 text-gray-300">
+                          {weekstaat.submitted_at
+                            ? new Date(weekstaat.submitted_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                            : '-'
+                          }
+                        </td>
+                        <td className="p-3 text-gray-300">
+                          {weekstaat.reviewed_at
+                            ? new Date(weekstaat.reviewed_at).toLocaleDateString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                            : '-'
+                          }
+                        </td>
+                        <td className="p-3">
+                          <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(weekstaat.status)}`}>
+                            {getStatusLabel(weekstaat.status)}
+                          </span>
+                        </td>
+                        <td className="p-3 text-white font-medium">
+                          {totalHours > 0 ? `${totalHours.toFixed(1)}u` : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
               {weekstaten.length === 0 && (
                 <p className="text-center text-gray-400 py-8">Geen weekstaten gevonden</p>
               )}
@@ -1301,12 +1343,12 @@ export default function Personeelsbeheer() {
       {/* Weekstaat Review Modal */}
       {selectedWeekstaat && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-6xl w-full p-6 my-8">
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-7xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-2xl font-bold text-white">Weekstaat Beoordeling</h3>
                 <p className="text-gray-400 mt-1">
-                  {selectedWeekstaat.user?.username} - Week {selectedWeekstaat.week_number}, {selectedWeekstaat.year}
+                  Week {selectedWeekstaat.week_number}, {selectedWeekstaat.year}
                 </p>
               </div>
               <button
@@ -1321,77 +1363,154 @@ export default function Personeelsbeheer() {
               </button>
             </div>
 
-            <div className="bg-[#2A303C] rounded-lg p-4 mb-6">
-              <h4 className="text-lg font-semibold text-white mb-4">Activiteiten</h4>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left p-2 text-gray-400">Code</th>
-                      <th className="text-left p-2 text-gray-400">Activiteit</th>
-                      <th className="text-left p-2 text-gray-400">WB nr</th>
-                      <th className="text-center p-2 text-gray-400">Ma</th>
-                      <th className="text-center p-2 text-gray-400">Di</th>
-                      <th className="text-center p-2 text-gray-400">Wo</th>
-                      <th className="text-center p-2 text-gray-400">Do</th>
-                      <th className="text-center p-2 text-gray-400">Vr</th>
-                      <th className="text-center p-2 text-gray-400">Za</th>
-                      <th className="text-center p-2 text-gray-400">Zo</th>
-                      <th className="text-center p-2 text-gray-400">Totaal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weekstaatEntries.map((entry, index) => {
-                      const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
-                                       (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
-                      return (
-                        <tr key={index} className="border-b border-gray-800">
-                          <td className="p-2 text-white">{entry.activity_code}</td>
-                          <td className="p-2 text-white">{entry.activity_description}</td>
-                          <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.wednesday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.thursday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
-                          <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
-                          <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(1)}</td>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left: Weekstaat Details (2/3) */}
+              <div className="lg:col-span-2">
+                <div className="bg-[#2A303C] rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-white mb-4">Activiteiten</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-700">
+                          <th className="text-left p-2 text-gray-400">Code</th>
+                          <th className="text-left p-2 text-gray-400">Activiteit</th>
+                          <th className="text-left p-2 text-gray-400">WB nr</th>
+                          <th className="text-center p-2 text-gray-400">Ma</th>
+                          <th className="text-center p-2 text-gray-400">Di</th>
+                          <th className="text-center p-2 text-gray-400">Wo</th>
+                          <th className="text-center p-2 text-gray-400">Do</th>
+                          <th className="text-center p-2 text-gray-400">Vr</th>
+                          <th className="text-center p-2 text-gray-400">Za</th>
+                          <th className="text-center p-2 text-gray-400">Zo</th>
+                          <th className="text-center p-2 text-gray-400">Totaal</th>
                         </tr>
-                      );
-                    })}
-                    <tr className="bg-purple-500/10 font-bold">
-                      <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-white">
-                        {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(1)}
-                      </td>
-                      <td className="p-2 text-center text-purple-400 font-bold text-lg">
+                      </thead>
+                      <tbody>
+                        {weekstaatEntries.map((entry, index) => {
+                          const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
+                                           (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
+                          return (
+                            <tr key={index} className="border-b border-gray-800">
+                              <td className="p-2 text-white">{entry.activity_code}</td>
+                              <td className="p-2 text-white">{entry.activity_description}</td>
+                              <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.wednesday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.thursday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
+                              <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(1)}</td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="bg-purple-500/10 font-bold">
+                          <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-white">
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(1)}
+                          </td>
+                          <td className="p-2 text-center text-purple-400 font-bold text-lg">
+                            {weekstaatEntries.reduce((sum, e) =>
+                              sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+                              (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                            ).toFixed(1)}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Employee Profile (1/3) */}
+              <div className="lg:col-span-1">
+                <div className="bg-[#2A303C] rounded-lg p-4 sticky top-4">
+                  <div className="text-center mb-4">
+                    <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Users className="w-10 h-10 text-white" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-white">{selectedWeekstaat.user?.username || 'Onbekend'}</h4>
+                    <p className="text-sm text-gray-400">{selectedWeekstaat.user?.email || '-'}</p>
+                  </div>
+
+                  <div className="space-y-3 border-t border-gray-700 pt-4">
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Status</p>
+                      <span className={`inline-block px-3 py-1 rounded-full text-xs ${getStatusColor(selectedWeekstaat.status)}`}>
+                        {getStatusLabel(selectedWeekstaat.status)}
+                      </span>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Ingediend</p>
+                      <p className="text-sm text-white">
+                        {selectedWeekstaat.submitted_at
+                          ? new Date(selectedWeekstaat.submitted_at).toLocaleString('nl-NL', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : '-'
+                        }
+                      </p>
+                    </div>
+
+                    {selectedWeekstaat.reviewed_at && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Beoordeeld</p>
+                        <p className="text-sm text-white">
+                          {new Date(selectedWeekstaat.reviewed_at).toLocaleString('nl-NL', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <p className="text-xs text-gray-400 mb-1">Totaal Uren</p>
+                      <p className="text-2xl font-bold text-purple-400">
                         {weekstaatEntries.reduce((sum, e) =>
                           sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
                           (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                        ).toFixed(1)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                        ).toFixed(1)}u
+                      </p>
+                    </div>
+
+                    {selectedWeekstaat.status === 'declined' && selectedWeekstaat.rejection_reason && (
+                      <div>
+                        <p className="text-xs text-gray-400 mb-1">Reden Afkeuring</p>
+                        <p className="text-sm text-red-400 bg-red-500/10 p-2 rounded">
+                          {selectedWeekstaat.rejection_reason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
