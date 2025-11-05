@@ -168,6 +168,76 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   };
 
+  const removeFromWeekstaat = async (workerId: string, date: string, hours: number, projectNumber: string) => {
+    try {
+      const workDate = new Date(date);
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: weekstaat } = await supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', workerId)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      if (!weekstaat) return;
+
+      const { data: entry } = await supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaat.id)
+        .eq('activity_code', projectNumber)
+        .maybeSingle();
+
+      if (!entry) return;
+
+      const currentHours = parseFloat(entry[dayColumn] || 0);
+      const newHours = Math.max(0, currentHours - hours);
+
+      if (newHours === 0) {
+        const allDaysZero = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+          .filter(day => day !== dayColumn)
+          .every(day => !entry[day] || parseFloat(entry[day]) === 0);
+
+        if (allDaysZero) {
+          await supabase
+            .from('weekstaat_entries')
+            .delete()
+            .eq('id', entry.id);
+        } else {
+          await supabase
+            .from('weekstaat_entries')
+            .update({ [dayColumn]: 0 })
+            .eq('id', entry.id);
+        }
+      } else {
+        await supabase
+          .from('weekstaat_entries')
+          .update({ [dayColumn]: newHours })
+          .eq('id', entry.id);
+      }
+
+      console.log('✅ Hours removed from weekstaat');
+    } catch (error) {
+      console.error('Error removing from weekstaat:', error);
+    }
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -431,13 +501,31 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     if (window.confirm('Weet je zeker dat je deze werk registratie wilt verwijderen?')) {
       try {
         console.log('🗑️ Deleting work entry:', entryId);
+
+        const entryToDelete = workEntries.find(e => e.id === entryId);
+        if (!entryToDelete) {
+          toast.error('Werk registratie niet gevonden');
+          return;
+        }
+
+        const { data: workEntry } = await supabase
+          .from('work_entries')
+          .select('*, distributors!inner(project_id, projects!inner(project_number))')
+          .eq('id', entryId)
+          .single();
+
+        await removeFromWeekstaat(
+          entryToDelete.worker_id,
+          entryToDelete.date,
+          entryToDelete.hours,
+          workEntry?.distributors?.projects?.project_number || project.project_number
+        );
+
         await dataService.deleteWorkEntry(entryId);
         console.log('✅ Work entry deleted successfully');
 
-        // Update local state immediately for instant UI feedback
         setWorkEntries(prev => prev.filter(entry => entry.id !== entryId));
 
-        // Update selectedDistributorData if modal is open
         if (selectedDistributorData) {
           setSelectedDistributorData(prev => ({
             ...prev,
@@ -445,7 +533,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
           }));
         }
 
-        toast.success('Werk registratie verwijderd!');
+        toast.success('Werk registratie verwijderd en weekstaat bijgewerkt!');
         await loadData();
       } catch (error) {
         console.error('Error deleting work entry:', error);
