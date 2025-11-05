@@ -36,6 +36,12 @@ export default function Personeelsbeheer() {
   const [selectedWeekstaat, setSelectedWeekstaat] = useState<any>(null);
   const [weekstaatEntries, setWeekstaatEntries] = useState<any[]>([]);
   const [allWeekstaatEntries, setAllWeekstaatEntries] = useState<any[]>([]);
+  const [weekstaatFilters, setWeekstaatFilters] = useState({
+    employee: '',
+    status: '',
+    week: '',
+    year: ''
+  });
 
   useEffect(() => {
     loadUsers();
@@ -1078,6 +1084,76 @@ export default function Personeelsbeheer() {
           {/* All Weekstaten */}
           <div className="card p-6">
             <h2 className="text-xl font-semibold text-white mb-4">Alle Weekstaten</h2>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Medewerker</label>
+                <select
+                  value={weekstaatFilters.employee}
+                  onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, employee: e.target.value })}
+                  className="input-field w-full"
+                >
+                  <option value="">Alle medewerkers</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>{user.username}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Status</label>
+                <select
+                  value={weekstaatFilters.status}
+                  onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, status: e.target.value })}
+                  className="input-field w-full"
+                >
+                  <option value="">Alle statussen</option>
+                  <option value="draft">Concept</option>
+                  <option value="submitted">Ingediend</option>
+                  <option value="approved">Goedgekeurd</option>
+                  <option value="declined">Afgekeurd</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Week</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="53"
+                  placeholder="1-53"
+                  value={weekstaatFilters.week}
+                  onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, week: e.target.value })}
+                  className="input-field w-full"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Jaar</label>
+                <input
+                  type="number"
+                  min="2020"
+                  max="2030"
+                  placeholder="2025"
+                  value={weekstaatFilters.year}
+                  onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, year: e.target.value })}
+                  className="input-field w-full"
+                />
+              </div>
+            </div>
+
+            {weekstaatFilters.employee || weekstaatFilters.status || weekstaatFilters.week || weekstaatFilters.year ? (
+              <div className="mb-4">
+                <button
+                  onClick={() => setWeekstaatFilters({ employee: '', status: '', week: '', year: '' })}
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Wis alle filters
+                </button>
+              </div>
+            ) : null}
+
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -1092,7 +1168,15 @@ export default function Personeelsbeheer() {
                   </tr>
                 </thead>
                 <tbody>
-                  {weekstaten.map(weekstaat => {
+                  {weekstaten
+                    .filter(weekstaat => {
+                      if (weekstaatFilters.employee && weekstaat.user_id !== weekstaatFilters.employee) return false;
+                      if (weekstaatFilters.status && weekstaat.status !== weekstaatFilters.status) return false;
+                      if (weekstaatFilters.week && weekstaat.week_number !== parseInt(weekstaatFilters.week)) return false;
+                      if (weekstaatFilters.year && weekstaat.year !== parseInt(weekstaatFilters.year)) return false;
+                      return true;
+                    })
+                    .map(weekstaat => {
                     const totalHours = allWeekstaatEntries
                       .filter(e => e.weekstaat_id === weekstaat.id)
                       .reduce((sum, e) =>
@@ -1134,8 +1218,16 @@ export default function Personeelsbeheer() {
                   })}
                 </tbody>
               </table>
-              {weekstaten.length === 0 && (
-                <p className="text-center text-gray-400 py-8">Geen weekstaten gevonden</p>
+              {weekstaten.filter(weekstaat => {
+                if (weekstaatFilters.employee && weekstaat.user_id !== weekstaatFilters.employee) return false;
+                if (weekstaatFilters.status && weekstaat.status !== weekstaatFilters.status) return false;
+                if (weekstaatFilters.week && weekstaat.week_number !== parseInt(weekstaatFilters.week)) return false;
+                if (weekstaatFilters.year && weekstaat.year !== parseInt(weekstaatFilters.year)) return false;
+                return true;
+              }).length === 0 && (
+                <p className="text-center text-gray-400 py-8">
+                  {weekstaten.length === 0 ? 'Geen weekstaten gevonden' : 'Geen weekstaten gevonden met de huidige filters'}
+                </p>
               )}
             </div>
           </div>
