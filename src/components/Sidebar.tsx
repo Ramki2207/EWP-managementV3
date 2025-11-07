@@ -3,10 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Users, Bell, Upload, LayoutDashboard, UserCircle,
   HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe,
-  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList
+  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus
 } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
+import { useTabContext } from '../contexts/TabContext';
 import ewpLogo from '../assets/ewp-logo.png';
 import processLogo from '../assets/process-logo.png';
 
@@ -35,6 +36,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const { openTab } = useTabContext();
 
   // Load user data directly without using the hook to avoid dependency issues
   useEffect(() => {
@@ -130,19 +132,35 @@ const Sidebar = () => {
             if (!hasModuleAccess(item.module)) return null;
 
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
-                    : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Icon size={20} />
-                <span>{item.label}</span>
-              </Link>
+              <div key={item.path} className="group relative flex items-center">
+                <Link
+                  to={item.path}
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
+                      : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openTab({
+                      title: item.label,
+                      path: item.path,
+                      icon: <Icon size={16} />
+                    });
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  title="Open in nieuw tabblad"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             );
           })}
         </nav>
@@ -154,19 +172,35 @@ const Sidebar = () => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
-                    : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
-                }`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <Icon size={20} />
-                <span>{item.label}</span>
-              </Link>
+              <div key={item.path} className="group relative flex items-center">
+                <Link
+                  to={item.path}
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
+                      : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
+                  }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Icon size={20} />
+                  <span>{item.label}</span>
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openTab({
+                      title: item.label,
+                      path: item.path,
+                      icon: <Icon size={16} />
+                    });
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  title="Open in nieuw tabblad"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             );
           })}
         </nav>

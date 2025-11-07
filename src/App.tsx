@@ -29,6 +29,8 @@ import UrenstaatVerlof from "./pages/UrenstaatVerlof";
 import Personeelsbeheer from "./pages/Personeelsbeheer";
 import { requestNotificationPermission, subscribeToNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
+import { TabProvider } from "./contexts/TabContext";
+import { TabBar } from "./components/TabBar";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -56,8 +58,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen">
       {showSidebar && <Sidebar />}
-      <div className={`flex-1 ${showSidebar ? 'ml-0 md:ml-64' : ''}`}>
-        {children}
+      <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-0 md:ml-64' : ''}`}>
+        {showSidebar && <TabBar />}
+        <div className="flex-1">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -66,9 +71,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const App = () => {
   return (
     <Router>
-      <Layout>
-        <React.Suspense fallback={<Loader />}>
-          <Routes>
+      <TabProvider>
+        <Layout>
+          <React.Suspense fallback={<Loader />}>
+            <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/404" element={<NotFound />} />
             <Route path="/" element={<PermissionRoute requiredPermission={{ module: 'dashboard', permission: 'read' }}><Dashboard /></PermissionRoute>} />
@@ -96,9 +102,10 @@ const App = () => {
             <Route path="/maintenance-report" element={<MaintenanceReport />} />
             <Route path="/client-portal/:accessCode" element={<ClientPortal />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
-        </React.Suspense>
-      </Layout>
+            </Routes>
+          </React.Suspense>
+        </Layout>
+      </TabProvider>
     </Router>
   );
 };
