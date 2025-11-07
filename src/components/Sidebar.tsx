@@ -8,6 +8,7 @@ import {
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
 import { useTabContext } from '../contexts/TabContext';
+import { getComponentForPath } from '../lib/routeComponents';
 import ewpLogo from '../assets/ewp-logo.png';
 import processLogo from '../assets/process-logo.png';
 
@@ -151,7 +152,8 @@ const Sidebar = () => {
                     openTab({
                       title: item.label,
                       path: item.path,
-                      icon: <Icon size={16} />
+                      icon: <Icon size={16} />,
+                      component: getComponentForPath(item.path)
                     });
                     setIsMobileMenuOpen(false);
                   }}
@@ -191,7 +193,8 @@ const Sidebar = () => {
                     openTab({
                       title: item.label,
                       path: item.path,
-                      icon: <Icon size={16} />
+                      icon: <Icon size={16} />,
+                      component: getComponentForPath(item.path)
                     });
                     setIsMobileMenuOpen(false);
                   }}
