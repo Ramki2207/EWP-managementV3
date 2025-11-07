@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Tab {
   id: string;
   title: string;
   path: string;
   icon?: React.ReactNode;
-  component: React.ReactNode;
 }
 
 interface TabContextType {
@@ -30,19 +30,22 @@ export const useTabContext = () => {
 export const TabProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const openTab = useCallback((newTab: Omit<Tab, 'id'>) => {
     const existingTab = tabs.find(t => t.path === newTab.path);
 
     if (existingTab) {
       setActiveTabId(existingTab.id);
+      navigate(existingTab.path);
     } else {
       const tabId = `tab-${Date.now()}-${Math.random()}`;
       const tab: Tab = { ...newTab, id: tabId };
       setTabs(prev => [...prev, tab]);
       setActiveTabId(tabId);
+      navigate(newTab.path);
     }
-  }, [tabs]);
+  }, [tabs, navigate]);
 
   const closeTab = useCallback((tabId: string) => {
     setTabs(prev => {
@@ -53,21 +56,24 @@ export const TabProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const closedIndex = prev.findIndex(t => t.id === tabId);
           const nextTab = newTabs[Math.max(0, closedIndex - 1)];
           setActiveTabId(nextTab.id);
+          navigate(nextTab.path);
         } else {
           setActiveTabId(null);
+          navigate('/dashboard');
         }
       }
 
       return newTabs;
     });
-  }, [activeTabId]);
+  }, [activeTabId, navigate]);
 
   const switchTab = useCallback((tabId: string) => {
     const tab = tabs.find(t => t.id === tabId);
     if (tab) {
       setActiveTabId(tabId);
+      navigate(tab.path);
     }
-  }, [tabs]);
+  }, [tabs, navigate]);
 
   const updateTabTitle = useCallback((tabId: string, title: string) => {
     setTabs(prev => prev.map(tab =>

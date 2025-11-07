@@ -29,15 +29,13 @@ import UrenstaatVerlof from "./pages/UrenstaatVerlof";
 import Personeelsbeheer from "./pages/Personeelsbeheer";
 import { requestNotificationPermission, subscribeToNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
-import { TabProvider, useTabContext } from "./contexts/TabContext";
+import { TabProvider } from "./contexts/TabContext";
 import { TabBar } from "./components/TabBar";
-import { TabContent } from "./components/TabContent";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const isLoggedIn = localStorage.getItem("loggedIn") === "true";
   const showSidebar = isLoggedIn && location.pathname !== "/login" && location.pathname !== "/client-portal";
-  const { tabs } = useTabContext();
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -51,7 +49,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           }
         });
       }
-
+      
       // Initialize project lock manager
       projectLockManager.initialize();
     }
@@ -63,7 +61,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-0 md:ml-64' : ''}`}>
         {showSidebar && <TabBar />}
         <div className="flex-1">
-          {tabs.length > 0 ? <TabContent /> : children}
+          {children}
         </div>
       </div>
     </div>

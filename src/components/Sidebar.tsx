@@ -8,7 +8,6 @@ import {
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
 import { useTabContext } from '../contexts/TabContext';
-import { getComponentForPath } from '../lib/routeComponents';
 import ewpLogo from '../assets/ewp-logo.png';
 import processLogo from '../assets/process-logo.png';
 
@@ -37,7 +36,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
-  const { openTab, tabs, activeTabId } = useTabContext();
+  const { openTab } = useTabContext();
 
   // Load user data directly without using the hook to avoid dependency issues
   useEffect(() => {
@@ -128,31 +127,38 @@ const Sidebar = () => {
         <nav className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const activeTab = tabs.find(t => t.id === activeTabId);
-            const isActive = activeTab ? activeTab.path === item.path : location.pathname === item.path;
+            const isActive = location.pathname === item.path;
 
             if (!hasModuleAccess(item.module)) return null;
 
             return (
               <div key={item.path} className="group relative flex items-center">
-                <button
-                  onClick={() => {
-                    openTab({
-                      title: item.label,
-                      path: item.path,
-                      icon: <Icon size={16} />,
-                      component: getComponentForPath(item.path)
-                    });
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all text-left ${
+                <Link
+                  to={item.path}
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
                       : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
                   }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Icon size={20} />
                   <span>{item.label}</span>
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openTab({
+                      title: item.label,
+                      path: item.path,
+                      icon: <Icon size={16} />
+                    });
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  title="Open in nieuw tabblad"
+                >
+                  <Plus size={14} />
                 </button>
               </div>
             );
@@ -164,28 +170,35 @@ const Sidebar = () => {
         <nav className="space-y-2">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
-            const activeTab = tabs.find(t => t.id === activeTabId);
-            const isActive = activeTab ? activeTab.path === item.path : location.pathname === item.path;
+            const isActive = location.pathname === item.path;
             return (
               <div key={item.path} className="group relative flex items-center">
-                <button
-                  onClick={() => {
-                    openTab({
-                      title: item.label,
-                      path: item.path,
-                      icon: <Icon size={16} />,
-                      component: getComponentForPath(item.path)
-                    });
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all text-left ${
+                <Link
+                  to={item.path}
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
                       : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
                   }`}
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Icon size={20} />
                   <span>{item.label}</span>
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    openTab({
+                      title: item.label,
+                      path: item.path,
+                      icon: <Icon size={16} />
+                    });
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  title="Open in nieuw tabblad"
+                >
+                  <Plus size={14} />
                 </button>
               </div>
             );
