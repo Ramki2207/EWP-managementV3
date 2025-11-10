@@ -55,9 +55,7 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
   doc.setFillColor(245, 248, 250);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  const headerHeight = 60;
-  doc.setFillColor(30, 37, 48);
-  doc.rect(0, 0, pageWidth, headerHeight, 'F');
+  const headerHeight = 50;
 
   try {
     const logoData = await loadLogoImage();
@@ -71,7 +69,7 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
     console.warn('Could not add logo to PDF:', error);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(0, 180, 216);
     doc.text('EWP PANEELBOUW', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
   }
 
@@ -95,8 +93,7 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
   const boxPadding = 15;
 
   const addInfoBox = (label: string, value: string | undefined, isPrimary: boolean = false) => {
-    if (!value) return;
-
+    const displayValue = value || '-';
     const boxHeight = 18;
 
     if (isPrimary) {
@@ -121,7 +118,7 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     const maxValueWidth = boxWidth - (2 * boxPadding);
-    const lines = doc.splitTextToSize(value, maxValueWidth);
+    const lines = doc.splitTextToSize(displayValue, maxValueWidth);
     doc.text(lines[0], boxMargin + boxPadding, yPos + 13);
 
     yPos += boxHeight + 5;
@@ -129,22 +126,11 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
 
   addInfoBox('Projectnummer', data.pmNumber, true);
   addInfoBox('Kastnaam', data.kastNaam, true);
-
-  if (data.expectedDeliveryDate) {
-    addInfoBox('Verwachte Leverdatum', data.expectedDeliveryDate);
-  }
-
-  if (data.clientName) {
-    addInfoBox('Klant', data.clientName);
-  }
-
-  if (data.deliveryAddress) {
-    addInfoBox('Afleveradres', data.deliveryAddress);
-  }
-
-  if (data.expectedHours) {
-    addInfoBox('Voorcalculatorische uren', data.expectedHours);
-  }
+  addInfoBox('Verwachte Leverdatum', data.expectedDeliveryDate);
+  addInfoBox('Klant', data.clientName);
+  addInfoBox('Referentie Klant', data.clientReference);
+  addInfoBox('Afleveradres', data.deliveryAddress);
+  addInfoBox('Voorcalculatorische uren', data.expectedHours);
 
   if (data.description) {
     const descHeight = 30;
@@ -166,10 +152,6 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
     doc.text(descLines.slice(0, 2), boxMargin + boxPadding, yPos + 13);
 
     yPos += descHeight + 5;
-  }
-
-  if (data.clientReference) {
-    addInfoBox('Referentie Klant', data.clientReference);
   }
 
   const footerY = pageHeight - 25;
