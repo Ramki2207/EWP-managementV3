@@ -50,15 +50,18 @@ const Verdelers = () => {
         const beforeRoleFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectStatus = distributor.projects?.status;
-          const hasTestingStatus = projectStatus?.toLowerCase() === 'testen';
+          const verdelerStatus = distributor.status;
+          const hasProjectTestingStatus = projectStatus?.toLowerCase() === 'testen';
+          const hasVerdelerTestingStatus = verdelerStatus?.toLowerCase() === 'testen';
+          const shouldShow = hasProjectTestingStatus || hasVerdelerTestingStatus;
 
-          if (!hasTestingStatus) {
-            console.log(`🧪 TESTER FILTER: Hiding distributor ${distributor.distributor_id} (project status: ${projectStatus}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
+          if (!shouldShow) {
+            console.log(`🧪 TESTER FILTER: Hiding distributor ${distributor.distributor_id} (project status: ${projectStatus}, verdeler status: ${verdelerStatus}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
           } else {
-            console.log(`🧪 TESTER FILTER: Showing distributor ${distributor.distributor_id} (project status: ${projectStatus}) to tester ${currentUser.username} - IN TESTING PHASE`);
+            console.log(`🧪 TESTER FILTER: Showing distributor ${distributor.distributor_id} (project status: ${projectStatus}, verdeler status: ${verdelerStatus}) to tester ${currentUser.username} - IN TESTING PHASE`);
           }
 
-          return hasTestingStatus;
+          return shouldShow;
         });
         console.log(`🧪 TESTER FILTER: Filtered ${beforeRoleFilter} distributors down to ${filteredDistributors.length} for tester ${currentUser.username}`);
       }
@@ -178,8 +181,17 @@ const Verdelers = () => {
                 >
                   <td className="py-4">
                     <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                      <span className="font-medium text-green-400">{distributor.distributor_id}</span>
+                      <div className={`w-2 h-2 rounded-full ${
+                        distributor.status?.toLowerCase() === 'testen' ? 'bg-orange-400' : 'bg-green-400'
+                      }`}></div>
+                      <span className={`font-medium ${
+                        distributor.status?.toLowerCase() === 'testen' ? 'text-orange-400' : 'text-green-400'
+                      }`}>{distributor.distributor_id}</span>
+                      {distributor.status?.toLowerCase() === 'testen' && (
+                        <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full">
+                          Testen
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-4 text-gray-300">{distributor.kast_naam || "-"}</td>

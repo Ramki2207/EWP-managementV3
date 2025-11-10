@@ -27,7 +27,7 @@ import ClientPortal from "./pages/ClientPortal";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import UrenstaatVerlof from "./pages/UrenstaatVerlof";
 import Personeelsbeheer from "./pages/Personeelsbeheer";
-import { requestNotificationPermission, subscribeToNotifications } from "./lib/notifications";
+import { requestNotificationPermission, subscribeToNotifications, subscribeToTestingNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
 import { TabProvider } from "./contexts/TabContext";
 import { TabBar } from "./components/TabBar";
@@ -40,16 +40,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isLoggedIn) {
       const userId = localStorage.getItem("currentUserId");
+      const userRole = localStorage.getItem("role");
       if (userId) {
         // Request notification permission
         requestNotificationPermission().then((granted) => {
           if (granted) {
             // Subscribe to notifications
             subscribeToNotifications(userId);
+
+            // Subscribe to testing notifications (for testers and admins)
+            if (userRole) {
+              subscribeToTestingNotifications(userId, userRole);
+            }
           }
         });
       }
-      
+
       // Initialize project lock manager
       projectLockManager.initialize();
     }

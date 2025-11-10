@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
+import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
@@ -30,13 +31,23 @@ const VerdelerDetails = () => {
     isActive: true
   });
   const [testData, setTestData] = useState<any>(null);
+  const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
       loadDistributor();
       loadUsers();
+      loadCurrentUser();
     }
   }, [id]);
+
+  const loadCurrentUser = async () => {
+    const userId = localStorage.getItem('currentUserId');
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find((u: any) => u.id === userId);
+    setCurrentUser(user);
+  };
 
   useEffect(() => {
     if (distributor) {
@@ -365,6 +376,16 @@ const VerdelerDetails = () => {
             </div>
           </div>
           <div className="flex space-x-2">
+            {distributor.status === 'Testen' && (
+              <button
+                onClick={() => setShowPreTestingApproval(true)}
+                className="btn-primary flex items-center space-x-2 bg-green-600 hover:bg-green-700"
+                title="Open pre-testing checklist"
+              >
+                <CheckSquare size={20} />
+                <span>Testing Checklist</span>
+              </button>
+            )}
             <button
               onClick={handleGenerateAccessCode}
               className="btn-secondary flex items-center space-x-2"
@@ -934,6 +955,28 @@ const VerdelerDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Pre-Testing Approval Modal */}
+      {showPreTestingApproval && distributor && currentUser && (
+        <VerdelerPreTestingApproval
+          distributor={distributor}
+          currentUser={currentUser}
+          onClose={() => {
+            setShowPreTestingApproval(false);
+            loadDistributor();
+            loadTestData();
+          }}
+          onApprove={async () => {
+            await loadDistributor();
+            await loadTestData();
+          }}
+          onDecline={async () => {
+            await dataService.updateDistributor(distributor.id, { status: 'In productie' });
+            await loadDistributor();
+            await loadTestData();
+          }}
+        />
+      )}
     </div>
   );
 };
