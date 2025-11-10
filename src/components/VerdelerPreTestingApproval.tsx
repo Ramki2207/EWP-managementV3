@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { CheckSquare, X, AlertTriangle, User, Calendar, MessageSquare, Save, Eye, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { CheckSquare, X, AlertTriangle, User, Calendar, MessageSquare, Save, Eye, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
+import { openChecklistInNewWindow } from './VerdelerChecklistPopup';
 
 interface VerdelerPreTestingApprovalProps {
   distributor: any;
@@ -245,12 +246,24 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
                 </h2>
                 <p className="text-gray-400 text-lg">{distributor.kast_naam || 'Naamloos'}</p>
               </div>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
-              >
-                <X size={28} />
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => openChecklistInNewWindow(distributor, checklist, approvalData, currentUser, viewMode, (updatedChecklist, updatedApprovalData) => {
+                    setChecklist(updatedChecklist);
+                    setApprovalData(updatedApprovalData);
+                  })}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                >
+                  <ExternalLink size={20} />
+                  <span>Open in nieuw venster</span>
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
+                >
+                  <X size={28} />
+                </button>
+              </div>
             </div>
 
             {approvalData.status === 'reviewed' && (
