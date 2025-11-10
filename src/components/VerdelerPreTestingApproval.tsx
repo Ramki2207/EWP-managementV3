@@ -246,24 +246,12 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
                 </h2>
                 <p className="text-gray-400 text-lg">{distributor.kast_naam || 'Naamloos'}</p>
               </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => openChecklistInNewWindow(distributor, checklist, approvalData, currentUser, viewMode, (updatedChecklist, updatedApprovalData) => {
-                    setChecklist(updatedChecklist);
-                    setApprovalData(updatedApprovalData);
-                  })}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                >
-                  <ExternalLink size={20} />
-                  <span>Open in nieuw venster</span>
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
-                >
-                  <X size={28} />
-                </button>
-              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white hover:bg-gray-700 p-3 rounded-lg transition-colors"
+              >
+                <X size={32} />
+              </button>
             </div>
 
             {approvalData.status === 'reviewed' && (
@@ -284,42 +272,42 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
           {viewMode === 'form' && (
             <div className="space-y-5">
               {checklist.map((item, index) => (
-                <div key={item.id} className="bg-[#252d3d] p-6 rounded-lg shadow-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-400 font-mono">{index + 1}.</span>
-                    <div className="flex-1 space-y-3">
-                      <p className="text-white">{item.question}</p>
+                <div key={item.id} className="bg-[#252d3d] p-8 rounded-lg shadow-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
+                  <div className="flex items-start gap-6">
+                    <span className="text-gray-400 font-mono text-2xl font-semibold min-w-[3rem]">{index + 1}.</span>
+                    <div className="flex-1 space-y-4">
+                      <p className="text-white text-xl font-medium leading-relaxed">{item.question}</p>
 
-                      <div className="flex gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                      <div className="flex gap-8">
+                        <label className="flex items-center gap-3 cursor-pointer">
                           <input
                             type="radio"
                             checked={item.checked === true}
                             onChange={() => handleChecklistChange(item.id, 'checked', true)}
                             disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
+                            className="w-6 h-6"
                           />
-                          <span className="text-sm text-gray-300">Ja</span>
+                          <span className="text-lg font-medium ${item.checked === true ? 'text-green-400' : 'text-gray-300'}">Ja</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-3 cursor-pointer">
                           <input
                             type="radio"
                             checked={item.checked === false}
                             onChange={() => handleChecklistChange(item.id, 'checked', false)}
                             disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
+                            className="w-6 h-6"
                           />
-                          <span className="text-sm text-gray-300">Nee</span>
+                          <span className="text-lg font-medium ${item.checked === false ? 'text-red-400' : 'text-gray-300'}">Nee</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex items-center gap-3 cursor-pointer">
                           <input
                             type="radio"
                             checked={item.checked === 'n.v.t'}
                             onChange={() => handleChecklistChange(item.id, 'checked', 'n.v.t')}
                             disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
+                            className="w-6 h-6"
                           />
-                          <span className="text-sm text-gray-300">N.V.T.</span>
+                          <span className="text-lg font-medium ${item.checked === 'n.v.t' ? 'text-gray-200' : 'text-gray-300'}">N.V.T.</span>
                         </label>
                       </div>
 
@@ -328,8 +316,8 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
                         onChange={(e) => handleChecklistChange(item.id, 'comments', e.target.value)}
                         placeholder="Optionele opmerkingen..."
                         disabled={approvalData.status === 'submitted'}
-                        className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 text-sm disabled:opacity-50"
-                        rows={2}
+                        className="w-full bg-[#1a1f2e] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-lg disabled:opacity-50 leading-relaxed"
+                        rows={3}
                       />
                     </div>
                   </div>
@@ -352,15 +340,15 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
           {viewMode === 'review' && (
             <div className="space-y-6">
               {checklist.map((item, index) => (
-                <div key={item.id} className="bg-[#252d3d] p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-400 font-mono">{index + 1}.</span>
-                    <div className="flex-1 space-y-3">
-                      <p className="text-white">{item.question}</p>
+                <div key={item.id} className="bg-[#252d3d] p-8 rounded-lg shadow-lg border border-gray-700/50">
+                  <div className="flex items-start gap-6">
+                    <span className="text-gray-400 font-mono text-2xl font-semibold min-w-[3rem]">{index + 1}.</span>
+                    <div className="flex-1 space-y-4">
+                      <p className="text-white text-xl font-medium leading-relaxed">{item.question}</p>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400">Montage antwoord:</span>
-                        <span className={`px-2 py-1 rounded text-sm ${
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg text-gray-400 font-semibold">Montage antwoord:</span>
+                        <span className={`px-4 py-2 rounded-lg text-lg font-bold ${
                           item.checked === true ? 'bg-green-500/20 text-green-400' :
                           item.checked === false ? 'bg-red-500/20 text-red-400' :
                           'bg-gray-500/20 text-gray-400'
@@ -370,59 +358,59 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
                       </div>
 
                       {item.comments && (
-                        <div className="bg-[#1a1f2e] p-3 rounded">
-                          <p className="text-sm text-gray-400 mb-1">Opmerkingen montage:</p>
-                          <p className="text-sm text-gray-300">{item.comments}</p>
+                        <div className="bg-[#1a1f2e] p-5 rounded-lg">
+                          <p className="text-lg text-gray-400 mb-2 font-semibold">Opmerkingen montage:</p>
+                          <p className="text-lg text-gray-200 leading-relaxed">{item.comments}</p>
                         </div>
                       )}
 
                       {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && !approvalData.reviewedAt && (
-                        <div className="space-y-2 pt-2 border-t border-gray-700">
-                          <label className="block text-sm text-gray-400">Beoordeling tester:</label>
-                          <div className="flex gap-3">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="space-y-4 pt-5 border-t border-gray-700">
+                          <label className="block text-lg text-gray-400 font-semibold">Beoordeling tester:</label>
+                          <div className="flex gap-8">
+                            <label className="flex items-center gap-3 cursor-pointer">
                               <input
                                 type="radio"
                                 checked={item.approved === true}
                                 onChange={() => handleTesterReview(item.id, true, item.testerComments || '')}
-                                className="w-4 h-4"
+                                className="w-6 h-6"
                               />
-                              <span className="text-sm text-green-400">Goedkeuren</span>
+                              <span className="text-lg font-medium text-green-400">Goedkeuren</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-3 cursor-pointer">
                               <input
                                 type="radio"
                                 checked={item.approved === false}
                                 onChange={() => handleTesterReview(item.id, false, item.testerComments || '')}
-                                className="w-4 h-4"
+                                className="w-6 h-6"
                               />
-                              <span className="text-sm text-red-400">Afkeuren</span>
+                              <span className="text-lg font-medium text-red-400">Afkeuren</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex items-center gap-3 cursor-pointer">
                               <input
                                 type="radio"
                                 checked={item.approved === 'n.v.t'}
                                 onChange={() => handleTesterReview(item.id, 'n.v.t', item.testerComments || '')}
-                                className="w-4 h-4"
+                                className="w-6 h-6"
                               />
-                              <span className="text-sm text-gray-400">N.V.T.</span>
+                              <span className="text-lg font-medium text-gray-400">N.V.T.</span>
                             </label>
                           </div>
                           <textarea
                             value={item.testerComments || ''}
                             onChange={(e) => handleTesterReview(item.id, item.approved || false, e.target.value)}
                             placeholder="Optionele opmerkingen van tester..."
-                            className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 text-sm"
-                            rows={2}
+                            className="w-full bg-[#1a1f2e] border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 text-lg leading-relaxed"
+                            rows={3}
                           />
                         </div>
                       )}
 
                       {approvalData.reviewedAt && (
-                        <div className="pt-2 border-t border-gray-700">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm text-gray-400">Tester beoordeling:</span>
-                            <span className={`px-2 py-1 rounded text-sm ${
+                        <div className="pt-5 border-t border-gray-700">
+                          <div className="flex items-center gap-3 mb-3">
+                            <span className="text-lg text-gray-400 font-semibold">Tester beoordeling:</span>
+                            <span className={`px-4 py-2 rounded-lg text-lg font-bold ${
                               item.approved === true ? 'bg-green-500/20 text-green-400' :
                               item.approved === false ? 'bg-red-500/20 text-red-400' :
                               'bg-gray-500/20 text-gray-400'
@@ -431,9 +419,9 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
                             </span>
                           </div>
                           {item.testerComments && (
-                            <div className="bg-[#1a1f2e] p-3 rounded">
-                              <p className="text-sm text-gray-400 mb-1">Opmerkingen tester:</p>
-                              <p className="text-sm text-gray-300">{item.testerComments}</p>
+                            <div className="bg-[#1a1f2e] p-5 rounded-lg">
+                              <p className="text-lg text-gray-400 mb-2 font-semibold">Opmerkingen tester:</p>
+                              <p className="text-lg text-gray-200 leading-relaxed">{item.testerComments}</p>
                             </div>
                           )}
                         </div>
