@@ -988,20 +988,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {/* Show "Open Checklist" button if there's a pending notification */}
-                          {pendingNotifications[verdeler.id] && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenChecklist(verdeler);
-                              }}
-                              className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors flex items-center space-x-2"
-                              title="Open Checklist"
-                            >
-                              <CheckSquare size={16} className="text-green-400" />
-                              <span className="text-green-400 text-sm font-medium">Open Checklist</span>
-                            </button>
-                          )}
+                          {/* Always show "Checklist goedkeuring" button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenChecklist(verdeler);
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-2"
+                            title="Checklist goedkeuring"
+                          >
+                            <CheckSquare size={16} className="text-white" />
+                            <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

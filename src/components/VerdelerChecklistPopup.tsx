@@ -28,7 +28,7 @@ export const openChecklistInNewWindow = (
   viewMode: 'form' | 'review',
   onUpdate: (checklist: ChecklistItem[], approvalData: ApprovalData) => void
 ) => {
-  const windowFeatures = 'width=1200,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
+  const windowFeatures = 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes';
   const newWindow = window.open('', '_blank', windowFeatures);
 
   if (!newWindow) {
@@ -52,9 +52,9 @@ export const openChecklistInNewWindow = (
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     .checklist-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: 100%;
+      margin: 0;
+      padding: 3rem;
     }
     @media print {
       .no-print { display: none; }
@@ -95,43 +95,43 @@ export const openChecklistInNewWindow = (
     <!-- Checklist Items -->
     <div class="space-y-4">
       ${checklist.map((item, index) => `
-        <div class="bg-[#252d3d] rounded-lg p-6 shadow-lg border border-gray-700/50">
-          <div class="flex items-start gap-4">
-            <span class="text-gray-400 font-mono text-lg font-semibold">${index + 1}.</span>
+        <div class="bg-[#252d3d] rounded-lg p-8 shadow-lg border border-gray-700/50">
+          <div class="flex items-start gap-6">
+            <span class="text-gray-400 font-mono text-2xl font-semibold min-w-[3rem]">${index + 1}.</span>
             <div class="flex-1">
-              <p class="text-white text-lg mb-4 font-medium">${item.question}</p>
+              <p class="text-white text-2xl mb-6 font-medium leading-relaxed">${item.question}</p>
 
               <!-- Montage Antwoord -->
-              <div class="mb-3">
-                <div class="text-sm text-gray-400 mb-2">Montage antwoord:</div>
-                <div class="flex gap-4">
-                  <label class="flex items-center gap-2">
-                    <input type="radio" ${item.checked === true ? 'checked' : ''} disabled class="w-4 h-4">
-                    <span class="text-sm ${item.checked === true ? 'text-green-400 font-semibold' : 'text-gray-400'}">Ja</span>
+              <div class="mb-5">
+                <div class="text-lg text-gray-400 mb-3 font-semibold">Montage antwoord:</div>
+                <div class="flex gap-8">
+                  <label class="flex items-center gap-3">
+                    <input type="radio" ${item.checked === true ? 'checked' : ''} disabled class="w-6 h-6">
+                    <span class="text-xl ${item.checked === true ? 'text-green-400 font-bold' : 'text-gray-400'}">Ja</span>
                   </label>
-                  <label class="flex items-center gap-2">
-                    <input type="radio" ${item.checked === false ? 'checked' : ''} disabled class="w-4 h-4">
-                    <span class="text-sm ${item.checked === false ? 'text-red-400 font-semibold' : 'text-gray-400'}">Nee</span>
+                  <label class="flex items-center gap-3">
+                    <input type="radio" ${item.checked === false ? 'checked' : ''} disabled class="w-6 h-6">
+                    <span class="text-xl ${item.checked === false ? 'text-red-400 font-bold' : 'text-gray-400'}">Nee</span>
                   </label>
-                  <label class="flex items-center gap-2">
-                    <input type="radio" ${item.checked === 'n.v.t' ? 'checked' : ''} disabled class="w-4 h-4">
-                    <span class="text-sm ${item.checked === 'n.v.t' ? 'text-gray-300 font-semibold' : 'text-gray-400'}">N.V.T.</span>
+                  <label class="flex items-center gap-3">
+                    <input type="radio" ${item.checked === 'n.v.t' ? 'checked' : ''} disabled class="w-6 h-6">
+                    <span class="text-xl ${item.checked === 'n.v.t' ? 'text-gray-300 font-bold' : 'text-gray-400'}">N.V.T.</span>
                   </label>
                 </div>
               </div>
 
               ${item.comments ? `
-                <div class="bg-[#1a1f2e] p-3 rounded mb-3">
-                  <p class="text-sm text-gray-400 mb-1">Opmerkingen montage:</p>
-                  <p class="text-sm text-gray-300">${item.comments}</p>
+                <div class="bg-[#1a1f2e] p-5 rounded mb-5">
+                  <p class="text-lg text-gray-400 mb-2 font-semibold">Opmerkingen montage:</p>
+                  <p class="text-lg text-gray-200 leading-relaxed">${item.comments}</p>
                 </div>
               ` : ''}
 
               ${approvalData.reviewedAt ? `
-                <div class="pt-3 border-t border-gray-700 mt-3">
-                  <div class="flex items-center gap-2 mb-2">
-                    <span class="text-sm text-gray-400">Tester beoordeling:</span>
-                    <span class="px-3 py-1 rounded text-sm font-semibold ${
+                <div class="pt-5 border-t border-gray-700 mt-5">
+                  <div class="flex items-center gap-3 mb-3">
+                    <span class="text-lg text-gray-400 font-semibold">Tester beoordeling:</span>
+                    <span class="px-4 py-2 rounded text-lg font-bold ${
                       item.approved === true ? 'bg-green-500/20 text-green-400' :
                       item.approved === false ? 'bg-red-500/20 text-red-400' :
                       'bg-gray-500/20 text-gray-400'
@@ -140,9 +140,9 @@ export const openChecklistInNewWindow = (
                     </span>
                   </div>
                   ${item.testerComments ? `
-                    <div class="bg-[#1a1f2e] p-3 rounded">
-                      <p class="text-sm text-gray-400 mb-1">Opmerkingen tester:</p>
-                      <p class="text-sm text-gray-300">${item.testerComments}</p>
+                    <div class="bg-[#1a1f2e] p-5 rounded">
+                      <p class="text-lg text-gray-400 mb-2 font-semibold">Opmerkingen tester:</p>
+                      <p class="text-lg text-gray-200 leading-relaxed">${item.testerComments}</p>
                     </div>
                   ` : ''}
                 </div>
