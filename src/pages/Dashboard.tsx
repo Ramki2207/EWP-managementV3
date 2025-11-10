@@ -59,6 +59,7 @@ const Dashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
+  const [testingNotifications, setTestingNotifications] = useState<any[]>([]);
   
   const loadData = async () => {
     try {
@@ -170,6 +171,31 @@ const Dashboard = () => {
     setPendingApprovals(approvals);
   };
 
+  const loadTestingNotifications = async () => {
+    try {
+      console.log('🔔 Loading testing notifications...');
+      const { data, error } = await supabase
+        .from('verdeler_testing_notifications')
+        .select(`
+          *,
+          distributor:distributors(id, distributor_id, kast_naam),
+          project:projects(id, project_number, client_name)
+        `)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading testing notifications:', error);
+        return;
+      }
+
+      console.log('🔔 Loaded testing notifications:', data?.length || 0);
+      setTestingNotifications(data || []);
+    } catch (error) {
+      console.error('Error loading testing notifications:', error);
+    }
+  };
+
   // Get current user ID from localStorage
   const userId = localStorage.getItem('currentUserId');
 
@@ -196,11 +222,26 @@ const Dashboard = () => {
     loadProjects();
     fetchNotifications();
 
+    // Load testing notifications for testers
+    if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
+      loadTestingNotifications();
+    }
+
     // Set up real-time subscription for notifications
     const subscription = supabase
       .channel('notifications')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
         fetchNotifications();
+      })
+      .subscribe();
+
+    // Set up real-time subscription for testing notifications
+    const testingSubscription = supabase
+      .channel('testing_notifications_dashboard')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'verdeler_testing_notifications' }, () => {
+        if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
+          loadTestingNotifications();
+        }
       })
       .subscribe();
 
@@ -215,6 +256,7 @@ const Dashboard = () => {
     return () => {
       console.log('🔄 DASHBOARD: Cleaning up subscriptions...');
       subscription.unsubscribe();
+      testingSubscription.unsubscribe();
       lockUnsubscribe();
     };
   }, [currentUser]);
@@ -837,6 +879,66 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Testing Notifications for Testers */}
+      {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && testingNotifications.length > 0 && (
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <CheckCircle2 size={20} className="text-green-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-green-400">Pre-Test Checklists Beoordelen</h2>
+            <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-semibold">
+              {testingNotifications.length}
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {testingNotifications.map((notification: any) => (
+              <div
+                key={notification.id}
+                className="p-4 rounded-lg border bg-green-500/10 border-green-500/20 hover:bg-green-500/20 cursor-pointer transition-colors"
+                onClick={() => {
+                  // Navigate to the verdeler details page
+                  navigate(`/verdeler/${notification.distributor.id}`);
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl text-green-400">
+                      📋
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-white">
+                        {notification.distributor.distributor_id} - {notification.distributor.kast_naam || 'Naamloos'}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        Project: {notification.project.project_number} ({notification.project.client_name || 'Geen klant'})
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Pre-test checklist wacht op beoordeling
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="px-3 py-1 rounded-full text-sm bg-green-500/20 text-green-400">
+                      Wacht op beoordeling
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notification.created_at).toLocaleDateString('nl-NL')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+            <p className="text-sm text-gray-400">
+              💡 <span className="text-blue-400 font-medium">Tip:</span> Klik op een verdeler om de pre-test checklist te beoordelen
+            </p>
           </div>
         </div>
       )}
