@@ -234,39 +234,44 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-[#1a1f2e] rounded-lg w-full max-w-4xl my-8">
-        <div className="p-6 border-b border-gray-700">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                Pre-Testing Checklist - {distributor.distributor_id}
-              </h2>
-              <p className="text-gray-400">{distributor.kast_naam || 'Naamloos'}</p>
-            </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
-              <X size={24} />
-            </button>
-          </div>
-
-          {approvalData.status === 'reviewed' && (
-            <div className={`p-4 rounded-lg ${approvalData.overallApproval ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                {approvalData.overallApproval ? <CheckCircle className="text-green-400" size={20} /> : <XCircle className="text-red-400" size={20} />}
-                <h3 className="font-semibold text-white">
-                  {approvalData.overallApproval ? 'Goedgekeurd voor testen' : 'Afgekeurd - aanpassingen nodig'}
-                </h3>
+    <div className="fixed inset-0 bg-[#0f1419] z-50 overflow-y-auto">
+      <div className="min-h-screen max-w-6xl mx-auto">
+        <div className="sticky top-0 bg-[#1a1f2e] border-b border-gray-700 z-10 shadow-lg">
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  Pre-Testing Checklist - {distributor.distributor_id}
+                </h2>
+                <p className="text-gray-400 text-lg">{distributor.kast_naam || 'Naamloos'}</p>
               </div>
-              <p className="text-sm text-gray-300">Beoordeeld door: {approvalData.reviewedBy} op {new Date(approvalData.reviewedAt).toLocaleString('nl-NL')}</p>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
+              >
+                <X size={28} />
+              </button>
             </div>
-          )}
+
+            {approvalData.status === 'reviewed' && (
+              <div className={`p-4 rounded-lg ${approvalData.overallApproval ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  {approvalData.overallApproval ? <CheckCircle className="text-green-400" size={20} /> : <XCircle className="text-red-400" size={20} />}
+                  <h3 className="font-semibold text-white">
+                    {approvalData.overallApproval ? 'Goedgekeurd voor testen' : 'Afgekeurd - aanpassingen nodig'}
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-300">Beoordeeld door: {approvalData.reviewedBy} op {new Date(approvalData.reviewedAt).toLocaleString('nl-NL')}</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-8 pb-32">
           {viewMode === 'form' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {checklist.map((item, index) => (
-                <div key={item.id} className="bg-[#252d3d] p-4 rounded-lg">
+                <div key={item.id} className="bg-[#252d3d] p-6 rounded-lg shadow-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
                   <div className="flex items-start gap-3">
                     <span className="text-gray-400 font-mono">{index + 1}.</span>
                     <div className="flex-1 space-y-3">
@@ -461,43 +466,45 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-700 flex justify-between items-center">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-          >
-            Sluiten
-          </button>
+        <div className="fixed bottom-0 left-0 right-0 bg-[#1a1f2e] border-t border-gray-700 p-6 shadow-2xl">
+          <div className="max-w-6xl mx-auto flex justify-between items-center">
+            <button
+              onClick={onClose}
+              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+            >
+              Sluiten
+            </button>
 
-          <div className="flex gap-3">
-            {viewMode === 'form' && approvalData.status !== 'submitted' && (
-              <button
-                onClick={handleSubmitForReview}
-                disabled={!isFormComplete() || isSubmitting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Indienen...' : 'Indienen voor Beoordeling'}
-              </button>
-            )}
+            <div className="flex gap-3">
+              {viewMode === 'form' && approvalData.status !== 'submitted' && (
+                <button
+                  onClick={handleSubmitForReview}
+                  disabled={!isFormComplete() || isSubmitting}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? 'Indienen...' : 'Indienen voor Beoordeling'}
+                </button>
+              )}
 
-            {viewMode === 'review' && !approvalData.reviewedAt && (currentUser?.role === 'tester' || currentUser?.role === 'admin') && (
-              <button
-                onClick={handleTesterApproval}
-                disabled={!isTesterReviewComplete() || isSubmitting}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Bezig...' : 'Beoordeling Opslaan'}
-              </button>
-            )}
+              {viewMode === 'review' && !approvalData.reviewedAt && (currentUser?.role === 'tester' || currentUser?.role === 'admin') && (
+                <button
+                  onClick={handleTesterApproval}
+                  disabled={!isTesterReviewComplete() || isSubmitting}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSubmitting ? 'Bezig...' : 'Beoordeling Opslaan'}
+                </button>
+              )}
 
-            {approvalData.reviewedAt && approvalData.overallApproval === false && (currentUser?.role === 'montage' || currentUser?.role === 'admin') && (
-              <button
-                onClick={handleResubmitApproval}
-                className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg"
-              >
-                Opnieuw Indienen
-              </button>
-            )}
+              {approvalData.reviewedAt && approvalData.overallApproval === false && (currentUser?.role === 'montage' || currentUser?.role === 'admin') && (
+                <button
+                  onClick={handleResubmitApproval}
+                  className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Opnieuw Indienen
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
