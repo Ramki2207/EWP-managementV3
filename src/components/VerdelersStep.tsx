@@ -553,13 +553,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       }
 
       // If status was changed to "Testen", open the pre-test checklist
-      if (verdelerData.status === 'Testen' && editingVerdeler) {
-        console.log('🔔 Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
+      // BUT only for multi-verdeler projects (verdelers.length > 1)
+      if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length > 1) {
+        console.log('🔔 Multi-verdeler project: Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
         const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
           setVerdelerForTesting(updatedVerdeler);
           setShowPreTestingApproval(true);
         }
+      } else if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length === 1) {
+        console.log('ℹ️ Single-verdeler project: Use project-level testing instead');
+        toast.info('Voor projecten met 1 verdeler, verander de project status naar "Testen"');
       }
 
       handleCancelForm();
@@ -658,7 +662,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   };
 
   const isPreTestApproved = (verdeler: any) => {
-    // Check if pre-test checklist has been approved
+    // For single verdeler projects, use project-level testing (no pre-test approval needed)
+    if (verdelers.length === 1) {
+      return projectData.status?.toLowerCase() === 'testen';
+    }
+
+    // For multi-verdeler projects, check if pre-test checklist has been approved
     const cachedTests = testDataCache[verdeler.id];
     if (!cachedTests || cachedTests.length === 0) return false;
 
@@ -1188,16 +1197,35 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
                         <div>
                           <p className="text-yellow-400 font-medium">Testing Niet Beschikbaar</p>
-                          <p className="text-gray-400 text-sm mt-1">
-                            Testing is alleen beschikbaar nadat de pre-test checklist is goedgekeurd door een tester.
-                          </p>
-                          <p className="text-gray-400 text-sm mt-1">
-                            Huidige verdeler status: <span className="font-semibold text-blue-400">{selectedVerdeler.status || 'Onbekend'}</span>
-                          </p>
-                          {selectedVerdeler.status === 'Testen' && (
-                            <p className="text-gray-400 text-sm mt-2">
-                              De pre-test checklist moet eerst ingevuld en goedgekeurd worden.
-                            </p>
+                          {verdelers.length === 1 ? (
+                            <>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Dit project heeft 1 verdeler. Gebruik project-level testing.
+                              </p>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Verander de <span className="font-semibold text-blue-400">project status</span> naar "Testen" om test functies te activeren.
+                              </p>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Huidige project status: <span className="font-semibold text-blue-400">{projectData.status || 'Onbekend'}</span>
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Dit project heeft {verdelers.length} verdelers. Gebruik verdeler-level testing.
+                              </p>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Testing is alleen beschikbaar nadat de pre-test checklist is goedgekeurd door een tester.
+                              </p>
+                              <p className="text-gray-400 text-sm mt-1">
+                                Huidige verdeler status: <span className="font-semibold text-blue-400">{selectedVerdeler.status || 'Onbekend'}</span>
+                              </p>
+                              {selectedVerdeler.status === 'Testen' && (
+                                <p className="text-gray-400 text-sm mt-2">
+                                  De pre-test checklist moet eerst ingevuld en goedgekeurd worden.
+                                </p>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
