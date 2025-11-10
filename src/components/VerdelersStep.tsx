@@ -172,6 +172,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const loadPendingNotifications = async (verdelersList: any[]) => {
     try {
       console.log('🔔 Loading pending notifications for verdelers...');
+      console.log('🔔 Project ID:', projectData.id);
       const { data, error } = await dataService.supabase
         .from('verdeler_testing_notifications')
         .select('*')
@@ -179,13 +180,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         .eq('project_id', projectData.id);
 
       if (error) {
-        console.error('Error loading pending notifications:', error);
+        console.error('🔔 Error loading pending notifications:', error);
         return;
       }
+
+      console.log('🔔 Raw notification data:', data);
 
       // Create a map of distributor_id -> notification
       const notificationMap: Record<string, any> = {};
       data?.forEach((notification: any) => {
+        console.log('🔔 Adding notification for distributor:', notification.distributor_id);
         notificationMap[notification.distributor_id] = notification;
       });
 
@@ -194,7 +198,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       console.log('🔔 Verdelers IDs:', verdelersList.map(v => v.id));
       setPendingNotifications(notificationMap);
     } catch (error) {
-      console.error('Error loading pending notifications:', error);
+      console.error('🔔 Exception loading pending notifications:', error);
     }
   };
 
