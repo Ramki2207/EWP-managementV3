@@ -50,68 +50,137 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
-  const margin = 20;
+
+  doc.setFillColor(245, 248, 250);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  const headerHeight = 60;
+  doc.setFillColor(30, 37, 48);
+  doc.rect(0, 0, pageWidth, headerHeight, 'F');
 
   try {
     const logoData = await loadLogoImage();
-    const logoWidth = 70;
-    const logoHeight = 20;
+    const logoAspectRatio = 3.5;
+    const logoHeight = 18;
+    const logoWidth = logoHeight * logoAspectRatio;
     const logoX = (pageWidth - logoWidth) / 2;
-    const logoY = 30;
-    doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    const logoY = (headerHeight - logoHeight) / 2;
+    doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'NONE');
   } catch (error) {
     console.warn('Could not add logo to PDF:', error);
-    doc.setFontSize(20);
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 123, 255);
-    doc.text('EWP PANEELBOUW', pageWidth / 2, 40, { align: 'center' });
+    doc.setTextColor(255, 255, 255);
+    doc.text('EWP PANEELBOUW', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
   }
 
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(24);
+  let yPos = headerHeight + 35;
+
+  doc.setTextColor(30, 37, 48);
+  doc.setFontSize(28);
   doc.setFont('helvetica', 'bold');
-  doc.text('Verdeler Aanzicht', pageWidth / 2, 70, { align: 'center' });
+  doc.text('VERDELER AANZICHT', pageWidth / 2, yPos, { align: 'center' });
 
-  let yPos = 100;
-  const lineHeight = 10;
-  const labelWidth = 70;
+  yPos += 8;
+  doc.setDrawColor(0, 180, 216);
+  doc.setLineWidth(1.5);
+  const lineWidth = 60;
+  doc.line((pageWidth - lineWidth) / 2, yPos, (pageWidth + lineWidth) / 2, yPos);
 
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
+  yPos += 25;
 
-  const addField = (label: string, value: string | undefined) => {
-    if (value) {
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${label}:`, margin, yPos);
+  const boxMargin = 25;
+  const boxWidth = pageWidth - (2 * boxMargin);
+  const boxPadding = 15;
 
-      doc.setFont('helvetica', 'normal');
-      const valueX = margin + labelWidth;
-      const maxWidth = pageWidth - margin - valueX;
-      const lines = doc.splitTextToSize(value, maxWidth);
+  const addInfoBox = (label: string, value: string | undefined, isPrimary: boolean = false) => {
+    if (!value) return;
 
-      doc.text(lines, valueX, yPos);
-      yPos += lineHeight * lines.length;
-      yPos += 5;
+    const boxHeight = 18;
+
+    if (isPrimary) {
+      doc.setFillColor(0, 180, 216);
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'F');
+      doc.setTextColor(255, 255, 255);
+    } else {
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'F');
+
+      doc.setDrawColor(220, 225, 230);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'S');
+
+      doc.setTextColor(30, 37, 48);
     }
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label.toUpperCase(), boxMargin + boxPadding, yPos + 6);
+
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    const maxValueWidth = boxWidth - (2 * boxPadding);
+    const lines = doc.splitTextToSize(value, maxValueWidth);
+    doc.text(lines[0], boxMargin + boxPadding, yPos + 13);
+
+    yPos += boxHeight + 5;
   };
 
-  addField('PM Nummer', data.pmNumber);
-  addField('Kastnaam', data.kastNaam);
-  addField('Verwachte leverdatum', data.expectedDeliveryDate);
-  addField('Klant', data.clientName);
-  addField('Afleveradres', data.deliveryAddress);
-  addField('Omschrijving', data.description);
-  addField('Referentie klant', data.clientReference);
+  addInfoBox('PM Nummer', data.pmNumber, true);
+  addInfoBox('Kastnaam', data.kastNaam, true);
 
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.5);
-  doc.line(margin, pageHeight - 30, pageWidth - margin, pageHeight - 30);
+  if (data.expectedDeliveryDate) {
+    addInfoBox('Verwachte Leverdatum', data.expectedDeliveryDate);
+  }
 
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'italic');
-  doc.setTextColor(100, 100, 100);
-  doc.text('EWP Paneelbouw', pageWidth / 2, pageHeight - 20, { align: 'center' });
-  doc.text(new Date().toLocaleDateString('nl-NL'), pageWidth / 2, pageHeight - 15, { align: 'center' });
+  if (data.clientName) {
+    addInfoBox('Klant', data.clientName);
+  }
+
+  if (data.deliveryAddress) {
+    addInfoBox('Afleveradres', data.deliveryAddress);
+  }
+
+  if (data.description) {
+    const descHeight = 30;
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 3, 3, 'F');
+    doc.setDrawColor(220, 225, 230);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 3, 3, 'S');
+
+    doc.setTextColor(30, 37, 48);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('OMSCHRIJVING', boxMargin + boxPadding, yPos + 6);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const maxDescWidth = boxWidth - (2 * boxPadding);
+    const descLines = doc.splitTextToSize(data.description, maxDescWidth);
+    doc.text(descLines.slice(0, 2), boxMargin + boxPadding, yPos + 13);
+
+    yPos += descHeight + 5;
+  }
+
+  if (data.clientReference) {
+    addInfoBox('Referentie Klant', data.clientReference);
+  }
+
+  const footerY = pageHeight - 25;
+  doc.setDrawColor(200, 205, 210);
+  doc.setLineWidth(0.3);
+  doc.line(boxMargin, footerY, pageWidth - boxMargin, footerY);
+
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  doc.text('EWP Paneelbouw', boxMargin, footerY + 8);
+  doc.text(new Date().toLocaleDateString('nl-NL', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  }), pageWidth - boxMargin, footerY + 8, { align: 'right' });
 
   return doc.output('blob');
 };
