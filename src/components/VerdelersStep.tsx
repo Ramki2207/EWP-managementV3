@@ -9,6 +9,7 @@ import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
 import MPrintLabel from './MPrintLabel';
+import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -40,6 +41,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [testDataCache, setTestDataCache] = useState<Record<string, any>>({});
+  const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
+  const [verdelerForTesting, setVerdelerForTesting] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -70,6 +74,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     expectedHours: '',
     deliveryDate: '',
   });
+
+  // Load current user
+  useEffect(() => {
+    const userId = localStorage.getItem('currentUserId');
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const user = users.find((u: any) => u.id === userId);
+    setCurrentUser(user);
+  }, []);
 
   // Load verdelers from database when component mounts or project ID actually changes
   useEffect(() => {
@@ -373,6 +385,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
   const handleInputChange = (field: string, value: string) => {
     setVerdelerData({ ...verdelerData, [field]: value });
+
+    // If status is changed to "Testen", automatically trigger save and open pre-test checklist
+    if (field === 'status' && value === 'Testen' && editingVerdeler) {
+      // Set a flag to open checklist after save
+      setTimeout(async () => {
+        console.log('🔔 Status changed to Testen - will open pre-test checklist after save');
+      }, 100);
+    }
   };
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -532,6 +552,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         await loadAccessCodes(); // Also reload access codes
       }
 
+      // If status was changed to "Testen", open the pre-test checklist
+      if (verdelerData.status === 'Testen' && editingVerdeler) {
+        console.log('🔔 Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
+        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        if (updatedVerdeler) {
+          setVerdelerForTesting(updatedVerdeler);
+          setShowPreTestingApproval(true);
+        }
+      }
+
       handleCancelForm();
     } catch (error) {
       console.error('Error saving verdeler:', error);
@@ -625,6 +655,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       console.error('❌ Error saving test data to database:', error);
       toast.error('Fout bij opslaan van test data');
     }
+  };
+
+  const isPreTestApproved = (verdeler: any) => {
+    // Check if pre-test checklist has been approved
+    const cachedTests = testDataCache[verdeler.id];
+    if (!cachedTests || cachedTests.length === 0) return false;
+
+    const preTestApproval = cachedTests.find((t: any) => t.test_type === 'verdeler_pre_testing_approval');
+    if (!preTestApproval?.data) return false;
+
+    const approvalData = preTestApproval.data.approvalData;
+    // Check if reviewed and approved
+    return approvalData?.status === 'reviewed' && approvalData?.overallApproval === true;
   };
 
   const getTestStatus = (verdeler: any) => {
@@ -1139,18 +1182,23 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 {/* Testing Actions */}
                 <div className="bg-[#2A303C] p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
-                  {projectData.status?.toLowerCase() !== 'testen' ? (
+                  {!isPreTestApproved(selectedVerdeler) ? (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                       <div className="flex items-start space-x-3">
                         <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
                         <div>
                           <p className="text-yellow-400 font-medium">Testing Niet Beschikbaar</p>
                           <p className="text-gray-400 text-sm mt-1">
-                            Testing is alleen beschikbaar wanneer de project status op "Testen" staat.
+                            Testing is alleen beschikbaar nadat de pre-test checklist is goedgekeurd door een tester.
                           </p>
                           <p className="text-gray-400 text-sm mt-1">
-                            Huidige status: <span className="font-semibold text-blue-400">{projectData.status || 'Onbekend'}</span>
+                            Huidige verdeler status: <span className="font-semibold text-blue-400">{selectedVerdeler.status || 'Onbekend'}</span>
                           </p>
+                          {selectedVerdeler.status === 'Testen' && (
+                            <p className="text-gray-400 text-sm mt-2">
+                              De pre-test checklist moet eerst ingevuld en goedgekeurd worden.
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1782,6 +1830,29 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             Volgende stap
           </button>
         </div>
+      )}
+
+      {/* Pre-Testing Approval Modal */}
+      {showPreTestingApproval && verdelerForTesting && currentUser && (
+        <VerdelerPreTestingApproval
+          distributor={verdelerForTesting}
+          currentUser={currentUser}
+          onClose={async () => {
+            setShowPreTestingApproval(false);
+            setVerdelerForTesting(null);
+            await loadVerdelersFromDatabase();
+          }}
+          onApprove={async () => {
+            await loadVerdelersFromDatabase();
+          }}
+          onDecline={async () => {
+            // Update verdeler status back to "In productie"
+            if (verdelerForTesting) {
+              await dataService.updateDistributor(verdelerForTesting.id, { status: 'In productie' });
+              await loadVerdelersFromDatabase();
+            }
+          }}
+        />
       )}
     </div>
   );
