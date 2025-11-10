@@ -44,6 +44,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [verdelerForTesting, setVerdelerForTesting] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [pendingNotifications, setPendingNotifications] = useState<Record<string, any>>({});
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -160,8 +161,38 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setVerdelers(formattedVerdelers);
       // Don't call onVerdelersChange here - we're just loading existing data, not changing it
       // This prevents infinite refresh loops
+
+      // Load pending notifications for these verdelers
+      await loadPendingNotifications(formattedVerdelers);
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
+    }
+  };
+
+  const loadPendingNotifications = async (verdelersList: any[]) => {
+    try {
+      console.log('🔔 Loading pending notifications for verdelers...');
+      const { data, error } = await dataService.supabase
+        .from('verdeler_testing_notifications')
+        .select('*')
+        .eq('status', 'pending')
+        .eq('project_id', projectData.id);
+
+      if (error) {
+        console.error('Error loading pending notifications:', error);
+        return;
+      }
+
+      // Create a map of distributor_id -> notification
+      const notificationMap: Record<string, any> = {};
+      data?.forEach((notification: any) => {
+        notificationMap[notification.distributor_id] = notification;
+      });
+
+      console.log('🔔 Loaded pending notifications:', Object.keys(notificationMap).length);
+      setPendingNotifications(notificationMap);
+    } catch (error) {
+      console.error('Error loading pending notifications:', error);
     }
   };
 
@@ -796,6 +827,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     return users.filter(user => user.role === 'montage');
   };
 
+  const handleOpenChecklist = (verdeler: any) => {
+    console.log('📋 Opening checklist for verdeler:', verdeler.distributorId);
+    setVerdelerForTesting(verdeler);
+    setShowPreTestingApproval(true);
+  };
+
+  const handleApprovalComplete = async () => {
+    // Reload notifications after approval/decline
+    await loadPendingNotifications(verdelers);
+    setShowPreTestingApproval(false);
+    setVerdelerForTesting(null);
+  };
+
   return (
     <div className="space-y-6">
       {!hideNavigation && (
@@ -938,6 +982,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
+                          {/* Show "Open Checklist" button if there's a pending notification */}
+                          {pendingNotifications[verdeler.id] && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenChecklist(verdeler);
+                              }}
+                              className="px-3 py-1 bg-green-500/20 hover:bg-green-500/30 rounded-lg transition-colors flex items-center space-x-2"
+                              title="Open Checklist"
+                            >
+                              <CheckSquare size={16} className="text-green-400" />
+                              <span className="text-green-400 text-sm font-medium">Open Checklist</span>
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1872,12 +1930,14 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           }}
           onApprove={async () => {
             await loadVerdelersFromDatabase();
+            await loadPendingNotifications(verdelers);
           }}
           onDecline={async () => {
             // Update verdeler status back to "In productie"
             if (verdelerForTesting) {
               await dataService.updateDistributor(verdelerForTesting.id, { status: 'In productie' });
               await loadVerdelersFromDatabase();
+              await loadPendingNotifications(verdelers);
             }
           }}
         />
