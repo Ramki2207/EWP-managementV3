@@ -190,6 +190,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       });
 
       console.log('🔔 Loaded pending notifications:', Object.keys(notificationMap).length);
+      console.log('🔔 Notification map keys:', Object.keys(notificationMap));
+      console.log('🔔 Verdelers IDs:', verdelersList.map(v => v.id));
       setPendingNotifications(notificationMap);
     } catch (error) {
       console.error('Error loading pending notifications:', error);
