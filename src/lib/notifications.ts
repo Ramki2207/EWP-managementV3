@@ -64,8 +64,11 @@ export const subscribeToNotifications = (userId: string) => {
 export const subscribeToTestingNotifications = (userId: string, userRole: string) => {
   // Only testers and admins should receive testing notifications
   if (userRole !== 'tester' && userRole !== 'admin') {
+    console.log('🔕 Not subscribing to testing notifications - user role:', userRole);
     return null;
   }
+
+  console.log('🔔 Subscribing to testing notifications for user:', userId, 'role:', userRole);
 
   const testingChannel = supabase
     .channel('testing_notifications')
@@ -77,6 +80,7 @@ export const subscribeToTestingNotifications = (userId: string, userRole: string
         table: 'verdeler_testing_notifications'
       },
       async (payload) => {
+        console.log('🔔 Testing notification received:', payload);
         const notification = payload.new;
 
         try {
@@ -87,10 +91,14 @@ export const subscribeToTestingNotifications = (userId: string, userRole: string
             .eq('id', notification.distributor_id)
             .single();
 
+          console.log('🔔 Fetched distributor details:', distributor);
+
           if (distributor) {
             const projectInfo = distributor.project as any;
             const title = 'Verdeler klaar voor testen';
             const body = `${distributor.distributor_id} - ${distributor.kast_naam || 'Naamloos'}\nProject: ${projectInfo?.project_number || 'Onbekend'}`;
+
+            console.log('🔔 Showing notification:', title, body);
 
             // Show browser notification
             showNotification(title, {
@@ -111,6 +119,8 @@ export const subscribeToTestingNotifications = (userId: string, userRole: string
       }
     )
     .subscribe();
+
+  console.log('🔔 Testing notifications channel subscribed');
 
   return testingChannel;
 };

@@ -358,6 +358,25 @@ const VerdelerDetails = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 flex items-center justify-center">
+        <div className="text-white">Laden...</div>
+      </div>
+    );
+  }
+
+  if (!distributor) {
+    return (
+      <div className="min-h-screen p-8 flex items-center justify-center">
+        <div className="text-white">Verdeler niet gevonden</div>
+      </div>
+    );
+  }
+
+  console.log('🔍 VERDELER DETAILS: Current status:', distributor.status);
+  console.log('🔍 VERDELER DETAILS: Should show testing button:', distributor.status === 'Testen');
+
   return (
     <div className="min-h-screen p-8">
       {/* Header */}
