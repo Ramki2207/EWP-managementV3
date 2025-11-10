@@ -224,10 +224,8 @@ const Dashboard = () => {
     loadProjects();
     fetchNotifications();
 
-    // Load testing notifications for testers
-    if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
-      loadTestingNotifications();
-    }
+    // Load testing notifications (always load, filter in UI)
+    loadTestingNotifications();
 
     // Set up real-time subscription for notifications
     const subscription = supabase
@@ -241,9 +239,7 @@ const Dashboard = () => {
     const testingSubscription = supabase
       .channel('testing_notifications_dashboard')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'verdeler_testing_notifications' }, () => {
-        if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
-          loadTestingNotifications();
-        }
+        loadTestingNotifications();
       })
       .subscribe();
 
