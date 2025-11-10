@@ -55,38 +55,38 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
   doc.setFillColor(245, 248, 250);
   doc.rect(0, 0, pageWidth, pageHeight, 'F');
 
-  const headerHeight = 50;
+  const headerHeight = 40;
 
   try {
     const logoData = await loadLogoImage();
     const logoAspectRatio = 5.2;
-    const logoHeight = 14;
+    const logoHeight = 12;
     const logoWidth = logoHeight * logoAspectRatio;
     const logoX = (pageWidth - logoWidth) / 2;
     const logoY = (headerHeight - logoHeight) / 2;
     doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight, undefined, 'NONE');
   } catch (error) {
     console.warn('Could not add logo to PDF:', error);
-    doc.setFontSize(18);
+    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 180, 216);
     doc.text('EWP PANEELBOUW', pageWidth / 2, headerHeight / 2 + 5, { align: 'center' });
   }
 
-  let yPos = headerHeight + 35;
+  let yPos = headerHeight + 20;
 
   doc.setTextColor(30, 37, 48);
-  doc.setFontSize(28);
+  doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
   doc.text('VERDELER AANZICHT', pageWidth / 2, yPos, { align: 'center' });
 
-  yPos += 8;
+  yPos += 6;
   doc.setDrawColor(0, 180, 216);
   doc.setLineWidth(1.5);
   const lineWidth = 60;
   doc.line((pageWidth - lineWidth) / 2, yPos, (pageWidth + lineWidth) / 2, yPos);
 
-  yPos += 25;
+  yPos += 15;
 
   const boxMargin = 25;
   const boxWidth = pageWidth - (2 * boxMargin);
@@ -94,34 +94,34 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
 
   const addInfoBox = (label: string, value: string | undefined, isPrimary: boolean = false) => {
     const displayValue = value || '-';
-    const boxHeight = 18;
+    const boxHeight = 14;
 
     if (isPrimary) {
       doc.setFillColor(0, 180, 216);
-      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'F');
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 2, 2, 'F');
       doc.setTextColor(255, 255, 255);
     } else {
       doc.setFillColor(255, 255, 255);
-      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'F');
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 2, 2, 'F');
 
       doc.setDrawColor(220, 225, 230);
       doc.setLineWidth(0.3);
-      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 3, 3, 'S');
+      doc.roundedRect(boxMargin, yPos, boxWidth, boxHeight, 2, 2, 'S');
 
       doc.setTextColor(30, 37, 48);
     }
 
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text(label.toUpperCase(), boxMargin + boxPadding, yPos + 6);
+    doc.text(label.toUpperCase(), boxMargin + boxPadding, yPos + 5);
 
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     const maxValueWidth = boxWidth - (2 * boxPadding);
     const lines = doc.splitTextToSize(displayValue, maxValueWidth);
-    doc.text(lines[0], boxMargin + boxPadding, yPos + 13);
+    doc.text(lines[0], boxMargin + boxPadding, yPos + 10.5);
 
-    yPos += boxHeight + 5;
+    yPos += boxHeight + 3;
   };
 
   addInfoBox('Projectnummer', data.pmNumber, true);
@@ -133,41 +133,41 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
   addInfoBox('Voorcalculatorische uren', data.expectedHours);
 
   if (data.description) {
-    const descHeight = 30;
+    const descHeight = 22;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 3, 3, 'F');
+    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 2, 2, 'F');
     doc.setDrawColor(220, 225, 230);
     doc.setLineWidth(0.3);
-    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 3, 3, 'S');
+    doc.roundedRect(boxMargin, yPos, boxWidth, descHeight, 2, 2, 'S');
 
     doc.setTextColor(30, 37, 48);
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('OMSCHRIJVING', boxMargin + boxPadding, yPos + 6);
+    doc.text('OMSCHRIJVING', boxMargin + boxPadding, yPos + 5);
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     const maxDescWidth = boxWidth - (2 * boxPadding);
     const descLines = doc.splitTextToSize(data.description, maxDescWidth);
-    doc.text(descLines.slice(0, 2), boxMargin + boxPadding, yPos + 13);
+    doc.text(descLines.slice(0, 2), boxMargin + boxPadding, yPos + 11);
 
-    yPos += descHeight + 5;
+    yPos += descHeight + 3;
   }
 
-  const footerY = pageHeight - 25;
+  const footerY = pageHeight - 20;
   doc.setDrawColor(200, 205, 210);
   doc.setLineWidth(0.3);
   doc.line(boxMargin, footerY, pageWidth - boxMargin, footerY);
 
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(120, 120, 120);
-  doc.text('EWP Paneelbouw', boxMargin, footerY + 8);
+  doc.text('EWP Paneelbouw', boxMargin, footerY + 6);
   doc.text(new Date().toLocaleDateString('nl-NL', {
     day: '2-digit',
     month: 'long',
     year: 'numeric'
-  }), pageWidth - boxMargin, footerY + 8, { align: 'right' });
+  }), pageWidth - boxMargin, footerY + 6, { align: 'right' });
 
   return doc.output('blob');
 };
