@@ -716,6 +716,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     return approvalData?.status === 'reviewed' && approvalData?.overallApproval === true;
   };
 
+  const hasChecklistSubmitted = (verdeler: any) => {
+    // Check if the montage user has submitted a pre-testing checklist
+    const cachedTests = testDataCache[verdeler.id];
+    if (!cachedTests || cachedTests.length === 0) return false;
+
+    const preTestApproval = cachedTests.find((t: any) => t.test_type === 'verdeler_pre_testing_approval');
+    if (!preTestApproval?.data) return false;
+
+    const approvalData = preTestApproval.data.approvalData;
+    // Return true if status is 'submitted' or 'reviewed' (checklist exists and was submitted)
+    return approvalData?.status === 'submitted' || approvalData?.status === 'reviewed';
+  };
+
   const getTestStatus = (verdeler: any) => {
     let status = 'Niet getest';
     let color = 'bg-gray-500/20 text-gray-400';
@@ -988,18 +1001,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       </td>
                       <td className="py-4 text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          {/* Always show "Checklist goedkeuring" button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenChecklist(verdeler);
-                            }}
-                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-2"
-                            title="Checklist goedkeuring"
-                          >
-                            <CheckSquare size={16} className="text-white" />
-                            <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
-                          </button>
+                          {/* Show "Checklist goedkeuring" button only if checklist has been submitted */}
+                          {hasChecklistSubmitted(verdeler) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenChecklist(verdeler);
+                              }}
+                              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center space-x-2"
+                              title="Checklist goedkeuring"
+                            >
+                              <CheckSquare size={16} className="text-white" />
+                              <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
