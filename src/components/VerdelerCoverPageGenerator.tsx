@@ -9,6 +9,7 @@ interface CoverPageData {
   deliveryAddress?: string;
   description?: string;
   clientReference?: string;
+  expectedHours?: string;
 }
 
 let logoImageCache: string | null = null;
@@ -60,8 +61,8 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
 
   try {
     const logoData = await loadLogoImage();
-    const logoAspectRatio = 3.5;
-    const logoHeight = 18;
+    const logoAspectRatio = 5.2;
+    const logoHeight = 14;
     const logoWidth = logoHeight * logoAspectRatio;
     const logoX = (pageWidth - logoWidth) / 2;
     const logoY = (headerHeight - logoHeight) / 2;
@@ -126,7 +127,7 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
     yPos += boxHeight + 5;
   };
 
-  addInfoBox('PM Nummer', data.pmNumber, true);
+  addInfoBox('Projectnummer', data.pmNumber, true);
   addInfoBox('Kastnaam', data.kastNaam, true);
 
   if (data.expectedDeliveryDate) {
@@ -139,6 +140,10 @@ export const generateVerdelerCoverPage = async (data: CoverPageData): Promise<Bl
 
   if (data.deliveryAddress) {
     addInfoBox('Afleveradres', data.deliveryAddress);
+  }
+
+  if (data.expectedHours) {
+    addInfoBox('Voorcalculatorische uren', data.expectedHours);
   }
 
   if (data.description) {

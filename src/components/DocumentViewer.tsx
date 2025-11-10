@@ -345,6 +345,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         deliveryAddress: project?.delivery_address || undefined,
         description: project?.description || undefined,
         clientReference: project?.client_reference || undefined,
+        expectedHours: verdeler.expected_hours ? `${verdeler.expected_hours} uur` : undefined,
       };
 
       console.log('📄 Generating cover page with data:', coverPageData);
