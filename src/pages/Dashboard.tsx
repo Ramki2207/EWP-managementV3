@@ -179,7 +179,7 @@ const Dashboard = () => {
         .select(`
           *,
           distributor:distributors(id, distributor_id, kast_naam),
-          project:projects(id, project_number, client_name)
+          project:projects(id, project_number, client)
         `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
@@ -916,7 +916,7 @@ const Dashboard = () => {
                         {notification.distributor.distributor_id} - {notification.distributor.kast_naam || 'Naamloos'}
                       </h3>
                       <p className="text-sm text-gray-400">
-                        Project: {notification.project.project_number} ({notification.project.client_name || 'Geen klant'})
+                        Project: {notification.project.project_number} ({notification.project.client || 'Geen klant'})
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
                         Pre-test checklist wacht op beoordeling
