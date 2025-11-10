@@ -174,6 +174,7 @@ const Dashboard = () => {
   const loadTestingNotifications = async () => {
     try {
       console.log('🔔 Loading testing notifications...');
+      console.log('🔔 Current user:', currentUser?.username, 'Role:', currentUser?.role);
       const { data, error } = await supabase
         .from('verdeler_testing_notifications')
         .select(`
@@ -185,14 +186,15 @@ const Dashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading testing notifications:', error);
+        console.error('🔔 Error loading testing notifications:', error);
         return;
       }
 
       console.log('🔔 Loaded testing notifications:', data?.length || 0);
+      console.log('🔔 Testing notifications data:', data);
       setTestingNotifications(data || []);
     } catch (error) {
-      console.error('Error loading testing notifications:', error);
+      console.error('🔔 Exception loading testing notifications:', error);
     }
   };
 
@@ -884,7 +886,8 @@ const Dashboard = () => {
       )}
 
       {/* Testing Notifications for Testers */}
-      {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && testingNotifications.length > 0 && (
+      {/* Debug: Show for all users temporarily */}
+      {testingNotifications.length > 0 && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-green-500/20 rounded-lg">
