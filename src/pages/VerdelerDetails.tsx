@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { createRoot } from 'react-dom/client';
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
 import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval';
+import VerdelerChecklistWindow from '../components/VerdelerChecklistWindow';
+import { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
@@ -160,6 +163,110 @@ const VerdelerDetails = () => {
       setTestData(null);
     }
   };
+  const openChecklistInNewWindow = async () => {
+    // Load approval data first
+    let checklist = [
+      { id: '1', question: 'Zijn de Kamrailen correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '2', question: 'Zijn de eindkappen van de Kamrailen correct geplaatst?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '3', question: 'Is het deurslot correct gemonteerd en functioneel?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '4', question: 'Zijn de wartels en/of invoerplaten correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '5', question: 'Zijn de rijgklemmen en eindsteunen voorzien van correcte nummering?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '6', question: 'Zijn de pootjes van Hager correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '7', question: 'Zijn de Recepals en de codeer- of markeerstroken correct aangebracht?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '8', question: 'Is de werkruimte en kast stofvrij en gereinigd?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '9', question: 'Dient het schema aangepast of bijgewerkt te worden?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '10', question: 'Zijn alle bevestigingen en verbindingen met het juiste moment vastgedraaid?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '11', question: 'Is al het benodigde materiaal voor de kast aanwezig, inclusief deksels?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '12', question: 'Is de Juiste kabel dikte gebruikt?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '13', question: 'Zijn de aders correct aangesloten in de componenten?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '14', question: 'Zijn er aanvullende opmerkingen of bijzonderheden te vermelden?', checked: false, comments: '', approved: null, testerComments: '' },
+      { id: '15', question: 'Is het OSB-contact correct aangesloten en getest?', checked: false, comments: '', approved: null, testerComments: '' }
+    ];
+
+    let approvalData = {
+      submittedBy: '',
+      submittedAt: '',
+      reviewedBy: '',
+      reviewedAt: '',
+      overallApproval: null as boolean | null,
+      generalComments: '',
+      status: 'draft' as 'draft' | 'submitted' | 'reviewed'
+    };
+
+    let viewMode: 'form' | 'review' = 'form';
+
+    // Try to load existing approval data
+    try {
+      const dbTestData = await dataService.getTestData(distributor.id);
+      const approvalRecord = dbTestData?.find((data: any) => data.test_type === 'verdeler_pre_testing_approval');
+
+      if (approvalRecord) {
+        const data = approvalRecord.data;
+        checklist = data.checklist || checklist;
+        approvalData = data.approvalData || approvalData;
+
+        // Determine view mode
+        if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
+          if (approvalData.status === 'submitted' && !approvalData.reviewedAt) {
+            viewMode = 'review';
+          } else if (approvalData.reviewedAt) {
+            viewMode = 'review';
+          }
+        } else {
+          if (approvalData.reviewedAt || approvalData.status === 'submitted') {
+            viewMode = 'review';
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading existing approval data:', error);
+    }
+
+    const newWindow = window.open('', '_blank', 'width=1400,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes');
+
+    if (!newWindow) {
+      toast.error('Pop-up geblokkeerd. Sta pop-ups toe voor deze site.');
+      return;
+    }
+
+    newWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="nl">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pre-Testing Checklist - ${distributor.distributor_id}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          body { margin: 0; padding: 0; }
+        </style>
+      </head>
+      <body>
+        <div id="root"></div>
+      </body>
+      </html>
+    `);
+    newWindow.document.close();
+
+    const rootElement = newWindow.document.getElementById('root');
+    if (rootElement) {
+      const root = createRoot(rootElement);
+      root.render(
+        <>
+          <Toaster position="top-right" />
+          <VerdelerChecklistWindow
+            distributor={distributor}
+            initialChecklist={checklist}
+            initialApprovalData={approvalData}
+            currentUser={currentUser}
+            viewMode={viewMode}
+            onClose={() => newWindow.close()}
+          />
+        </>
+      );
+    }
+  };
+
   const generateRandomCode = () => {
     // Generate 5 random numbers (0-9)
     let result = '';
@@ -397,7 +504,7 @@ const VerdelerDetails = () => {
           <div className="flex space-x-2">
             {distributor.status === 'Testen' && (
               <button
-                onClick={() => setShowPreTestingApproval(true)}
+                onClick={openChecklistInNewWindow}
                 className="btn-primary flex items-center space-x-2 bg-green-600 hover:bg-green-700"
                 title="Open pre-testing checklist"
               >
