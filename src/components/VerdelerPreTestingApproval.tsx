@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import { CheckSquare, X, AlertTriangle, User, Calendar, MessageSquare, Save, Eye, Clock, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { openChecklistInNewWindow } from './VerdelerChecklistPopup';
+import VerdelerChecklistWindow from './VerdelerChecklistWindow';
 
 interface VerdelerPreTestingApprovalProps {
   distributor: any;
@@ -234,291 +235,110 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
     toast.success('Je kunt de checklist nu aanpassen en opnieuw indienen');
   };
 
+  const handleOpenInNewWindow = () => {
+    const newWindow = window.open('', '_blank', 'width=1400,height=900,menubar=no,toolbar=no,location=no,status=no,scrollbars=yes,resizable=yes');
+
+    if (!newWindow) {
+      toast.error('Pop-up geblokkeerd. Sta pop-ups toe voor deze site.');
+      return;
+    }
+
+    newWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="nl">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Pre-Testing Checklist - ${distributor.distributor_id}</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          body { margin: 0; padding: 0; }
+        </style>
+      </head>
+      <body>
+        <div id="root"></div>
+      </body>
+      </html>
+    `);
+    newWindow.document.close();
+
+    const rootElement = newWindow.document.getElementById('root');
+    if (rootElement) {
+      const root = createRoot(rootElement);
+      root.render(
+        <>
+          <Toaster position="top-right" />
+          <VerdelerChecklistWindow
+            distributor={distributor}
+            initialChecklist={checklist}
+            initialApprovalData={approvalData}
+            currentUser={currentUser}
+            viewMode={viewMode}
+            onClose={() => newWindow.close()}
+          />
+        </>
+      );
+    }
+
+    onClose();
+  };
+
   return (
-    <div className="fixed inset-0 bg-[#0f1419] z-50 overflow-y-auto">
-      <div className="min-h-screen max-w-6xl mx-auto">
-        <div className="sticky top-0 bg-[#1a1f2e] border-b border-gray-700 z-10 shadow-lg">
-          <div className="p-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h2 className="text-3xl font-bold text-white mb-2">
-                  Pre-Testing Checklist - {distributor.distributor_id}
-                </h2>
-                <p className="text-gray-400 text-lg">{distributor.kast_naam || 'Naamloos'}</p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => openChecklistInNewWindow(distributor, checklist, approvalData, currentUser, viewMode, (updatedChecklist, updatedApprovalData) => {
-                    setChecklist(updatedChecklist);
-                    setApprovalData(updatedApprovalData);
-                  })}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                >
-                  <ExternalLink size={20} />
-                  <span>Open in nieuw venster</span>
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
-                >
-                  <X size={28} />
-                </button>
-              </div>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#1a1f2e] rounded-xl shadow-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="p-6 border-b border-gray-700">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Pre-Testing Checklist - {distributor.distributor_id}
+              </h2>
+              <p className="text-gray-400">{distributor.kast_naam || 'Naamloos'}</p>
             </div>
-
-            {approvalData.status === 'reviewed' && (
-              <div className={`p-4 rounded-lg ${approvalData.overallApproval ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'}`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {approvalData.overallApproval ? <CheckCircle className="text-green-400" size={20} /> : <XCircle className="text-red-400" size={20} />}
-                  <h3 className="font-semibold text-white">
-                    {approvalData.overallApproval ? 'Goedgekeurd voor testen' : 'Afgekeurd - aanpassingen nodig'}
-                  </h3>
-                </div>
-                <p className="text-sm text-gray-300">Beoordeeld door: {approvalData.reviewedBy} op {new Date(approvalData.reviewedAt).toLocaleString('nl-NL')}</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-8 pb-32">
-          {viewMode === 'form' && (
-            <div className="space-y-5">
-              {checklist.map((item, index) => (
-                <div key={item.id} className="bg-[#252d3d] p-6 rounded-lg shadow-lg border border-gray-700/50 hover:border-gray-600/50 transition-colors">
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-400 font-mono">{index + 1}.</span>
-                    <div className="flex-1 space-y-3">
-                      <p className="text-white">{item.question}</p>
-
-                      <div className="flex gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            checked={item.checked === true}
-                            onChange={() => handleChecklistChange(item.id, 'checked', true)}
-                            disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm text-gray-300">Ja</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            checked={item.checked === false}
-                            onChange={() => handleChecklistChange(item.id, 'checked', false)}
-                            disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm text-gray-300">Nee</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            checked={item.checked === 'n.v.t'}
-                            onChange={() => handleChecklistChange(item.id, 'checked', 'n.v.t')}
-                            disabled={approvalData.status === 'submitted'}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-sm text-gray-300">N.V.T.</span>
-                        </label>
-                      </div>
-
-                      <textarea
-                        value={item.comments}
-                        onChange={(e) => handleChecklistChange(item.id, 'comments', e.target.value)}
-                        placeholder="Optionele opmerkingen..."
-                        disabled={approvalData.status === 'submitted'}
-                        className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 text-sm disabled:opacity-50"
-                        rows={2}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <div className="bg-[#252d3d] p-4 rounded-lg">
-                <label className="block text-sm text-gray-400 mb-2">Ingediend door:</label>
-                <input
-                  type="text"
-                  value={approvalData.submittedBy || currentUser?.username || ''}
-                  onChange={(e) => setApprovalData(prev => ({ ...prev, submittedBy: e.target.value }))}
-                  className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white"
-                  disabled={approvalData.status === 'submitted'}
-                />
-              </div>
-            </div>
-          )}
-
-          {viewMode === 'review' && (
-            <div className="space-y-6">
-              {checklist.map((item, index) => (
-                <div key={item.id} className="bg-[#252d3d] p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
-                    <span className="text-gray-400 font-mono">{index + 1}.</span>
-                    <div className="flex-1 space-y-3">
-                      <p className="text-white">{item.question}</p>
-
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-400">Montage antwoord:</span>
-                        <span className={`px-2 py-1 rounded text-sm ${
-                          item.checked === true ? 'bg-green-500/20 text-green-400' :
-                          item.checked === false ? 'bg-red-500/20 text-red-400' :
-                          'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {item.checked === true ? 'Ja' : item.checked === false ? 'Nee' : 'N.V.T.'}
-                        </span>
-                      </div>
-
-                      {item.comments && (
-                        <div className="bg-[#1a1f2e] p-3 rounded">
-                          <p className="text-sm text-gray-400 mb-1">Opmerkingen montage:</p>
-                          <p className="text-sm text-gray-300">{item.comments}</p>
-                        </div>
-                      )}
-
-                      {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && !approvalData.reviewedAt && (
-                        <div className="space-y-2 pt-2 border-t border-gray-700">
-                          <label className="block text-sm text-gray-400">Beoordeling tester:</label>
-                          <div className="flex gap-3">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                checked={item.approved === true}
-                                onChange={() => handleTesterReview(item.id, true, item.testerComments || '')}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-sm text-green-400">Goedkeuren</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                checked={item.approved === false}
-                                onChange={() => handleTesterReview(item.id, false, item.testerComments || '')}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-sm text-red-400">Afkeuren</span>
-                            </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="radio"
-                                checked={item.approved === 'n.v.t'}
-                                onChange={() => handleTesterReview(item.id, 'n.v.t', item.testerComments || '')}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-sm text-gray-400">N.V.T.</span>
-                            </label>
-                          </div>
-                          <textarea
-                            value={item.testerComments || ''}
-                            onChange={(e) => handleTesterReview(item.id, item.approved || false, e.target.value)}
-                            placeholder="Optionele opmerkingen van tester..."
-                            className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-500 text-sm"
-                            rows={2}
-                          />
-                        </div>
-                      )}
-
-                      {approvalData.reviewedAt && (
-                        <div className="pt-2 border-t border-gray-700">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm text-gray-400">Tester beoordeling:</span>
-                            <span className={`px-2 py-1 rounded text-sm ${
-                              item.approved === true ? 'bg-green-500/20 text-green-400' :
-                              item.approved === false ? 'bg-red-500/20 text-red-400' :
-                              'bg-gray-500/20 text-gray-400'
-                            }`}>
-                              {item.approved === true ? 'Goedgekeurd' : item.approved === false ? 'Afgekeurd' : 'N.V.T.'}
-                            </span>
-                          </div>
-                          {item.testerComments && (
-                            <div className="bg-[#1a1f2e] p-3 rounded">
-                              <p className="text-sm text-gray-400 mb-1">Opmerkingen tester:</p>
-                              <p className="text-sm text-gray-300">{item.testerComments}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && !approvalData.reviewedAt && (
-                <div className="bg-[#252d3d] p-4 rounded-lg space-y-4">
-                  <label className="block text-sm text-gray-400">Eindoordeel:</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={approvalData.overallApproval === true}
-                        onChange={() => setApprovalData(prev => ({ ...prev, overallApproval: true }))}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-green-400">Verdeler goedkeuren voor testfase</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        checked={approvalData.overallApproval === false}
-                        onChange={() => setApprovalData(prev => ({ ...prev, overallApproval: false }))}
-                        className="w-4 h-4"
-                      />
-                      <span className="text-red-400">Verdeler afkeuren</span>
-                    </label>
-                  </div>
-                  <input
-                    type="text"
-                    value={approvalData.reviewedBy || currentUser?.username || ''}
-                    onChange={(e) => setApprovalData(prev => ({ ...prev, reviewedBy: e.target.value }))}
-                    placeholder="Naam tester"
-                    className="w-full bg-[#1a1f2e] border border-gray-600 rounded px-3 py-2 text-white"
-                  />
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 bg-[#1a1f2e] border-t border-gray-700 p-6 shadow-2xl">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+              className="text-gray-400 hover:text-white hover:bg-gray-700 p-2 rounded-lg transition-colors"
             >
-              Sluiten
+              <X size={24} />
             </button>
-
-            <div className="flex gap-3">
-              {viewMode === 'form' && approvalData.status !== 'submitted' && (
-                <button
-                  onClick={handleSubmitForReview}
-                  disabled={!isFormComplete() || isSubmitting}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSubmitting ? 'Indienen...' : 'Indienen voor Beoordeling'}
-                </button>
-              )}
-
-              {viewMode === 'review' && !approvalData.reviewedAt && (currentUser?.role === 'tester' || currentUser?.role === 'admin') && (
-                <button
-                  onClick={handleTesterApproval}
-                  disabled={!isTesterReviewComplete() || isSubmitting}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSubmitting ? 'Bezig...' : 'Beoordeling Opslaan'}
-                </button>
-              )}
-
-              {approvalData.reviewedAt && approvalData.overallApproval === false && (currentUser?.role === 'montage' || currentUser?.role === 'admin') && (
-                <button
-                  onClick={handleResubmitApproval}
-                  className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  Opnieuw Indienen
-                </button>
-              )}
-            </div>
           </div>
+
+          {approvalData.status === 'reviewed' && (
+            <div className={`p-4 rounded-lg ${approvalData.overallApproval ? 'bg-green-500/20 border border-green-500/30' : 'bg-red-500/20 border border-red-500/30'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                {approvalData.overallApproval ? <CheckCircle className="text-green-400" size={20} /> : <XCircle className="text-red-400" size={20} />}
+                <h3 className="font-semibold text-white">
+                  {approvalData.overallApproval ? 'Goedgekeurd voor testen' : 'Afgekeurd - aanpassingen nodig'}
+                </h3>
+              </div>
+              <p className="text-sm text-gray-300">Beoordeeld door: {approvalData.reviewedBy} op {new Date(approvalData.reviewedAt).toLocaleString('nl-NL')}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          <div className="text-center py-12">
+            <ExternalLink className="mx-auto mb-4 text-blue-400" size={64} />
+            <h3 className="text-xl font-semibold text-white mb-3">Open Checklist in Nieuw Venster</h3>
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              De pre-testing checklist wordt geopend in een nieuw venster voor een betere weergave en meer ruimte.
+            </p>
+            <button
+              onClick={handleOpenInNewWindow}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-lg"
+            >
+              <ExternalLink size={24} />
+              <span>Open in nieuw venster</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-gray-700 bg-[#1a1f2e] flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+          >
+            Sluiten
+          </button>
         </div>
       </div>
     </div>
