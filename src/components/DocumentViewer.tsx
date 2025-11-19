@@ -3,7 +3,6 @@ import { FileText, Upload, Trash2, Download, Folder, X, Archive, Clock } from 'l
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { generateVerdelerCoverPage } from './VerdelerCoverPageGenerator';
 
 interface Document {
   id: string;
@@ -316,54 +315,6 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
   };
 
-  // Helper function to generate cover page for Verdeler aanzicht PDFs
-  const generateCoverPageForPDF = useCallback(async (pdfFile: File): Promise<File | null> => {
-    try {
-      const verdelers = await dataService.getDistributors();
-      const verdeler = verdelers.find((v: any) => v.id === distributorId);
-
-      if (!verdeler) {
-        console.warn('Could not find verdeler data for cover page generation');
-        return null;
-      }
-
-      let project = null;
-      if (verdeler.project_id) {
-        const projects = await dataService.getProjects();
-        project = projects.find((p: any) => p.id === verdeler.project_id);
-      }
-
-      const coverPageData = {
-        pmNumber: project?.project_number || verdeler.distributor_id || 'N/A',
-        kastNaam: verdeler.kast_naam || 'Geen naam',
-        expectedDeliveryDate: verdeler.gewenste_lever_datum
-          ? new Date(verdeler.gewenste_lever_datum).toLocaleDateString('nl-NL')
-          : project?.expected_delivery_date
-            ? new Date(project.expected_delivery_date).toLocaleDateString('nl-NL')
-            : undefined,
-        clientName: project?.client || undefined,
-        deliveryAddress: project?.delivery_address || undefined,
-        description: project?.description || undefined,
-        clientReference: project?.client_reference || undefined,
-        expectedHours: verdeler.expected_hours ? `${verdeler.expected_hours} uur` : undefined,
-      };
-
-      console.log('📄 Generating cover page with data:', coverPageData);
-      const coverPageBlob = await generateVerdelerCoverPage(coverPageData);
-
-      const originalName = pdfFile.name.replace(/\.pdf$/i, '');
-      const coverPageName = `${originalName} - Voorblad.pdf`;
-
-      const coverPageFile = new File([coverPageBlob], coverPageName, { type: 'application/pdf' });
-
-      return coverPageFile;
-    } catch (error) {
-      console.error('Error generating cover page:', error);
-      toast.error('Kon voorblad niet genereren');
-      return null;
-    }
-  }, [distributorId]);
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -453,32 +404,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       console.log('🚀 UPLOAD: Files to process:', files.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`));
       console.log('🚀 UPLOAD: Target folder:', folder);
 
-      // Check if we need to generate cover pages for Verdeler aanzicht PDFs
-      const filesToProcess: File[] = [];
-      if (folder === 'Verdeler aanzicht' && distributorId) {
-        for (const file of files) {
-          filesToProcess.push(file);
+      const filesToProcess: File[] = [...files];
 
-          // Check if it's a PDF file
-          if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-            console.log('📄 UPLOAD: PDF detected in Verdeler aanzicht folder, generating cover page...');
-            toast.loading('Voorblad genereren...', { id: 'cover-page' });
-
-            const coverPageFile = await generateCoverPageForPDF(file);
-            if (coverPageFile) {
-              filesToProcess.push(coverPageFile);
-              toast.success('Voorblad gegenereerd!', { id: 'cover-page' });
-              console.log('✅ UPLOAD: Cover page generated:', coverPageFile.name);
-            } else {
-              toast.dismiss('cover-page');
-            }
-          }
-        }
-      } else {
-        filesToProcess.push(...files);
-      }
-
-      console.log('🚀 UPLOAD: Total files to process (including cover pages):', filesToProcess.length);
+      console.log('🚀 UPLOAD: Total files to process:', filesToProcess.length);
 
       // CRITICAL: Load ALL current documents (main + subfolders) BEFORE processing revisions
       console.log('📥 UPLOAD: Loading ALL current documents for revision check...');
