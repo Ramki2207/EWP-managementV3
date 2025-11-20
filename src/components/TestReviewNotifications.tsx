@@ -48,6 +48,7 @@ const TestReviewNotifications: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log('🔔 TEST REVIEW: Component mounted');
     loadNotifications();
 
     // Reload notifications every 30 seconds
