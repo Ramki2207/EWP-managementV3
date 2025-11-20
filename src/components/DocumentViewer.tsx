@@ -30,15 +30,23 @@ const REVISION_MANAGED_FOLDERS = [
 
 // Helper function to detect revision in filename
 const detectRevision = (filename: string): { hasRevision: boolean; revisionNumber: number; baseFilename: string } => {
-  const revMatch = filename.match(/(.+?)\s+rev\.?(\d+)(\.[^.]+)?$/i);
+  // Extract extension first
+  const lastDotIndex = filename.lastIndexOf('.');
+  const extension = lastDotIndex > 0 ? filename.substring(lastDotIndex) : '';
+  const nameWithoutExt = lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+
+  // Try matching revision pattern: "filename rev.1" or "filename rev1"
+  const revMatch = nameWithoutExt.match(/(.+?)\s+rev\.?(\d+)$/i);
+
   if (revMatch) {
-    const [, baseName, revNum, extension] = revMatch;
+    const [, baseName, revNum] = revMatch;
     return {
       hasRevision: true,
       revisionNumber: parseInt(revNum),
-      baseFilename: baseName.trim() + (extension || '')
+      baseFilename: baseName.trim() + extension
     };
   }
+
   return {
     hasRevision: false,
     revisionNumber: 0,
