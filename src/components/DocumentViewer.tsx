@@ -277,38 +277,49 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       console.log('🔄 REVISION: Will place new revision in Actueel:', `${folder}/Actueel`);
 
       try {
-        // Step 1: Create copy of original document in Historie subfolder
-        console.log('📁 REVISION: Creating document in Historie...');
+        // Step 1: Check if document already exists in Historie to prevent duplicates
+        const existingInHistorie = existingDocuments.find(doc =>
+          doc.folder === `${folder}/Historie` &&
+          doc.name === matchingDoc.name &&
+          doc.storage_path === matchingDoc.storage_path
+        );
 
-        // For storage-based documents, we need to copy the file in storage
-        // For now, we'll just update the database record to point to the same storage file
-        // (multiple docs can reference the same storage file)
-        const historieDoc = await dataService.createDocument({
-          projectId,
-          distributorId,
-          folder: `${folder}/Historie`,
-          name: matchingDoc.name,
-          type: matchingDoc.type,
-          size: matchingDoc.size,
-          storagePath: matchingDoc.storage_path || null,
-          content: matchingDoc.storage_path ? null : await loadDocumentContent(matchingDoc)
-        });
+        if (existingInHistorie) {
+          console.log('⚠️ REVISION: Document already exists in Historie, skipping creation');
+        } else {
+          // Create copy of original document in Historie subfolder
+          console.log('📁 REVISION: Creating document in Historie...');
 
-        console.log('✅ REVISION: Successfully created document in Historie:', historieDoc?.id);
-        
+          // For storage-based documents, we need to copy the file in storage
+          // For now, we'll just update the database record to point to the same storage file
+          // (multiple docs can reference the same storage file)
+          const historieDoc = await dataService.createDocument({
+            projectId,
+            distributorId,
+            folder: `${folder}/Historie`,
+            name: matchingDoc.name,
+            type: matchingDoc.type,
+            size: matchingDoc.size,
+            storagePath: matchingDoc.storage_path || null,
+            content: matchingDoc.storage_path ? null : await loadDocumentContent(matchingDoc)
+          });
+
+          console.log('✅ REVISION: Successfully created document in Historie:', historieDoc?.id);
+        }
+
         // Step 2: Delete original document from its current location
         console.log(`🗑️ REVISION: Deleting original document from ${sourceLocation} folder...`);
         console.log('🗑️ REVISION: Deleting document ID:', matchingDoc.id);
         await dataService.deleteDocument(matchingDoc.id);
         console.log(`✅ REVISION: Successfully deleted original document from ${sourceLocation} folder`);
-        
+
         // Step 3: Set new document to go to Actueel subfolder
         console.log('📁 REVISION: Setting new revision document folder to Actueel...');
         newDoc.folder = `${folder}/Actueel`;
         console.log('✅ REVISION: New revision document will be saved to:', newDoc.folder);
-        
+
         toast.success(`Original document moved from ${sourceLocation === 'main' ? 'Hoofdmap' : 'Actueel'} to Historie, new revision placed in Actueel`);
-        
+
       } catch (error) {
         console.error('❌ REVISION: Error during revision management:', error);
         toast.error(`Revision management failed: ${error.message}`);
