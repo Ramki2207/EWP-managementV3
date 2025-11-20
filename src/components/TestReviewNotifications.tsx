@@ -70,8 +70,8 @@ const TestReviewNotifications: React.FC = () => {
   };
 
   const handleViewTest = (notification: TestReviewNotification) => {
-    // Navigate to the project page to view the verdeler test
-    navigate(`/project/${notification.project_id}`);
+    // Navigate to the project page with verdeler ID to auto-open the test
+    navigate(`/project/${notification.project_id}?verdeler=${notification.distributor_id}&openTest=true`);
   };
 
   const handleApprove = async (notification: TestReviewNotification) => {

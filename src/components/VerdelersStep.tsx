@@ -23,6 +23,7 @@ interface VerdelersStepProps {
   onNext?: () => void;
   onBack?: () => void;
   hideNavigation?: boolean;
+  autoOpenVerdelerId?: string;
 }
 
 const VerdelersStep: React.FC<VerdelersStepProps> = ({
@@ -30,7 +31,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   onVerdelersChange,
   onNext,
   onBack,
-  hideNavigation = false
+  hideNavigation = false,
+  autoOpenVerdelerId
 }) => {
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
@@ -240,6 +242,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       }
     }
   }, [verdelers]);
+
+  // Auto-open verdeler test when coming from notification
+  useEffect(() => {
+    if (autoOpenVerdelerId && verdelers.length > 0) {
+      const verdelerToOpen = verdelers.find(v => v.id === autoOpenVerdelerId);
+      if (verdelerToOpen) {
+        console.log('🎯 Auto-opening verdeler:', verdelerToOpen);
+        setSelectedVerdeler(verdelerToOpen);
+        setShowVerdelerDetails(true);
+      }
+    }
+  }, [autoOpenVerdelerId, verdelers]);
 
   const loadUsers = async () => {
     try {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
@@ -20,6 +20,7 @@ import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { hasPermission } = useEnhancedPermissions();
 
   const [project, setProject] = useState<any>(null);
@@ -63,13 +64,24 @@ const ProjectDetails = () => {
       checkApprovalStatus();
     }
 
+    // Check URL parameters for auto-opening test
+    const verdelerId = searchParams.get('verdeler');
+    const openTest = searchParams.get('openTest');
+
+    if (verdelerId && openTest === 'true') {
+      // Switch to verdelers tab to show the test
+      setActiveTab('verdelers');
+      // Clear the URL parameters after processing
+      setSearchParams({});
+    }
+
     // Cleanup lock on unmount
     return () => {
       if (projectId && currentUser?.id) {
         projectLockManager.unlockProject(projectId, currentUser.id);
       }
     };
-  }, [projectId]);
+  }, [projectId, searchParams]);
 
   const checkApprovalStatus = async () => {
     if (!project?.distributors || project.distributors.length === 0) return;
@@ -843,6 +855,7 @@ const ProjectDetails = () => {
             onNext={() => {}} // No next step in project details
             onBack={() => {}} // No back step in project details
             hideNavigation={true} // Hide navigation buttons in project details
+            autoOpenVerdelerId={searchParams.get('verdeler') || undefined}
           />
         )}
 
