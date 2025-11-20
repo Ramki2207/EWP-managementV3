@@ -506,13 +506,27 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
               if (saved) {
                 // Create notification for admin review
                 try {
+                  if (!projectId || !distributorId) {
+                    console.error('Missing projectId or distributorId:', { projectId, distributorId });
+                    toast.success('Test opgeslagen! Je kunt later verder gaan.');
+                    setShowModal(false);
+                    return;
+                  }
+
                   const currentUser = localStorage.getItem('currentUserId');
                   const users = JSON.parse(localStorage.getItem('users') || '[]');
                   const user = users.find((u: any) => u.id === currentUser);
 
+                  console.log('Creating test review notification with:', {
+                    projectId,
+                    distributorId,
+                    testType: 'verdeler_testing_tot_630',
+                    submittedBy: user?.name || 'Onbekend'
+                  });
+
                   await dataService.createTestReviewNotification({
-                    projectId: projectId!,
-                    distributorId: distributorId!,
+                    projectId: projectId,
+                    distributorId: distributorId,
                     testType: 'verdeler_testing_tot_630',
                     submittedBy: user?.name || 'Onbekend'
                   });
