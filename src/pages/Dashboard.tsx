@@ -135,39 +135,43 @@ const Dashboard = () => {
 
   const checkPendingApprovals = async (projectList: any[]) => {
     const approvals = [];
-    
+
     for (const project of projectList) {
       if (project.status?.toLowerCase() === 'productie' && project.distributors?.length > 0) {
-        try {
-          const firstDistributorId = project.distributors[0].id;
-          const testData = await dataService.getTestData(firstDistributorId);
-          const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
-          
-          if (approvalRecord && approvalRecord.data.approvalData) {
-            const approvalData = approvalRecord.data.approvalData;
-            
-            if (approvalData.reviewedAt) {
-              approvals.push({
-                project,
-                status: approvalData.overallApproval ? 'approved' : 'declined',
-                reviewedBy: approvalData.reviewedBy,
-                reviewedAt: approvalData.reviewedAt
-              });
-            } else if (approvalData.status === 'submitted') {
-              approvals.push({
-                project,
-                status: 'submitted',
-                submittedBy: approvalData.submittedBy,
-                submittedAt: approvalData.submittedAt
-              });
+        // Check ALL distributors, not just the first one
+        for (const distributor of project.distributors) {
+          try {
+            const testData = await dataService.getTestData(distributor.id);
+            const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+
+            if (approvalRecord && approvalRecord.data.approvalData) {
+              const approvalData = approvalRecord.data.approvalData;
+
+              if (approvalData.reviewedAt) {
+                approvals.push({
+                  project,
+                  distributor,
+                  status: approvalData.overallApproval ? 'approved' : 'declined',
+                  reviewedBy: approvalData.reviewedBy,
+                  reviewedAt: approvalData.reviewedAt
+                });
+              } else if (approvalData.status === 'submitted') {
+                approvals.push({
+                  project,
+                  distributor,
+                  status: 'submitted',
+                  submittedBy: approvalData.submittedBy,
+                  submittedAt: approvalData.submittedAt
+                });
+              }
             }
+          } catch (error) {
+            console.error('Error checking approval for distributor:', distributor.distributor_id, error);
           }
-        } catch (error) {
-          console.error('Error checking approval for project:', project.project_number, error);
         }
       }
     }
-    
+
     setPendingApprovals(approvals);
   };
 
@@ -808,10 +812,11 @@ const Dashboard = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-white">
-                        Project {approval.project.project_number}
+                        Project {approval.project.project_number} - {approval.distributor?.distributor_id || 'Verdeler'}
                       </h3>
                       <p className="text-sm text-gray-400">
-                        {approval.status === 'approved' ? 
+                        {approval.distributor?.kast_naam && `${approval.distributor.kast_naam} • `}
+                        {approval.status === 'approved' ?
                           `Goedgekeurd door ${approval.reviewedBy}` :
                          approval.status === 'declined' ?
                           `Afgekeurd door ${approval.reviewedBy} - Aanpassingen vereist` :

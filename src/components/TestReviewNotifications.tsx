@@ -34,11 +34,13 @@ const TestReviewNotifications: React.FC = () => {
 
   const loadNotifications = async () => {
     try {
+      console.log('🔔 TEST REVIEW: Loading notifications...');
       setLoading(true);
       const data = await dataService.getTestReviewNotifications('pending_review');
+      console.log('🔔 TEST REVIEW: Loaded notifications:', data);
       setNotifications(data || []);
     } catch (error) {
-      console.error('Error loading test review notifications:', error);
+      console.error('❌ TEST REVIEW: Error loading test review notifications:', error);
       toast.error('Kon test review meldingen niet laden');
     } finally {
       setLoading(false);
