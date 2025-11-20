@@ -472,6 +472,29 @@ export const dataService = {
     }
   },
 
+  async updateDistributorStatusByProject(projectId: string, status: string) {
+    try {
+      console.log(`📦 Updating all distributors in project ${projectId} to status: ${status}`);
+
+      const { data, error } = await supabase
+        .from('distributors')
+        .update({ status })
+        .eq('project_id', projectId)
+        .select();
+
+      if (error) {
+        console.error('Database error in updateDistributorStatusByProject:', error);
+        throw error;
+      }
+
+      console.log(`✅ Updated ${data?.length || 0} distributors to status: ${status}`);
+      return data;
+    } catch (err) {
+      console.error('Network error in updateDistributorStatusByProject:', err);
+      throw new Error(`Failed to update distributor statuses: ${getErrorMessage(err)}`);
+    }
+  },
+
   async deleteDistributor(id: string) {
     try {
       const { error } = await supabase

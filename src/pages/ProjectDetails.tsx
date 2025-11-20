@@ -259,9 +259,47 @@ const ProjectDetails = () => {
       };
 
       await dataService.updateProject(editedProject.id, updateData);
-      setProject(editedProject);
+
+      // Check if status changed to "Opgeleverd" - if so, update all distributors
+      const statusChangedToOpgeleverd =
+        project.status !== 'Opgeleverd' &&
+        editedProject.status === 'Opgeleverd';
+
+      if (statusChangedToOpgeleverd) {
+        console.log('🚚 Project status changed to Opgeleverd - updating all distributor statuses...');
+        try {
+          const updatedDistributors = await dataService.updateDistributorStatusByProject(
+            editedProject.id,
+            'Opgeleverd'
+          );
+
+          // Update local state with new distributor statuses
+          if (updatedDistributors && updatedDistributors.length > 0) {
+            const updatedProject = {
+              ...editedProject,
+              distributors: editedProject.distributors?.map((d: any) => ({
+                ...d,
+                status: 'Opgeleverd'
+              }))
+            };
+            setProject(updatedProject);
+            setEditedProject(updatedProject);
+            toast.success(`Project en ${updatedDistributors.length} verdeler(s) zijn gemarkeerd als opgeleverd!`);
+          } else {
+            setProject(editedProject);
+            toast.success('Project gegevens opgeslagen!');
+          }
+        } catch (distributorError) {
+          console.error('Error updating distributor statuses:', distributorError);
+          toast.error('Project opgeslagen, maar fout bij updaten verdeler statussen');
+          setProject(editedProject);
+        }
+      } else {
+        setProject(editedProject);
+        toast.success('Project gegevens opgeslagen!');
+      }
+
       setIsEditing(false);
-      toast.success('Project gegevens opgeslagen!');
     } catch (error) {
       console.error('Error saving project:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van het project');
