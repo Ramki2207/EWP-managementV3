@@ -848,6 +848,13 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+        <div className="mb-8">
+          <TestReviewNotifications />
+        </div>
+      )}
+
       <div className="card p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
@@ -1220,11 +1227,6 @@ const Dashboard = () => {
       {/* Admin and Projectleider: Compact Dashboard Sections */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
-          {/* Test Review Notifications - Full Width */}
-          <div className="mb-8">
-            <TestReviewNotifications />
-          </div>
-
           {/* Three Column Layout for Key Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Today's Deliveries - Compact Card */}
