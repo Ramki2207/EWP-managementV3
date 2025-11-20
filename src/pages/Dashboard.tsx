@@ -152,15 +152,8 @@ const Dashboard = () => {
             if (approvalRecord && approvalRecord.data.approvalData) {
               const approvalData = approvalRecord.data.approvalData;
 
-              if (approvalData.reviewedAt) {
-                approvals.push({
-                  project,
-                  distributor,
-                  status: approvalData.overallApproval ? 'approved' : 'declined',
-                  reviewedBy: approvalData.reviewedBy,
-                  reviewedAt: approvalData.reviewedAt
-                });
-              } else if (approvalData.status === 'submitted') {
+              // Only show items that are waiting for review (status = 'submitted' and not yet reviewed)
+              if (approvalData.status === 'submitted' && !approvalData.reviewedAt) {
                 approvals.push({
                   project,
                   distributor,
