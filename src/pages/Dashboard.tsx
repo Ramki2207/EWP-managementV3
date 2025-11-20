@@ -686,8 +686,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin-Only: Quick Actions at Top */}
-      {currentUser?.role === 'admin' && (
+      {/* Admin and Projectleider: Quick Actions at Top */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -1164,8 +1164,8 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin-Only: Project Status Overview with Drill-through - Moved to Top */}
-      {currentUser?.role === 'admin' && (
+      {/* Admin and Projectleider: Project Status Overview with Drill-through - Moved to Top */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-purple-500/20 rounded-lg">
@@ -1211,8 +1211,8 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Admin-Only: Compact Dashboard Sections */}
-      {currentUser?.role === 'admin' && (
+      {/* Admin and Projectleider: Compact Dashboard Sections */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
           {/* Three Column Layout for Key Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
