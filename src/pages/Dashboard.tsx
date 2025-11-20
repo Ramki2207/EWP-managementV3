@@ -847,7 +847,10 @@ const Dashboard = () => {
       )}
 
       {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+      {(currentUser?.role === 'admin' ||
+        currentUser?.role === 'projectleider' ||
+        currentUser?.username === 'Zouhair Taha' ||
+        currentUser?.username === 'Ibrahim Abdalla') && (
         <div className="mb-8">
           <TestReviewNotifications />
         </div>
