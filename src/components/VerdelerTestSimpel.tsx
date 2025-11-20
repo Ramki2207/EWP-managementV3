@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Check, X, CheckSquare, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { generateVerdelerTestSimpelPDF } from './VerdelerTestSimpelPDF';
+import { dataService } from '../lib/supabase';
 
 interface VerdelerTestSimpelProps {
   verdeler: any;
