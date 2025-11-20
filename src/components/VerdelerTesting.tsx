@@ -13,13 +13,15 @@ interface VerdelerTestingProps {
   distributorId?: string;
 }
 
-const VerdelerTesting: React.FC<VerdelerTestingProps> = ({ 
-  verdeler, 
-  projectNumber, 
+const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
+  verdeler,
+  projectNumber,
   onComplete,
   projectId,
-  distributorId 
+  distributorId
 }) => {
+  console.log('🔧 VerdelerTesting mounted with:', { projectId, distributorId, verdeler });
+
   const [showModal, setShowModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [generatingPDF, setGeneratingPDF] = useState(false);
