@@ -137,12 +137,17 @@ const Dashboard = () => {
     const approvals = [];
 
     for (const project of projectList) {
-      if (project.status?.toLowerCase() === 'productie' && project.distributors?.length > 0) {
-        // Check ALL distributors, not just the first one
+      if (project.distributors?.length > 0) {
+        // Check ALL distributors that are in 'testen' status
         for (const distributor of project.distributors) {
+          // Only check distributors with status 'testen'
+          if (distributor.status?.toLowerCase() !== 'testen') {
+            continue;
+          }
+
           try {
             const testData = await dataService.getTestData(distributor.id);
-            const approvalRecord = testData?.find((data: any) => data.test_type === 'pre_testing_approval');
+            const approvalRecord = testData?.find((data: any) => data.test_type === 'verdeler_pre_testing_approval');
 
             if (approvalRecord && approvalRecord.data.approvalData) {
               const approvalData = approvalRecord.data.approvalData;
