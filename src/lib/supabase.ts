@@ -1677,9 +1677,12 @@ export const dataService = {
   ) {
     try {
       const updateData: any = {
-        ...updates,
         reviewed_at: new Date().toISOString()
       };
+
+      if (updates.status) updateData.status = updates.status;
+      if (updates.reviewedBy) updateData.reviewed_by = updates.reviewedBy;
+      if (updates.reviewNotes) updateData.review_notes = updates.reviewNotes;
 
       const { data, error } = await supabase
         .from('test_review_notifications')
