@@ -452,18 +452,24 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       // Process each document
       for (const doc of newDocs) {
         console.log('💾 UPLOAD: Processing document:', doc.name);
-        
+
         // Apply revision management if needed
         if (REVISION_MANAGED_FOLDERS.includes(folder)) {
           console.log('🔄 UPLOAD: Applying revision management...');
           await handleRevisionManagement(doc, allCurrentDocs);
         }
-        
+
         console.log('💾 UPLOAD: Saving document:', doc.name, 'to folder:', doc.folder);
-        
+
         try {
-          await dataService.createDocument(doc);
+          const savedDoc = await dataService.createDocument(doc);
           console.log('✅ UPLOAD: Document saved successfully:', doc.name);
+
+          // Add the newly saved document to allCurrentDocs so subsequent files can see it
+          if (savedDoc) {
+            allCurrentDocs.push(savedDoc);
+            console.log('📥 UPLOAD: Added document to current docs list for revision checking');
+          }
         } catch (saveError) {
           console.error('❌ UPLOAD: Error saving document:', doc.name, saveError);
           toast.error(`Fout bij opslaan van ${doc.name}: ${saveError.message}`);
