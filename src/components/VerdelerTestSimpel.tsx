@@ -199,6 +199,33 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
       setGeneratingPDF(false);
     }
 
+    // Update the test review notification to 'approved' status
+    if (projectId && distributorId) {
+      try {
+        const currentUser = localStorage.getItem('currentUserId');
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const user = users.find((u: any) => u.id === currentUser);
+
+        // Find and update the notification for this test
+        const notifications = await dataService.getTestReviewNotifications('pending_review');
+        const notification = notifications.find((n: any) =>
+          n.project_id === projectId &&
+          n.distributor_id === distributorId &&
+          n.test_type === 'verdeler_test_simpel'
+        );
+
+        if (notification) {
+          await dataService.updateTestReviewNotification(notification.id, {
+            status: 'approved',
+            reviewedBy: user?.name || 'Admin'
+          });
+          console.log('✅ Test notification updated to approved');
+        }
+      } catch (error) {
+        console.error('Error updating test notification:', error);
+      }
+    }
+
     toast.success('Verdeler Test Simpel succesvol afgerond!');
     setShowModal(false);
   }, [testData, verdelerInfo.id, onComplete, verdeler, projectNumber, projectId, distributorId]);
