@@ -589,7 +589,37 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
           </div>
         ))}
         
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
+          <button
+            className="btn-secondary"
+            onClick={async () => {
+              try {
+                // Save to localStorage
+                const storageKey = `verdeler_test_vanaf_630_${verdelerInfo.id}`;
+                localStorage.setItem(storageKey, JSON.stringify(testData));
+
+                // Create notification for admin review
+                const currentUser = localStorage.getItem('currentUserId');
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find((u: any) => u.id === currentUser);
+
+                await dataService.createTestReviewNotification({
+                  projectId: projectId!,
+                  distributorId: distributorId!,
+                  testType: 'verdeler_vanaf_630',
+                  submittedBy: user?.name || 'Onbekend'
+                });
+
+                toast.success('Test opgeslagen! Admin is op de hoogte gesteld voor controle.');
+                setShowModal(false);
+              } catch (error) {
+                console.error('Error saving test:', error);
+                toast.error('Er is een fout opgetreden bij het opslaan');
+              }
+            }}
+          >
+            Opslaan en later verdergaan
+          </button>
           <button
             className={`btn-primary ${isTestComplete() ? '' : 'opacity-50 cursor-not-allowed'}`}
             onClick={handleComplete}

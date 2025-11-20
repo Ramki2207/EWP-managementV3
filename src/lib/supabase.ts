@@ -1601,5 +1601,119 @@ export const dataService = {
       console.error('Network error in deleteAccessCode:', err);
      throw new Error(getErrorMessage(err));
     }
+  },
+
+  // Test Review Notifications
+  async createTestReviewNotification(notification: {
+    projectId: string;
+    distributorId: string;
+    testType: string;
+    submittedBy: string;
+  }) {
+    try {
+      console.log('📢 Creating test review notification:', notification);
+
+      const { data, error } = await supabase
+        .from('test_review_notifications')
+        .insert([{
+          project_id: notification.projectId,
+          distributor_id: notification.distributorId,
+          test_type: notification.testType,
+          submitted_by: notification.submittedBy,
+          status: 'pending_review'
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in createTestReviewNotification:', error);
+        throw error;
+      }
+
+      console.log('✅ Test review notification created:', data);
+      return data;
+    } catch (err) {
+      console.error('Network error in createTestReviewNotification:', err);
+      throw new Error(`Failed to create test review notification: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async getTestReviewNotifications(status?: string) {
+    try {
+      let query = supabase
+        .from('test_review_notifications')
+        .select(`
+          *,
+          projects:project_id (id, project_number, location),
+          distributors:distributor_id (id, distributor_id, kast_naam)
+        `)
+        .order('submitted_at', { ascending: false });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Database error in getTestReviewNotifications:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Network error in getTestReviewNotifications:', err);
+      throw new Error(`Failed to fetch test review notifications: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async updateTestReviewNotification(
+    id: string,
+    updates: {
+      status?: string;
+      reviewedBy?: string;
+      reviewNotes?: string;
+    }
+  ) {
+    try {
+      const updateData: any = {
+        ...updates,
+        reviewed_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('test_review_notifications')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in updateTestReviewNotification:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Network error in updateTestReviewNotification:', err);
+      throw new Error(`Failed to update test review notification: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async deleteTestReviewNotification(id: string) {
+    try {
+      const { error } = await supabase
+        .from('test_review_notifications')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Database error in deleteTestReviewNotification:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.error('Network error in deleteTestReviewNotification:', err);
+      throw new Error(`Failed to delete test review notification: ${getErrorMessage(err)}`);
+    }
   }
 };

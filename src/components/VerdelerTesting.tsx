@@ -504,7 +504,24 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             onClick={async () => {
               const saved = await saveTestData();
               if (saved) {
-                toast.success('Werkplaats Checklist opgeslagen! Je kunt later verder gaan.');
+                // Create notification for admin review
+                try {
+                  const currentUser = localStorage.getItem('currentUserId');
+                  const users = JSON.parse(localStorage.getItem('users') || '[]');
+                  const user = users.find((u: any) => u.id === currentUser);
+
+                  await dataService.createTestReviewNotification({
+                    projectId: projectId!,
+                    distributorId: distributorId!,
+                    testType: 'verdeler_testing_tot_630',
+                    submittedBy: user?.name || 'Onbekend'
+                  });
+
+                  toast.success('Test opgeslagen! Admin is op de hoogte gesteld voor controle.');
+                } catch (error) {
+                  console.error('Error creating notification:', error);
+                  toast.success('Test opgeslagen! Je kunt later verder gaan.');
+                }
                 setShowModal(false);
               }
             }}

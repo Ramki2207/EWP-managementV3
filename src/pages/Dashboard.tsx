@@ -10,6 +10,7 @@ import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
+import TestReviewNotifications from '../components/TestReviewNotifications';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -1214,6 +1215,11 @@ const Dashboard = () => {
       {/* Admin and Projectleider: Compact Dashboard Sections */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
+          {/* Test Review Notifications - Full Width */}
+          <div className="mb-8">
+            <TestReviewNotifications />
+          </div>
+
           {/* Three Column Layout for Key Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Today's Deliveries - Compact Card */}
