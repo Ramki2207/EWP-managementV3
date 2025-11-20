@@ -40,6 +40,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
   const loadedProjectIdRef = useRef<string | null>(null);
   const [editingVerdeler, setEditingVerdeler] = useState<any>(null);
+  const [autoOpenTestForVerdeler, setAutoOpenTestForVerdeler] = useState<string | null>(null);
   const [showAccessCodeForm, setShowAccessCodeForm] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
@@ -251,6 +252,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         console.log('🎯 Auto-opening verdeler:', verdelerToOpen);
         setSelectedVerdeler(verdelerToOpen);
         setShowVerdelerDetails(true);
+        setAutoOpenTestForVerdeler(autoOpenVerdelerId);
       }
     }
   }, [autoOpenVerdelerId, verdelers]);
@@ -1333,6 +1335,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
                         projectId={projectData.id}
                         distributorId={selectedVerdeler.id}
+                        autoOpen={autoOpenTestForVerdeler === selectedVerdeler.id}
                       />
 
                       <VerdelerVanaf630Test

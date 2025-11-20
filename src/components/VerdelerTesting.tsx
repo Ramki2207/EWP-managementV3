@@ -11,6 +11,7 @@ interface VerdelerTestingProps {
   onComplete: (testData: any) => void;
   projectId?: string;
   distributorId?: string;
+  autoOpen?: boolean;
 }
 
 const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
@@ -18,11 +19,12 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   projectNumber,
   onComplete,
   projectId,
-  distributorId
+  distributorId,
+  autoOpen = false
 }) => {
-  console.log('🔧 VerdelerTesting mounted with:', { projectId, distributorId, verdeler });
+  console.log('🔧 VerdelerTesting mounted with:', { projectId, distributorId, verdeler, autoOpen });
 
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState(autoOpen);
   const [currentStep, setCurrentStep] = useState(0);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   
