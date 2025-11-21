@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
@@ -35,7 +34,6 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   hideNavigation = false,
   autoOpenVerdelerId
 }) => {
-  const navigate = useNavigate();
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState(false);
@@ -52,6 +50,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [verdelerForTesting, setVerdelerForTesting] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [pendingNotifications, setPendingNotifications] = useState<Record<string, any>>({});
+  const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
+  const [verdelerForLevering, setVerdelerForLevering] = useState<any>(null);
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -881,6 +881,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     setVerdelerForTesting(null);
   };
 
+  const handleOpenLeveringChecklist = (verdeler: any) => {
+    console.log('🚚 Opening levering checklist for verdeler:', verdeler.distributorId);
+    setVerdelerForLevering(verdeler);
+    setShowLeveringChecklist(true);
+  };
+
+  const handleLeveringChecklistComplete = async () => {
+    setShowLeveringChecklist(false);
+    setVerdelerForLevering(null);
+    // Reload verdelers to get updated status
+    await loadVerdelersFromDatabase();
+  };
+
   return (
     <div className="space-y-6">
       {!hideNavigation && (
@@ -1042,7 +1055,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/verdelers/${verdeler.id}?tab=levering`);
+                                handleOpenLeveringChecklist(verdeler);
                               }}
                               className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center space-x-2"
                               title="Levering Checklist"
@@ -1997,6 +2010,32 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             }
           }}
         />
+      )}
+
+      {/* Levering Checklist Modal */}
+      {showLeveringChecklist && verdelerForLevering && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gradient">Levering Checklist</h2>
+                <button
+                  onClick={() => {
+                    setShowLeveringChecklist(false);
+                    setVerdelerForLevering(null);
+                  }}
+                  className="p-2 hover:bg-[#2A303C] rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
+              <VerdelerLeveringChecklist
+                verdeler={verdelerForLevering}
+                onComplete={handleLeveringChecklistComplete}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
