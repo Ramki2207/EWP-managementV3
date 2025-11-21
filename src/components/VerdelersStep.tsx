@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import VerdelerVanaf630Test from './VerdelerVanaf630Test';
@@ -34,6 +35,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   hideNavigation = false,
   autoOpenVerdelerId
 }) => {
+  const navigate = useNavigate();
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState(false);
@@ -1033,6 +1035,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             >
                               <CheckSquare size={16} className="text-white" />
                               <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
+                            </button>
+                          )}
+                          {/* Show "Levering Checklist" button for logistiek users when verdeler status is "Levering" */}
+                          {currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/verdelers/${verdeler.id}?tab=levering`);
+                              }}
+                              className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center space-x-2"
+                              title="Levering Checklist"
+                            >
+                              <Truck size={16} className="text-white" />
+                              <span className="text-white text-sm font-medium">Levering Checklist</span>
                             </button>
                           )}
                           <button

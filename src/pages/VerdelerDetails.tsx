@@ -60,12 +60,14 @@ const VerdelerDetails = () => {
     if (distributor) {
       loadTestData();
 
-      // Auto-switch to levering tab for logistiek users when verdeler is in Levering status
-      if (currentUser?.role === 'logistiek' && distributor.status === 'Levering') {
+      // Check for tab query parameter and switch to that tab
+      const searchParams = new URLSearchParams(location.search);
+      const tabParam = searchParams.get('tab');
+      if (tabParam === 'levering' && currentUser?.role === 'logistiek' && distributor.status === 'Levering') {
         setActiveTab('levering');
       }
     }
-  }, [distributor, currentUser]);
+  }, [distributor, currentUser, location.search]);
 
   const loadUsers = async () => {
     try {
