@@ -156,17 +156,29 @@ const VerdelerLeveringChecklist: React.FC<VerdelerLeveringChecklistProps> = ({
 
   const handleSave = async () => {
     try {
+      console.log('🚚 Starting save...', {
+        project_id: verdeler.project_id,
+        verdeler_id: verdeler.id,
+        isComplete: isComplete()
+      });
       setSaving(true);
 
-      await dataService.saveVerdelerDelivery(verdeler.project_id, verdeler.id, {
+      const result = await dataService.saveVerdelerDelivery(verdeler.project_id, verdeler.id, {
         delivery_status: isComplete() ? 'ready_for_delivery' : 'pending',
         fysiek_checklist: fysiekChecklist,
         documentatie_checklist: documentatieChecklist,
         delivery_photos: uploadedPhotos
       });
 
+      console.log('🚚 Save result:', result);
       toast.success('Levering checklist opgeslagen');
-      onComplete();
+
+      console.log('🚚 Calling onComplete...');
+      if (onComplete) {
+        onComplete();
+      } else {
+        console.warn('🚚 onComplete is not defined!');
+      }
     } catch (error) {
       console.error('Error saving delivery checklist:', error);
       toast.error('Fout bij opslaan van checklist');
