@@ -108,18 +108,21 @@ const Dashboard = () => {
       if (currentUser?.role === 'logistiek') {
         const beforeLogistiekFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
-          // Check if project has any verdelers with status "Levering"
+          // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
+          const projectIsLevering = project.status === 'Levering';
           const hasVerdelersInLevering = project.distributors?.some(
             (dist: any) => dist.status === 'Levering'
           );
 
-          if (!hasVerdelersInLevering) {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Hiding project ${project.project_number} from logistiek ${currentUser.username} - NO VERDELERS IN LEVERING STATUS`);
+          const shouldShow = projectIsLevering || hasVerdelersInLevering;
+
+          if (!shouldShow) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Hiding project ${project.project_number} from logistiek ${currentUser.username} - NOT IN LEVERING STATUS`);
           } else {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Showing project ${project.project_number} to logistiek ${currentUser.username} - HAS VERDELERS IN LEVERING STATUS`);
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Showing project ${project.project_number} to logistiek ${currentUser.username} - IN LEVERING STATUS`);
           }
 
-          return hasVerdelersInLevering;
+          return shouldShow;
         });
         console.log(`📦 DASHBOARD LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} projects down to ${filteredData.length} for logistiek ${currentUser.username}`);
       }
@@ -295,18 +298,21 @@ const Dashboard = () => {
       if (currentUser?.role === 'logistiek') {
         const beforeLogistiekFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
-          // Check if project has any verdelers with status "Levering"
+          // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
+          const projectIsLevering = project.status === 'Levering';
           const hasVerdelersInLevering = project.distributors?.some(
             (dist: any) => dist.status === 'Levering'
           );
 
-          if (!hasVerdelersInLevering) {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Hiding project ${project.project_number} from logistiek ${currentUser.username} - NO VERDELERS IN LEVERING STATUS`);
+          const shouldShow = projectIsLevering || hasVerdelersInLevering;
+
+          if (!shouldShow) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Hiding project ${project.project_number} from logistiek ${currentUser.username} - NOT IN LEVERING STATUS`);
           } else {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Showing project ${project.project_number} to logistiek ${currentUser.username} - HAS VERDELERS IN LEVERING STATUS`);
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Showing project ${project.project_number} to logistiek ${currentUser.username} - IN LEVERING STATUS`);
           }
 
-          return hasVerdelersInLevering;
+          return shouldShow;
         });
         console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Filtered ${beforeLogistiekFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
       }
