@@ -12,6 +12,7 @@ import PrintLabel from './PrintLabel';
 import MPrintLabel from './MPrintLabel';
 import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
 import VerdelerChecklistWindow from './VerdelerChecklistWindow';
+import VerdelerLeveringChecklist from './VerdelerLeveringChecklist';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
