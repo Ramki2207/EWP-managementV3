@@ -65,6 +65,24 @@ const Verdelers = () => {
         });
         console.log(`🧪 TESTER FILTER: Filtered ${beforeRoleFilter} distributors down to ${filteredDistributors.length} for tester ${currentUser.username}`);
       }
+
+      // Role-based filtering for Logistiek users
+      if (currentUser?.role === 'Logistiek') {
+        const beforeLogistiekFilter = filteredDistributors.length;
+        filteredDistributors = filteredDistributors.filter((distributor: any) => {
+          const verdelerStatus = distributor.status;
+          const isInLevering = verdelerStatus === 'Levering';
+
+          if (!isInLevering) {
+            console.log(`📦 LOGISTIEK FILTER: Hiding distributor ${distributor.distributor_id} (status: ${verdelerStatus}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          } else {
+            console.log(`📦 LOGISTIEK FILTER: Showing distributor ${distributor.distributor_id} (status: ${verdelerStatus}) to logistiek ${currentUser.username} - IN LEVERING`);
+          }
+
+          return isInLevering;
+        });
+        console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} distributors down to ${filteredDistributors.length} for logistiek ${currentUser.username}`);
+      }
       
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations

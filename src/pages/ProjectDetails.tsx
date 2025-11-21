@@ -196,7 +196,14 @@ const ProjectDetails = () => {
     try {
       setLoading(true);
       const projects = await dataService.getProjects();
-      const foundProject = projects.find((p: any) => p.id === projectId);
+      let foundProject = projects.find((p: any) => p.id === projectId);
+
+      if (foundProject && currentUser?.role === 'Logistiek') {
+        foundProject = {
+          ...foundProject,
+          distributors: foundProject.distributors?.filter((d: any) => d.status === 'Levering') || []
+        };
+      }
 
       console.log('🔍 ProjectDetails - Loaded project:', {
         projectId: foundProject?.id,
@@ -205,8 +212,10 @@ const ProjectDetails = () => {
         distributorsSample: foundProject?.distributors?.slice(0, 2).map((d: any) => ({
           id: d.id,
           distributor_id: d.distributor_id,
-          kast_naam: d.kast_naam
-        }))
+          kast_naam: d.kast_naam,
+          status: d.status
+        })),
+        userRole: currentUser?.role
       });
 
       setProject(foundProject || null);
