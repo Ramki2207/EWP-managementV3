@@ -103,6 +103,23 @@ const Dashboard = () => {
         });
         console.log(`🧪 DASHBOARD TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredData.length} for tester ${currentUser.username}`);
       }
+
+      // Role-based filtering for Logistiek users
+      if (currentUser?.role === 'logistiek') {
+        const beforeLogistiekFilter = filteredData.length;
+        filteredData = filteredData.filter((project: any) => {
+          const isInLevering = project.status === 'Levering';
+
+          if (!isInLevering) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Hiding project ${project.project_number} (status: ${project.status}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          } else {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Showing project ${project.project_number} (status: ${project.status}) to logistiek ${currentUser.username} - IN LEVERING`);
+          }
+
+          return isInLevering;
+        });
+        console.log(`📦 DASHBOARD LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} projects down to ${filteredData.length} for logistiek ${currentUser.username}`);
+      }
       
       // Apply location filtering if user has location restrictions
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
@@ -777,8 +794,8 @@ const Dashboard = () => {
         currentUserId={currentUser?.id || ''}
       />
 
-      {/* Approval Status Alerts */}
-      {pendingApprovals.length > 0 && (
+      {/* Approval Status Alerts - Hidden for Logistiek users */}
+      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-orange-500/20 rounded-lg">
