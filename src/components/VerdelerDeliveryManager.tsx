@@ -230,6 +230,8 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
         delivery_photos: delivery.delivery_photos
       });
 
+      await dataService.updateDistributor(verdelerId, { status: 'Levering' });
+
       setDeliveryData(prev => ({
         ...prev,
         [verdelerId]: {
@@ -238,7 +240,8 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
         }
       }));
 
-      toast.success('Verdeler klaar voor levering gemarkeerd!');
+      const verdeler = verdelers.find(v => v.id === verdelerId);
+      toast.success(`${verdeler?.distributor_id} status bijgewerkt naar Levering!`);
     } catch (error) {
       console.error('Error marking verdeler as ready:', error);
       toast.error('Fout bij opslaan van leverstatus');
@@ -263,9 +266,14 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
           documentatie_checklist: delivery.documentatie_checklist,
           delivery_photos: delivery.delivery_photos
         });
+
+        if (delivery.delivery_status === 'ready_for_delivery') {
+          await dataService.updateDistributor(verdelerId, { status: 'Levering' });
+        }
       }
 
-      toast.success('Leverstatus opgeslagen!');
+      const readyCount = Object.values(deliveryData).filter(d => d.delivery_status === 'ready_for_delivery').length;
+      toast.success(`${readyCount} verdeler(s) klaargezet voor levering!`);
       onConfirm();
     } catch (error) {
       console.error('Error saving delivery data:', error);

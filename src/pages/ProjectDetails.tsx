@@ -455,22 +455,30 @@ const ProjectDetails = () => {
 
   const handleDeliveryChecklistConfirm = async () => {
     try {
-      // Update project status to Levering
-      const updateData = {
-        status: 'Levering'
-      };
+      const verdelerDeliveries = await dataService.getVerdelerDeliveries(editedProject.id);
+      const hasReadyVerdelers = verdelerDeliveries?.some(
+        (d: any) => d.delivery_status === 'ready_for_delivery'
+      );
 
-      await dataService.updateProject(editedProject.id, updateData);
+      if (hasReadyVerdelers && editedProject.status !== 'Levering') {
+        const updateData = {
+          status: 'Levering'
+        };
 
-      const updatedProject = {
-        ...editedProject,
-        status: 'Levering'
-      };
+        await dataService.updateProject(editedProject.id, updateData);
 
-      setProject(updatedProject);
-      setEditedProject(updatedProject);
+        const updatedProject = {
+          ...editedProject,
+          status: 'Levering'
+        };
+
+        setProject(updatedProject);
+        setEditedProject(updatedProject);
+        toast.success('Project status bijgewerkt naar Levering!');
+      }
+
       setShowDeliveryChecklist(false);
-      toast.success('Project status bijgewerkt naar Levering!');
+      await loadProject();
     } catch (error) {
       console.error('Error updating to Levering:', error);
       toast.error('Er is een fout opgetreden bij het bijwerken van de status');
