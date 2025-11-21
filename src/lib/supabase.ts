@@ -1718,5 +1718,80 @@ export const dataService = {
       console.error('Network error in deleteTestReviewNotification:', err);
       throw new Error(`Failed to delete test review notification: ${getErrorMessage(err)}`);
     }
+  },
+
+  async getVerdelerDeliveries(projectId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('verdeler_deliveries')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (error) {
+        console.error('Database error in getVerdelerDeliveries:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Network error in getVerdelerDeliveries:', err);
+      throw new Error(`Failed to fetch verdeler deliveries: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async saveVerdelerDelivery(
+    projectId: string,
+    distributorId: string,
+    deliveryData: {
+      delivery_status: string;
+      fysiek_checklist: any[];
+      documentatie_checklist: any[];
+      delivery_photos: string[];
+    }
+  ) {
+    try {
+      const { data: existing } = await supabase
+        .from('verdeler_deliveries')
+        .select('id')
+        .eq('project_id', projectId)
+        .eq('distributor_id', distributorId)
+        .maybeSingle();
+
+      const saveData = {
+        project_id: projectId,
+        distributor_id: distributorId,
+        delivery_status: deliveryData.delivery_status,
+        fysiek_checklist: deliveryData.fysiek_checklist,
+        documentatie_checklist: deliveryData.documentatie_checklist,
+        delivery_photos: deliveryData.delivery_photos,
+        completed_at: deliveryData.delivery_status === 'ready_for_delivery' ? new Date().toISOString() : null
+      };
+
+      let result;
+      if (existing) {
+        result = await supabase
+          .from('verdeler_deliveries')
+          .update(saveData)
+          .eq('id', existing.id)
+          .select()
+          .single();
+      } else {
+        result = await supabase
+          .from('verdeler_deliveries')
+          .insert(saveData)
+          .select()
+          .single();
+      }
+
+      if (result.error) {
+        console.error('Database error in saveVerdelerDelivery:', result.error);
+        throw result.error;
+      }
+
+      return result.data;
+    } catch (err) {
+      console.error('Network error in saveVerdelerDelivery:', err);
+      throw new Error(`Failed to save verdeler delivery: ${getErrorMessage(err)}`);
+    }
   }
 };

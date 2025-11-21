@@ -13,7 +13,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import ProductionTracking from '../components/ProductionTracking';
 import PreTestingApproval from '../components/PreTestingApproval';
 import InvoiceReportPDF from '../components/InvoiceReportPDF';
-import DeliveryChecklist from '../components/DeliveryChecklist';
+import VerdelerDeliveryManager from '../components/VerdelerDeliveryManager';
 import PakbonManager from '../components/PakbonManager';
 import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 
@@ -1312,9 +1312,9 @@ const ProjectDetails = () => {
         </div>
       )}
 
-      {/* Delivery Checklist Modal */}
+      {/* Verdeler Delivery Manager Modal */}
       {showDeliveryChecklist && editedProject && (
-        <DeliveryChecklist
+        <VerdelerDeliveryManager
           project={editedProject}
           onConfirm={handleDeliveryChecklistConfirm}
           onCancel={handleDeliveryChecklistCancel}
