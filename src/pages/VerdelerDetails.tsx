@@ -38,12 +38,15 @@ const VerdelerDetails = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    if (id) {
+    loadCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    if (id && currentUser) {
       loadDistributor();
       loadUsers();
-      loadCurrentUser();
     }
-  }, [id]);
+  }, [id, currentUser]);
 
   const loadCurrentUser = async () => {
     const userId = localStorage.getItem('currentUserId');

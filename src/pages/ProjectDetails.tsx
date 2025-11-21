@@ -56,8 +56,10 @@ const ProjectDetails = () => {
       const user = users.find((u: any) => u.id === currentUserId);
       setCurrentUser(user);
     }
+  }, []);
 
-    if (projectId) {
+  useEffect(() => {
+    if (projectId && currentUser) {
       loadProject();
       loadUsers();
       attemptProjectLock();
@@ -81,7 +83,7 @@ const ProjectDetails = () => {
         projectLockManager.unlockProject(projectId, currentUser.id);
       }
     };
-  }, [projectId, searchParams]);
+  }, [projectId, searchParams, currentUser]);
 
   const checkApprovalStatus = async () => {
     if (!project?.distributors || project.distributors.length === 0) return;

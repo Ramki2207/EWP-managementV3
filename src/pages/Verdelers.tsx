@@ -15,7 +15,7 @@ const Verdelers = () => {
 
   useEffect(() => {
     loadDistributors();
-  }, []);
+  }, [currentUser]);
 
   const loadDistributors = async () => {
     try {

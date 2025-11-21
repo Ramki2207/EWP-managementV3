@@ -133,7 +133,7 @@ const Projects = () => {
 
   useEffect(() => {
     console.log('🚀 PROJECTS: Component mounting, setting up subscriptions...');
-    
+
     // Get current user info
     const currentUserId = localStorage.getItem('currentUserId');
     if (currentUserId) {
@@ -156,7 +156,7 @@ const Projects = () => {
       console.log('🔄 PROJECTS: Cleaning up subscriptions...');
       lockUnsubscribe();
     };
-  }, []);
+  }, [currentUser]);
 
   const loadProjects = async () => {
     try {
