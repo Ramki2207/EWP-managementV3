@@ -14,6 +14,7 @@ import ProductionTracking from '../components/ProductionTracking';
 import PreTestingApproval from '../components/PreTestingApproval';
 import InvoiceReportPDF from '../components/InvoiceReportPDF';
 import VerdelerDeliveryManager from '../components/VerdelerDeliveryManager';
+import VerdelerLeveringSelector from '../components/VerdelerLeveringSelector';
 import PakbonManager from '../components/PakbonManager';
 import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 
@@ -366,7 +367,8 @@ const ProjectDetails = () => {
       // If already approved, allow direct status change
     }
 
-    // Special handling for status change to Levering
+    // Special handling for status change to Levering - just update status, no checklist
+    // The delivery checklist is now handled by logistiek users in VerdelerDetails page
     if (field === 'status' && value === 'Levering' && editedProject?.status !== 'Levering') {
       setShowDeliveryChecklist(true);
       return;
@@ -1332,9 +1334,9 @@ const ProjectDetails = () => {
         </div>
       )}
 
-      {/* Verdeler Delivery Manager Modal */}
+      {/* Verdeler Levering Selector - Simple selection for non-logistiek users */}
       {showDeliveryChecklist && editedProject && (
-        <VerdelerDeliveryManager
+        <VerdelerLeveringSelector
           project={editedProject}
           onConfirm={handleDeliveryChecklistConfirm}
           onCancel={handleDeliveryChecklistCancel}

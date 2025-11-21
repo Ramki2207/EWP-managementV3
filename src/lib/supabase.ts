@@ -1739,6 +1739,27 @@ export const dataService = {
     }
   },
 
+  async getVerdelerDelivery(projectId: string, distributorId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('verdeler_deliveries')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('distributor_id', distributorId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Database error in getVerdelerDelivery:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Network error in getVerdelerDelivery:', err);
+      throw new Error(`Failed to fetch verdeler delivery: ${getErrorMessage(err)}`);
+    }
+  },
+
   async saveVerdelerDelivery(
     projectId: string,
     distributorId: string,

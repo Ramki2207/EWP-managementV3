@@ -7,6 +7,7 @@ import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
 import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval';
 import VerdelerChecklistWindow from '../components/VerdelerChecklistWindow';
+import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
 import { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -20,7 +21,7 @@ const VerdelerDetails = () => {
   const { hasPermission } = useEnhancedPermissions();
 
   const [distributor, setDistributor] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'details' | 'documents' | 'tests'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'documents' | 'tests' | 'levering'>('details');
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editedDistributor, setEditedDistributor] = useState<any>(null);
@@ -618,6 +619,18 @@ const VerdelerDetails = () => {
           >
             Testrapporten
           </button>
+          {currentUser?.role === 'logistiek' && distributor?.status === 'Levering' && (
+            <button
+              onClick={() => setActiveTab('levering')}
+              className={`px-4 py-2 rounded-lg transition ${
+                activeTab === 'levering'
+                  ? 'bg-[#4169e1] text-white'
+                  : 'text-gray-400 hover:bg-[#2A303C] hover:text-white'
+              }`}
+            >
+              Levering Checklist
+            </button>
+          )}
         </div>
       </div>
 
@@ -984,6 +997,18 @@ const VerdelerDetails = () => {
                 </p>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'levering' && currentUser?.role === 'logistiek' && distributor?.status === 'Levering' && (
+          <div>
+            <h2 className="text-lg text-gradient mb-6">Levering Checklist</h2>
+            <VerdelerLeveringChecklist
+              verdeler={distributor}
+              onComplete={() => {
+                loadDistributor();
+              }}
+            />
           </div>
         )}
       </div>
