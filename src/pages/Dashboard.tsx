@@ -108,15 +108,18 @@ const Dashboard = () => {
       if (currentUser?.role === 'logistiek') {
         const beforeLogistiekFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
-          const isInLevering = project.status === 'Levering';
+          // Check if project has any verdelers with status "Levering"
+          const hasVerdelersInLevering = project.distributors?.some(
+            (dist: any) => dist.status === 'Levering'
+          );
 
-          if (!isInLevering) {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Hiding project ${project.project_number} (status: ${project.status}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          if (!hasVerdelersInLevering) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Hiding project ${project.project_number} from logistiek ${currentUser.username} - NO VERDELERS IN LEVERING STATUS`);
           } else {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Showing project ${project.project_number} (status: ${project.status}) to logistiek ${currentUser.username} - IN LEVERING`);
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER: Showing project ${project.project_number} to logistiek ${currentUser.username} - HAS VERDELERS IN LEVERING STATUS`);
           }
 
-          return isInLevering;
+          return hasVerdelersInLevering;
         });
         console.log(`📦 DASHBOARD LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} projects down to ${filteredData.length} for logistiek ${currentUser.username}`);
       }
@@ -292,15 +295,18 @@ const Dashboard = () => {
       if (currentUser?.role === 'logistiek') {
         const beforeLogistiekFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
-          const isInLevering = project.status === 'Levering';
+          // Check if project has any verdelers with status "Levering"
+          const hasVerdelersInLevering = project.distributors?.some(
+            (dist: any) => dist.status === 'Levering'
+          );
 
-          if (!isInLevering) {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Hiding project ${project.project_number} (status: ${project.status}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          if (!hasVerdelersInLevering) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Hiding project ${project.project_number} from logistiek ${currentUser.username} - NO VERDELERS IN LEVERING STATUS`);
           } else {
-            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Showing project ${project.project_number} (status: ${project.status}) to logistiek ${currentUser.username} - IN LEVERING`);
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Showing project ${project.project_number} to logistiek ${currentUser.username} - HAS VERDELERS IN LEVERING STATUS`);
           }
 
-          return isInLevering;
+          return hasVerdelersInLevering;
         });
         console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Filtered ${beforeLogistiekFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
       }
