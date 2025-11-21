@@ -210,70 +210,50 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
     }));
   };
 
-  const markVerdelerAsReady = async (verdelerId: string) => {
+  const isVerdelerComplete = (verdelerId: string) => {
     const delivery = deliveryData[verdelerId];
+    if (!delivery) return false;
 
     const allFysiekChecked = delivery.fysiek_checklist.every(item => item.checked);
     const allDocumentatieChecked = delivery.documentatie_checklist.every(item => item.checked);
     const hasPhotos = delivery.delivery_photos.length > 0;
 
-    if (!allFysiekChecked || !allDocumentatieChecked || !hasPhotos) {
-      toast.error('Vul alle checklist items in en upload minimaal 1 foto');
-      return;
-    }
-
-    try {
-      await dataService.saveVerdelerDelivery(project.id, verdelerId, {
-        delivery_status: 'ready_for_delivery',
-        fysiek_checklist: delivery.fysiek_checklist,
-        documentatie_checklist: delivery.documentatie_checklist,
-        delivery_photos: delivery.delivery_photos
-      });
-
-      await dataService.updateDistributor(verdelerId, { status: 'Levering' });
-
-      setDeliveryData(prev => ({
-        ...prev,
-        [verdelerId]: {
-          ...prev[verdelerId],
-          delivery_status: 'ready_for_delivery'
-        }
-      }));
-
-      const verdeler = verdelers.find(v => v.id === verdelerId);
-      toast.success(`${verdeler?.distributor_id} status bijgewerkt naar Levering!`);
-    } catch (error) {
-      console.error('Error marking verdeler as ready:', error);
-      toast.error('Fout bij opslaan van leverstatus');
-    }
+    return allFysiekChecked && allDocumentatieChecked && hasPhotos;
   };
 
   const handleConfirm = async () => {
-    const hasAtLeastOneReady = Object.values(deliveryData).some(
-      d => d.delivery_status === 'ready_for_delivery'
-    );
-
-    if (!hasAtLeastOneReady) {
-      toast.error('Markeer minimaal 1 verdeler als klaar voor levering');
-      return;
-    }
-
     try {
+      const completedVerdelers: string[] = [];
+
       for (const [verdelerId, delivery] of Object.entries(deliveryData)) {
+        const isComplete = isVerdelerComplete(verdelerId);
+
         await dataService.saveVerdelerDelivery(project.id, verdelerId, {
-          delivery_status: delivery.delivery_status,
+          delivery_status: isComplete ? 'ready_for_delivery' : 'pending',
           fysiek_checklist: delivery.fysiek_checklist,
           documentatie_checklist: delivery.documentatie_checklist,
           delivery_photos: delivery.delivery_photos
         });
 
-        if (delivery.delivery_status === 'ready_for_delivery') {
+        if (isComplete) {
           await dataService.updateDistributor(verdelerId, { status: 'Levering' });
+          completedVerdelers.push(verdelerId);
         }
       }
 
-      const readyCount = Object.values(deliveryData).filter(d => d.delivery_status === 'ready_for_delivery').length;
-      toast.success(`${readyCount} verdeler(s) klaargezet voor levering!`);
+      if (completedVerdelers.length === 0) {
+        toast.error('Vul minimaal 1 verdeler volledig in (checklist + foto)');
+        return;
+      }
+
+      const allVerdelersComplete = completedVerdelers.length === verdelers.length;
+
+      if (allVerdelersComplete) {
+        toast.success(`Alle ${verdelers.length} verdelers zijn klaar voor levering!`);
+      } else {
+        toast.success(`${completedVerdelers.length} van ${verdelers.length} verdeler(s) klaargezet voor levering`);
+      }
+
       onConfirm();
     } catch (error) {
       console.error('Error saving delivery data:', error);
@@ -334,8 +314,7 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
               <div className="space-y-2">
                 {verdelers.map((verdeler) => {
                   const status = getCompletionStatus(verdeler.id);
-                  const delivery = deliveryData[verdeler.id];
-                  const isReady = delivery?.delivery_status === 'ready_for_delivery';
+                  const isComplete = isVerdelerComplete(verdeler.id);
 
                   return (
                     <div
@@ -349,7 +328,7 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-medium">{verdeler.distributor_id}</div>
-                        {isReady && (
+                        {isComplete && (
                           <CheckCircle className="text-green-400" size={18} />
                         )}
                       </div>
@@ -397,19 +376,16 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                       {verdelers.find(v => v.id === selectedVerdeler)?.kast_naam}
                     </p>
                   </div>
-                  {currentDelivery.delivery_status === 'ready_for_delivery' ? (
+                  {isVerdelerComplete(selectedVerdeler) ? (
                     <div className="flex items-center space-x-2 px-4 py-2 bg-green-500/20 rounded-lg">
                       <CheckCircle className="text-green-400" size={20} />
-                      <span className="text-green-400 font-medium">Klaar voor levering</span>
+                      <span className="text-green-400 font-medium">Compleet</span>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => markVerdelerAsReady(selectedVerdeler)}
-                      className="btn btn-primary flex items-center space-x-2"
-                    >
-                      <CheckCircle size={18} />
-                      <span>Markeer als klaar</span>
-                    </button>
+                    <div className="flex items-center space-x-2 px-4 py-2 bg-orange-500/20 rounded-lg">
+                      <AlertCircle className="text-orange-400" size={20} />
+                      <span className="text-orange-400 font-medium">Incompleet</span>
+                    </div>
                   )}
                 </div>
 
@@ -430,7 +406,6 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                           checked={item.checked}
                           onChange={() => toggleFysiekItem(item.id)}
                           className="mt-1 w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500"
-                          disabled={currentDelivery.delivery_status === 'ready_for_delivery'}
                         />
                         <span className={`flex-1 text-sm ${item.checked ? 'text-gray-300' : 'text-gray-400'}`}>
                           {item.label}
@@ -457,7 +432,6 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                           checked={item.checked}
                           onChange={() => toggleDocumentatieItem(item.id)}
                           className="mt-1 w-4 h-4 rounded border-gray-600 text-orange-500 focus:ring-orange-500"
-                          disabled={currentDelivery.delivery_status === 'ready_for_delivery'}
                         />
                         <span className={`flex-1 text-sm ${item.checked ? 'text-gray-300' : 'text-gray-400'}`}>
                           {item.label}
@@ -474,34 +448,32 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                     <h4 className="font-medium">Verzend Foto's</h4>
                   </div>
 
-                  {currentDelivery.delivery_status !== 'ready_for_delivery' && (
-                    <div
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-                        isDragging
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-600 hover:border-gray-500'
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        id={`file-upload-${selectedVerdeler}`}
-                        className="hidden"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleFileUpload(e.target.files)}
-                        disabled={isUploading}
-                      />
-                      <label htmlFor={`file-upload-${selectedVerdeler}`} className="cursor-pointer">
-                        <Upload className="mx-auto text-gray-400 mb-2" size={32} />
-                        <p className="text-sm text-gray-400">
-                          {isUploading ? 'Uploaden...' : 'Klik of sleep foto\'s hierheen'}
-                        </p>
-                      </label>
-                    </div>
-                  )}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                      isDragging
+                        ? 'border-blue-500 bg-blue-500/10'
+                        : 'border-gray-600 hover:border-gray-500'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      id={`file-upload-${selectedVerdeler}`}
+                      className="hidden"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleFileUpload(e.target.files)}
+                      disabled={isUploading}
+                    />
+                    <label htmlFor={`file-upload-${selectedVerdeler}`} className="cursor-pointer">
+                      <Upload className="mx-auto text-gray-400 mb-2" size={32} />
+                      <p className="text-sm text-gray-400">
+                        {isUploading ? 'Uploaden...' : 'Klik of sleep foto\'s hierheen'}
+                      </p>
+                    </label>
+                  </div>
 
                   {currentDelivery.delivery_photos.length > 0 && (
                     <div className="grid grid-cols-4 gap-3 mt-4">
@@ -512,14 +484,12 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
                             alt={`Verzend foto ${index + 1}`}
                             className="w-full h-24 object-cover rounded-lg"
                           />
-                          {currentDelivery.delivery_status !== 'ready_for_delivery' && (
-                            <button
-                              onClick={() => removePhoto(photoPath)}
-                              className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => removePhoto(photoPath)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -533,7 +503,7 @@ const VerdelerDeliveryManager: React.FC<VerdelerDeliveryManagerProps> = ({ proje
         {/* Footer */}
         <div className="p-6 border-t border-gray-700 flex justify-between items-center">
           <div className="text-sm text-gray-400">
-            {Object.values(deliveryData).filter(d => d.delivery_status === 'ready_for_delivery').length} van {verdelers.length} verdelers klaar voor levering
+            {Object.keys(deliveryData).filter(id => isVerdelerComplete(id)).length} van {verdelers.length} verdelers compleet
           </div>
           <div className="flex space-x-3">
             <button onClick={onCancel} className="btn btn-secondary">

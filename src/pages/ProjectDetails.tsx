@@ -455,12 +455,13 @@ const ProjectDetails = () => {
 
   const handleDeliveryChecklistConfirm = async () => {
     try {
-      const verdelerDeliveries = await dataService.getVerdelerDeliveries(editedProject.id);
-      const hasReadyVerdelers = verdelerDeliveries?.some(
-        (d: any) => d.delivery_status === 'ready_for_delivery'
-      );
+      const allVerdelers = await dataService.getDistributorsByProject(editedProject.id);
+      const verdelersWithLeveringStatus = allVerdelers?.filter((v: any) => v.status === 'Levering') || [];
 
-      if (hasReadyVerdelers && editedProject.status !== 'Levering') {
+      const allVerdelersAreInLevering = allVerdelers && allVerdelers.length > 0 &&
+        verdelersWithLeveringStatus.length === allVerdelers.length;
+
+      if (allVerdelersAreInLevering && editedProject.status !== 'Levering') {
         const updateData = {
           status: 'Levering'
         };
@@ -474,7 +475,7 @@ const ProjectDetails = () => {
 
         setProject(updatedProject);
         setEditedProject(updatedProject);
-        toast.success('Project status bijgewerkt naar Levering!');
+        toast.success('Alle verdelers zijn in levering - Project status bijgewerkt naar Levering!');
       }
 
       setShowDeliveryChecklist(false);
