@@ -162,7 +162,26 @@ const Projects = () => {
     try {
       setLoading(true);
       const data = await dataService.getProjects();
-      setProjects(data || []);
+      let filteredProjects = data || [];
+
+      // Filter for Logistiek users - only show projects with status "Levering"
+      if (currentUser?.role === 'Logistiek') {
+        const beforeFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: Project) => {
+          const isInLevering = project.status === 'Levering';
+
+          if (!isInLevering) {
+            console.log(`📦 LOGISTIEK FILTER: Hiding project ${project.project_number} (status: ${project.status}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          } else {
+            console.log(`📦 LOGISTIEK FILTER: Showing project ${project.project_number} (status: ${project.status}) to logistiek ${currentUser.username} - IN LEVERING`);
+          }
+
+          return isInLevering;
+        });
+        console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
+      }
+
+      setProjects(filteredProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
      toast.error(error.message || 'Er is een fout opgetreden bij het laden van de projecten');
