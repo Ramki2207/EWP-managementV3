@@ -538,8 +538,8 @@ export const dataService = {
         query = query.eq('distributor_id', distributorId);
       }
       if (folder) {
-        // Match exact folder only (subfolders must be queried separately)
-        query = query.eq('folder', folder);
+        // Match folder and its subfolders (e.g., "Verdeler aanzicht" matches "Verdeler aanzicht/Actueel")
+        query = query.or(`folder.eq.${folder},folder.like.${folder}/%`);
       }
 
       const { data, error } = await query.limit(100); // Increased limit now that we have indexes
