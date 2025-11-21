@@ -136,6 +136,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       // Keep BOTH camelCase (for UI) and snake_case (for other components like ProjectDocumentManager)
       const formattedVerdelers = distributors.map((dist: any) => ({
         id: dist.id,
+        project_id: projectData.id, // Add project_id for delivery tracking
         distributorId: dist.distributor_id,
         distributor_id: dist.distributor_id, // Keep snake_case for compatibility
         kastNaam: dist.kast_naam,
