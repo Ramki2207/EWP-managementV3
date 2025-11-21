@@ -164,8 +164,14 @@ const Projects = () => {
       const data = await dataService.getProjects();
       let filteredProjects = data || [];
 
+      console.log(`🔍 PROJECTS: Loading projects for user:`, {
+        username: currentUser?.username,
+        role: currentUser?.role,
+        totalProjects: filteredProjects.length
+      });
+
       // Filter for Logistiek users - only show projects with status "Levering"
-      if (currentUser?.role === 'Logistiek') {
+      if (currentUser?.role === 'logistiek') {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: Project) => {
           const isInLevering = project.status === 'Levering';

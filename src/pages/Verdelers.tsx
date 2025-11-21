@@ -67,7 +67,7 @@ const Verdelers = () => {
       }
 
       // Role-based filtering for Logistiek users
-      if (currentUser?.role === 'Logistiek') {
+      if (currentUser?.role === 'logistiek') {
         const beforeLogistiekFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const verdelerStatus = distributor.status;

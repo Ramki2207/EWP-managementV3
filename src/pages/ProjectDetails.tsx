@@ -200,7 +200,7 @@ const ProjectDetails = () => {
       const projects = await dataService.getProjects();
       let foundProject = projects.find((p: any) => p.id === projectId);
 
-      if (foundProject && currentUser?.role === 'Logistiek') {
+      if (foundProject && currentUser?.role === 'logistiek') {
         foundProject = {
           ...foundProject,
           distributors: foundProject.distributors?.filter((d: any) => d.status === 'Levering') || []

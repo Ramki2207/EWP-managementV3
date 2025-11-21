@@ -129,7 +129,7 @@ const VerdelerDetails = () => {
       const distributors = await dataService.getDistributors();
       const foundDistributor = distributors.find((d: any) => d.id === id);
 
-      if (foundDistributor && currentUser?.role === 'Logistiek' && foundDistributor.status !== 'Levering') {
+      if (foundDistributor && currentUser?.role === 'logistiek' && foundDistributor.status !== 'Levering') {
         toast.error('Je hebt geen toegang tot deze verdeler');
         navigate('/verdelers');
         return;
