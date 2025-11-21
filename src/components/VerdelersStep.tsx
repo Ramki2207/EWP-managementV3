@@ -53,6 +53,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [pendingNotifications, setPendingNotifications] = useState<Record<string, any>>({});
   const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
   const [verdelerForLevering, setVerdelerForLevering] = useState<any>(null);
+  const [deliveryCompletionStatus, setDeliveryCompletionStatus] = useState<Record<string, boolean>>({});
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -173,6 +174,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       // Load pending notifications for these verdelers
       await loadPendingNotifications(formattedVerdelers);
+
+      // Load delivery completion status
+      await loadDeliveryCompletionStatus(formattedVerdelers);
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
     }
@@ -208,6 +212,27 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setPendingNotifications(notificationMap);
     } catch (error) {
       console.error('🔔 Exception loading pending notifications:', error);
+    }
+  };
+
+  const loadDeliveryCompletionStatus = async (verdelersList: any[]) => {
+    if (!projectData?.id) return;
+
+    try {
+      console.log('🚚 Loading delivery completion status...');
+      const completionMap: Record<string, boolean> = {};
+
+      for (const verdeler of verdelersList) {
+        const deliveryData = await dataService.getVerdelerDelivery(projectData.id, verdeler.id);
+        if (deliveryData && deliveryData.delivery_status === 'ready_for_delivery') {
+          completionMap[verdeler.id] = true;
+        }
+      }
+
+      console.log('🚚 Delivery completion status:', completionMap);
+      setDeliveryCompletionStatus(completionMap);
+    } catch (error) {
+      console.error('🚚 Error loading delivery completion status:', error);
     }
   };
 
@@ -1059,11 +1084,21 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                                 e.stopPropagation();
                                 handleOpenLeveringChecklist(verdeler);
                               }}
-                              className="px-3 py-1.5 bg-green-600 hover:bg-green-700 rounded-lg transition-colors flex items-center space-x-2"
-                              title="Levering Checklist"
+                              className={`px-3 py-1.5 rounded-lg transition-colors flex items-center space-x-2 ${
+                                deliveryCompletionStatus[verdeler.id]
+                                  ? 'bg-green-500 hover:bg-green-600'
+                                  : 'bg-green-600 hover:bg-green-700'
+                              }`}
+                              title={deliveryCompletionStatus[verdeler.id] ? 'Checklist Voltooid' : 'Levering Checklist'}
                             >
-                              <Truck size={16} className="text-white" />
-                              <span className="text-white text-sm font-medium">Levering Checklist</span>
+                              {deliveryCompletionStatus[verdeler.id] ? (
+                                <CheckCircle size={16} className="text-white" />
+                              ) : (
+                                <Truck size={16} className="text-white" />
+                              )}
+                              <span className="text-white text-sm font-medium">
+                                {deliveryCompletionStatus[verdeler.id] ? 'Checklist Voltooid' : 'Levering Checklist'}
+                              </span>
                             </button>
                           )}
                           <button
