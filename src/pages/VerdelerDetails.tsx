@@ -59,8 +59,13 @@ const VerdelerDetails = () => {
   useEffect(() => {
     if (distributor) {
       loadTestData();
+
+      // Auto-switch to levering tab for logistiek users when verdeler is in Levering status
+      if (currentUser?.role === 'logistiek' && distributor.status === 'Levering') {
+        setActiveTab('levering');
+      }
     }
-  }, [distributor]);
+  }, [distributor, currentUser]);
 
   const loadUsers = async () => {
     try {
