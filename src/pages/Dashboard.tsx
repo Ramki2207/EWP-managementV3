@@ -287,7 +287,24 @@ const Dashboard = () => {
         });
         console.log(`🧪 DASHBOARD TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
       }
-      
+
+      // Role-based filtering for Logistiek users
+      if (currentUser?.role === 'logistiek') {
+        const beforeLogistiekFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: any) => {
+          const isInLevering = project.status === 'Levering';
+
+          if (!isInLevering) {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Hiding project ${project.project_number} (status: ${project.status}) from logistiek ${currentUser.username} - NOT IN LEVERING`);
+          } else {
+            console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Showing project ${project.project_number} (status: ${project.status}) to logistiek ${currentUser.username} - IN LEVERING`);
+          }
+
+          return isInLevering;
+        });
+        console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Filtered ${beforeLogistiekFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
+      }
+
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
