@@ -626,7 +626,10 @@ const VerdelerDetails = () => {
           </button>
           {currentUser?.role === 'logistiek' && distributor?.status === 'Levering' && (
             <button
-              onClick={() => setActiveTab('levering')}
+              onClick={() => {
+                console.log('🚚 Switching to levering tab');
+                setActiveTab('levering');
+              }}
               className={`px-4 py-2 rounded-lg transition ${
                 activeTab === 'levering'
                   ? 'bg-[#4169e1] text-white'
@@ -636,6 +639,13 @@ const VerdelerDetails = () => {
               Levering Checklist
             </button>
           )}
+          {/* Debug info */}
+          {console.log('🚚 VerdelerDetails Tab Debug:', {
+            currentUserRole: currentUser?.role,
+            distributorStatus: distributor?.status,
+            showTab: currentUser?.role === 'logistiek' && distributor?.status === 'Levering',
+            activeTab
+          })}
         </div>
       </div>
 
@@ -1005,15 +1015,32 @@ const VerdelerDetails = () => {
           </div>
         )}
 
-        {activeTab === 'levering' && currentUser?.role === 'logistiek' && distributor?.status === 'Levering' && (
+        {activeTab === 'levering' && (
           <div>
+            {console.log('🚚 Rendering Levering tab content:', {
+              activeTab,
+              currentUserRole: currentUser?.role,
+              distributorStatus: distributor?.status,
+              distributor
+            })}
             <h2 className="text-lg text-gradient mb-6">Levering Checklist</h2>
-            <VerdelerLeveringChecklist
-              verdeler={distributor}
-              onComplete={() => {
-                loadDistributor();
-              }}
-            />
+            {currentUser?.role === 'logistiek' && distributor?.status === 'Levering' ? (
+              <VerdelerLeveringChecklist
+                verdeler={distributor}
+                onComplete={() => {
+                  loadDistributor();
+                }}
+              />
+            ) : (
+              <div className="bg-[#2A303C] p-6 rounded-lg text-center">
+                <p className="text-gray-400">
+                  Deze checklist is alleen beschikbaar voor logistiek medewerkers wanneer de verdeler status "Levering" heeft.
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Huidige status: {distributor?.status} | Gebruikersrol: {currentUser?.role}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
