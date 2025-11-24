@@ -60,7 +60,17 @@ const Dashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
-  
+  const [viewAsProjectleider, setViewAsProjectleider] = useState(false);
+
+  const effectiveRole = currentUser?.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser?.role;
+
+  useEffect(() => {
+    if (currentUser?.role === 'admin') {
+      loadData();
+      loadProjects();
+    }
+  }, [viewAsProjectleider]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -69,7 +79,7 @@ const Dashboard = () => {
       let filteredData = data || [];
 
       // Role-based filtering for Montage users
-      if (currentUser?.role === 'montage') {
+      if (effectiveRole === 'montage') {
         const beforeMontageFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const hasAssignedVerdelers = project.distributors?.some(
@@ -88,7 +98,7 @@ const Dashboard = () => {
       }
 
       // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
+      if (effectiveRole === 'tester') {
         const beforeRoleFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
@@ -105,7 +115,7 @@ const Dashboard = () => {
       }
 
       // Role-based filtering for Logistiek users
-      if (currentUser?.role === 'logistiek') {
+      if (effectiveRole === 'logistiek') {
         const beforeLogistiekFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
@@ -258,7 +268,7 @@ const Dashboard = () => {
       console.log('🌍 DASHBOARD: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
 
       // Role-based filtering for Montage users
-      if (currentUser?.role === 'montage') {
+      if (effectiveRole === 'montage') {
         const beforeMontageFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           // Check if this project has any verdelers assigned to this monteur
@@ -278,7 +288,7 @@ const Dashboard = () => {
       }
 
       // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
+      if (effectiveRole === 'tester') {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
@@ -295,7 +305,7 @@ const Dashboard = () => {
       }
 
       // Role-based filtering for Logistiek users
-      if (currentUser?.role === 'logistiek') {
+      if (effectiveRole === 'logistiek') {
         const beforeLogistiekFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
@@ -545,7 +555,7 @@ const Dashboard = () => {
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
       // Role-based filtering for Montage users
-      if (currentUser?.role === 'montage') {
+      if (effectiveRole === 'montage') {
         const hasAssignedVerdelers = project.distributors?.some(
           (dist: any) => dist.toegewezen_monteur === currentUser.username
         );
@@ -703,13 +713,37 @@ const Dashboard = () => {
                   Welkom terug! 👋
                 </h1>
                 <p className="text-gray-400">
-                  {new Date().toLocaleDateString('nl-NL', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
+                  {new Date().toLocaleDateString('nl-NL', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
                   })}
                 </p>
+
+                {/* Admin View Toggle */}
+                {currentUser?.role === 'admin' && (
+                  <div className="mt-4 flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                    <span className="text-sm text-gray-300">
+                      Weergave als:
+                    </span>
+                    <button
+                      onClick={() => setViewAsProjectleider(!viewAsProjectleider)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        viewAsProjectleider ? 'bg-blue-600' : 'bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          viewAsProjectleider ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span className={`text-sm font-medium ${viewAsProjectleider ? 'text-blue-400' : 'text-gray-400'}`}>
+                      {viewAsProjectleider ? 'Projectleider' : 'Admin'}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -736,7 +770,7 @@ const Dashboard = () => {
       </div>
 
       {/* Admin and Projectleider: Quick Actions at Top */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -893,8 +927,8 @@ const Dashboard = () => {
       )}
 
       {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
-      {(currentUser?.role === 'admin' ||
-        currentUser?.role === 'projectleider' ||
+      {(effectiveRole === 'admin' ||
+        effectiveRole === 'projectleider' ||
         currentUser?.username === 'Zouhair Taha' ||
         currentUser?.username === 'Ibrahim Abdalla') && (
         <div className="mb-8">
@@ -1272,7 +1306,7 @@ const Dashboard = () => {
       )}
 
       {/* Admin and Projectleider: Compact Dashboard Sections */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
         <>
           {/* Three Column Layout for Key Metrics */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -1965,7 +1999,7 @@ const Dashboard = () => {
       )}
 
       {/* Enhanced KPI Dashboard - Hidden for Admin */}
-      {currentUser?.role !== 'admin' && (
+      {effectiveRole !== 'admin' && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Total Projects KPI */}
         <div className="group relative overflow-hidden">
