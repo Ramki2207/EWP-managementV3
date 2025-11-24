@@ -25,6 +25,7 @@ interface VerdelersStepProps {
   onBack?: () => void;
   hideNavigation?: boolean;
   autoOpenVerdelerId?: string;
+  onVerdelerDetailsClose?: () => void;
 }
 
 const VerdelersStep: React.FC<VerdelersStepProps> = ({
@@ -33,7 +34,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   onNext,
   onBack,
   hideNavigation = false,
-  autoOpenVerdelerId
+  autoOpenVerdelerId,
+  onVerdelerDetailsClose
 }) => {
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
@@ -350,6 +352,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleCloseDetails = () => {
     setShowVerdelerDetails(false);
     setSelectedVerdeler(null);
+    onVerdelerDetailsClose?.();
   };
 
   const handleEditVerdeler = (verdeler: any) => {

@@ -958,6 +958,7 @@ const ProjectDetails = () => {
             onBack={() => {}} // No back step in project details
             hideNavigation={true} // Hide navigation buttons in project details
             autoOpenVerdelerId={searchParams.get('verdeler') || undefined}
+            onVerdelerDetailsClose={() => setSearchParams({})}
           />
         )}
 
