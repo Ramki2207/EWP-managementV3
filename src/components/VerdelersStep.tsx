@@ -129,12 +129,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
   const loadVerdelersFromDatabase = async () => {
     if (!projectData?.id) return;
-    
+
     try {
       console.log('🔄 Loading verdelers from database for project:', projectData.id);
       const distributors = await dataService.getDistributorsByProject(projectData.id);
       console.log('📥 Loaded distributors from database:', distributors.length);
-      
+
       // Convert database format to component format
       // Keep BOTH camelCase (for UI) and snake_case (for other components like ProjectDocumentManager)
       const formattedVerdelers = distributors.map((dist: any) => ({
@@ -168,17 +168,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         deliveryDate: dist.gewenste_lever_datum,
         gewenste_lever_datum: dist.gewenste_lever_datum // Keep snake_case for compatibility
       }));
-      
+
       console.log('✅ Formatted verdelers:', formattedVerdelers);
       setVerdelers(formattedVerdelers);
       // Don't call onVerdelersChange here - we're just loading existing data, not changing it
       // This prevents infinite refresh loops
 
-      // Load pending notifications for these verdelers
-      await loadPendingNotifications(formattedVerdelers);
+      // Load pending notifications in the background (don't await)
+      loadPendingNotifications(formattedVerdelers);
 
-      // Load delivery completion status
-      await loadDeliveryCompletionStatus(formattedVerdelers);
+      // Load delivery completion status in the background (don't await)
+      loadDeliveryCompletionStatus(formattedVerdelers);
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
     }
@@ -277,7 +277,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
   // Auto-open verdeler test when coming from notification
   useEffect(() => {
-    if (autoOpenVerdelerId && verdelers.length > 0) {
+    if (autoOpenVerdelerId) {
+      // Try to find in current verdelers state first (includes initial projectData.distributors)
       const verdelerToOpen = verdelers.find(v => v.id === autoOpenVerdelerId);
       if (verdelerToOpen) {
         console.log('🎯 Auto-opening verdeler:', verdelerToOpen);
@@ -286,7 +287,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         setAutoOpenTestForVerdeler(autoOpenVerdelerId);
       }
     }
-  }, [autoOpenVerdelerId, verdelers]);
+  }, [autoOpenVerdelerId]);
 
   const loadUsers = async () => {
     try {
