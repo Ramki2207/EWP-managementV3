@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import ewpLogo from '../assets/ewp2-logo.png';
 
 // Cache for the logo image
 let logoImageCache: string | null = null;
@@ -36,7 +35,7 @@ const loadLogoImage = (): Promise<string> => {
     };
 
     img.onerror = () => reject(new Error('Failed to load logo'));
-    img.src = ewpLogo;
+    img.src = '/EWP-Logo_blauw.png';
   });
 };
 
