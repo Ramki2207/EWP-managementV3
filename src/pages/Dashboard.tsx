@@ -2001,8 +2001,8 @@ const Dashboard = () => {
         </>
       )}
 
-      {/* Enhanced KPI Dashboard - Hidden for Admin */}
-      {effectiveRole !== 'admin' && (
+      {/* Enhanced KPI Dashboard - Hidden for Admin and Projectleider */}
+      {effectiveRole !== 'admin' && effectiveRole !== 'projectleider' && (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Total Projects KPI */}
         <div className="group relative overflow-hidden">
