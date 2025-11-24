@@ -285,7 +285,10 @@ const VerdelerDetails = () => {
     }
     try {
       console.log('Saving distributor with data:', editedDistributor);
-      
+
+      // Check if status is being changed to "Levering"
+      const statusChangedToLevering = distributor?.status !== 'Levering' && editedDistributor.status === 'Levering';
+
       // Map frontend fields to database fields - use the exact database field names
       const updateData = {
         distributorId: editedDistributor.distributor_id,
@@ -306,11 +309,11 @@ const VerdelerDetails = () => {
         profilePhoto: editedDistributor.profile_photo,
         status: editedDistributor.status,
         // Only include new columns if they exist in database
-        ...(editedDistributor.toegewezen_monteur !== undefined && { 
-          toegewezenMonteur: editedDistributor.toegewezen_monteur 
+        ...(editedDistributor.toegewezen_monteur !== undefined && {
+          toegewezenMonteur: editedDistributor.toegewezen_monteur
         }),
-        ...(editedDistributor.gewenste_lever_datum !== undefined && { 
-          gewensteLeverDatum: editedDistributor.gewenste_lever_datum 
+        ...(editedDistributor.gewenste_lever_datum !== undefined && {
+          gewensteLeverDatum: editedDistributor.gewenste_lever_datum
         })
       };
 
@@ -321,7 +324,20 @@ const VerdelerDetails = () => {
       // Update the local state with the edited data
       setDistributor(editedDistributor);
       setIsEditing(false);
-      toast.success('Verdeler gegevens opgeslagen!');
+
+      if (statusChangedToLevering) {
+        toast.success('Verdeler status bijgewerkt naar Levering! Het levering proces is gestart.');
+
+        // If user is logistiek, automatically switch to levering tab
+        if (currentUser?.role === 'logistiek') {
+          setActiveTab('levering');
+          toast.info('Je kunt nu de levering checklist invullen in het Levering tabblad.');
+        } else {
+          toast.info('Logistiek medewerkers kunnen nu de levering checklist invullen.');
+        }
+      } else {
+        toast.success('Verdeler gegevens opgeslagen!');
+      }
     } catch (error) {
       console.error('Error saving distributor:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van de verdeler');
@@ -702,6 +718,7 @@ const VerdelerDetails = () => {
                         <option value="In productie">In productie</option>
                         <option value="Testen">Testen</option>
                         <option value="Gereed">Gereed</option>
+                        <option value="Levering">Levering</option>
                         <option value="Gereed voor oplevering">Gereed voor oplevering</option>
                         <option value="Opgeleverd">Opgeleverd</option>
                       </select>

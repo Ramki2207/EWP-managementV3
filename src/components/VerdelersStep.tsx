@@ -1713,6 +1713,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                           <option value="In productie">In productie</option>
                           <option value="Testen">Testen</option>
                           <option value="Gereed">Gereed</option>
+                          <option value="Levering">Levering</option>
                           <option value="Opgeleverd">Opgeleverd</option>
                         </>
                       )}
