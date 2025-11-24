@@ -788,7 +788,10 @@ const ProjectDetails = () => {
                     <div
                       key={verdeler.id}
                       className="bg-[#2A303C] rounded-lg p-3 hover:bg-[#374151] transition-colors cursor-pointer"
-                      onClick={() => navigate(`/verdelers/${verdeler.id}`)}
+                      onClick={() => {
+                        setActiveTab('verdelers');
+                        setSearchParams({ verdeler: verdeler.id });
+                      }}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <h4 className="font-semibold text-white text-sm truncate pr-2">
