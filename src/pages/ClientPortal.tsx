@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Lock, Eye, Download, Calendar, Package, CheckCircle,
   AlertTriangle, FileText, Server, Building, User, Mail, Phone,
-  Folder, ChevronRight, ChevronDown, X
+  Folder, ChevronRight, ChevronDown, X, ExternalLink
 } from 'lucide-react';
 import { clientPortalService } from '../lib/clientPortalService';
 import { dataService } from '../lib/supabase';
@@ -488,6 +488,34 @@ const ClientPortal = () => {
                 Toegang verloopt: {portalData?.expires_at ? new Date(portalData.expires_at).toLocaleDateString('nl-NL') : '-'}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Website CTA Banner */}
+        <div className="bg-gradient-to-r from-blue-600/20 to-blue-500/20 backdrop-blur-lg rounded-2xl shadow-xl border border-blue-500/30 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-blue-500/20 rounded-xl">
+                <Building size={28} className="text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">
+                  Ontdek meer over onze diensten
+                </h3>
+                <p className="text-sm text-gray-300">
+                  Bezoek onze website voor meer informatie over EWP Paneelbouw
+                </p>
+              </div>
+            </div>
+            <a
+              href="https://ewp-paneelbouw.nl/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              <span className="font-semibold">Bezoek website</span>
+              <ExternalLink size={18} />
+            </a>
           </div>
         </div>
 
