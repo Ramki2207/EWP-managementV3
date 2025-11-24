@@ -38,12 +38,12 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
       try {
         // Dynamically import the permissions hook to avoid Supabase dependency
         const { useEnhancedPermissions } = await import('../hooks/useEnhancedPermissions');
-        
+
         // Get current user from localStorage
         const currentUserId = localStorage.getItem('currentUserId');
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const currentUser = users.find((u: any) => u.id === currentUserId);
-        
+
         if (!currentUser) {
           setPermissionState({ loading: false, hasAccess: false, user: null });
           return;
@@ -52,9 +52,18 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
         // Check permissions
         let hasAccess = false;
 
-        if (currentUser.role === 'admin') {
+        // Check if admin is viewing as projectleider
+        const viewAsProjectleider = localStorage.getItem('viewAsProjectleider') === 'true';
+        const effectiveRole = currentUser.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser.role;
+
+        if (currentUser.role === 'admin' && !viewAsProjectleider) {
           hasAccess = true;
           console.log('🔐 ROUTE: Admin user - access granted to', requiredPermission.module);
+        } else if (effectiveRole === 'projectleider') {
+          // Projectleider has access to specific modules
+          const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account'];
+          hasAccess = projectleiderModules.includes(requiredPermission.module);
+          console.log('🔐 ROUTE: Projectleider access to', requiredPermission.module, '=', hasAccess);
         } else if (currentUser.username === 'Annemieke' && requiredPermission.module === 'worksheets') {
           // Special access for Annemieke to Personeelsbeheer
           hasAccess = true;
@@ -75,6 +84,18 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
     };
 
     checkPermissions();
+
+    // Listen for view mode changes
+    const handleViewChange = () => {
+      console.log('🔄 ROUTE: View mode changed, rechecking permissions');
+      checkPermissions();
+    };
+
+    window.addEventListener('viewAsProjectleiderChanged', handleViewChange);
+
+    return () => {
+      window.removeEventListener('viewAsProjectleiderChanged', handleViewChange);
+    };
   }, [isLoggedIn, requiredPermission]);
   
   if (!isLoggedIn) {

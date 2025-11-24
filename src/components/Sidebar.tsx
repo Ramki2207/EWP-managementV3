@@ -36,6 +36,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [viewAsProjectleider, setViewAsProjectleider] = useState(false);
   const { openTab } = useTabContext();
 
   // Load user data directly without using the hook to avoid dependency issues
@@ -69,6 +70,31 @@ const Sidebar = () => {
     };
 
     loadUser();
+
+    // Load initial viewAsProjectleider state
+    const initialView = localStorage.getItem('viewAsProjectleider') === 'true';
+    setViewAsProjectleider(initialView);
+
+    // Listen for storage changes (when toggle is clicked)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'viewAsProjectleider') {
+        setViewAsProjectleider(e.newValue === 'true');
+      }
+    };
+
+    // Listen for custom event (for same-tab changes)
+    const handleViewChange = () => {
+      const newView = localStorage.getItem('viewAsProjectleider') === 'true';
+      setViewAsProjectleider(newView);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('viewAsProjectleiderChanged', handleViewChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('viewAsProjectleiderChanged', handleViewChange);
+    };
   }, []);
 
   const hasModuleAccess = (module?: SystemModule) => {
@@ -78,10 +104,23 @@ const Sidebar = () => {
       return false;
     }
 
-    // Admin users have access to everything
-    if (currentUser.role === 'admin') {
+    // Check if admin is viewing as projectleider
+    const effectiveRole = currentUser.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser.role;
+
+    // Admin users have access to everything (unless viewing as projectleider)
+    if (currentUser.role === 'admin' && !viewAsProjectleider) {
       console.log('✅ SIDEBAR: Admin user - access granted to', module);
       return true;
+    }
+
+    // If admin is viewing as projectleider, treat them as projectleider
+    if (effectiveRole === 'projectleider') {
+      console.log('🔍 SIDEBAR: Admin viewing as projectleider - checking projectleider permissions for', module);
+      // Projectleider has access to specific modules
+      const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account'];
+      const hasAccess = projectleiderModules.includes(module);
+      console.log('✅ SIDEBAR: Projectleider access to', module, ':', hasAccess);
+      return hasAccess;
     }
 
     // Special access for Annemieke to worksheets (Personeelsbeheer)

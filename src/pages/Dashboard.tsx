@@ -70,6 +70,8 @@ const Dashboard = () => {
     const newValue = !viewAsProjectleider;
     setViewAsProjectleider(newValue);
     localStorage.setItem('viewAsProjectleider', String(newValue));
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new Event('viewAsProjectleiderChanged'));
   };
 
   const loadData = async () => {
