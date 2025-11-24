@@ -754,6 +754,83 @@ const ProjectDetails = () => {
           <div>
             <h2 className="text-lg text-gradient mb-6">Project gegevens</h2>
 
+            {/* Multi-Verdeler Notification */}
+            {project?.distributors && project.distributors.length > 1 && (
+              <div className="mb-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-blue-400 mb-1">
+                      Let op: Dit project heeft meerdere verdelers
+                    </h3>
+                    <p className="text-sm text-gray-300">
+                      Je hoeft alleen de <span className="font-semibold text-blue-400">verdeler status</span> aan te passen, niet de project status.
+                      De project status wordt automatisch bijgewerkt wanneer alle verdeler statussen zijn aangepast.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Verdeler Status Overview */}
+            {project?.distributors && project.distributors.length > 1 && (
+              <div className="mb-6 bg-[#1e2530] border border-gray-700 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center space-x-2">
+                  <Server size={16} className="text-blue-400" />
+                  <span>Verdeler Status Overzicht</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {project.distributors.map((verdeler: any) => (
+                    <div
+                      key={verdeler.id}
+                      className="bg-[#2A303C] rounded-lg p-3 hover:bg-[#374151] transition-colors cursor-pointer"
+                      onClick={() => navigate(`/verdelers/${verdeler.id}`)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-semibold text-white text-sm truncate pr-2">
+                          {verdeler.kast_naam || 'Naamloze Verdeler'}
+                        </h4>
+                        <span className={`text-xs px-2 py-1 rounded-full whitespace-nowrap ${
+                          verdeler.status === 'Opgeleverd' ? 'bg-green-900/30 text-green-400' :
+                          verdeler.status === 'Levering' ? 'bg-blue-900/30 text-blue-400' :
+                          verdeler.status === 'Testen' ? 'bg-yellow-900/30 text-yellow-400' :
+                          verdeler.status === 'Gereed' ? 'bg-purple-900/30 text-purple-400' :
+                          verdeler.status === 'In productie' ? 'bg-orange-900/30 text-orange-400' :
+                          'bg-gray-700 text-gray-300'
+                        }`}>
+                          {verdeler.status || 'Geen status'}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-xs text-gray-400">
+                        {verdeler.systeem && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-gray-500">Systeem:</span>
+                            <span className="text-gray-300">{verdeler.systeem}</span>
+                          </div>
+                        )}
+                        {verdeler.in_in_a && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-gray-500">In:</span>
+                            <span className="text-gray-300">{verdeler.in_in_a}A</span>
+                          </div>
+                        )}
+                        {verdeler.toegewezen_monteur && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-gray-500">Monteur:</span>
+                            <span className="text-gray-300">{verdeler.toegewezen_monteur}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-6">
               {[
                 { label: "Projectnummer", field: "project_number", readOnly: true },
