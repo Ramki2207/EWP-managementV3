@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EnhancedUser, SystemModule, ModulePermissions } from '../types/userRoles';
+import { EnhancedUser, SystemModule, ModulePermissions, ROLE_TEMPLATES, SystemRole, UserPermissions } from '../types/userRoles';
 
 export const useEnhancedPermissions = () => {
   const [currentUser, setCurrentUser] = useState<EnhancedUser | null>(null);
@@ -62,6 +62,12 @@ export const useEnhancedPermissions = () => {
     }
   };
 
+  // Helper function to get default permissions for a role
+  const getDefaultPermissions = (role: SystemRole): UserPermissions => {
+    const template = ROLE_TEMPLATES[role];
+    return template?.permissions || ROLE_TEMPLATES.standard_user.permissions;
+  };
+
   const hasPermission = useCallback((
     module: SystemModule,
     permission: keyof ModulePermissions
@@ -70,8 +76,14 @@ export const useEnhancedPermissions = () => {
 
     if (!currentUser) return false;
 
-    // Admins have all permissions
-    if (currentUser.role === 'admin') {
+    // Check if admin is viewing as projectleider
+    const viewAsProjectleider = localStorage.getItem('viewAsProjectleider') === 'true';
+    const effectiveRole = currentUser.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser.role;
+
+    console.log(`🔄 EFFECTIVE ROLE: ${effectiveRole} (actual: ${currentUser.role}, viewAsProjectleider: ${viewAsProjectleider})`);
+
+    // Admins have all permissions (unless viewing as projectleider)
+    if (effectiveRole === 'admin') {
       console.log('✅ PERMISSION: Admin user - all permissions granted for', module, permission);
       return true;
     }
@@ -89,11 +101,19 @@ export const useEnhancedPermissions = () => {
       }
     }
 
-    // Check specific permission
-    const modulePermissions = currentUser.permissions?.[module];
+    // If viewing as projectleider, use projectleider permissions
+    let modulePermissions;
+    if (effectiveRole === 'projectleider' && currentUser.role === 'admin') {
+      const projectleiderPerms = getDefaultPermissions('projectleider');
+      modulePermissions = projectleiderPerms[module];
+      console.log(`🔄 USING PROJECTLEIDER PERMISSIONS for ${module}:`, modulePermissions);
+    } else {
+      modulePermissions = currentUser.permissions?.[module];
+    }
+
     const hasAccess = modulePermissions?.[permission] || false;
-    
-    console.log(`🔐 PERMISSION RESULT: ${module}.${permission} = ${hasAccess} (User: ${currentUser.username}, Role: ${currentUser.role})`);
+
+    console.log(`🔐 PERMISSION RESULT: ${module}.${permission} = ${hasAccess} (User: ${currentUser.username}, Effective Role: ${effectiveRole})`);
     console.log(`🔐 PERMISSION DETAILS: Module permissions for ${module}:`, modulePermissions);
     
     // Extra debug for problematic modules
@@ -118,12 +138,6 @@ export const useEnhancedPermissions = () => {
     console.log('🔄 PERMISSIONS: Force refreshing permissions from localStorage...');
     setRefreshTrigger(prev => prev + 1);
   }, []);
-
-  // Helper function to get default permissions for a role
-  const getDefaultPermissions = (role: SystemRole): UserPermissions => {
-    const template = ROLE_TEMPLATES[role];
-    return template?.permissions || ROLE_TEMPLATES.standard_user.permissions;
-  };
 
   const getModulePermissions = useCallback((module: SystemModule): ModulePermissions => {
     if (!currentUser) {
