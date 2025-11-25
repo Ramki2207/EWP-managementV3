@@ -81,8 +81,8 @@ const Dashboard = () => {
       
       let filteredData = data || [];
 
-      // Role-based filtering for Montage users
-      if (effectiveRole === 'montage') {
+      // Role-based filtering for Montage users (except Sven who sees all projects)
+      if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const beforeMontageFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const hasAssignedVerdelers = project.distributors?.some(
@@ -98,6 +98,8 @@ const Dashboard = () => {
           return hasAssignedVerdelers;
         });
         console.log(`🔧 DASHBOARD MONTAGE FILTER: Filtered ${beforeMontageFilter} projects down to ${filteredData.length} for monteur ${currentUser.username}`);
+      } else if (effectiveRole === 'montage' && currentUser.username === 'Sven') {
+        console.log(`🔧 DASHBOARD MONTAGE FILTER: Sven sees all ${filteredData.length} projects (special access)`);
       }
 
       // Role-based filtering for Tester users
@@ -270,8 +272,8 @@ const Dashboard = () => {
       console.log('🌍 DASHBOARD: Raw projects loaded:', filteredProjects.length);
       console.log('🌍 DASHBOARD: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
 
-      // Role-based filtering for Montage users
-      if (effectiveRole === 'montage') {
+      // Role-based filtering for Montage users (except Sven who sees all projects)
+      if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const beforeMontageFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           // Check if this project has any verdelers assigned to this monteur
@@ -288,6 +290,8 @@ const Dashboard = () => {
           return hasAssignedVerdelers;
         });
         console.log(`🔧 DASHBOARD MONTAGE FILTER: Filtered ${beforeMontageFilter} projects down to ${filteredProjects.length} for monteur ${currentUser.username}`);
+      } else if (effectiveRole === 'montage' && currentUser.username === 'Sven') {
+        console.log(`🔧 DASHBOARD MONTAGE FILTER (loadProjects): Sven sees all ${filteredProjects.length} projects (special access)`);
       }
 
       // Role-based filtering for Tester users
@@ -557,8 +561,8 @@ const Dashboard = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
-      // Role-based filtering for Montage users
-      if (effectiveRole === 'montage') {
+      // Role-based filtering for Montage users (except Sven who sees all projects)
+      if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const hasAssignedVerdelers = project.distributors?.some(
           (dist: any) => dist.toegewezen_monteur === currentUser.username
         );
@@ -771,6 +775,113 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Special Section for Sven */}
+      {currentUser?.username === 'Sven' && (
+        <div className="card p-6 mb-8 border-2 border-blue-500/30">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <FolderOpen size={20} className="text-blue-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Mijn Toegewezen Verdelers</h2>
+            <span className="text-sm text-gray-400">Projecten met verdelers toegewezen aan jou</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            {(() => {
+              const myProjects = projects
+                .filter(project =>
+                  project.distributors?.some(
+                    (dist: any) => dist.toegewezen_monteur === 'Sven'
+                  )
+                )
+                .map(project => ({
+                  ...project,
+                  myVerdelers: project.distributors?.filter(
+                    (dist: any) => dist.toegewezen_monteur === 'Sven'
+                  ) || []
+                }));
+
+              if (myProjects.length === 0) {
+                return (
+                  <div className="text-center py-12">
+                    <FolderOpen size={48} className="mx-auto text-gray-600 mb-4" />
+                    <p className="text-gray-400">Geen verdelers aan jou toegewezen</p>
+                  </div>
+                );
+              }
+
+              return (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Project</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Klant</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Locatie</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Mijn Verdelers</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Status</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Actie</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myProjects.map((project) => (
+                      <tr
+                        key={project.id}
+                        className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors"
+                      >
+                        <td className="py-4 px-4">
+                          <div className="font-medium text-white">{project.project_number}</div>
+                          <div className="text-sm text-gray-400 line-clamp-1">{project.description}</div>
+                        </td>
+                        <td className="py-4 px-4 text-sm text-gray-300">{project.client}</td>
+                        <td className="py-4 px-4 text-sm text-gray-300">{project.location}</td>
+                        <td className="py-4 px-4">
+                          <div className="space-y-1">
+                            {project.myVerdelers.map((verdeler: any, idx: number) => (
+                              <div
+                                key={idx}
+                                className="text-sm bg-blue-500/10 border border-blue-500/30 rounded px-2 py-1 inline-block mr-1 mb-1"
+                              >
+                                <span className="text-blue-400 font-medium">{verdeler.distributor_id}</span>
+                                {verdeler.kast_naam && (
+                                  <span className="text-gray-400"> - {verdeler.kast_naam}</span>
+                                )}
+                              </div>
+                            ))}
+                            <div className="text-xs text-gray-500 mt-1">
+                              {project.myVerdelers.length} verdeler{project.myVerdelers.length !== 1 ? 's' : ''}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'In behandeling' ? 'bg-blue-500/20 text-blue-400' :
+                            project.status === 'Gereed' ? 'bg-green-500/20 text-green-400' :
+                            project.status === 'Testen' ? 'bg-yellow-500/20 text-yellow-400' :
+                            project.status === 'Levering' ? 'bg-orange-500/20 text-orange-400' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {project.status || 'Onbekend'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <button
+                            onClick={() => handleProjectClick(project.id)}
+                            disabled={isProjectLocked(project.id)}
+                            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+                          >
+                            Open
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Admin and Projectleider: Quick Actions at Top */}
       {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (

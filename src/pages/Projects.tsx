@@ -382,11 +382,11 @@ const Projects = () => {
         console.log(`💼 ANNEMIEKE FILTER: Annemieke has special access - skipping role/location filters for ${project.project_number}`);
       }
 
-      // Role-based filtering for Montage users (skip for Annemieke)
+      // Role-based filtering for Montage users (skip for Annemieke and Sven)
       if (!isAnnemieke && currentUser?.role === 'montage') {
-        // Exception for Zouhair Taha and Ibrahim Abdalla - can see all projects (montage + tester role)
-        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla') {
-          console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS (MONTAGE + TESTER)`);
+        // Exception for Zouhair Taha, Ibrahim Abdalla, and Sven - can see all projects
+        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Sven') {
+          console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS`);
           // Skip the montage filtering - they can see all projects
         } else {
           // Check if this project has any verdelers assigned to this monteur
