@@ -789,6 +789,8 @@ const Dashboard = () => {
 
           <div className="overflow-x-auto">
             {(() => {
+              const completedStatuses = ['Testen', 'Levering', 'Opgeleverd'];
+
               const myProjects = projects
                 .filter(project =>
                   project.distributors?.some(
@@ -800,7 +802,13 @@ const Dashboard = () => {
                   myVerdelers: project.distributors?.filter(
                     (dist: any) => dist.toegewezen_monteur === 'Sven'
                   ) || []
-                }));
+                }))
+                .filter(project => {
+                  const allCompleted = project.myVerdelers.every(
+                    (verdeler: any) => completedStatuses.includes(verdeler.status)
+                  );
+                  return !allCompleted;
+                });
 
               if (myProjects.length === 0) {
                 return (
