@@ -2,17 +2,24 @@ import jsPDF from 'jspdf';
 
 // Cache for the logo image
 let logoImageCache: string | null = null;
+let logoLoadingPromise: Promise<string> | null = null;
 
 /**
  * Load and cache the EWP logo as base64
  */
 const loadLogoImage = (): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    if (logoImageCache) {
-      resolve(logoImageCache);
-      return;
-    }
+  // If already cached, return immediately
+  if (logoImageCache) {
+    return Promise.resolve(logoImageCache);
+  }
 
+  // If already loading, return the existing promise
+  if (logoLoadingPromise) {
+    return logoLoadingPromise;
+  }
+
+  // Start loading
+  logoLoadingPromise = new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
 
@@ -25,18 +32,35 @@ const loadLogoImage = (): Promise<string> => {
         if (ctx) {
           ctx.drawImage(img, 0, 0);
           logoImageCache = canvas.toDataURL('image/png');
+          logoLoadingPromise = null;
           resolve(logoImageCache);
         } else {
+          logoLoadingPromise = null;
           reject(new Error('Could not get canvas context'));
         }
       } catch (error) {
+        logoLoadingPromise = null;
         reject(error);
       }
     };
 
-    img.onerror = () => reject(new Error('Failed to load logo'));
+    img.onerror = () => {
+      logoLoadingPromise = null;
+      reject(new Error('Failed to load logo'));
+    };
+
     img.src = '/EWP-Logo_blauw.png';
   });
+
+  return logoLoadingPromise;
+};
+
+/**
+ * Preload the logo image to cache it early
+ * Call this on app initialization for better performance
+ */
+export const preloadLogoImage = () => {
+  loadLogoImage().catch(err => console.warn('Logo preload failed:', err));
 };
 
 /**

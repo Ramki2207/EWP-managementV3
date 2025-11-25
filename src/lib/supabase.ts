@@ -1667,6 +1667,33 @@ export const dataService = {
     }
   },
 
+  async getSpecificTestReviewNotification(projectId: string, distributorId: string, testType: string, status?: string) {
+    try {
+      let query = supabase
+        .from('test_review_notifications')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('distributor_id', distributorId)
+        .eq('test_type', testType);
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query.maybeSingle();
+
+      if (error) {
+        console.error('Database error in getSpecificTestReviewNotification:', error);
+        throw error;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Network error in getSpecificTestReviewNotification:', err);
+      throw new Error(`Failed to fetch test review notification: ${getErrorMessage(err)}`);
+    }
+  },
+
   async updateTestReviewNotification(
     id: string,
     updates: {

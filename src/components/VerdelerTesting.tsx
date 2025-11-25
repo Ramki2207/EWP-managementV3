@@ -256,53 +256,57 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
       setCurrentStep(currentStep + 1);
       toast.success('Werkplaats Checklist succesvol afgerond!');
     } else {
-      // Generate PDF when inspection report is completed
-      try {
-        setGeneratingPDF(true);
-        await generateVerdelerTestingPDF(
+      // Show immediate feedback
+      toast.success('Keuringsrapport succesvol afgerond!');
+      setShowModal(false);
+
+      // Generate PDF and update notification in the background
+      setGeneratingPDF(true);
+
+      Promise.all([
+        // Generate and save PDF
+        generateVerdelerTestingPDF(
           updatedTestData,
           verdeler,
           projectNumber,
           projectId,
           distributorId
-        );
-        toast.success('Keuringsrapport voltooid en PDF automatisch opgeslagen!');
-      } catch (error) {
-        console.error('Error generating PDF:', error);
-        toast.error('Keuringsrapport voltooid, maar PDF generatie mislukt');
-      } finally {
-        setGeneratingPDF(false);
-      }
+        ).catch(error => {
+          console.error('Error generating PDF:', error);
+          toast.error('PDF generatie mislukt. Probeer het opnieuw.');
+        }),
 
-      // Update the test review notification to 'approved' status
-      if (projectId && distributorId) {
-        try {
-          const currentUser = localStorage.getItem('currentUserId');
-          const users = JSON.parse(localStorage.getItem('users') || '[]');
-          const user = users.find((u: any) => u.id === currentUser);
+        // Update notification status
+        (async () => {
+          if (projectId && distributorId) {
+            try {
+              const currentUser = localStorage.getItem('currentUserId');
+              const users = JSON.parse(localStorage.getItem('users') || '[]');
+              const user = users.find((u: any) => u.id === currentUser);
 
-          // Find and update the notification for this test
-          const notifications = await dataService.getTestReviewNotifications('pending_review');
-          const notification = notifications.find((n: any) =>
-            n.project_id === projectId &&
-            n.distributor_id === distributorId &&
-            n.test_type === 'verdeler_testing_tot_630'
-          );
+              // Use optimized specific query instead of fetching all notifications
+              const notification = await dataService.getSpecificTestReviewNotification(
+                projectId,
+                distributorId,
+                'verdeler_testing_tot_630',
+                'pending_review'
+              );
 
-          if (notification) {
-            await dataService.updateTestReviewNotification(notification.id, {
-              status: 'approved',
-              reviewedBy: user?.name || 'Admin'
-            });
-            console.log('✅ Test notification updated to approved');
+              if (notification) {
+                await dataService.updateTestReviewNotification(notification.id, {
+                  status: 'approved',
+                  reviewedBy: user?.name || 'Admin'
+                });
+                console.log('✅ Test notification updated to approved');
+              }
+            } catch (error) {
+              console.error('Error updating test notification:', error);
+            }
           }
-        } catch (error) {
-          console.error('Error updating test notification:', error);
-        }
-      }
-
-      toast.success('Keuringsrapport succesvol afgerond!');
-      setShowModal(false);
+        })()
+      ]).finally(() => {
+        setGeneratingPDF(false);
+      });
     }
   }, [currentStep, testData, verdelerInfo.id, onComplete, verdeler, projectNumber, projectId, distributorId]);
 

@@ -31,6 +31,7 @@ import { requestNotificationPermission, subscribeToNotifications, subscribeToTes
 import { projectLockManager } from "./lib/projectLocks";
 import { TabProvider } from "./contexts/TabContext";
 import { TabBar } from "./components/TabBar";
+import { preloadLogoImage } from "./lib/pdfUtils";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -75,6 +76,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
+  useEffect(() => {
+    preloadLogoImage();
+  }, []);
+
   return (
     <Router>
       <TabProvider>
