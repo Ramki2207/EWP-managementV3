@@ -36,7 +36,7 @@ const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userLoading, setUserLoading] = useState(true);
-  const [viewAsProjectleider, setViewAsProjectleider] = useState(false);
+  const [viewAsRole, setViewAsRole] = useState<string>('admin');
   const { openTab } = useTabContext();
 
   // Load user data directly without using the hook to avoid dependency issues
@@ -71,21 +71,21 @@ const Sidebar = () => {
 
     loadUser();
 
-    // Load initial viewAsProjectleider state
-    const initialView = localStorage.getItem('viewAsProjectleider') === 'true';
-    setViewAsProjectleider(initialView);
+    // Load initial viewAsRole state
+    const initialRole = localStorage.getItem('viewAsRole') || 'admin';
+    setViewAsRole(initialRole);
 
-    // Listen for storage changes (when toggle is clicked)
+    // Listen for storage changes (when role is changed)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'viewAsProjectleider') {
-        setViewAsProjectleider(e.newValue === 'true');
+      if (e.key === 'viewAsRole') {
+        setViewAsRole(e.newValue || 'admin');
       }
     };
 
     // Listen for custom event (for same-tab changes)
     const handleViewChange = () => {
-      const newView = localStorage.getItem('viewAsProjectleider') === 'true';
-      setViewAsProjectleider(newView);
+      const newRole = localStorage.getItem('viewAsRole') || 'admin';
+      setViewAsRole(newRole);
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -104,16 +104,16 @@ const Sidebar = () => {
       return false;
     }
 
-    // Check if admin is viewing as projectleider
-    const effectiveRole = currentUser.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser.role;
+    // Check if admin is viewing as another role
+    const effectiveRole = currentUser.role === 'admin' ? viewAsRole : currentUser.role;
 
-    // Admin users have access to everything (unless viewing as projectleider)
-    if (currentUser.role === 'admin' && !viewAsProjectleider) {
+    // Admin users have access to everything (unless viewing as another role)
+    if (currentUser.role === 'admin' && viewAsRole === 'admin') {
       console.log('✅ SIDEBAR: Admin user - access granted to', module);
       return true;
     }
 
-    // If admin is viewing as projectleider, treat them as projectleider
+    // If admin is viewing as another role, treat them as that role
     if (effectiveRole === 'projectleider') {
       console.log('🔍 SIDEBAR: Admin viewing as projectleider - checking projectleider permissions for', module);
       // Projectleider has access to specific modules

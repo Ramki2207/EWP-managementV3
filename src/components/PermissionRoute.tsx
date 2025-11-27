@@ -52,11 +52,11 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
         // Check permissions
         let hasAccess = false;
 
-        // Check if admin is viewing as projectleider
-        const viewAsProjectleider = localStorage.getItem('viewAsProjectleider') === 'true';
-        const effectiveRole = currentUser.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser.role;
+        // Check if admin is viewing as another role
+        const viewAsRole = localStorage.getItem('viewAsRole') || 'admin';
+        const effectiveRole = currentUser.role === 'admin' ? viewAsRole : currentUser.role;
 
-        if (currentUser.role === 'admin' && !viewAsProjectleider) {
+        if (currentUser.role === 'admin' && viewAsRole === 'admin') {
           hasAccess = true;
           console.log('🔐 ROUTE: Admin user - access granted to', requiredPermission.module);
         } else if (effectiveRole === 'projectleider') {
@@ -73,7 +73,7 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
           hasAccess = modulePerms?.[requiredPermission.permission] || false;
           console.log('🔐 ROUTE: Permission check for', requiredPermission.module, requiredPermission.permission, '=', hasAccess);
           console.log('🔐 ROUTE: Module permissions:', modulePerms);
-          console.log('🔐 ROUTE: User:', currentUser.username, 'Role:', currentUser.role);
+          console.log('🔐 ROUTE: User:', currentUser.username, 'Role:', effectiveRole);
         }
 
         setPermissionState({ loading: false, hasAccess, user: currentUser });

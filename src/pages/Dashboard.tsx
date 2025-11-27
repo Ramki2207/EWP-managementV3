@@ -60,16 +60,15 @@ const Dashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
-  const [viewAsProjectleider, setViewAsProjectleider] = useState(() => {
-    return localStorage.getItem('viewAsProjectleider') === 'true';
+  const [viewAsRole, setViewAsRole] = useState<string>(() => {
+    return localStorage.getItem('viewAsRole') || 'admin';
   });
 
-  const effectiveRole = currentUser?.role === 'admin' && viewAsProjectleider ? 'projectleider' : currentUser?.role;
+  const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
-  const toggleViewMode = () => {
-    const newValue = !viewAsProjectleider;
-    setViewAsProjectleider(newValue);
-    localStorage.setItem('viewAsProjectleider', String(newValue));
+  const handleRoleChange = (role: string) => {
+    setViewAsRole(role);
+    localStorage.setItem('viewAsRole', role);
     // Dispatch custom event to notify other components
     window.dispatchEvent(new Event('viewAsProjectleiderChanged'));
   };
@@ -728,27 +727,25 @@ const Dashboard = () => {
                   })}
                 </p>
 
-                {/* Admin View Toggle */}
+                {/* Admin Role Selector */}
                 {currentUser?.role === 'admin' && (
                   <div className="mt-4 flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
                     <span className="text-sm text-gray-300">
                       Weergave als:
                     </span>
-                    <button
-                      onClick={toggleViewMode}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        viewAsProjectleider ? 'bg-blue-600' : 'bg-gray-600'
-                      }`}
+                    <select
+                      value={viewAsRole}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                      className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          viewAsProjectleider ? 'translate-x-6' : 'translate-x-1'
-                        }`}
-                      />
-                    </button>
-                    <span className={`text-sm font-medium ${viewAsProjectleider ? 'text-blue-400' : 'text-gray-400'}`}>
-                      {viewAsProjectleider ? 'Projectleider' : 'Admin'}
-                    </span>
+                      <option value="admin">Admin</option>
+                      <option value="projectleider">Projectleider</option>
+                      <option value="montage">Montage</option>
+                      <option value="tester">Tester</option>
+                      <option value="logistiek">Logistiek</option>
+                      <option value="inkoop">Inkoop</option>
+                      <option value="engineering">Engineering</option>
+                    </select>
                   </div>
                 )}
               </div>
