@@ -424,7 +424,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
               className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               value={testData.workshopChecklist.testedBy}
               onChange={workshopTesterHandler}
-              placeholder="Naam monteur"
+              placeholder="Naam Tester"
             />
           </div>
         </div>
