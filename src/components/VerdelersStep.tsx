@@ -656,6 +656,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         toast.info('Voor projecten met 1 verdeler, verander de project status naar "Testen"');
       }
 
+      // If status was changed to "Levering", open the delivery checklist
+      if (verdelerData.status === 'Levering' && editingVerdeler) {
+        console.log('🚚 Status changed to Levering: Opening delivery checklist for verdeler:', editingVerdeler.distributor_id || editingVerdeler.distributorId);
+        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        if (updatedVerdeler) {
+          setTimeout(() => {
+            setVerdelerForLevering(updatedVerdeler);
+            setShowLeveringChecklist(true);
+          }, 100);
+        }
+      }
+
       handleCancelForm();
     } catch (error) {
       console.error('Error saving verdeler:', error);
@@ -923,6 +935,28 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     setVerdelerForLevering(null);
     // Reload verdelers to get updated status
     await loadVerdelersFromDatabase();
+
+    // Check if all verdelers now have "Levering" status
+    setTimeout(async () => {
+      const currentVerdelers = await dataService.getDistributorsByProject(projectData.id);
+      const allLevering = currentVerdelers.length > 0 && currentVerdelers.every((v: any) => v.status === 'Levering');
+
+      if (allLevering) {
+        console.log('✅ All verdelers have Levering status - updating project status to Levering');
+        try {
+          await dataService.updateProject(projectData.id, { status: 'Levering' });
+          toast.success('Alle verdelers hebben status Levering - project status is automatisch aangepast naar Levering');
+
+          // Trigger a reload of the parent component if possible
+          if (onVerdelersChange) {
+            onVerdelersChange(currentVerdelers);
+          }
+        } catch (error) {
+          console.error('Error updating project status:', error);
+          toast.error('Fout bij het updaten van project status');
+        }
+      }
+    }, 500);
   };
 
   return (
