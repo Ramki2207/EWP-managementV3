@@ -48,7 +48,7 @@ const TestReportPDF: React.FC<TestReportPDFProps> = ({ testData, verdeler, proje
     return (
       <div className="space-y-6 p-8 bg-white text-black">
         <div className="border-b border-gray-300 pb-4 mb-6">
-          <h2 className="text-xl font-semibold">Werkplaats Checklist</h2>
+          <h2 className="text-xl font-semibold">Werkplaats Test</h2>
           <div className="flex justify-between mt-2">
             <p>Verdeler: {verdeler.distributorId} - {verdeler.kastNaam || 'Naamloos'}</p>
             <p>Project: {projectNumber}</p>

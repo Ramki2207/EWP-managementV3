@@ -48,7 +48,7 @@ export const generateVerdelerTestingPDF = async (
       
       pdf.setFontSize(14);
       pdf.setTextColor(0, 0, 0);
-      pdf.text('Werkplaats Checklist', 20, yPosition);
+      pdf.text('Werkplaats Test', 20, yPosition);
       yPosition += 10;
       
       pdf.setFontSize(10);

@@ -147,13 +147,13 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           // Check if workshopChecklist is completed to determine the step
           if (workshopTest.data.workshopChecklist?.completed) {
             setCurrentStep(1);
-            toast.info('Werkplaats Checklist is voltooid - ga verder met Keuringsrapport');
+            toast.info('Werkplaats Test is voltooid - ga verder met Keuringsrapport');
           } else {
             const hasWorkshopData = workshopTest.data.workshopChecklist?.items?.some((item: any) =>
               item.passed !== null || item.notes !== ''
             );
             if (hasWorkshopData) {
-              toast.info('Werkplaats Checklist opgeslagen data geladen - ga verder waar je gebleven was');
+              toast.info('Werkplaats Test opgeslagen data geladen - ga verder waar je gebleven was');
             }
           }
           return;
@@ -180,14 +180,14 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
               // Check if workshopChecklist is completed to determine the step
               if (parsed.workshopChecklist?.completed) {
                 setCurrentStep(1);
-                toast.info('Werkplaats Checklist is voltooid - ga verder met Keuringsrapport');
+                toast.info('Werkplaats Test is voltooid - ga verder met Keuringsrapport');
               } else {
                 // Check if there's any data filled in the workshopChecklist
                 const hasWorkshopData = parsed.workshopChecklist?.items?.some((item: any) =>
                   item.passed !== null || item.notes !== ''
                 );
                 if (hasWorkshopData) {
-                  toast.info('Werkplaats Checklist opgeslagen data geladen - ga verder waar je gebleven was');
+                  toast.info('Werkplaats Test opgeslagen data geladen - ga verder waar je gebleven was');
                 }
               }
             }
@@ -254,7 +254,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
     
     if (currentStep < 1) {
       setCurrentStep(currentStep + 1);
-      toast.success('Werkplaats Checklist succesvol afgerond!');
+      toast.success('Werkplaats Test succesvol afgerond!');
     } else {
       // Show immediate feedback
       toast.success('Keuringsrapport succesvol afgerond!');
@@ -405,7 +405,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
 
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-blue-400">Werkplaats Checklist</h2>
+        <h2 className="text-xl font-semibold text-blue-400">Werkplaats Test</h2>
         
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
@@ -737,7 +737,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   const renderStepIndicator = () => {
     return (
       <div className="flex items-center justify-center mb-6">
-        {['Werkplaats Checklist', 'Keuringsrapport'].map((step, index) => (
+        {['Werkplaats Test', 'Keuringsrapport'].map((step, index) => (
           <React.Fragment key={index}>
             <div 
               className={`flex flex-col items-center ${index <= currentStep ? 'text-blue-400' : 'text-gray-500'}`}

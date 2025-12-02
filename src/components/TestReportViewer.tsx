@@ -55,7 +55,7 @@ const TestReportViewer: React.FC<TestReportViewerProps> = ({ testData, verdeler,
     return (
       <div className="space-y-6 print:p-8">
         <div className="print:border-b print:border-gray-300 print:pb-4 print:mb-6">
-          <h2 className="text-xl font-semibold text-blue-400 print:text-black">Werkplaats Checklist</h2>
+          <h2 className="text-xl font-semibold text-blue-400 print:text-black">Werkplaats Test</h2>
           <div className="flex justify-between mt-2 print:text-black">
             <p>Verdeler: {verdeler.distributorId} - {verdeler.kastNaam || 'Naamloos'}</p>
             <p>Project: {projectNumber}</p>
@@ -393,7 +393,7 @@ const TestReportViewer: React.FC<TestReportViewerProps> = ({ testData, verdeler,
             className={`px-4 py-2 ${activeTab === 'checklist' ? 'border-b-2 border-blue-400 text-blue-400' : 'text-gray-400'}`}
             onClick={() => setActiveTab('checklist')}
           >
-            Werkplaats Checklist
+            Werkplaats Test
           </button>
           <button
             className={`px-4 py-2 ${activeTab === 'fat' ? 'border-b-2 border-blue-400 text-blue-400' : 'text-gray-400'}`}
