@@ -96,6 +96,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [isUploading, setIsUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   // Helper function to load document content on-demand
   const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
@@ -604,6 +605,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
 
         // Load content first, then open modal
         try {
+          setPreviewLoading(true);
           const content = await loadDocumentContent(doc);
           // Find the updated document in state (it may have been updated with content)
           const updatedDoc = documents.find(d => d.id === doc.id) || doc;
@@ -612,6 +614,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         } catch (error) {
           console.error('Error loading document content:', error);
           toast.error('Kan document niet laden');
+        } finally {
+          setPreviewLoading(false);
         }
       }}
     >
@@ -872,25 +876,28 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       );
     } else if (isPDF(doc.type)) {
       return (
-        <div className="w-full h-[500px] relative">
-          <object
-            data={doc.content}
-            type="application/pdf"
-            className="w-full h-full"
-          >
-            <div className="flex flex-col items-center justify-center h-full bg-[#1E2530] p-8">
-              <FileText size={64} className="text-gray-400 mb-4" />
-              <p className="text-gray-400 mb-2">Kan PDF niet weergeven in browser</p>
-              <p className="text-sm text-gray-500 mb-4">Browser ondersteunt geen PDF preview of het bestand kan niet worden geladen</p>
-              <button
-                onClick={() => handleDownload(doc)}
-                className="btn-primary"
-              >
-                <Download size={16} className="mr-2" />
-                Download PDF
-              </button>
-            </div>
-          </object>
+        <div className="w-full h-[500px] relative bg-[#1E2530]">
+          <iframe
+            src={`${doc.content}#view=FitH`}
+            className="w-full h-full border-0"
+            title={doc.name}
+            onError={(e) => {
+              console.error('PDF iframe failed to load:', doc.name);
+            }}
+          />
+          <div className="absolute top-4 right-4 bg-[#1E2530]/90 rounded-lg p-2 shadow-lg">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(doc);
+              }}
+              className="btn-primary text-sm flex items-center space-x-2"
+            >
+              <Download size={16} />
+              <span>Download PDF</span>
+            </button>
+          </div>
         </div>
       );
     } else {
@@ -1033,9 +1040,21 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         </div>
       )}
 
+      {/* Loading Overlay */}
+      {previewLoading && createPortal(
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60]">
+          <div className="bg-[#1E2530] rounded-lg p-8 flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="text-white text-lg">Document laden...</p>
+            <p className="text-gray-400 text-sm">Dit kan even duren voor grote bestanden</p>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Preview Modal */}
       {selectedDocument && createPortal(
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
