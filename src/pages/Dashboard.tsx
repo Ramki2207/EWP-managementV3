@@ -1668,9 +1668,12 @@ const Dashboard = () => {
                   {(() => {
                     const users = JSON.parse(localStorage.getItem('users') || '[]');
                     return users.filter((user: any) => {
-                      const hasWork = projects.some(p =>
-                        p.distributors?.some((d: any) => d.toegewezen_monteur === user.username)
-                      );
+                      // Only count users with work in Productie projects
+                      const hasWork = projects.some(p => {
+                        const isProductie = p.status?.toLowerCase() === 'productie';
+                        const hasAssignedVerdelers = p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                        return isProductie && hasAssignedVerdelers;
+                      });
                       return hasWork;
                     }).length;
                   })()}
@@ -1681,11 +1684,17 @@ const Dashboard = () => {
                 {(() => {
                   const users = JSON.parse(localStorage.getItem('users') || '[]');
                   const workload = users.map((user: any) => {
+                    // Only include projects with status "Productie"
                     const userProjects = projects.filter(p => {
-                      return p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                      const isProductie = p.status?.toLowerCase() === 'productie';
+                      const hasAssignedVerdelers = p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
+                      return isProductie && hasAssignedVerdelers;
                     });
 
+                    // Count verdelers only from Productie projects
                     const verdelerCount = projects.reduce((total, p) => {
+                      const isProductie = p.status?.toLowerCase() === 'productie';
+                      if (!isProductie) return total;
                       const userVerdelers = p.distributors?.filter((d: any) => d.toegewezen_monteur === user.username) || [];
                       return total + userVerdelers.length;
                     }, 0);
