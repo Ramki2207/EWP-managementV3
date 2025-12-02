@@ -2089,8 +2089,22 @@ const Dashboard = () => {
                   {(() => {
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
+                    // Filter projects: Include if project status is Productie/Testen OR if it has verdelers with Productie/Testen status
                     const upcomingProjects = projects
-                      .filter(p => p.expected_delivery_date && p.status?.toLowerCase() !== 'opgeleverd')
+                      .filter(p => {
+                        if (!p.expected_delivery_date) return false;
+
+                        const projectStatus = p.status?.toLowerCase();
+                        const isProjectProductieOrTesten = projectStatus === 'productie' || projectStatus === 'testen';
+
+                        // Check if any verdelers have Productie or Testen status
+                        const hasProductieOrTestenVerdelers = p.distributors?.some((d: any) => {
+                          const verdelerStatus = d.status?.toLowerCase();
+                          return verdelerStatus === 'productie' || verdelerStatus === 'testen';
+                        }) || false;
+
+                        return isProjectProductieOrTesten || hasProductieOrTestenVerdelers;
+                      })
                       .sort((a, b) => {
                         const dateA = new Date(a.expected_delivery_date!);
                         const dateB = new Date(b.expected_delivery_date!);
@@ -2126,10 +2140,16 @@ const Dashboard = () => {
                         statusText = 'Binnenkort';
                       }
 
-                      const verdelerCount = project.distributors?.length || 0;
-                      const completedVerdelers = project.distributors?.filter((d: any) =>
+                      // Only count verdelers with Productie or Testen status
+                      const relevantVerdelers = project.distributors?.filter((d: any) => {
+                        const verdelerStatus = d.status?.toLowerCase();
+                        return verdelerStatus === 'productie' || verdelerStatus === 'testen';
+                      }) || [];
+
+                      const verdelerCount = relevantVerdelers.length;
+                      const completedVerdelers = relevantVerdelers.filter((d: any) =>
                         d.testing_status === 'completed'
-                      ).length || 0;
+                      ).length;
                       const progressPercent = verdelerCount > 0 ? (completedVerdelers / verdelerCount) * 100 : 0;
 
                       return (
