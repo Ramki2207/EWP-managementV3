@@ -1131,7 +1131,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      <div className="card p-6 mb-8">
+      <div id="projecten-overzicht" className="card p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -1477,7 +1477,10 @@ const Dashboard = () => {
                   onClick={() => {
                     setStatusFilter(status);
                     setShowFilters(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    const element = document.getElementById('projecten-overzicht');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                   }}
                   className="p-4 bg-gradient-to-br from-[#2A303C] to-[#1E2530] rounded-lg border border-gray-700 hover:border-blue-500/40 cursor-pointer transition-all transform hover:scale-105"
                 >
