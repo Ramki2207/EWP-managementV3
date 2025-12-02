@@ -603,6 +603,15 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         e.preventDefault();
         e.stopPropagation();
 
+        // For large PDFs (>5MB), skip loading and just show the info modal
+        const isLargePDF = isPDF(doc.type) && doc.size > 5 * 1024 * 1024;
+
+        if (isLargePDF) {
+          // Just open modal without loading content - the modal will show download option
+          setSelectedDocument(doc);
+          return;
+        }
+
         // Load content first, then open modal
         try {
           setPreviewLoading(true);
@@ -643,9 +652,16 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       <div className="p-4">
         <p className="font-medium text-white truncate" title={doc.name}>{doc.name}</p>
         <div className="flex items-center justify-between mt-2">
-          <p className="text-sm text-gray-400">
-            {formatFileSize(doc.size)}
-          </p>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-gray-400">
+              {formatFileSize(doc.size)}
+            </p>
+            {isPDF(doc.type) && doc.size > 5 * 1024 * 1024 && (
+              <span className="text-xs px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded">
+                Groot
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-500">
             {new Date(doc.uploaded_at).toLocaleDateString('nl-NL')}
           </p>
@@ -875,28 +891,74 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         />
       );
     } else if (isPDF(doc.type)) {
-      return (
-        <div className="w-full h-[500px] relative bg-[#1E2530]">
-          <iframe
-            src={`${doc.content}#view=FitH`}
-            className="w-full h-full border-0"
-            title={doc.name}
-            onError={(e) => {
-              console.error('PDF iframe failed to load:', doc.name);
-            }}
-          />
-          <div className="absolute top-4 right-4 bg-[#1E2530]/90 rounded-lg p-2 shadow-lg">
+      // For large PDFs (>5MB), show download option instead of preview to prevent crashes
+      const isLargePDF = doc.size > 5 * 1024 * 1024;
+
+      if (isLargePDF) {
+        return (
+          <div className="flex flex-col items-center justify-center p-8 space-y-4">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center">
+              <FileText size={48} className="text-red-400" />
+            </div>
+            <div className="text-center">
+              <p className="text-white text-lg font-semibold mb-2">{doc.name}</p>
+              <p className="text-gray-400 mb-1">PDF Document</p>
+              <p className="text-gray-500 text-sm mb-4">Bestandsgrootte: {formatFileSize(doc.size)}</p>
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ Dit PDF bestand is te groot om direct te bekijken in de browser
+                </p>
+                <p className="text-yellow-300 text-xs mt-1">
+                  Download het bestand om het te openen in een PDF viewer
+                </p>
+              </div>
+            </div>
             <button
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 handleDownload(doc);
               }}
-              className="btn-primary text-sm flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-2 px-6 py-3"
             >
-              <Download size={16} />
+              <Download size={20} />
               <span>Download PDF</span>
             </button>
+          </div>
+        );
+      }
+
+      // For smaller PDFs, show iframe preview with download option
+      return (
+        <div className="space-y-4">
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <FileText size={20} className="text-yellow-400" />
+              <p className="text-yellow-400 text-sm">
+                Preview kan langzaam zijn. Download voor betere weergave.
+              </p>
+            </div>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(doc);
+              }}
+              className="btn-secondary text-sm flex items-center space-x-2"
+            >
+              <Download size={16} />
+              <span>Download</span>
+            </button>
+          </div>
+          <div className="w-full h-[500px] relative bg-[#1E2530] rounded-lg overflow-hidden">
+            <iframe
+              src={`${doc.content}#view=FitH`}
+              className="w-full h-full border-0"
+              title={doc.name}
+              onError={(e) => {
+                console.error('PDF iframe failed to load:', doc.name);
+              }}
+            />
           </div>
         </div>
       );
