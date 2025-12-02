@@ -63,6 +63,10 @@ const Dashboard = () => {
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
     return localStorage.getItem('viewAsRole') || 'admin';
   });
+  const [showPreTestingWidget, setShowPreTestingWidget] = useState<boolean>(() => {
+    const saved = localStorage.getItem('showPreTestingWidget');
+    return saved !== null ? saved === 'true' : true;
+  });
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
@@ -173,6 +177,22 @@ const Dashboard = () => {
   const checkPendingApprovals = async (projectList: any[]) => {
     const approvals = [];
 
+    // Determine if current user can see all approvals
+    const isAdmin = currentUser?.role === 'admin';
+    const isTester = effectiveRole === 'tester';
+    const isIbrahimOrZouhair = currentUser?.username === 'Ibrahim Abdalla' || currentUser?.username === 'Zouhair Taha';
+    const canSeeAll = isAdmin || isTester || isIbrahimOrZouhair;
+
+    console.log('👁️ Pre-Testing Approvals Filter:', {
+      username: currentUser?.username,
+      role: currentUser?.role,
+      effectiveRole,
+      canSeeAll,
+      isAdmin,
+      isTester,
+      isIbrahimOrZouhair
+    });
+
     for (const project of projectList) {
       if (project.distributors?.length > 0) {
         // Check ALL distributors that are in 'testen' status
@@ -191,13 +211,34 @@ const Dashboard = () => {
 
               // Only show items that are waiting for review (status = 'submitted' and not yet reviewed)
               if (approvalData.status === 'submitted' && !approvalData.reviewedAt) {
-                approvals.push({
-                  project,
-                  distributor,
-                  status: 'submitted',
-                  submittedBy: approvalData.submittedBy,
-                  submittedAt: approvalData.submittedAt
-                });
+                // Filter based on user permissions
+                const submittedBy = approvalData.submittedBy;
+                const isOwnSubmission = submittedBy === currentUser?.username;
+
+                // Show if: user can see all OR it's their own submission
+                if (canSeeAll || isOwnSubmission) {
+                  console.log('✅ Showing approval:', {
+                    project: project.project_number,
+                    distributor: distributor.distributor_id,
+                    submittedBy,
+                    reason: canSeeAll ? 'Can see all' : 'Own submission'
+                  });
+
+                  approvals.push({
+                    project,
+                    distributor,
+                    status: 'submitted',
+                    submittedBy: approvalData.submittedBy,
+                    submittedAt: approvalData.submittedAt
+                  });
+                } else {
+                  console.log('❌ Hiding approval:', {
+                    project: project.project_number,
+                    distributor: distributor.distributor_id,
+                    submittedBy,
+                    currentUser: currentUser?.username
+                  });
+                }
               }
             }
           } catch (error) {
@@ -207,6 +248,7 @@ const Dashboard = () => {
       }
     }
 
+    console.log(`📋 Total approvals visible: ${approvals.length}`);
     setPendingApprovals(approvals);
   };
 
@@ -977,13 +1019,42 @@ const Dashboard = () => {
       />
 
       {/* Approval Status Alerts - Hidden for Logistiek users */}
-      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && (
+      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
         <div className="card p-6 mb-8">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="p-2 bg-orange-500/20 rounded-lg">
-              <CheckCircle2 size={20} className="text-orange-400" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-orange-500/20 rounded-lg">
+                <CheckCircle2 size={20} className="text-orange-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-orange-400">Pre-Testing Goedkeuringen</h2>
             </div>
-            <h2 className="text-lg font-semibold text-orange-400">Pre-Testing Goedkeuringen</h2>
+
+            {/* Admin toggle to show/hide widget */}
+            {currentUser?.role === 'admin' && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-400">Widget:</span>
+                <button
+                  onClick={() => {
+                    const newValue = !showPreTestingWidget;
+                    setShowPreTestingWidget(newValue);
+                    localStorage.setItem('showPreTestingWidget', String(newValue));
+                    toast.success(newValue ? 'Pre-Testing widget ingeschakeld' : 'Pre-Testing widget uitgeschakeld');
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    showPreTestingWidget ? 'bg-green-500' : 'bg-gray-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      showPreTestingWidget ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <span className={`text-xs font-medium ${showPreTestingWidget ? 'text-green-400' : 'text-gray-500'}`}>
+                  {showPreTestingWidget ? 'Aan' : 'Uit'}
+                </span>
+              </div>
+            )}
           </div>
           
           <div className="space-y-3">
