@@ -145,16 +145,41 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
   }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
-    const savedTestData = localStorage.getItem(`verdeler_test_simpel_${verdelerInfo.id}`);
-    if (savedTestData) {
-      try {
-        const parsed = JSON.parse(savedTestData);
-        setTestData(parsed);
-      } catch (error) {
-        console.error('Error parsing saved test data:', error);
+    // Load saved test data from database first, then fall back to localStorage
+    const loadSavedTestData = async () => {
+      if (projectId && distributorId) {
+        try {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_test_simpel',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ Loaded test data from database:', notification.test_data);
+            setTestData(notification.test_data);
+            return;
+          }
+        } catch (error) {
+          console.error('Error loading test data from database:', error);
+        }
       }
-    }
-  }, [verdelerInfo.id]);
+
+      // Fall back to localStorage if no database data
+      const savedTestData = localStorage.getItem(`verdeler_test_simpel_${verdelerInfo.id}`);
+      if (savedTestData) {
+        try {
+          const parsed = JSON.parse(savedTestData);
+          setTestData(parsed);
+        } catch (error) {
+          console.error('Error parsing saved test data:', error);
+        }
+      }
+    };
+
+    loadSavedTestData();
+  }, [verdelerInfo.id, projectId, distributorId]);
 
   const handleComplete = useCallback(async () => {
     // Show confirmation modal first
@@ -574,11 +599,11 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
             className="btn-secondary"
             onClick={async () => {
               try {
-                // Save to localStorage
+                // Save to localStorage as backup
                 const storageKey = `verdeler_test_simpel_${verdelerInfo.id}`;
                 localStorage.setItem(storageKey, JSON.stringify(testData));
 
-                // Create notification for admin review
+                // Save to database with test data
                 if (!projectId || !distributorId) {
                   console.error('Missing projectId or distributorId:', { projectId, distributorId });
                   toast.success('Test opgeslagen! Je kunt later verder gaan.');
@@ -590,21 +615,41 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
                 const users = JSON.parse(localStorage.getItem('users') || '[]');
                 const user = users.find((u: any) => u.id === currentUser);
 
-                console.log('Creating test review notification with:', {
+                console.log('Saving test review notification with data:', {
                   projectId,
                   distributorId,
                   testType: 'verdeler_test_simpel',
-                  submittedBy: user?.name || 'Onbekend'
+                  submittedBy: user?.name || 'Onbekend',
+                  testData
                 });
 
-                await dataService.createTestReviewNotification({
-                  projectId: projectId,
-                  distributorId: distributorId,
-                  testType: 'verdeler_test_simpel',
-                  submittedBy: user?.name || 'Onbekend'
-                });
+                // Check if notification already exists
+                const existing = await dataService.getSpecificTestReviewNotification(
+                  projectId,
+                  distributorId,
+                  'verdeler_test_simpel',
+                  'pending_review'
+                );
 
-                toast.success('Test opgeslagen! Admin is op de hoogte gesteld voor controle.');
+                if (existing) {
+                  // Update existing notification with new test data
+                  await dataService.updateTestReviewNotification(existing.id, {
+                    testData: testData
+                  });
+                  console.log('✅ Updated existing notification with test data');
+                } else {
+                  // Create new notification with test data
+                  await dataService.createTestReviewNotification({
+                    projectId: projectId,
+                    distributorId: distributorId,
+                    testType: 'verdeler_test_simpel',
+                    submittedBy: user?.name || 'Onbekend',
+                    testData: testData
+                  });
+                  console.log('✅ Created new notification with test data');
+                }
+
+                toast.success('Test opgeslagen! Admin kan de test nu bekijken en controleren.');
                 setShowModal(false);
               } catch (error) {
                 console.error('Error saving test:', error);

@@ -1609,6 +1609,7 @@ export const dataService = {
     distributorId: string;
     testType: string;
     submittedBy: string;
+    testData?: any;
   }) {
     try {
       console.log('📢 Creating test review notification:', notification);
@@ -1620,7 +1621,8 @@ export const dataService = {
           distributor_id: notification.distributorId,
           test_type: notification.testType,
           submitted_by: notification.submittedBy,
-          status: 'pending_review'
+          status: 'pending_review',
+          test_data: notification.testData || null
         }])
         .select()
         .single();
@@ -1700,6 +1702,7 @@ export const dataService = {
       status?: string;
       reviewedBy?: string;
       reviewNotes?: string;
+      testData?: any;
     }
   ) {
     try {
@@ -1710,6 +1713,7 @@ export const dataService = {
       if (updates.status) updateData.status = updates.status;
       if (updates.reviewedBy) updateData.reviewed_by = updates.reviewedBy;
       if (updates.reviewNotes) updateData.review_notes = updates.reviewNotes;
+      if (updates.testData !== undefined) updateData.test_data = updates.testData;
 
       const { data, error } = await supabase
         .from('test_review_notifications')
