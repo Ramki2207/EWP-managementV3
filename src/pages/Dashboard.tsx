@@ -67,6 +67,10 @@ const Dashboard = () => {
     const saved = localStorage.getItem('showPreTestingWidget');
     return saved !== null ? saved === 'true' : true;
   });
+  const [showTestReviewWidget, setShowTestReviewWidget] = useState<boolean>(() => {
+    const saved = localStorage.getItem('showTestReviewWidget');
+    return saved !== null ? saved === 'true' : true;
+  });
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
@@ -1121,11 +1125,45 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Admin toggle for Test Review widget */}
+      {currentUser?.role === 'admin' && (
+        <div className="card p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertCircle size={16} className="text-yellow-400" />
+              <span className="text-sm text-gray-400">Tests Ter Controle Widget:</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  const newValue = !showTestReviewWidget;
+                  setShowTestReviewWidget(newValue);
+                  localStorage.setItem('showTestReviewWidget', String(newValue));
+                  toast.success(newValue ? 'Tests Ter Controle widget ingeschakeld' : 'Tests Ter Controle widget uitgeschakeld');
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  showTestReviewWidget ? 'bg-green-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    showTestReviewWidget ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-xs font-medium ${showTestReviewWidget ? 'text-green-400' : 'text-gray-500'}`}>
+                {showTestReviewWidget ? 'Aan' : 'Uit'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
       {(effectiveRole === 'admin' ||
         effectiveRole === 'projectleider' ||
         currentUser?.username === 'Zouhair Taha' ||
-        currentUser?.username === 'Ibrahim Abdalla') && (
+        currentUser?.username === 'Ibrahim Abdalla') && showTestReviewWidget && (
         <div className="mb-8">
           <TestReviewNotifications />
         </div>
