@@ -163,17 +163,42 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
   }), [verdeler.id, verdeler.distributorId, verdeler.distributor_id, verdeler.kastNaam, verdeler.kast_naam]);
 
   useEffect(() => {
-    const savedTestData = localStorage.getItem(`verdeler_vanaf_630_test_${verdelerInfo.id}`);
-    if (savedTestData) {
-      try {
-        const parsed = JSON.parse(savedTestData);
-        setTestData(parsed);
-      } catch (error) {
-        console.error('Error parsing saved test data:', error);
-        toast.error('Er is een fout opgetreden bij het laden van de testgegevens');
+    // Load saved test data from database first, then fall back to localStorage
+    const loadSavedTestData = async () => {
+      if (projectId && distributorId) {
+        try {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_vanaf_630',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ Loaded test data from database:', notification.test_data);
+            setTestData(notification.test_data);
+            return;
+          }
+        } catch (error) {
+          console.error('Error loading test data from database:', error);
+        }
       }
-    }
-  }, [verdelerInfo.id]);
+
+      // Fall back to localStorage if no database data
+      const savedTestData = localStorage.getItem(`verdeler_vanaf_630_test_${verdelerInfo.id}`);
+      if (savedTestData) {
+        try {
+          const parsed = JSON.parse(savedTestData);
+          setTestData(parsed);
+        } catch (error) {
+          console.error('Error parsing saved test data:', error);
+          toast.error('Er is een fout opgetreden bij het laden van de testgegevens');
+        }
+      }
+    };
+
+    loadSavedTestData();
+  }, [verdelerInfo.id, projectId, distributorId]);
 
   const saveTestData = useCallback((): boolean => {
     try {
@@ -649,14 +674,33 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
                   submittedBy: user?.name || 'Onbekend'
                 });
 
-                await dataService.createTestReviewNotification({
-                  projectId: projectId,
-                  distributorId: distributorId,
-                  testType: 'verdeler_vanaf_630',
-                  submittedBy: user?.name || 'Onbekend'
-                });
+                // Check if notification already exists
+                const existing = await dataService.getSpecificTestReviewNotification(
+                  projectId,
+                  distributorId,
+                  'verdeler_vanaf_630',
+                  'pending_review'
+                );
 
-                toast.success('Test opgeslagen! Admin is op de hoogte gesteld voor controle.');
+                if (existing) {
+                  // Update existing notification with new test data
+                  await dataService.updateTestReviewNotification(existing.id, {
+                    testData: testData
+                  });
+                  console.log('✅ Updated existing notification with test data');
+                } else {
+                  // Create new notification with test data
+                  await dataService.createTestReviewNotification({
+                    projectId: projectId,
+                    distributorId: distributorId,
+                    testType: 'verdeler_vanaf_630',
+                    submittedBy: user?.name || 'Onbekend',
+                    testData: testData
+                  });
+                  console.log('✅ Created new notification with test data');
+                }
+
+                toast.success('Test opgeslagen! Admin kan de test nu bekijken en controleren.');
                 setShowModal(false);
               } catch (error) {
                 console.error('Error saving test:', error);

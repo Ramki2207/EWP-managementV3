@@ -136,7 +136,36 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   useEffect(() => {
     const loadTestData = async () => {
       try {
-        // First try to load from database
+        // First check test_review_notifications for pending draft
+        if (projectId && distributorId) {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_testing_tot_630',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ VERDELER TESTING: Loading draft from test_review_notifications');
+            setTestData(notification.test_data);
+
+            // Check if workshopChecklist is completed to determine the step
+            if (notification.test_data.workshopChecklist?.completed) {
+              setCurrentStep(1);
+              toast.info('Werkplaats Test is voltooid - ga verder met Keuringsrapport');
+            } else {
+              const hasWorkshopData = notification.test_data.workshopChecklist?.items?.some((item: any) =>
+                item.passed !== null || item.notes !== ''
+              );
+              if (hasWorkshopData) {
+                toast.info('Werkplaats Test opgeslagen data geladen - ga verder waar je gebleven was');
+              }
+            }
+            return;
+          }
+        }
+
+        // Then try to load from test_data table (completed tests)
         const dbTestData = await dataService.getTestData(verdelerInfo.id);
         const workshopTest = dbTestData?.find((test: any) => test.test_type === 'workshop_checklist');
 
@@ -214,7 +243,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
     };
 
     loadTestData();
-  }, [verdelerInfo.id, initialTestData]);
+  }, [verdelerInfo.id, initialTestData, projectId, distributorId]);
 
   const saveTestData = useCallback((): boolean => {
     try {
@@ -559,14 +588,33 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                     submittedBy: user?.name || 'Onbekend'
                   });
 
-                  await dataService.createTestReviewNotification({
-                    projectId: projectId,
-                    distributorId: distributorId,
-                    testType: 'verdeler_testing_tot_630',
-                    submittedBy: user?.name || 'Onbekend'
-                  });
+                  // Check if notification already exists
+                  const existing = await dataService.getSpecificTestReviewNotification(
+                    projectId,
+                    distributorId,
+                    'verdeler_testing_tot_630',
+                    'pending_review'
+                  );
 
-                  toast.success('Test opgeslagen! Admin is op de hoogte gesteld voor controle.');
+                  if (existing) {
+                    // Update existing notification with new test data
+                    await dataService.updateTestReviewNotification(existing.id, {
+                      testData: testData
+                    });
+                    console.log('✅ Updated existing notification with test data');
+                  } else {
+                    // Create new notification with test data
+                    await dataService.createTestReviewNotification({
+                      projectId: projectId,
+                      distributorId: distributorId,
+                      testType: 'verdeler_testing_tot_630',
+                      submittedBy: user?.name || 'Onbekend',
+                      testData: testData
+                    });
+                    console.log('✅ Created new notification with test data');
+                  }
+
+                  toast.success('Test opgeslagen! Admin kan de test nu bekijken en controleren.');
                 } catch (error) {
                   console.error('Error creating notification:', error);
                   toast.success('Test opgeslagen! Je kunt later verder gaan.');
