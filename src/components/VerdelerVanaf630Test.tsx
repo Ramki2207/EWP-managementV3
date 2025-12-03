@@ -200,6 +200,31 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
     loadSavedTestData();
   }, [verdelerInfo.id, projectId, distributorId]);
 
+  // Reload data when modal opens
+  useEffect(() => {
+    if (showModal && projectId && distributorId) {
+      console.log('🔄 VERDELER VANAF 630: Modal opened, reloading data...');
+      const reloadData = async () => {
+        try {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_vanaf_630',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ VERDELER VANAF 630: Reloaded test data from modal open');
+            setTestData(notification.test_data);
+          }
+        } catch (error) {
+          console.error('Error reloading test data on modal open:', error);
+        }
+      };
+      reloadData();
+    }
+  }, [showModal, projectId, distributorId]);
+
   const saveTestData = useCallback((): boolean => {
     try {
       localStorage.setItem(`verdeler_vanaf_630_test_${verdelerInfo.id}`, JSON.stringify(testData));

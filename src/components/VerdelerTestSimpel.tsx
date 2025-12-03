@@ -181,6 +181,31 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
     loadSavedTestData();
   }, [verdelerInfo.id, projectId, distributorId]);
 
+  // Reload data when modal opens
+  useEffect(() => {
+    if (showModal && projectId && distributorId) {
+      console.log('🔄 VERDELER TEST SIMPEL: Modal opened, reloading data...');
+      const reloadData = async () => {
+        try {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_test_simpel',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ VERDELER TEST SIMPEL: Reloaded test data from modal open');
+            setTestData(notification.test_data);
+          }
+        } catch (error) {
+          console.error('Error reloading test data on modal open:', error);
+        }
+      };
+      reloadData();
+    }
+  }, [showModal, projectId, distributorId]);
+
   const handleComplete = useCallback(async () => {
     // Show confirmation modal first
     setConfirmationModal(true);

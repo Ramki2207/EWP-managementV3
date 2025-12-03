@@ -136,8 +136,15 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   useEffect(() => {
     const loadTestData = async () => {
       try {
+        console.log('🔄 VERDELER TESTING: Loading test data with:', {
+          projectId,
+          distributorId,
+          verdelerInfoId: verdelerInfo.id
+        });
+
         // First check test_review_notifications for pending draft
         if (projectId && distributorId) {
+          console.log('🔍 VERDELER TESTING: Checking test_review_notifications...');
           const notification = await dataService.getSpecificTestReviewNotification(
             projectId,
             distributorId,
@@ -145,8 +152,12 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             'pending_review'
           );
 
+          console.log('🔍 VERDELER TESTING: Notification result:', notification);
+
           if (notification && notification.test_data) {
-            console.log('✅ VERDELER TESTING: Loading draft from test_review_notifications');
+            console.log('✅ VERDELER TESTING: Loading draft from test_review_notifications with',
+              notification.test_data.workshopChecklist?.items?.filter((i: any) => i.passed !== null).length,
+              'checked items');
             setTestData(notification.test_data);
 
             // Check if workshopChecklist is completed to determine the step
@@ -162,7 +173,11 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
               }
             }
             return;
+          } else {
+            console.log('⚠️ VERDELER TESTING: No test_data found in notification');
           }
+        } else {
+          console.log('⚠️ VERDELER TESTING: Missing projectId or distributorId', { projectId, distributorId });
         }
 
         // Then try to load from test_data table (completed tests)
@@ -244,6 +259,35 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
 
     loadTestData();
   }, [verdelerInfo.id, initialTestData, projectId, distributorId]);
+
+  // Reload data when modal opens
+  useEffect(() => {
+    if (showModal && projectId && distributorId) {
+      console.log('🔄 VERDELER TESTING: Modal opened, reloading data...');
+      const reloadData = async () => {
+        try {
+          const notification = await dataService.getSpecificTestReviewNotification(
+            projectId,
+            distributorId,
+            'verdeler_testing_tot_630',
+            'pending_review'
+          );
+
+          if (notification && notification.test_data) {
+            console.log('✅ VERDELER TESTING: Reloaded test data from modal open');
+            setTestData(notification.test_data);
+
+            if (notification.test_data.workshopChecklist?.completed) {
+              setCurrentStep(1);
+            }
+          }
+        } catch (error) {
+          console.error('Error reloading test data on modal open:', error);
+        }
+      };
+      reloadData();
+    }
+  }, [showModal, projectId, distributorId]);
 
   const saveTestData = useCallback((): boolean => {
     try {
