@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import VerdelerVanaf630Test from './VerdelerVanaf630Test';
@@ -13,6 +13,7 @@ import MPrintLabel from './MPrintLabel';
 import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
 import VerdelerChecklistWindow from './VerdelerChecklistWindow';
 import VerdelerLeveringChecklist from './VerdelerLeveringChecklist';
+import { generatePakbonPDF } from './PakbonPDF';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -56,6 +57,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
   const [verdelerForLevering, setVerdelerForLevering] = useState<any>(null);
   const [deliveryCompletionStatus, setDeliveryCompletionStatus] = useState<Record<string, boolean>>({});
+  const [generatingPakbon, setGeneratingPakbon] = useState(false);
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -687,6 +689,36 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         console.error('Error deleting verdeler:', error);
         toast.error('Er is een fout opgetreden bij het verwijderen van de verdeler');
       }
+    }
+  };
+
+  const handleGeneratePakbon = async (verdeler: any) => {
+    try {
+      setGeneratingPakbon(true);
+      console.log('🔍 PAKBON: Generating empty pakbon for verdeler:', verdeler.id);
+
+      // Generate pakbon without signature (empty pakbon for driver)
+      const blob = await generatePakbonPDF(projectData, verdeler, null);
+
+      const verdelerName = verdeler.kastNaam || verdeler.kast_naam || verdeler.distributorId || verdeler.distributor_id || 'verdeler';
+      const sanitizedVerdelerName = verdelerName.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `Pakbon_${projectData.project_number || projectData.projectNumber}_${sanitizedVerdelerName}_${new Date().getTime()}.pdf`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Pakbon gedownload!');
+    } catch (error) {
+      console.error('Error generating pakbon:', error);
+      toast.error('Er is een fout opgetreden bij het genereren van de pakbon');
+    } finally {
+      setGeneratingPakbon(false);
     }
   };
 
@@ -1493,6 +1525,27 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       logo={ewpLogo}
                     />
+                    {selectedVerdeler?.status === 'Levering' && (
+                      <button
+                        onClick={() => handleGeneratePakbon(selectedVerdeler)}
+                        disabled={generatingPakbon}
+                        className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors ${
+                          generatingPakbon ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        {generatingPakbon ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                            <span>Genereren...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileText size={16} />
+                            <span>Pakbon</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

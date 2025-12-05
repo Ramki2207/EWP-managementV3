@@ -9,7 +9,6 @@ import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval
 import VerdelerChecklistWindow from '../components/VerdelerChecklistWindow';
 import { openChecklistInNewWindow } from '../components/VerdelerChecklistPopup';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
-import { generatePakbonPDF } from '../components/PakbonPDF';
 import { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -39,7 +38,6 @@ const VerdelerDetails = () => {
   const [testData, setTestData] = useState<any>(null);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [generatingPakbon, setGeneratingPakbon] = useState(false);
 
   useEffect(() => {
     loadCurrentUser();
@@ -366,38 +364,6 @@ const VerdelerDetails = () => {
     } else {
       // Default to verdelers list
       navigate("/verdelers");
-    }
-  };
-
-  const handleGeneratePakbon = async () => {
-    try {
-      setGeneratingPakbon(true);
-      console.log('🔍 PAKBON: Generating empty pakbon for verdeler:', distributor.id);
-
-      const project = distributor.projects;
-
-      // Generate pakbon without signature (empty pakbon for driver)
-      const blob = await generatePakbonPDF(project, distributor, null);
-
-      const verdelerName = distributor.kast_naam || distributor.distributor_id || 'verdeler';
-      const sanitizedVerdelerName = verdelerName.replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `Pakbon_${project.project_number}_${sanitizedVerdelerName}_${new Date().getTime()}.pdf`;
-
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast.success('Pakbon gedownload!');
-    } catch (error) {
-      console.error('Error generating pakbon:', error);
-      toast.error('Er is een fout opgetreden bij het genereren van de pakbon');
-    } finally {
-      setGeneratingPakbon(false);
     }
   };
 
@@ -1038,33 +1004,6 @@ const VerdelerDetails = () => {
                 </div>
               </div>
 
-              {/* Extra Section - Pakbon Button */}
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-purple-400 mb-4">Extra</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  {distributor.status === 'Levering' && (
-                    <button
-                      onClick={handleGeneratePakbon}
-                      disabled={generatingPakbon}
-                      className={`flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors ${
-                        generatingPakbon ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      {generatingPakbon ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-                          <span>Genereren...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FileText size={20} />
-                          <span>Pakbon</span>
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         )}
