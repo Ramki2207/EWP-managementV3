@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from 'react-dom/client';
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare, FileText } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
 import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval';
 import VerdelerChecklistWindow from '../components/VerdelerChecklistWindow';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
+import SignaturePad from '../components/SignaturePad';
+import { generatePakbonPDF } from '../components/PakbonPDF';
 import { Toaster } from 'react-hot-toast';
-import { dataService } from '../lib/supabase';
+import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
@@ -37,6 +39,10 @@ const VerdelerDetails = () => {
   const [testData, setTestData] = useState<any>(null);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showPakbonSignature, setShowPakbonSignature] = useState(false);
+  const [pakbonPickupName, setPakbonPickupName] = useState('');
+  const [pakbonSignature, setPakbonSignature] = useState('');
+  const [generatingPakbon, setGeneratingPakbon] = useState(false);
 
   useEffect(() => {
     loadCurrentUser();
@@ -356,13 +362,62 @@ const VerdelerDetails = () => {
   const handleBackNavigation = () => {
     // Check if we came from a project (look for project in the URL path or state)
     const fromProject = location.pathname.includes('/project/') || location.state?.fromProject;
-    
+
     if (fromProject && distributor?.project_id) {
       // Navigate back to the project details
       navigate(`/project/${distributor.project_id}`);
     } else {
       // Default to verdelers list
       navigate("/verdelers");
+    }
+  };
+
+  const handleGeneratePakbon = () => {
+    setPakbonPickupName('');
+    setPakbonSignature('');
+    setShowPakbonSignature(true);
+  };
+
+  const handlePakbonSignatureConfirm = async () => {
+    try {
+      if (!pakbonPickupName.trim()) {
+        toast.error('Vul de naam van de ontvanger in');
+        return;
+      }
+
+      if (!pakbonSignature) {
+        toast.error('Plaats een handtekening');
+        return;
+      }
+
+      setGeneratingPakbon(true);
+
+      const project = distributor.projects;
+      const blob = await generatePakbonPDF(project, distributor, {
+        name: pakbonPickupName,
+        signature: pakbonSignature
+      });
+
+      const verdelerName = distributor.kast_naam || distributor.distributor_id || 'verdeler';
+      const sanitizedVerdelerName = verdelerName.replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `Pakbon_${project.project_number}_${sanitizedVerdelerName}_${new Date().getTime()}.pdf`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Pakbon gedownload!');
+      setShowPakbonSignature(false);
+    } catch (error) {
+      console.error('Error generating pakbon:', error);
+      toast.error('Er is een fout opgetreden bij het genereren van de pakbon');
+    } finally {
+      setGeneratingPakbon(false);
     }
   };
 
@@ -1002,6 +1057,22 @@ const VerdelerDetails = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Extra Section - Pakbon Button */}
+              {distributor.status === 'Levering' && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Extra</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    <button
+                      onClick={handleGeneratePakbon}
+                      className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                    >
+                      <FileText size={20} />
+                      <span>Pakbon</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1084,6 +1155,72 @@ const VerdelerDetails = () => {
             await loadTestData();
           }}
         />
+      )}
+
+      {/* Pakbon Signature Modal */}
+      {showPakbonSignature && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-white">Pakbon Ondertekening</h2>
+              <button
+                onClick={() => setShowPakbonSignature(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Naam ontvanger</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={pakbonPickupName}
+                  onChange={(e) => setPakbonPickupName(e.target.value)}
+                  placeholder="Voer naam in..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Handtekening</label>
+                <SignaturePad
+                  onSave={(signature) => setPakbonSignature(signature)}
+                  onClear={() => setPakbonSignature('')}
+                />
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => setShowPakbonSignature(false)}
+                  className="flex-1 btn-secondary"
+                  disabled={generatingPakbon}
+                >
+                  Annuleren
+                </button>
+                <button
+                  onClick={handlePakbonSignatureConfirm}
+                  disabled={generatingPakbon || !pakbonPickupName.trim() || !pakbonSignature}
+                  className={`flex-1 btn-primary ${
+                    generatingPakbon || !pakbonPickupName.trim() || !pakbonSignature
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
+                >
+                  {generatingPakbon ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      <span>Genereren...</span>
+                    </div>
+                  ) : (
+                    'Genereer Pakbon'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
