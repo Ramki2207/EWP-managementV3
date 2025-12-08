@@ -36,6 +36,7 @@ const ProjectDetails = () => {
   const [showWerkvoorbereidingModal, setShowWerkvoorbereidingModal] = useState(false);
   const [tempProjectDeliveryDate, setTempProjectDeliveryDate] = useState('');
   const [tempVerdelerDates, setTempVerdelerDates] = useState<{[key: string]: string}>({});
+  const [tempVerdelerHours, setTempVerdelerHours] = useState<{[key: string]: number}>({});
   const [documentStatus, setDocumentStatus] = useState<Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }>>({});
   const [checkingDocuments, setCheckingDocuments] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<{ distributorId: string; folder: string } | null>(null);
@@ -415,6 +416,103 @@ const ProjectDetails = () => {
     setShowPreTestingApproval(false);
   };
 
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
+  const syncTekenUrenToWeekstaat = async (workerId: string, date: string, hours: number, verdelerName: string) => {
+    try {
+      const workDate = new Date(date);
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: existingWeekstaat, error: weekstaatError } = await dataService.supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', workerId)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      let weekstaatId = existingWeekstaat?.id;
+
+      if (!weekstaatId) {
+        const { data: newWeekstaat, error: createError } = await dataService.supabase
+          .from('weekstaten')
+          .insert({
+            user_id: workerId,
+            week_number: weekNumber,
+            year: year,
+            status: 'draft'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        weekstaatId = newWeekstaat.id;
+      }
+
+      const activityCode = 'TEKEN';
+      const activityDescription = `Teken uren - ${verdelerName}`;
+
+      const { data: existingEntry, error: entryFetchError } = await dataService.supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaatId)
+        .eq('activity_code', activityCode)
+        .eq('activity_description', activityDescription)
+        .maybeSingle();
+
+      if (existingEntry) {
+        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const updateData = {
+          [dayColumn]: currentHours + hours
+        };
+
+        const { error: updateError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .update(updateData)
+          .eq('id', existingEntry.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .insert({
+            weekstaat_id: weekstaatId,
+            activity_code: activityCode,
+            activity_description: activityDescription,
+            workorder_number: weekNumber.toString(),
+            [dayColumn]: hours
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      console.log('✅ Teken uren synced to weekstaat for', verdelerName);
+    } catch (error) {
+      console.error('Error syncing teken uren to weekstaat:', error);
+      throw error;
+    }
+  };
+
   const handleWerkvoorbereidingConfirm = async () => {
     try {
       // Check if all required documents are uploaded
@@ -424,6 +522,16 @@ const ProjectDetails = () => {
 
       if (!allDocsUploaded) {
         toast.error('Upload eerst alle verplichte documenten (Verdeler aanzicht en Installatie schema) voor elke verdeler!');
+        return;
+      }
+
+      // Validate that all verdelers have hours logged
+      const allVerdelersHaveHours = editedProject.distributors?.every((v: any) =>
+        tempVerdelerHours[v.id] && tempVerdelerHours[v.id] > 0
+      );
+
+      if (!allVerdelersHaveHours) {
+        toast.error('Voer voor elke verdeler de bestede teken uren in!');
         return;
       }
 
@@ -442,6 +550,21 @@ const ProjectDetails = () => {
         }
       }
 
+      // Sync teken uren to weekstaat for logged-in user
+      const currentDate = new Date().toISOString().split('T')[0];
+      for (const verdeler of editedProject.distributors || []) {
+        const hours = tempVerdelerHours[verdeler.id];
+        if (hours && hours > 0) {
+          const verdelerName = verdeler.kastNaam || verdeler.kast_naam || verdeler.distributorId || verdeler.distributor_id || 'Onbekend';
+          await syncTekenUrenToWeekstaat(
+            currentUser.id,
+            currentDate,
+            hours,
+            verdelerName
+          );
+        }
+      }
+
       const updatedProject = {
         ...editedProject,
         status: 'Werkvoorbereiding',
@@ -455,7 +578,8 @@ const ProjectDetails = () => {
       setProject(updatedProject);
       setEditedProject(updatedProject);
       setShowWerkvoorbereidingModal(false);
-      toast.success('Project status bijgewerkt naar Werkvoorbereiding!');
+      setTempVerdelerHours({});
+      toast.success('Project status bijgewerkt naar Werkvoorbereiding en teken uren geregistreerd!');
     } catch (error) {
       console.error('Error updating to Werkvoorbereiding:', error);
       toast.error('Er is een fout opgetreden bij het bijwerken van de status');
@@ -464,6 +588,7 @@ const ProjectDetails = () => {
 
   const handleWerkvoorbereidingCancel = () => {
     setShowWerkvoorbereidingModal(false);
+    setTempVerdelerHours({});
   };
 
   const handleDeliveryChecklistConfirm = async () => {
@@ -1238,30 +1363,55 @@ const ProjectDetails = () => {
                 </div>
               </div>
 
-              {/* Verdelers Delivery Dates */}
+              {/* Verdelers Delivery Dates and Hours */}
               {editedProject?.distributors && editedProject.distributors.length > 0 && (
                 <div className="card p-4">
-                  <h3 className="text-lg font-semibold text-white mb-4">🔌 Verdeler Leverdata</h3>
+                  <h3 className="text-lg font-semibold text-white mb-4">🔌 Verdeler Leverdata & Teken Uren</h3>
                   <div className="space-y-4">
                     {editedProject.distributors.map((verdeler: any) => (
-                      <div key={verdeler.id} className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <label className="block text-sm text-gray-400 mb-2">
-                            {verdeler.distributorId || verdeler.distributor_id} - {verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'}
-                          </label>
-                          <input
-                            type="date"
-                            className="input-field"
-                            value={tempVerdelerDates[verdeler.id] || ''}
-                            onChange={(e) => setTempVerdelerDates({
-                              ...tempVerdelerDates,
-                              [verdeler.id]: e.target.value
-                            })}
-                          />
+                      <div key={verdeler.id} className="space-y-3 p-4 bg-gray-800/50 rounded-lg">
+                        <div className="font-semibold text-white">
+                          {verdeler.distributorId || verdeler.distributor_id} - {verdeler.kastNaam || verdeler.kast_naam || 'Naamloos'}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">
+                              Gewenste leverdatum
+                            </label>
+                            <input
+                              type="date"
+                              className="input-field"
+                              value={tempVerdelerDates[verdeler.id] || ''}
+                              onChange={(e) => setTempVerdelerDates({
+                                ...tempVerdelerDates,
+                                [verdeler.id]: e.target.value
+                              })}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">
+                              Teken uren <span className="text-red-400">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              placeholder="0.0"
+                              className="input-field"
+                              value={tempVerdelerHours[verdeler.id] || ''}
+                              onChange={(e) => setTempVerdelerHours({
+                                ...tempVerdelerHours,
+                                [verdeler.id]: parseFloat(e.target.value) || 0
+                              })}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
+                  <p className="text-xs text-gray-400 mt-3">
+                    💡 Teken uren worden automatisch geregistreerd in uw weekstaat van vandaag
+                  </p>
                 </div>
               )}
 
