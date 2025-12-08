@@ -426,7 +426,7 @@ const VerdelerDetails = () => {
       setTestingHoursLogged(true);
       setShowTestingHoursModal(false);
       setTestingHours('');
-      toast.success('Test uren succesvol geregistreerd!');
+      toast.success('Test uren succesvol geregistreerd! Je kunt nu de levering checklist invullen.');
     } catch (error) {
       console.error('Error logging testing hours:', error);
       toast.error('Er is een fout opgetreden bij het registreren van test uren');
@@ -604,6 +604,19 @@ const VerdelerDetails = () => {
               >
                 <CheckSquare size={20} />
                 <span>Testing Checklist</span>
+              </button>
+            )}
+            {distributor.status === 'Levering' && testingHoursLogged && (
+              <button
+                onClick={() => {
+                  setActiveTab('levering');
+                  setTimeout(() => setShowLeveringChecklist(true), 100);
+                }}
+                className="btn-primary flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+                title="Open levering checklist"
+              >
+                <FileText size={20} />
+                <span>Levering Checklist</span>
               </button>
             )}
             <button
