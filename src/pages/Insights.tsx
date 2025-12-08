@@ -437,127 +437,320 @@ const Insights = () => {
       setGeneratingReport(true);
       toast('Rapport wordt gegenereerd...');
 
-      // Create a new jsPDF instance
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      let yPosition = 20;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      let currentPage = 1;
 
-      // Add header
-      pdf.setFontSize(20);
-      pdf.setTextColor(37, 99, 235); // Blue color
-      pdf.text('Business Inzichten Rapport', 20, yPosition);
-      
-      yPosition += 10;
-      pdf.setFontSize(12);
-      pdf.setTextColor(107, 114, 128); // Gray color
-      pdf.text(`Gegenereerd op: ${new Date().toLocaleDateString('nl-NL')}`, 20, yPosition);
-      pdf.text(`Periode: ${format(parseISO(startDate), 'dd MMM yyyy', { locale: nl })} - ${format(parseISO(endDate), 'dd MMM yyyy', { locale: nl })}`, 20, yPosition + 5);
-      
-      yPosition += 20;
+      const addHeader = (pageNum: number) => {
+        pdf.setFillColor(37, 99, 235);
+        pdf.rect(0, 0, pageWidth, 35, 'F');
 
-      // Add KPI section
+        pdf.setFontSize(24);
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('EWP PANEELBOUW', margin, 15);
+
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('Business Inzichten Rapport', margin, 23);
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(200, 200, 255);
+        pdf.text(`Pagina ${pageNum}`, pageWidth - margin - 20, 15);
+      };
+
+      const addFooter = (pageNum: number) => {
+        pdf.setDrawColor(200, 200, 200);
+        pdf.line(margin, pageHeight - 20, pageWidth - margin, pageHeight - 20);
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(
+          `© ${new Date().getFullYear()} Process Improvement B.V. - EWP Management System`,
+          margin,
+          pageHeight - 12
+        );
+
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(
+          `Gegenereerd op ${format(new Date(), 'dd MMMM yyyy HH:mm', { locale: nl })}`,
+          pageWidth - margin - 60,
+          pageHeight - 12
+        );
+      };
+
+      const addNewPage = () => {
+        pdf.addPage();
+        currentPage++;
+        addHeader(currentPage);
+        return 45;
+      };
+
+      const drawBox = (x: number, y: number, width: number, height: number, color: number[]) => {
+        pdf.setFillColor(...color);
+        pdf.roundedRect(x, y, width, height, 2, 2, 'F');
+      };
+
+      addHeader(currentPage);
+      let yPos = 45;
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(80, 80, 80);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Rapportage Periode: ${format(parseISO(startDate), 'dd MMM yyyy', { locale: nl })} - ${format(parseISO(endDate), 'dd MMM yyyy', { locale: nl })}`, margin, yPos);
+      yPos += 15;
+
       pdf.setFontSize(16);
-      pdf.setTextColor(0, 0, 0);
-      pdf.text('📊 Belangrijkste Cijfers', 20, yPosition);
-      yPosition += 15;
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('EXECUTIVE SUMMARY', margin, yPos);
+      yPos += 10;
 
-      pdf.setFontSize(11);
-      const kpiItems = [
-        { label: 'Totale Projecten', value: kpiData.totalProjects },
-        { label: 'Actieve Projecten', value: kpiData.activeProjects },
-        { label: 'Totale Klanten', value: kpiData.totalClients },
-        { label: 'Verdelers', value: kpiData.totalDistributors },
-        { label: 'Projecten deze maand', value: kpiData.projectsThisMonth },
-        { label: 'Klanten deze maand', value: kpiData.clientsThisMonth },
-        { label: 'Verdelers deze maand', value: kpiData.distributorsThisMonth }
+      const kpiBoxes = [
+        { label: 'Totale Uren', value: `${kpiData.totalHours}u`, color: [59, 130, 246], icon: 'clock' },
+        { label: 'Actieve Projecten', value: kpiData.activeProjects.toString(), color: [16, 185, 129], icon: 'project' },
+        { label: 'Actieve Medewerkers', value: kpiData.activeEmployees.toString(), color: [245, 158, 11], icon: 'users' },
+        { label: 'Gem. Uren/Project', value: `${kpiData.avgHoursPerProject}u`, color: [139, 92, 246], icon: 'chart' }
       ];
 
-      kpiItems.forEach((item, index) => {
-        const x = 20 + (index % 2) * 90;
-        const y = yPosition + Math.floor(index / 2) * 8;
-        pdf.text(`${item.label}: ${item.value}`, x, y);
+      const boxWidth = (contentWidth - 15) / 4;
+      const boxHeight = 30;
+
+      kpiBoxes.forEach((kpi, index) => {
+        const x = margin + (index * (boxWidth + 5));
+        const lightColor = [...kpi.color.map(c => Math.min(255, c + 200))] as [number, number, number];
+
+        drawBox(x, yPos, boxWidth, boxHeight, lightColor);
+
+        pdf.setDrawColor(...kpi.color);
+        pdf.setLineWidth(0.5);
+        pdf.roundedRect(x, yPos, boxWidth, boxHeight, 2, 2, 'S');
+
+        pdf.setFontSize(8);
+        pdf.setTextColor(80, 80, 80);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(kpi.label, x + 3, yPos + 8);
+
+        pdf.setFontSize(16);
+        pdf.setTextColor(...kpi.color);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(kpi.value, x + 3, yPos + 20);
       });
 
-      yPosition += Math.ceil(kpiItems.length / 2) * 8 + 15;
+      yPos += boxHeight + 15;
 
-      // Add charts section
-      pdf.setFontSize(16);
-      pdf.text('📈 Grafieken en Trends', 20, yPosition);
-      yPosition += 15;
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Prestatie Indicatoren', margin, yPos);
+      yPos += 8;
 
-      // Capture charts as images
-      const chartElements = document.querySelectorAll('.recharts-wrapper');
-      
-      for (let i = 0; i < Math.min(chartElements.length, 3); i++) {
-        const element = chartElements[i] as HTMLElement;
-        
-        try {
-          const canvas = await html2canvas(element, {
-            backgroundColor: '#1E2530',
-            scale: 2,
-            logging: false,
-            useCORS: true
-          });
-          
-          const imgData = canvas.toDataURL('image/png');
-          const imgWidth = pageWidth - 40;
-          const imgHeight = (canvas.height * imgWidth) / canvas.width;
-          
-          // Check if we need a new page
-          if (yPosition + imgHeight > pageHeight - 20) {
-            pdf.addPage();
-            yPosition = 20;
+      const performanceMetrics = [
+        { label: 'Totale Projecten', value: kpiData.totalProjects },
+        { label: 'Afgeronde Projecten', value: kpiData.completedProjects },
+        { label: 'Totale Verdelers', value: kpiData.totalDistributors },
+        { label: 'Totale Klanten', value: kpiData.totalClients },
+        { label: 'Projecten deze maand', value: kpiData.projectsThisMonth },
+        { label: 'Uren deze maand', value: kpiData.totalHoursThisMonth }
+      ];
+
+      pdf.setFillColor(245, 245, 250);
+      pdf.rect(margin, yPos, contentWidth, 40, 'F');
+
+      pdf.setDrawColor(220, 220, 230);
+      pdf.rect(margin, yPos, contentWidth, 40, 'S');
+
+      const metricsPerRow = 3;
+      const metricWidth = contentWidth / metricsPerRow;
+
+      performanceMetrics.forEach((metric, index) => {
+        const row = Math.floor(index / metricsPerRow);
+        const col = index % metricsPerRow;
+        const x = margin + (col * metricWidth) + 5;
+        const y = yPos + (row * 20) + 8;
+
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(metric.label, x, y);
+
+        pdf.setFontSize(12);
+        pdf.setTextColor(30, 30, 30);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(metric.value.toString(), x, y + 7);
+      });
+
+      yPos += 50;
+
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Uren Analyse per Fase', margin, yPos);
+      yPos += 8;
+
+      if (phaseData.length > 0) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos, contentWidth, 10 + (phaseData.length * 12), 'F');
+
+        pdf.setDrawColor(220, 220, 230);
+        pdf.rect(margin, yPos, contentWidth, 10 + (phaseData.length * 12), 'S');
+
+        const colors: { [key: string]: [number, number, number] } = {
+          'Werkvoorbereiding': [245, 158, 11],
+          'Productie': [59, 130, 246],
+          'Testen': [16, 185, 129],
+          'Overig': [107, 114, 128]
+        };
+
+        phaseData.forEach((phase, index) => {
+          const y = yPos + 8 + (index * 12);
+          const phaseColor = colors[phase.name] || [107, 114, 128];
+
+          pdf.setFillColor(...phaseColor);
+          pdf.circle(margin + 5, y - 1, 2, 'F');
+
+          pdf.setFontSize(10);
+          pdf.setTextColor(60, 60, 60);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(phase.name, margin + 12, y);
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${phase.hours}u`, margin + 70, y);
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(120, 120, 120);
+          pdf.text(`(${phase.count} entries, gem. ${phase.avgHours}u)`, margin + 90, y);
+        });
+
+        yPos += 15 + (phaseData.length * 12);
+      }
+
+      if (yPos > pageHeight - 60) {
+        yPos = addNewPage();
+      }
+
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Voorcalculatorische vs Werkelijke Uren', margin, yPos);
+      yPos += 8;
+
+      if (estimatedVsActualData.length > 0) {
+        const avgVariance = estimatedVsActualData.reduce((sum, v) => sum + Math.abs(v.variance), 0) / estimatedVsActualData.length;
+        const underEstimated = estimatedVsActualData.filter(v => v.variance > 0).length;
+        const overEstimated = estimatedVsActualData.filter(v => v.variance < 0).length;
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(80, 80, 80);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Gemiddelde afwijking: ${Math.round(avgVariance * 10) / 10}u | Onder geschat: ${underEstimated} | Over geschat: ${overEstimated}`, margin, yPos);
+        yPos += 10;
+
+        pdf.setFillColor(240, 240, 245);
+        pdf.rect(margin, yPos, contentWidth, 10, 'F');
+
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Verdeler', margin + 2, yPos + 7);
+        pdf.text('Geschat', margin + 70, yPos + 7);
+        pdf.text('Werkelijk', margin + 95, yPos + 7);
+        pdf.text('Afwijking', margin + 125, yPos + 7);
+        pdf.text('%', margin + 155, yPos + 7);
+
+        yPos += 12;
+
+        estimatedVsActualData.slice(0, 10).forEach((item, index) => {
+          if (yPos > pageHeight - 40) {
+            yPos = addNewPage();
           }
-          
-          pdf.addImage(imgData, 'PNG', 20, yPosition, imgWidth, imgHeight);
-          yPosition += imgHeight + 15;
-        } catch (error) {
-          console.error('Error capturing chart:', error);
-        }
+
+          if (index % 2 === 0) {
+            pdf.setFillColor(250, 250, 252);
+            pdf.rect(margin, yPos - 5, contentWidth, 8, 'F');
+          }
+
+          pdf.setFontSize(8);
+          pdf.setTextColor(60, 60, 60);
+          pdf.setFont('helvetica', 'normal');
+
+          const nameText = item.name.length > 35 ? item.name.substring(0, 35) + '...' : item.name;
+          pdf.text(nameText, margin + 2, yPos);
+          pdf.text(`${item.estimated}u`, margin + 70, yPos);
+          pdf.text(`${item.actual}u`, margin + 95, yPos);
+
+          const varianceColor: [number, number, number] = item.variance > 0 ? [239, 68, 68] : [16, 185, 129];
+          pdf.setTextColor(...varianceColor);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(`${item.variance > 0 ? '+' : ''}${item.variance}u`, margin + 125, yPos);
+          pdf.text(`${item.variancePercentage > 0 ? '+' : ''}${item.variancePercentage}%`, margin + 155, yPos);
+
+          yPos += 8;
+        });
+
+        yPos += 5;
       }
 
-      // Add data table
-      if (yPosition + 50 > pageHeight - 20) {
-        pdf.addPage();
-        yPosition = 20;
+      if (yPos > pageHeight - 60) {
+        yPos = addNewPage();
       }
 
-      pdf.setFontSize(16);
-      pdf.text('📋 Maandelijkse Data', 20, yPosition);
-      yPosition += 15;
+      pdf.setFontSize(14);
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Top 5 Medewerkers', margin, yPos);
+      yPos += 8;
 
-      // Table headers
-      pdf.setFontSize(10);
-      pdf.setTextColor(107, 114, 128);
-      pdf.text('Maand', 20, yPosition);
-      pdf.text('Projecten', 60, yPosition);
-      pdf.text('Klanten', 100, yPosition);
-      pdf.text('Verdelers', 140, yPosition);
-      yPosition += 8;
+      if (employeeData.length > 0) {
+        pdf.setFillColor(240, 240, 245);
+        pdf.rect(margin, yPos, contentWidth, 10, 'F');
 
-      // Table data
-      pdf.setTextColor(0, 0, 0);
-      chartData.slice(-6).forEach((data) => {
-        pdf.text(data.month, 20, yPosition);
-        pdf.text(data.projects.toString(), 60, yPosition);
-        pdf.text(data.clients.toString(), 100, yPosition);
-        pdf.text(data.distributors.toString(), 140, yPosition);
-        yPosition += 6;
-      });
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 100, 100);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Naam', margin + 2, yPos + 7);
+        pdf.text('Totale Uren', margin + 80, yPos + 7);
+        pdf.text('Entries', margin + 115, yPos + 7);
+        pdf.text('Verdelers', margin + 145, yPos + 7);
 
-      // Add footer
-      pdf.setFontSize(8);
-      pdf.setTextColor(107, 114, 128);
-      pdf.text('© 2025 Process Improvement B.V. - EWP Management System', 20, pageHeight - 10);
+        yPos += 12;
 
-      // Generate filename with current date
-      const filename = `EWP_Inzichten_Rapport_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      
-      // Download the PDF
+        employeeData.slice(0, 5).forEach((emp, index) => {
+          if (index % 2 === 0) {
+            pdf.setFillColor(250, 250, 252);
+            pdf.rect(margin, yPos - 5, contentWidth, 8, 'F');
+          }
+
+          pdf.setFontSize(9);
+          pdf.setTextColor(60, 60, 60);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text(emp.name, margin + 2, yPos);
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.setTextColor(16, 185, 129);
+          pdf.text(`${emp.hours}u`, margin + 80, yPos);
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(60, 60, 60);
+          pdf.text(emp.entries.toString(), margin + 115, yPos);
+          pdf.text(emp.verdelers.toString(), margin + 145, yPos);
+
+          yPos += 8;
+        });
+      }
+
+      for (let i = 1; i <= pdf.getNumberOfPages(); i++) {
+        pdf.setPage(i);
+        addFooter(i);
+      }
+
+      const filename = `EWP_Inzichten_Rapport_${format(new Date(), 'yyyy-MM-dd_HHmm')}.pdf`;
       pdf.save(filename);
-      
-      toast.success('Rapport succesvol gegenereerd en gedownload!');
+
+      toast.success('Professioneel rapport succesvol gegenereerd!');
     } catch (error) {
       console.error('Error generating PDF report:', error);
       toast.error('Er is een fout opgetreden bij het genereren van het rapport');
@@ -613,7 +806,11 @@ const Insights = () => {
           </div>
           <div className="flex items-center space-x-4">
             <button
-              onClick={generatePDFReport}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                generatePDFReport();
+              }}
               disabled={generatingReport}
               className={`btn-primary flex items-center space-x-2 ${
                 generatingReport ? 'opacity-50 cursor-not-allowed' : ''
