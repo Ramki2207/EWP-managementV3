@@ -479,19 +479,21 @@ const Insights = () => {
           console.log('Could not add logo:', error);
         }
 
+        const textStartX = margin + 85;
+
         pdf.setFontSize(20);
         pdf.setTextColor(255, 255, 255);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Business Inzichten Rapport', margin + 50, 18);
+        pdf.text('Business Inzichten Rapport', textStartX, 18);
 
         pdf.setFontSize(9);
         pdf.setTextColor(156, 163, 175);
         pdf.setFont('helvetica', 'normal');
         const dateInfo = `Periode: ${format(parseISO(startDate), 'dd MMM yyyy', { locale: nl })} - ${format(parseISO(endDate), 'dd MMM yyyy', { locale: nl })}`;
-        pdf.text(dateInfo, margin + 50, 25);
+        pdf.text(dateInfo, textStartX, 25);
 
         const clientInfo = selectedClient === 'all' ? 'Alle klanten' : `Klant: ${selectedClient}`;
-        pdf.text(clientInfo, margin + 50, 30);
+        pdf.text(clientInfo, textStartX, 30);
       };
 
       const addFooter = () => {
