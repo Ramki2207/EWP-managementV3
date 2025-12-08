@@ -99,6 +99,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     const userId = localStorage.getItem('currentUserId');
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     const user = users.find((u: any) => u.id === userId);
+    console.log('👤 Current user loaded:', { userId, role: user?.role, name: user?.name });
     setCurrentUser(user);
   }, []);
 
@@ -649,14 +650,22 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       });
 
       // Mark testing hours as logged for this verdeler
-      setTestingHoursLogged(prev => ({
-        ...prev,
-        [verdelerForTestingHours.id]: true
-      }));
+      setTestingHoursLogged(prev => {
+        const updated = {
+          ...prev,
+          [verdelerForTestingHours.id]: true
+        };
+        console.log('⏱️ Updated testingHoursLogged state:', updated);
+        return updated;
+      });
 
       setShowTestingHoursModal(false);
       setTestingHours('');
       setVerdelerForTestingHours(null);
+
+      // Force a re-render by updating the verdelers array
+      setVerdelers([...verdelers]);
+
       toast.success('Test uren succesvol geregistreerd! Klik op de "Levering Checklist" knop om door te gaan.');
     } catch (error) {
       console.error('Error logging testing hours:', error);
@@ -1349,7 +1358,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                             </button>
                           )}
                           {/* Show "Levering Checklist" button for logistiek users when verdeler status is "Levering" and testing hours are logged */}
-                          {currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && testingHoursLogged[verdeler.id] && (
+                          {(() => {
+                            const shouldShow = currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && testingHoursLogged[verdeler.id];
+                            console.log(`🔍 Levering Checklist button check for ${verdeler.id}:`, {
+                              role: currentUser?.role,
+                              status: verdeler.status,
+                              hoursLogged: testingHoursLogged[verdeler.id],
+                              shouldShow
+                            });
+                            return shouldShow;
+                          })() && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
