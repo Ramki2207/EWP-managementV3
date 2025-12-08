@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import ewpLogo from '../assets/ewp-logo.png';
 
 const Insights = () => {
   const { hasPermission } = useEnhancedPermissions();
@@ -448,8 +449,17 @@ const Insights = () => {
         pdf.rect(0, 0, pageWidth, 40, 'F');
 
         try {
-          const logoImg = document.querySelector('img[src*="ewp-logo"]') as HTMLImageElement;
-          if (logoImg) {
+          const logoImg = document.querySelector('img[alt="EWP Logo"]') as HTMLImageElement;
+          if (logoImg && logoImg.complete && logoImg.naturalHeight !== 0) {
+            await new Promise((resolve) => {
+              if (logoImg.complete) {
+                resolve(null);
+              } else {
+                logoImg.onload = () => resolve(null);
+                logoImg.onerror = () => resolve(null);
+              }
+            });
+
             const canvas = document.createElement('canvas');
             canvas.width = logoImg.naturalWidth;
             canvas.height = logoImg.naturalHeight;
@@ -851,6 +861,9 @@ const Insights = () => {
 
   return (
     <div className="min-h-screen p-8">
+      {/* Hidden logo for PDF generation */}
+      <img src={ewpLogo} alt="EWP Logo" className="hidden" crossOrigin="anonymous" />
+
       {/* Header */}
       <div className="card p-6 mb-8">
         <div className="flex items-center justify-between">
@@ -863,7 +876,12 @@ const Insights = () => {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                generatePDFReport();
+                e.stopPropagation();
+                console.log('Button clicked!');
+                generatePDFReport().catch(err => {
+                  console.error('PDF generation failed:', err);
+                  toast.error('Er is een fout opgetreden');
+                });
               }}
               disabled={generatingReport}
               className={`btn-primary flex items-center space-x-2 ${
