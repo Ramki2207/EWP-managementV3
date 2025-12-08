@@ -1237,31 +1237,32 @@ const VerdelerDetails = () => {
                       <CheckSquare className="w-5 h-5 mr-2" />
                       <h3 className="text-lg font-semibold">Test uren geregistreerd</h3>
                     </div>
-                    <p className="text-gray-400">Je test uren zijn succesvol geregistreerd.</p>
+                    <p className="text-gray-400">
+                      Je test uren zijn succesvol geregistreerd. Klik op de "Levering Checklist" knop bovenaan de pagina om de checklist in te vullen.
+                    </p>
                   </div>
                 )}
 
-                {testingHoursLogged && (
+                {showLeveringChecklist && (
                   <div className="bg-[#2A303C] p-6 rounded-lg">
-                    <h3 className="text-lg font-semibold text-white mb-4">Levering Checklist</h3>
-                    {showLeveringChecklist ? (
-                      <VerdelerLeveringChecklist
-                        verdeler={distributor}
-                        onComplete={() => {
-                          setShowLeveringChecklist(false);
-                          loadDistributor();
-                          toast.success('Levering checklist opgeslagen!');
-                        }}
-                      />
-                    ) : (
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold text-white">Levering Checklist</h3>
                       <button
-                        onClick={() => setShowLeveringChecklist(true)}
-                        className="btn-primary"
+                        onClick={() => setShowLeveringChecklist(false)}
+                        className="btn-secondary p-2"
+                        title="Sluiten"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Checklist invullen
+                        <X size={20} />
                       </button>
-                    )}
+                    </div>
+                    <VerdelerLeveringChecklist
+                      verdeler={distributor}
+                      onComplete={() => {
+                        setShowLeveringChecklist(false);
+                        loadDistributor();
+                        toast.success('Levering checklist opgeslagen!');
+                      }}
+                    />
                   </div>
                 )}
               </div>
