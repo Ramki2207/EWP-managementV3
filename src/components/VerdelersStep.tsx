@@ -1951,6 +1951,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       onChange={(e) => handleInputChange('stuurspanning', e.target.value)}
                     >
                       <option value="">Selecteer stuurspanning</option>
+                      <option value="N.V.T.">N.V.T.</option>
                       <option value="230V AC">230V AC</option>
                       <option value="24V AC">24V AC</option>
                       <option value="12V AC">12V AC</option>
