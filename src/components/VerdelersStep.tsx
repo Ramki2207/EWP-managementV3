@@ -58,6 +58,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [verdelerForLevering, setVerdelerForLevering] = useState<any>(null);
   const [deliveryCompletionStatus, setDeliveryCompletionStatus] = useState<Record<string, boolean>>({});
   const [generatingPakbon, setGeneratingPakbon] = useState(false);
+  const [showTestingHoursModal, setShowTestingHoursModal] = useState(false);
+  const [testingHours, setTestingHours] = useState('');
+  const [verdelerForTestingHours, setVerdelerForTestingHours] = useState<any>(null);
+  const [previousVerdelerStatus, setPreviousVerdelerStatus] = useState<string>('');
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -361,6 +365,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleEditVerdeler = (verdeler: any) => {
     console.log('🔧 EDIT: Starting edit for verdeler:', verdeler);
     setEditingVerdeler(verdeler);
+    setPreviousVerdelerStatus(verdeler.status || '');
 
     // Check if systeem/voeding are custom values
     const systeemOptions = ['TN-S', 'TN-C', 'TN-C-S', 'TT'];
@@ -470,6 +475,152 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       toast.error('Er is een fout opgetreden bij het aanmaken van de toegangscode');
     } finally {
       setGeneratingCode(false);
+    }
+  };
+
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
+  const syncTestingHoursToWeekstaat = async (workerId: string, date: string, hours: number, verdelerName: string, projectNumber: string) => {
+    try {
+      const workDate = new Date(date);
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: existingWeekstaat } = await dataService.supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', workerId)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      let weekstaatId = existingWeekstaat?.id;
+
+      if (!weekstaatId) {
+        const { data: newWeekstaat, error: createError } = await dataService.supabase
+          .from('weekstaten')
+          .insert({
+            user_id: workerId,
+            week_number: weekNumber,
+            year: year,
+            status: 'draft'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        weekstaatId = newWeekstaat.id;
+      }
+
+      const activityCode = projectNumber;
+      const activityDescription = `Test uren - ${verdelerName} - ${projectNumber}`;
+
+      const { data: existingEntry } = await dataService.supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaatId)
+        .eq('activity_code', activityCode)
+        .eq('activity_description', activityDescription)
+        .maybeSingle();
+
+      if (existingEntry) {
+        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const updateData = {
+          [dayColumn]: currentHours + hours
+        };
+
+        const { error: updateError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .update(updateData)
+          .eq('id', existingEntry.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .insert({
+            weekstaat_id: weekstaatId,
+            activity_code: activityCode,
+            activity_description: activityDescription,
+            workorder_number: weekNumber.toString(),
+            [dayColumn]: hours
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      console.log('✅ Testing hours synced to weekstaat for', verdelerName);
+    } catch (error) {
+      console.error('Error syncing testing hours to weekstaat:', error);
+      throw error;
+    }
+  };
+
+  const handleTestingHoursSubmit = async () => {
+    if (!testingHours || parseFloat(testingHours) <= 0) {
+      toast.error('Voer geldige testuren in');
+      return;
+    }
+
+    if (!verdelerForTestingHours || !currentUser) {
+      toast.error('Verdeler of gebruiker niet gevonden');
+      return;
+    }
+
+    try {
+      const hours = parseFloat(testingHours);
+      const currentDate = new Date().toISOString().split('T')[0];
+      const verdelerName = verdelerForTestingHours.kast_naam || verdelerForTestingHours.distributor_id || 'Onbekend';
+      const projectNumber = projectData.project_number || 'Onbekend';
+
+      await syncTestingHoursToWeekstaat(
+        currentUser.id,
+        currentDate,
+        hours,
+        verdelerName,
+        projectNumber
+      );
+
+      await dataService.createWorkEntry({
+        distributorId: verdelerForTestingHours.id,
+        workerId: currentUser.id,
+        date: currentDate,
+        hours: hours,
+        status: 'completed',
+        notes: `Test uren - ${verdelerName}`
+      });
+
+      setShowTestingHoursModal(false);
+      setTestingHours('');
+      toast.success('Test uren succesvol geregistreerd!');
+
+      setTimeout(() => {
+        setVerdelerForLevering(verdelerForTestingHours);
+        setShowLeveringChecklist(true);
+        setVerdelerForTestingHours(null);
+      }, 100);
+    } catch (error) {
+      console.error('Error logging testing hours:', error);
+      toast.error('Er is een fout opgetreden bij het registreren van test uren');
     }
   };
 
@@ -658,8 +809,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         toast.info('Voor projecten met 1 verdeler, verander de project status naar "Testen"');
       }
 
-      // If status was changed to "Levering", open the delivery checklist
-      if (verdelerData.status === 'Levering' && editingVerdeler) {
+      // If status was changed from "Testen" to "Levering", open testing hours modal first
+      if (verdelerData.status === 'Levering' && editingVerdeler && previousVerdelerStatus === 'Testen') {
+        console.log('🚚 Status changed from Testen to Levering: Opening testing hours modal for verdeler:', editingVerdeler.distributor_id || editingVerdeler.distributorId);
+        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        if (updatedVerdeler) {
+          setTimeout(() => {
+            setVerdelerForTestingHours(updatedVerdeler);
+            setShowTestingHoursModal(true);
+          }, 100);
+        }
+      } else if (verdelerData.status === 'Levering' && editingVerdeler) {
         console.log('🚚 Status changed to Levering: Opening delivery checklist for verdeler:', editingVerdeler.distributor_id || editingVerdeler.distributorId);
         const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
@@ -725,6 +885,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleCancelForm = () => {
     setShowVerdelerForm(false);
     setEditingVerdeler(null);
+    setPreviousVerdelerStatus('');
     setVerdelerData({
       distributorId: '',
       kastNaam: '',
@@ -2139,6 +2300,57 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             }
           }}
         />
+      )}
+
+      {/* Testing Hours Modal */}
+      {showTestingHoursModal && verdelerForTestingHours && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E1E1E] rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-white mb-4">Test uren registreren</h3>
+            <p className="text-gray-400 mb-6">
+              Voer het aantal uren in dat je hebt besteed aan het testen van {verdelerForTestingHours.kast_naam || verdelerForTestingHours.distributor_id || 'deze verdeler'}.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Aantal uren *
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={testingHours}
+                onChange={(e) => setTestingHours(e.target.value)}
+                className="input-field w-full"
+                placeholder="Bijv. 2.5"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Deze uren worden automatisch toegevoegd aan je weekstaat en de productie tab
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowTestingHoursModal(false);
+                  setTestingHours('');
+                  setVerdelerForTestingHours(null);
+                }}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleTestingHoursSubmit}
+                className="btn-primary"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Uren opslaan
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Levering Checklist Modal */}
