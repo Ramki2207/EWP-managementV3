@@ -38,6 +38,10 @@ const VerdelerDetails = () => {
   const [testData, setTestData] = useState<any>(null);
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showTestingHoursModal, setShowTestingHoursModal] = useState(false);
+  const [testingHours, setTestingHours] = useState('');
+  const [testingHoursLogged, setTestingHoursLogged] = useState(false);
+  const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
 
   useEffect(() => {
     loadCurrentUser();
@@ -60,15 +64,45 @@ const VerdelerDetails = () => {
   useEffect(() => {
     if (distributor) {
       loadTestData();
+      checkLeveringStatus();
 
       // Check for tab query parameter and switch to that tab
       const searchParams = new URLSearchParams(location.search);
       const tabParam = searchParams.get('tab');
-      if (tabParam === 'levering' && currentUser?.role === 'logistiek' && distributor.status === 'Levering') {
+      if (tabParam === 'levering' && distributor.status === 'Levering') {
         setActiveTab('levering');
       }
     }
   }, [distributor, currentUser, location.search]);
+
+  const checkLeveringStatus = async () => {
+    if (!distributor || distributor.status !== 'Levering') return;
+
+    try {
+      const { data: workEntries } = await dataService.supabase
+        .from('work_entries')
+        .select('*')
+        .eq('distributor_id', distributor.id)
+        .eq('worker_id', currentUser?.id)
+        .ilike('notes', '%Test uren%');
+
+      if (workEntries && workEntries.length > 0) {
+        setTestingHoursLogged(true);
+      }
+
+      const { data: deliveryData } = await dataService.supabase
+        .from('verdeler_deliveries')
+        .select('*')
+        .eq('distributor_id', distributor.id)
+        .maybeSingle();
+
+      if (deliveryData && deliveryData.completed_at) {
+        setTestingHoursLogged(true);
+      }
+    } catch (error) {
+      console.error('Error checking levering status:', error);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -263,6 +297,142 @@ const VerdelerDetails = () => {
     toast.success('Code gekopieerd naar klembord!');
   };
 
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
+  const syncTestingHoursToWeekstaat = async (workerId: string, date: string, hours: number, verdelerName: string, projectNumber: string) => {
+    try {
+      const workDate = new Date(date);
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: existingWeekstaat } = await dataService.supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', workerId)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      let weekstaatId = existingWeekstaat?.id;
+
+      if (!weekstaatId) {
+        const { data: newWeekstaat, error: createError } = await dataService.supabase
+          .from('weekstaten')
+          .insert({
+            user_id: workerId,
+            week_number: weekNumber,
+            year: year,
+            status: 'draft'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        weekstaatId = newWeekstaat.id;
+      }
+
+      const activityCode = projectNumber;
+      const activityDescription = `Test uren - ${verdelerName} - ${projectNumber}`;
+
+      const { data: existingEntry } = await dataService.supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaatId)
+        .eq('activity_code', activityCode)
+        .eq('activity_description', activityDescription)
+        .maybeSingle();
+
+      if (existingEntry) {
+        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const updateData = {
+          [dayColumn]: currentHours + hours
+        };
+
+        const { error: updateError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .update(updateData)
+          .eq('id', existingEntry.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await dataService.supabase
+          .from('weekstaat_entries')
+          .insert({
+            weekstaat_id: weekstaatId,
+            activity_code: activityCode,
+            activity_description: activityDescription,
+            workorder_number: weekNumber.toString(),
+            [dayColumn]: hours
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      console.log('✅ Testing hours synced to weekstaat for', verdelerName);
+    } catch (error) {
+      console.error('Error syncing testing hours to weekstaat:', error);
+      throw error;
+    }
+  };
+
+  const handleTestingHoursSubmit = async () => {
+    if (!testingHours || parseFloat(testingHours) <= 0) {
+      toast.error('Voer geldige testuren in');
+      return;
+    }
+
+    try {
+      const hours = parseFloat(testingHours);
+      const currentDate = new Date().toISOString().split('T')[0];
+      const verdelerName = distributor.kast_naam || distributor.distributor_id || 'Onbekend';
+      const projectNumber = distributor.projects?.project_number || 'Onbekend';
+
+      await syncTestingHoursToWeekstaat(
+        currentUser.id,
+        currentDate,
+        hours,
+        verdelerName,
+        projectNumber
+      );
+
+      await dataService.createWorkEntry({
+        distributorId: distributor.id,
+        workerId: currentUser.id,
+        date: currentDate,
+        hours: hours,
+        status: 'completed',
+        notes: `Test uren - ${verdelerName}`
+      });
+
+      setTestingHoursLogged(true);
+      setShowTestingHoursModal(false);
+      setTestingHours('');
+      toast.success('Test uren succesvol geregistreerd!');
+    } catch (error) {
+      console.error('Error logging testing hours:', error);
+      toast.error('Er is een fout opgetreden bij het registreren van test uren');
+    }
+  };
+
   const handleEdit = () => {
     if (!hasPermission('verdelers', 'update')) {
       toast.error('Je hebt geen toestemming om verdelers te bewerken');
@@ -287,8 +457,8 @@ const VerdelerDetails = () => {
     try {
       console.log('Saving distributor with data:', editedDistributor);
 
-      // Check if status is being changed to "Levering"
-      const statusChangedToLevering = distributor?.status !== 'Levering' && editedDistributor.status === 'Levering';
+      // Check if status is being changed from "Testen" to "Levering"
+      const statusChangedFromTestenToLevering = distributor?.status === 'Testen' && editedDistributor.status === 'Levering';
 
       // Map frontend fields to database fields - use the exact database field names
       const updateData = {
@@ -326,16 +496,9 @@ const VerdelerDetails = () => {
       setDistributor(editedDistributor);
       setIsEditing(false);
 
-      if (statusChangedToLevering) {
-        toast.success('Verdeler status bijgewerkt naar Levering! Het levering proces is gestart.');
-
-        // If user is logistiek, automatically switch to levering tab
-        if (currentUser?.role === 'logistiek') {
-          setActiveTab('levering');
-          toast.info('Je kunt nu de levering checklist invullen in het Levering tabblad.');
-        } else {
-          toast.info('Logistiek medewerkers kunnen nu de levering checklist invullen.');
-        }
+      if (statusChangedFromTestenToLevering) {
+        toast.success('Verdeler status bijgewerkt naar Levering!');
+        setShowTestingHoursModal(true);
       } else {
         toast.success('Verdeler gegevens opgeslagen!');
       }
@@ -1038,27 +1201,64 @@ const VerdelerDetails = () => {
 
         {activeTab === 'levering' && (
           <div>
-            {console.log('🚚 Rendering Levering tab content:', {
-              activeTab,
-              currentUserRole: currentUser?.role,
-              distributorStatus: distributor?.status,
-              distributor
-            })}
-            <h2 className="text-lg text-gradient mb-6">Levering Checklist</h2>
-            {currentUser?.role === 'logistiek' && distributor?.status === 'Levering' ? (
-              <VerdelerLeveringChecklist
-                verdeler={distributor}
-                onComplete={() => {
-                  loadDistributor();
-                }}
-              />
+            <h2 className="text-lg text-gradient mb-6">Levering</h2>
+            {distributor?.status === 'Levering' ? (
+              <div className="space-y-6">
+                {!testingHoursLogged ? (
+                  <div className="bg-[#2A303C] p-6 rounded-lg border-l-4 border-yellow-500">
+                    <h3 className="text-lg font-semibold text-yellow-500 mb-2">Test uren registreren</h3>
+                    <p className="text-gray-400 mb-4">
+                      Log eerst je test uren voordat je de levering checklist invult.
+                    </p>
+                    <button
+                      onClick={() => setShowTestingHoursModal(true)}
+                      className="btn-primary"
+                    >
+                      <Clock className="w-4 h-4 mr-2" />
+                      Test uren invoeren
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-[#2A303C] p-6 rounded-lg border-l-4 border-green-500">
+                    <div className="flex items-center text-green-500 mb-2">
+                      <CheckSquare className="w-5 h-5 mr-2" />
+                      <h3 className="text-lg font-semibold">Test uren geregistreerd</h3>
+                    </div>
+                    <p className="text-gray-400">Je test uren zijn succesvol geregistreerd.</p>
+                  </div>
+                )}
+
+                {testingHoursLogged && (
+                  <div className="bg-[#2A303C] p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold text-white mb-4">Levering Checklist</h3>
+                    {showLeveringChecklist ? (
+                      <VerdelerLeveringChecklist
+                        verdeler={distributor}
+                        onComplete={() => {
+                          setShowLeveringChecklist(false);
+                          loadDistributor();
+                          toast.success('Levering checklist opgeslagen!');
+                        }}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setShowLeveringChecklist(true)}
+                        className="btn-primary"
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Checklist invullen
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="bg-[#2A303C] p-6 rounded-lg text-center">
                 <p className="text-gray-400">
-                  Deze checklist is alleen beschikbaar voor logistiek medewerkers wanneer de verdeler status "Levering" heeft.
+                  Deze tab is alleen beschikbaar wanneer de verdeler status "Levering" heeft.
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  Huidige status: {distributor?.status} | Gebruikersrol: {currentUser?.role}
+                  Huidige status: {distributor?.status}
                 </p>
               </div>
             )}
@@ -1086,6 +1286,56 @@ const VerdelerDetails = () => {
             await loadTestData();
           }}
         />
+      )}
+
+      {/* Testing Hours Modal */}
+      {showTestingHoursModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E1E1E] rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-semibold text-white mb-4">Test uren registreren</h3>
+            <p className="text-gray-400 mb-6">
+              Voer het aantal uren in dat je hebt besteed aan het testen van {distributor?.kast_naam || 'deze verdeler'}.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Aantal uren *
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                value={testingHours}
+                onChange={(e) => setTestingHours(e.target.value)}
+                className="input-field w-full"
+                placeholder="Bijv. 2.5"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Deze uren worden automatisch toegevoegd aan je weekstaat en de productie tab
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowTestingHoursModal(false);
+                  setTestingHours('');
+                }}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleTestingHoursSubmit}
+                className="btn-primary"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Uren opslaan
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
