@@ -424,7 +424,7 @@ const ProjectDetails = () => {
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   };
 
-  const syncTekenUrenToWeekstaat = async (workerId: string, date: string, hours: number, verdelerName: string) => {
+  const syncTekenUrenToWeekstaat = async (workerId: string, date: string, hours: number, verdelerName: string, projectNumber: string) => {
     try {
       const workDate = new Date(date);
       const weekNumber = getWeekNumber(workDate);
@@ -470,7 +470,7 @@ const ProjectDetails = () => {
       }
 
       const activityCode = 'TEKEN';
-      const activityDescription = `Teken uren - ${verdelerName}`;
+      const activityDescription = `Teken uren - ${verdelerName} - ${projectNumber}`;
 
       const { data: existingEntry, error: entryFetchError } = await dataService.supabase
         .from('weekstaat_entries')
@@ -550,18 +550,31 @@ const ProjectDetails = () => {
         }
       }
 
-      // Sync teken uren to weekstaat for logged-in user
+      // Sync teken uren to weekstaat and create work entries for logged-in user
       const currentDate = new Date().toISOString().split('T')[0];
       for (const verdeler of editedProject.distributors || []) {
         const hours = tempVerdelerHours[verdeler.id];
         if (hours && hours > 0) {
           const verdelerName = verdeler.kastNaam || verdeler.kast_naam || verdeler.distributorId || verdeler.distributor_id || 'Onbekend';
+
+          // Sync to weekstaat
           await syncTekenUrenToWeekstaat(
             currentUser.id,
             currentDate,
             hours,
-            verdelerName
+            verdelerName,
+            editedProject.project_number
           );
+
+          // Create work entry for Productie tab
+          await dataService.createWorkEntry({
+            distributorId: verdeler.id,
+            workerId: currentUser.id,
+            date: currentDate,
+            hours: hours,
+            status: 'completed',
+            notes: `Teken uren - Werkvoorbereiding`
+          });
         }
       }
 
