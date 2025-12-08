@@ -618,7 +618,11 @@ const Insights = () => {
             backgroundColor: '#1E2530',
             scale: 2,
             logging: false,
-            useCORS: true
+            useCORS: true,
+            allowTaint: true,
+            ignoreElements: (element) => {
+              return element.tagName === 'IMG' && element.getAttribute('src')?.includes('/src/assets/');
+            }
           });
 
           const imgData = canvas.toDataURL('image/png');
