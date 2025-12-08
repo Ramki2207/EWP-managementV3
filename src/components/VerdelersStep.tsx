@@ -1357,17 +1357,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                               <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
                             </button>
                           )}
-                          {/* Show "Levering Checklist" button for logistiek users when verdeler status is "Levering" and testing hours are logged */}
-                          {(() => {
-                            const shouldShow = currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && testingHoursLogged[verdeler.id];
-                            console.log(`🔍 Levering Checklist button check for ${verdeler.id}:`, {
-                              role: currentUser?.role,
-                              status: verdeler.status,
-                              hoursLogged: testingHoursLogged[verdeler.id],
-                              shouldShow
-                            });
-                            return shouldShow;
-                          })() && (
+                          {/* Show "Levering Checklist" button when verdeler status is "Levering" and testing hours are logged */}
+                          {verdeler.status === 'Levering' && testingHoursLogged[verdeler.id] && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
