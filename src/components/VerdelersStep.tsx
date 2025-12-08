@@ -62,6 +62,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [testingHours, setTestingHours] = useState('');
   const [verdelerForTestingHours, setVerdelerForTestingHours] = useState<any>(null);
   const [previousVerdelerStatus, setPreviousVerdelerStatus] = useState<string>('');
+  const [testingHoursLogged, setTestingHoursLogged] = useState<Record<string, boolean>>({});
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -133,6 +134,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   }, [verdelers]);
 
+  // Load testing hours status when currentUser or verdelers change
+  useEffect(() => {
+    if (currentUser?.id && verdelers.length > 0) {
+      loadTestingHoursStatus(verdelers);
+    }
+  }, [currentUser, verdelers]);
+
   const loadVerdelersFromDatabase = async () => {
     if (!projectData?.id) return;
 
@@ -185,6 +193,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       // Load delivery completion status in the background (don't await)
       loadDeliveryCompletionStatus(formattedVerdelers);
+
+      // Load testing hours logged status in the background (don't await)
+      loadTestingHoursStatus(formattedVerdelers);
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
     }
@@ -241,6 +252,34 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setDeliveryCompletionStatus(completionMap);
     } catch (error) {
       console.error('🚚 Error loading delivery completion status:', error);
+    }
+  };
+
+  const loadTestingHoursStatus = async (verdelersList: any[]) => {
+    if (!currentUser?.id) return;
+
+    try {
+      console.log('⏱️ Loading testing hours status...');
+      const hoursLoggedMap: Record<string, boolean> = {};
+
+      for (const verdeler of verdelersList) {
+        // Check if there are work entries for this verdeler by the current user
+        const { data, error } = await dataService.supabase
+          .from('work_entries')
+          .select('id')
+          .eq('distributor_id', verdeler.id)
+          .eq('worker_id', currentUser.id)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          hoursLoggedMap[verdeler.id] = true;
+        }
+      }
+
+      console.log('⏱️ Testing hours logged status:', hoursLoggedMap);
+      setTestingHoursLogged(hoursLoggedMap);
+    } catch (error) {
+      console.error('⏱️ Error loading testing hours status:', error);
     }
   };
 
@@ -609,15 +648,16 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         notes: `Test uren - ${verdelerName}`
       });
 
+      // Mark testing hours as logged for this verdeler
+      setTestingHoursLogged(prev => ({
+        ...prev,
+        [verdelerForTestingHours.id]: true
+      }));
+
       setShowTestingHoursModal(false);
       setTestingHours('');
-      toast.success('Test uren succesvol geregistreerd!');
-
-      setTimeout(() => {
-        setVerdelerForLevering(verdelerForTestingHours);
-        setShowLeveringChecklist(true);
-        setVerdelerForTestingHours(null);
-      }, 100);
+      setVerdelerForTestingHours(null);
+      toast.success('Test uren succesvol geregistreerd! Klik op de "Levering Checklist" knop om door te gaan.');
     } catch (error) {
       console.error('Error logging testing hours:', error);
       toast.error('Er is een fout opgetreden bij het registreren van test uren');
@@ -1308,8 +1348,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                               <span className="text-white text-sm font-medium">Checklist goedkeuring</span>
                             </button>
                           )}
-                          {/* Show "Levering Checklist" button for logistiek users when verdeler status is "Levering" */}
-                          {currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && (
+                          {/* Show "Levering Checklist" button for logistiek users when verdeler status is "Levering" and testing hours are logged */}
+                          {currentUser?.role === 'logistiek' && verdeler.status === 'Levering' && testingHoursLogged[verdeler.id] && (
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
