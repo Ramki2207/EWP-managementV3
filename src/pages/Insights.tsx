@@ -457,7 +457,12 @@ const Insights = () => {
             if (ctx) {
               ctx.drawImage(logoImg, 0, 0);
               const imgData = canvas.toDataURL('image/png');
-              pdf.addImage(imgData, 'PNG', margin, 8, 30, 24);
+
+              const logoHeight = 20;
+              const aspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+              const logoWidth = logoHeight * aspectRatio;
+
+              pdf.addImage(imgData, 'PNG', margin, 10, logoWidth, logoHeight);
             }
           }
         } catch (error) {
@@ -467,16 +472,16 @@ const Insights = () => {
         pdf.setFontSize(20);
         pdf.setTextColor(255, 255, 255);
         pdf.setFont('helvetica', 'bold');
-        pdf.text('Business Inzichten Rapport', margin + 35, 18);
+        pdf.text('Business Inzichten Rapport', margin + 50, 18);
 
         pdf.setFontSize(9);
         pdf.setTextColor(156, 163, 175);
         pdf.setFont('helvetica', 'normal');
         const dateInfo = `Periode: ${format(parseISO(startDate), 'dd MMM yyyy', { locale: nl })} - ${format(parseISO(endDate), 'dd MMM yyyy', { locale: nl })}`;
-        pdf.text(dateInfo, margin + 35, 25);
+        pdf.text(dateInfo, margin + 50, 25);
 
         const clientInfo = selectedClient === 'all' ? 'Alle klanten' : `Klant: ${selectedClient}`;
-        pdf.text(clientInfo, margin + 35, 30);
+        pdf.text(clientInfo, margin + 50, 30);
       };
 
       const addFooter = () => {
@@ -682,14 +687,17 @@ const Insights = () => {
       if (estimatedVsActualData.length > 0) {
         const avgVariance = estimatedVsActualData.reduce((sum, v) => sum + Math.abs(v.variance), 0) / estimatedVsActualData.length;
 
+        pdf.setFillColor(42, 48, 60);
+        pdf.roundedRect(margin, yPos - 2, contentWidth, 8, 2, 2, 'F');
+
         pdf.setFontSize(8);
-        pdf.setTextColor(156, 163, 175);
+        pdf.setTextColor(255, 255, 255);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`Gem. afwijking: ${Math.round(avgVariance * 10) / 10}u`, margin, yPos);
-        yPos += 7;
+        pdf.text(`Gem. afwijking: ${Math.round(avgVariance * 10) / 10}u`, margin + 3, yPos + 3);
+        yPos += 9;
 
         pdf.setFillColor(42, 48, 60);
-        pdf.roundedRect(margin, yPos, contentWidth, 8, 2, 2, 'FD');
+        pdf.roundedRect(margin, yPos, contentWidth, 8, 2, 2, 'F');
 
         pdf.setFontSize(8);
         pdf.setTextColor(156, 163, 175);
@@ -746,7 +754,7 @@ const Insights = () => {
 
       if (employeeData.length > 0) {
         pdf.setFillColor(42, 48, 60);
-        pdf.roundedRect(margin, yPos, contentWidth, 8, 2, 2, 'FD');
+        pdf.roundedRect(margin, yPos, contentWidth, 8, 2, 2, 'F');
 
         pdf.setFontSize(8);
         pdf.setTextColor(156, 163, 175);
