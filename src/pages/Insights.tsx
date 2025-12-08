@@ -35,6 +35,8 @@ const Insights = () => {
   const [workEntries, setWorkEntries] = useState<any[]>([]);
   const [hoursData, setHoursData] = useState<any[]>([]);
   const [employeeData, setEmployeeData] = useState<any[]>([]);
+  const [phaseData, setPhaseData] = useState<any[]>([]);
+  const [estimatedVsActualData, setEstimatedVsActualData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingReport, setGeneratingReport] = useState(false);
   const [kpiData, setKpiData] = useState({
@@ -60,6 +62,8 @@ const Insights = () => {
     if (projects.length > 0 || distributors.length > 0 || clients.length > 0 || workEntries.length > 0) {
       processChartData();
       processHoursData();
+      processPhaseData();
+      processEstimatedVsActual();
       calculateKPIs();
     }
   }, [timeRange, selectedClient, startDate, endDate, projects, distributors, clients, workEntries]);
@@ -272,6 +276,77 @@ const Insights = () => {
       .slice(0, 10);
 
     setEmployeeData(employeeArray);
+  };
+
+  const processPhaseData = () => {
+    // Calculate total hours per phase
+    const phaseStats = workEntries.reduce((acc: any, entry: any) => {
+      const phase = entry.phase || 'overig';
+      if (!acc[phase]) {
+        acc[phase] = {
+          name: phase,
+          hours: 0,
+          count: 0
+        };
+      }
+      acc[phase].hours += parseFloat(entry.hours) || 0;
+      acc[phase].count += 1;
+      return acc;
+    }, {});
+
+    const phaseArray = Object.values(phaseStats).map((phase: any) => ({
+      name: phase.name === 'werkvoorbereiding' ? 'Werkvoorbereiding' :
+            phase.name === 'productie' ? 'Productie' :
+            phase.name === 'testen' ? 'Testen' : 'Overig',
+      hours: Math.round(phase.hours * 10) / 10,
+      count: phase.count,
+      avgHours: phase.count > 0 ? Math.round((phase.hours / phase.count) * 10) / 10 : 0
+    }));
+
+    setPhaseData(phaseArray);
+  };
+
+  const processEstimatedVsActual = () => {
+    // Calculate estimated vs actual hours per verdeler
+    const verdelerStats = distributors.map((distributor: any) => {
+      // Get all work entries for this distributor
+      const verdelerEntries = workEntries.filter((w: any) => w.distributor_id === distributor.id);
+
+      // Calculate actual hours by phase
+      const actualWerkvoorbereiding = verdelerEntries
+        .filter((w: any) => w.phase === 'werkvoorbereiding')
+        .reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+
+      const actualProductie = verdelerEntries
+        .filter((w: any) => w.phase === 'productie')
+        .reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+
+      const actualTesten = verdelerEntries
+        .filter((w: any) => w.phase === 'testen')
+        .reduce((sum: number, w: any) => sum + (parseFloat(w.hours) || 0), 0);
+
+      const totalActual = actualWerkvoorbereiding + actualProductie + actualTesten;
+      const totalEstimated = parseFloat(distributor.expected_hours || '0');
+
+      return {
+        id: distributor.id,
+        name: distributor.distributor_id || distributor.kast_naam,
+        estimated: Math.round(totalEstimated * 10) / 10,
+        actual: Math.round(totalActual * 10) / 10,
+        werkvoorbereiding: Math.round(actualWerkvoorbereiding * 10) / 10,
+        productie: Math.round(actualProductie * 10) / 10,
+        testen: Math.round(actualTesten * 10) / 10,
+        variance: Math.round((totalActual - totalEstimated) * 10) / 10,
+        variancePercentage: totalEstimated > 0
+          ? Math.round(((totalActual - totalEstimated) / totalEstimated) * 100)
+          : 0
+      };
+    }).filter((v: any) => v.actual > 0 || v.estimated > 0);
+
+    // Sort by variance (show largest deviations first)
+    verdelerStats.sort((a: any, b: any) => Math.abs(b.variance) - Math.abs(a.variance));
+
+    setEstimatedVsActualData(verdelerStats.slice(0, 15)); // Show top 15
   };
 
   const calculateKPIs = () => {
@@ -1031,6 +1106,216 @@ const Insights = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Phase Tracking Section */}
+      <div className="mb-8">
+        <div className="card p-6 mb-6">
+          <h2 className="text-2xl font-bold text-white mb-2">⏱️ Uren Analyse per Fase</h2>
+          <p className="text-gray-400">Inzicht in tijdsbesteding per fase om voorcalculatorische uren te optimaliseren</p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Phase Distribution Pie Chart */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-blue-500/20">
+                  <PieChartIcon size={20} className="text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Verdeling per Fase</h2>
+                  <p className="text-xs text-gray-400">Totale uren per werkfase</p>
+                </div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={phaseData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, hours }) => `${name}: ${hours}u`}
+                  outerRadius={100}
+                  fill="#8884d8"
+                  dataKey="hours"
+                >
+                  {phaseData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={
+                      entry.name === 'Werkvoorbereiding' ? '#F59E0B' :
+                      entry.name === 'Productie' ? '#3B82F6' :
+                      entry.name === 'Testen' ? '#10B981' : '#6B7280'
+                    } />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E2530',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: '#fff'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2">
+              {phaseData.map((phase, index) => (
+                <div key={index} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-3 h-3 rounded-full`} style={{
+                      backgroundColor: phase.name === 'Werkvoorbereiding' ? '#F59E0B' :
+                                     phase.name === 'Productie' ? '#3B82F6' :
+                                     phase.name === 'Testen' ? '#10B981' : '#6B7280'
+                    }}></div>
+                    <span className="text-gray-300">{phase.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-white font-semibold">{phase.hours}u</span>
+                    <span className="text-gray-400">({phase.count} entries)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Average Hours per Phase */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-purple-500/20">
+                  <BarChart3 size={20} className="text-purple-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Gemiddelde Uren per Fase</h2>
+                  <p className="text-xs text-gray-400">Gemiddelde tijdsbesteding per entry</p>
+                </div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={phaseData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                  label={{ value: 'Gemiddelde Uren', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E2530',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: '#fff'
+                  }}
+                />
+                <Bar dataKey="avgHours" fill="#8B5CF6" name="Gem. Uren" radius={[4, 4, 0, 0]}>
+                  {phaseData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={
+                      entry.name === 'Werkvoorbereiding' ? '#F59E0B' :
+                      entry.name === 'Productie' ? '#3B82F6' :
+                      entry.name === 'Testen' ? '#10B981' : '#6B7280'
+                    } />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Estimated vs Actual Hours */}
+        <div className="grid grid-cols-1 gap-8">
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-red-500/20">
+                  <Target size={20} className="text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Voorcalculatorische vs Werkelijke Uren</h2>
+                  <p className="text-xs text-gray-400">Top 15 verdelers met grootste afwijkingen - optimaliseer je schattingen</p>
+                </div>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={estimatedVsActualData} layout="horizontal">
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis
+                  type="number"
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  stroke="#9CA3AF"
+                  tick={{ fill: '#9CA3AF', fontSize: 10 }}
+                  width={80}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1E2530',
+                    border: 'none',
+                    borderRadius: '0.5rem',
+                    color: '#fff'
+                  }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-[#1E2530] p-4 rounded-lg border border-gray-700">
+                          <p className="font-semibold text-white mb-2">{data.name}</p>
+                          <div className="space-y-1 text-sm">
+                            <p><span className="text-blue-400">Geschat:</span> <span className="text-white font-semibold">{data.estimated}u</span></p>
+                            <p><span className="text-green-400">Werkelijk:</span> <span className="text-white font-semibold">{data.actual}u</span></p>
+                            <p><span className="text-orange-400">Werkvoorbereiding:</span> {data.werkvoorbereiding}u</p>
+                            <p><span className="text-blue-400">Productie:</span> {data.productie}u</p>
+                            <p><span className="text-cyan-400">Testen:</span> {data.testen}u</p>
+                            <p className="pt-2 border-t border-gray-700">
+                              <span className={data.variance > 0 ? 'text-red-400' : 'text-green-400'}>
+                                Afwijking: {data.variance > 0 ? '+' : ''}{data.variance}u ({data.variancePercentage > 0 ? '+' : ''}{data.variancePercentage}%)
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Legend />
+                <Bar dataKey="estimated" fill="#3B82F6" name="Voorcalculatorisch" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="actual" fill="#10B981" name="Werkelijk" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-500/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400 mb-1">Gemiddelde Afwijking</div>
+                <div className="text-2xl font-bold text-white">
+                  {estimatedVsActualData.length > 0
+                    ? Math.round((estimatedVsActualData.reduce((sum, v) => sum + Math.abs(v.variance), 0) / estimatedVsActualData.length) * 10) / 10
+                    : 0}u
+                </div>
+              </div>
+              <div className="bg-green-500/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400 mb-1">Onder Schatting</div>
+                <div className="text-2xl font-bold text-green-400">
+                  {estimatedVsActualData.filter(v => v.variance > 0).length}
+                </div>
+              </div>
+              <div className="bg-red-500/10 rounded-lg p-4">
+                <div className="text-sm text-gray-400 mb-1">Over Schatting</div>
+                <div className="text-2xl font-bold text-red-400">
+                  {estimatedVsActualData.filter(v => v.variance < 0).length}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
