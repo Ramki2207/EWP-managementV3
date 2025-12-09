@@ -55,7 +55,7 @@ const loadLogoImage = (): Promise<string> => {
       reject(new Error('Failed to load logo'));
     };
 
-    img.src = '/EWP-Logo_blauw.png';
+    img.src = '/EWP logo test.png';
   });
 
   return logoLoadingPromise;
@@ -88,25 +88,32 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
   doc.setTextColor(0, 0, 0);
   doc.text('Keuringsrapport', margin, 25);
 
-  // Add EWP logo box on the right side
-  const logoBoxWidth = 52.5;
-  const logoBoxHeight = 15;
-  const logoBoxX = pageWidth - logoBoxWidth - margin;
-  const logoBoxY = 12;
+  // Add EWP logo on the right side
+  try {
+    const logoImage = await loadLogoImage();
+    const logoWidth = 50;
+    const logoHeight = 15;
+    const logoX = pageWidth - logoWidth - margin;
+    const logoY = 12;
 
-  // Draw blue rectangle background
-  doc.setFillColor(0, 51, 153); // EWP blue color
-  doc.rect(logoBoxX, logoBoxY, logoBoxWidth, logoBoxHeight, 'F');
+    doc.addImage(logoImage, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+  } catch (error) {
+    console.warn('Failed to add logo to PDF:', error);
+    // Fallback to text if logo fails to load
+    const logoBoxWidth = 52.5;
+    const logoBoxHeight = 15;
+    const logoBoxX = pageWidth - logoBoxWidth - margin;
+    const logoBoxY = 12;
 
-  // Add "EWP" text
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(255, 255, 255); // White text
-  doc.text('EWP', logoBoxX + 5, logoBoxY + 8);
-
-  // Add "PANEELBOUW" text
-  doc.setFontSize(10);
-  doc.text('PANEELBOUW', logoBoxX + 5, logoBoxY + 13);
+    doc.setFillColor(0, 51, 153);
+    doc.rect(logoBoxX, logoBoxY, logoBoxWidth, logoBoxHeight, 'F');
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('EWP', logoBoxX + 5, logoBoxY + 8);
+    doc.setFontSize(10);
+    doc.text('PANEELBOUW', logoBoxX + 5, logoBoxY + 13);
+  }
 
   // Reset text color to black for content
   doc.setTextColor(0, 0, 0);
