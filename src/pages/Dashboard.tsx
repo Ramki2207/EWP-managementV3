@@ -2631,7 +2631,8 @@ const Dashboard = () => {
                 {selectedUserWorkload.projects.length > 0 ? (
                   selectedUserWorkload.projects.map((project: any) => {
                     const userVerdelers = project.distributors?.filter(
-                      (d: any) => d.toegewezen_monteur === selectedUserWorkload.user.username
+                      (d: any) => d.toegewezen_monteur === selectedUserWorkload.user.username &&
+                        d.status?.toLowerCase() === 'productie'
                     ) || [];
 
                     return (
