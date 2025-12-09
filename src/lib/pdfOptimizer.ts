@@ -53,8 +53,8 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
           continue;
         }
 
-        const [distributor] = await dataService.getDistributors(doc.project_id);
-        const verdeler = distributor.distributors?.find((d: any) => d.id === doc.distributor_id);
+        const distributors = await dataService.getDistributorsByProject(doc.project_id);
+        const verdeler = distributors?.find((d: any) => d.id === doc.distributor_id);
 
         if (!verdeler) {
           console.log(`Skipping ${doc.name} - distributor not found`);
