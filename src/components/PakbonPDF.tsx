@@ -39,18 +39,24 @@ export const generatePakbonPDF = async (
     });
 
     const canvas = document.createElement('canvas');
-    canvas.width = logoImg.width;
-    canvas.height = logoImg.height;
+
+    const targetWidth = 600;
+    const targetHeight = Math.round((logoImg.height / logoImg.width) * targetWidth);
+
+    canvas.width = targetWidth;
+    canvas.height = targetHeight;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.drawImage(logoImg, 0, 0);
-      const logoDataUrl = canvas.toDataURL('image/png');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(logoImg, 0, 0, targetWidth, targetHeight);
+      const logoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
 
-      const logoAspectRatio = logoImg.width / logoImg.height;
+      const logoAspectRatio = targetWidth / targetHeight;
       const logoWidth = 60;
       const logoHeight = logoWidth / logoAspectRatio;
 
-      doc.addImage(logoDataUrl, 'PNG', margin, yPosition, logoWidth, logoHeight);
+      doc.addImage(logoDataUrl, 'JPEG', margin, yPosition, logoWidth, logoHeight);
       yPosition = Math.max(yPosition + logoHeight + 5, yPosition + 20);
     }
   } catch (error) {

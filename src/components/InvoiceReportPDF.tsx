@@ -85,7 +85,21 @@ const InvoiceReportPDF: React.FC<InvoiceReportPDFProps> = ({ project, className 
 
       try {
         const logoImg = await loadImage(ewpLogo);
-        doc.addImage(logoImg, 'PNG', 15, yPos, 40, 15);
+
+        const canvas = document.createElement('canvas');
+        const targetWidth = 600;
+        const targetHeight = Math.round((logoImg.height / logoImg.width) * targetWidth);
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(logoImg, 0, 0, targetWidth, targetHeight);
+          const logoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          doc.addImage(logoDataUrl, 'JPEG', 15, yPos, 40, 15);
+        }
       } catch (error) {
         console.warn('Could not load logo:', error);
       }

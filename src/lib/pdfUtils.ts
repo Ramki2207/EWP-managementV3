@@ -26,12 +26,18 @@ const loadLogoImage = (): Promise<string> => {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+
+        const targetWidth = 600;
+        const targetHeight = Math.round((img.height / img.width) * targetWidth);
+
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          logoImageCache = canvas.toDataURL('image/png');
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+          logoImageCache = canvas.toDataURL('image/jpeg', 0.85);
           logoLoadingPromise = null;
           resolve(logoImageCache);
         } else {
@@ -92,7 +98,7 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
     const logoY = 12;
 
     // Add the logo image with proper aspect ratio
-    doc.addImage(logoData, 'PNG', logoX, logoY, logoWidth, logoHeight);
+    doc.addImage(logoData, 'JPEG', logoX, logoY, logoWidth, logoHeight);
   } catch (error) {
     console.warn('Could not add logo to PDF:', error);
     // Fallback to text if logo fails to load
