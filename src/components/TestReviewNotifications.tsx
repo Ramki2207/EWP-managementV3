@@ -15,6 +15,7 @@ interface TestReviewNotification {
   reviewed_by?: string;
   reviewed_at?: string;
   review_notes?: string;
+  test_data?: any;
   projects?: {
     id: string;
     project_number: string;
@@ -79,16 +80,182 @@ const TestReviewNotifications: React.FC = () => {
       const currentUser = localStorage.getItem('currentUserId');
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const user = users.find((u: any) => u.id === currentUser);
+      const userName = user?.name || 'Admin';
 
+      toast.loading('Test wordt goedgekeurd en PDF wordt gegenereerd...');
+
+      // Try to get test data from notification first, then from database
+      let testData = notification.test_data;
+
+      if (!testData) {
+        // Get the test data from database
+        const testDataRecords = await dataService.getTestData(notification.distributor_id);
+
+        // Map notification test type to database test type
+        let dbTestType = notification.test_type;
+        if (notification.test_type === 'verdeler_testing_tot_630') {
+          dbTestType = 'workshop_checklist';
+        }
+        // Note: 'verdeler_vanaf_630' and 'verdeler_test_simpel' match the database test types
+
+        const testRecord = testDataRecords?.find((t: any) => t.test_type === dbTestType);
+
+        if (!testRecord || !testRecord.data) {
+          throw new Error('Test data niet gevonden');
+        }
+
+        testData = testRecord.data;
+      }
+
+      // Map notification test type to database test type for saving
+      let dbTestType = notification.test_type;
+      if (notification.test_type === 'verdeler_testing_tot_630') {
+        dbTestType = 'workshop_checklist';
+      }
+
+      // Auto-fill and approve all fields based on test type
+      if (notification.test_type === 'verdeler_testing_tot_630') {
+        // Update workshopChecklist
+        if (testData.workshopChecklist) {
+          testData.workshopChecklist.date = new Date().toISOString().split('T')[0];
+          testData.workshopChecklist.testedBy = userName;
+          testData.workshopChecklist.completed = true;
+
+          // Set all items to "akkoord"
+          if (testData.workshopChecklist.items) {
+            testData.workshopChecklist.items = testData.workshopChecklist.items.map((item: any) => ({
+              ...item,
+              passed: item.options?.includes('text') ? 'akkoord' : 'akkoord'
+            }));
+          }
+        }
+
+        // Update inspectionReport
+        if (testData.inspectionReport) {
+          testData.inspectionReport.date = new Date().toISOString().split('T')[0];
+          testData.inspectionReport.inspectedBy = userName;
+          testData.inspectionReport.approvedBy = userName;
+          testData.inspectionReport.result = 'approved';
+          testData.inspectionReport.completed = true;
+
+          // Set all items to true (approved)
+          if (testData.inspectionReport.items) {
+            testData.inspectionReport.items = testData.inspectionReport.items.map((item: any) => ({
+              ...item,
+              passed: true
+            }));
+          }
+        }
+
+        // Save the updated test data
+        await dataService.createTestData({
+          distributorId: notification.distributor_id,
+          testType: dbTestType,
+          data: testData
+        });
+
+        // Generate the PDF
+        const { generateVerdelerTestingPDF } = await import('./VerdelerTestingPDF');
+
+        // Get project and verdeler info
+        const distributors = await dataService.getDistributorsByProject(notification.project_id);
+        const verdeler = distributors?.find((d: any) => d.id === notification.distributor_id);
+
+        if (verdeler) {
+          await generateVerdelerTestingPDF(
+            testData,
+            verdeler,
+            notification.projects?.project_number || '',
+            notification.project_id,
+            notification.distributor_id
+          );
+        }
+      } else if (notification.test_type === 'verdeler_vanaf_630') {
+        // Handle vanaf 630 test type
+        if (testData.verdelerVanaf630Test) {
+          testData.verdelerVanaf630Test.date = new Date().toISOString().split('T')[0];
+          testData.verdelerVanaf630Test.testedBy = userName;
+          testData.verdelerVanaf630Test.approvedBy = userName;
+          testData.verdelerVanaf630Test.result = 'approved';
+          testData.verdelerVanaf630Test.completed = true;
+
+          // Set all checklist items to true
+          if (testData.verdelerVanaf630Test.checklist) {
+            Object.keys(testData.verdelerVanaf630Test.checklist).forEach(key => {
+              if (typeof testData.verdelerVanaf630Test.checklist[key] === 'boolean') {
+                testData.verdelerVanaf630Test.checklist[key] = true;
+              }
+            });
+          }
+        }
+
+        await dataService.createTestData({
+          distributorId: notification.distributor_id,
+          testType: dbTestType,
+          data: testData
+        });
+
+        const { generateVerdelerVanaf630PDF } = await import('./VerdelerVanaf630PDF');
+        const distributors = await dataService.getDistributorsByProject(notification.project_id);
+        const verdeler = distributors?.find((d: any) => d.id === notification.distributor_id);
+
+        if (verdeler) {
+          await generateVerdelerVanaf630PDF(
+            testData,
+            verdeler,
+            notification.projects?.project_number || ''
+          );
+        }
+      } else if (notification.test_type === 'verdeler_test_simpel') {
+        // Handle simpel test type
+        if (testData.verdelerTestSimpel) {
+          testData.verdelerTestSimpel.date = new Date().toISOString().split('T')[0];
+          testData.verdelerTestSimpel.testedBy = userName;
+          testData.verdelerTestSimpel.approvedBy = userName;
+          testData.verdelerTestSimpel.result = 'approved';
+          testData.verdelerTestSimpel.completed = true;
+
+          // Set all checklist items to true
+          if (testData.verdelerTestSimpel.checklist) {
+            Object.keys(testData.verdelerTestSimpel.checklist).forEach(key => {
+              if (typeof testData.verdelerTestSimpel.checklist[key] === 'boolean') {
+                testData.verdelerTestSimpel.checklist[key] = true;
+              }
+            });
+          }
+        }
+
+        await dataService.createTestData({
+          distributorId: notification.distributor_id,
+          testType: dbTestType,
+          data: testData
+        });
+
+        const { generateVerdelerTestSimpelPDF } = await import('./VerdelerTestSimpelPDF');
+        const distributors = await dataService.getDistributorsByProject(notification.project_id);
+        const verdeler = distributors?.find((d: any) => d.id === notification.distributor_id);
+
+        if (verdeler) {
+          await generateVerdelerTestSimpelPDF(
+            testData,
+            verdeler,
+            notification.projects?.project_number || ''
+          );
+        }
+      }
+
+      // Update the notification status
       await dataService.updateTestReviewNotification(notification.id, {
         status: 'approved',
-        reviewedBy: user?.name || 'Admin'
+        reviewedBy: userName
       });
 
-      toast.success('Test goedgekeurd!');
+      toast.dismiss();
+      toast.success('Test goedgekeurd en PDF gegenereerd!');
       loadNotifications();
     } catch (error) {
       console.error('Error approving test:', error);
+      toast.dismiss();
       toast.error('Fout bij goedkeuren van test');
     }
   };
