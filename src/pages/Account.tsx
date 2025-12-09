@@ -232,18 +232,17 @@ const Account = () => {
 
       console.log('HEIC conversion result:', result);
 
-      if (result.success) {
-        toast.success(`Conversie voltooid! ${result.converted} HEIC bestanden geconverteerd naar JPEG.`);
-      } else {
-        if (result.converted > 0) {
-          toast.success(`Conversie voltooid met fouten. ${result.converted} succesvol, ${result.failed} mislukt.`);
-        } else {
-          toast.error(`Conversie mislukt. ${result.failed} bestanden konden niet worden geconverteerd.`);
-        }
-
-        if (result.errors.length > 0) {
-          console.error('Conversion errors:', result.errors);
-        }
+      if (result.success && result.converted > 0) {
+        toast.success(`Conversie voltooid! ${result.converted} HEIC bestanden geconverteerd naar JPEG.`, { duration: 5000 });
+      } else if (result.converted === 0 && result.failed === 0) {
+        console.log('No HEIC files found to convert');
+      } else if (result.converted > 0 && result.failed > 0) {
+        toast.success(`Conversie voltooid met fouten. ${result.converted} succesvol, ${result.failed} mislukt.`, { duration: 6000 });
+        console.error('Conversion errors:', result.errors);
+        toast.error(`Zie console voor details van ${result.failed} mislukte conversies`, { duration: 5000 });
+      } else if (result.failed > 0) {
+        toast.error(`Conversie mislukt. ${result.failed} bestanden konden niet worden geconverteerd.`, { duration: 5000 });
+        console.error('Conversion errors:', result.errors);
       }
     } catch (error) {
       console.error('HEIC conversion error:', error);

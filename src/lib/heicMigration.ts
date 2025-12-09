@@ -28,16 +28,29 @@ export async function convertExistingHeicFiles(
     console.log(`📁 HEIC MIGRATION: Found ${allDocuments.length} total documents`);
 
     const heicDocuments = allDocuments.filter((doc: any) => {
-      const isHeic = doc.name?.toLowerCase().endsWith('.heic') ||
-                     doc.name?.toLowerCase().endsWith('.heif') ||
-                     doc.type === 'image/heic' ||
-                     doc.type === 'image/heif';
+      const fileName = doc.name?.toLowerCase() || '';
+      const fileType = doc.type?.toLowerCase() || '';
+
+      const isHeicByExtension = fileName.endsWith('.heic') || fileName.endsWith('.heif');
+
+      const isHeicByType = fileType.includes('heic') || fileType.includes('heif');
+
+      const isHeic = isHeicByExtension || isHeicByType;
+
+      if (isHeic) {
+        console.log(`🔍 HEIC MIGRATION: Found HEIC file - Name: ${doc.name}, Type: ${doc.type}, Storage: ${doc.storage_path ? 'Yes' : 'No'}`);
+      }
+
       return isHeic;
     });
 
     console.log(`🔄 HEIC MIGRATION: Found ${heicDocuments.length} HEIC files to convert`);
+    console.log(`📋 HEIC MIGRATION: File list:`, heicDocuments.map(d => ({ name: d.name, type: d.type, folder: d.folder })));
 
     if (heicDocuments.length === 0) {
+      console.log(`⚠️ HEIC MIGRATION: No HEIC files found. Sample of document types:`,
+        allDocuments.slice(0, 10).map(d => ({ name: d.name, type: d.type }))
+      );
       toast.info('Geen HEIC bestanden gevonden om te converteren');
       return result;
     }
