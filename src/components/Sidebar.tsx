@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   FolderOpen, Users, Bell, Upload, LayoutDashboard, UserCircle,
   HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe,
-  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus
+  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus, Zap
 } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
@@ -28,6 +28,7 @@ const navItems = [
 
 const bottomNavItems = [
   { path: '/account', icon: UserCircle, label: 'Mijn account', module: 'account' as SystemModule },
+  { path: '/pdf-optimizer', icon: Zap, label: 'PDF Optimizer', module: 'gebruikers' as SystemModule, adminOnly: true },
   { path: '/help', icon: HelpCircle, label: 'Help', module: undefined },
 ];
 
@@ -207,9 +208,13 @@ const Sidebar = () => {
 
       <div className="mt-auto p-6 border-t border-white/10">
         <nav className="space-y-2">
-          {bottomNavItems.map((item) => {
+          {bottomNavItems.map((item: any) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+
+            if (item.adminOnly && currentUser?.role !== 'admin') return null;
+            if (!hasModuleAccess(item.module)) return null;
+
             return (
               <div key={item.path} className="group relative flex items-center">
                 <Link

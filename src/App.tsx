@@ -27,6 +27,7 @@ import ClientPortal from "./pages/ClientPortal";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import UrenstaatVerlof from "./pages/UrenstaatVerlof";
 import Personeelsbeheer from "./pages/Personeelsbeheer";
+import PDFOptimizer from "./pages/PDFOptimizer";
 import { requestNotificationPermission, subscribeToNotifications, subscribeToTestingNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
 import { TabProvider } from "./contexts/TabContext";
@@ -108,6 +109,7 @@ const App = () => {
             <Route path="/help" element={<PermissionRoute><Help /></PermissionRoute>} />
             <Route path="/urenstaat-verlof" element={<PermissionRoute><UrenstaatVerlof /></PermissionRoute>} />
             <Route path="/personeelsbeheer" element={<PermissionRoute requiredPermission={{ module: 'worksheets', permission: 'read' }}><Personeelsbeheer /></PermissionRoute>} />
+            <Route path="/pdf-optimizer" element={<PermissionRoute requiredPermission={{ module: 'gebruikers', permission: 'write' }}><PDFOptimizer /></PermissionRoute>} />
             <Route path="/my-worksheet" element={<Navigate to="/urenstaat-verlof" replace />} />
             <Route path="/worksheet-management" element={<Navigate to="/personeelsbeheer" replace />} />
             <Route path="/maintenance-report" element={<MaintenanceReport />} />
