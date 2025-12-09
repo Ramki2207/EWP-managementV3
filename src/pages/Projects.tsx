@@ -193,6 +193,20 @@ const Projects = () => {
         console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
       }
 
+      // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
+      const viewAsRole = localStorage.getItem('viewAsRole');
+      if (
+        currentUser &&
+        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman') &&
+        viewAsRole === 'projectleider'
+      ) {
+        const beforeFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: any) => {
+          return project.created_by === currentUser.id;
+        });
+        console.log(`👤 PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (own projects only)`);
+      }
+
       setProjects(filteredProjects);
     } catch (error) {
       console.error('Error loading projects:', error);

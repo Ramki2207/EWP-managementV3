@@ -153,7 +153,10 @@ export const dataService = {
       console.log('Creating project with intake form:', project.intakeForm);
       console.log('Full project data:', project);
       console.log('Contact person being saved:', project.contactPerson || project.contact_person);
-      
+
+      // Get current user ID
+      const currentUserId = localStorage.getItem('currentUserId');
+
       const { data, error } = await supabase
         .from('projects')
         .insert([{
@@ -172,16 +175,17 @@ export const dataService = {
           contactpersoon_voornaam: project.contactpersoonVoornaam,
           contactpersoon_achternaam: project.contactpersoonAchternaam,
           contactpersoon_telefoon: project.contactpersoonTelefoon,
-          contactpersoon_email: project.contactpersoonEmail
+          contactpersoon_email: project.contactpersoonEmail,
+          created_by: currentUserId
         }])
         .select()
         .single();
-      
+
       if (error) {
         console.error('Database error in createProject:', error);
         throw error;
       }
-      
+
       console.log('Project created successfully:', data);
       console.log('Saved intake form data:', data.intake_form);
       return data;
@@ -347,6 +351,9 @@ export const dataService = {
         console.log('❌ Full distributor object:', JSON.stringify(distributor, null, 2));
         throw new Error('Kast naam is missing - cannot save distributor');
       }
+      // Get current user ID
+      const currentUserId = localStorage.getItem('currentUserId');
+
       const dbData = {
         distributor_id: distributorId,
         project_id: distributor.projectId,
@@ -370,7 +377,8 @@ export const dataService = {
         status: distributor.status,
         toegewezen_monteur: distributor.toegewezenMonteur || null,
         gewenste_lever_datum: distributor.gewensteLeverDatum || null,
-        expected_hours: distributor.expectedHours || null
+        expected_hours: distributor.expectedHours || null,
+        created_by: currentUserId
       };
       
       console.log('Database data being inserted:', dbData);

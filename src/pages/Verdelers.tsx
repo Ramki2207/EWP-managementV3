@@ -107,7 +107,21 @@ const Verdelers = () => {
       } else {
         console.log(`🌍 VERDELERS FILTER: User ${currentUser?.username} has no location restrictions - showing all distributors`);
       }
-      
+
+      // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
+      const viewAsRole = localStorage.getItem('viewAsRole');
+      if (
+        currentUser &&
+        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman') &&
+        viewAsRole === 'projectleider'
+      ) {
+        const beforeFilter = filteredDistributors.length;
+        filteredDistributors = filteredDistributors.filter((distributor: any) => {
+          return distributor.created_by === currentUser.id;
+        });
+        console.log(`👤 PROJECTLEIDER FILTER: Filtered ${beforeFilter} verdelers down to ${filteredDistributors.length} for ${currentUser.username} (own verdelers only)`);
+      }
+
       setDistributors(filteredDistributors);
     } catch (error) {
       console.error('Error loading distributors:', error);
