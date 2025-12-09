@@ -940,7 +940,7 @@ const ProjectDetails = () => {
                           verdeler.status === 'Levering' ? 'bg-blue-900/30 text-blue-400' :
                           verdeler.status === 'Testen' ? 'bg-yellow-900/30 text-yellow-400' :
                           verdeler.status === 'Gereed' ? 'bg-purple-900/30 text-purple-400' :
-                          verdeler.status === 'In productie' ? 'bg-orange-900/30 text-orange-400' :
+                          verdeler.status === 'Productie' ? 'bg-orange-900/30 text-orange-400' :
                           'bg-gray-700 text-gray-300'
                         }`}>
                           {verdeler.status || 'Geen status'}

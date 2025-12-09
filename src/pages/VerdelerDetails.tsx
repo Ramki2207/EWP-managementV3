@@ -892,7 +892,7 @@ const VerdelerDetails = () => {
                         onChange={(e) => handleInputChange('status', e.target.value)}
                       >
                         <option value="">Selecteer status</option>
-                        <option value="In productie">In productie</option>
+                        <option value="Productie">Productie</option>
                         <option value="Testen">Testen</option>
                         <option value="Gereed">Gereed</option>
                         <option value="Levering">Levering</option>
@@ -1296,7 +1296,7 @@ const VerdelerDetails = () => {
             await loadTestData();
           }}
           onDecline={async () => {
-            await dataService.updateDistributor(distributor.id, { status: 'In productie' });
+            await dataService.updateDistributor(distributor.id, { status: 'Productie' });
             await loadDistributor();
             await loadTestData();
           }}

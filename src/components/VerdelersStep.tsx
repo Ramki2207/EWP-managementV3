@@ -947,7 +947,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       kaWaarde: '',
       ipWaarde: '44',
       bouwjaar: new Date().getFullYear().toString(),
-      status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'In productie',
+      status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'Productie',
       fabrikant: '',
       unInV: '',
       inInA: '',
@@ -1294,7 +1294,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <td className="py-4 text-gray-300">{verdeler.toegewezenMonteur || "Vrij"}</td>
                       <td className="py-4">
                         <span className="px-3 py-1 rounded-full text-sm bg-blue-500/20 text-blue-400">
-                          {verdeler.status || 'In productie'}
+                          {verdeler.status || 'Productie'}
                         </span>
                       </td>
                       <td className="py-4">
@@ -1487,7 +1487,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                     </div>
                     <div>
                       <span className="text-gray-400">Status:</span>
-                      <p className="text-white">{selectedVerdeler.status || 'In productie'}</p>
+                      <p className="text-white">{selectedVerdeler.status || 'Productie'}</p>
                     </div>
                     <div>
                       <span className="text-gray-400">Stelsel:</span>
@@ -2012,7 +2012,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <option value="Offerte">Offerte</option>
                       {!isProjectOfferte && (
                         <>
-                          <option value="In productie">In productie</option>
+                          <option value="Productie">Productie</option>
                           <option value="Testen">Testen</option>
                           <option value="Gereed">Gereed</option>
                           <option value="Levering">Levering</option>
@@ -2342,9 +2342,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             await loadPendingNotifications(verdelers);
           }}
           onDecline={async () => {
-            // Update verdeler status back to "In productie"
+            // Update verdeler status back to "Productie"
             if (verdelerForTesting) {
-              await dataService.updateDistributor(verdelerForTesting.id, { status: 'In productie' });
+              await dataService.updateDistributor(verdelerForTesting.id, { status: 'Productie' });
               await loadVerdelersFromDatabase();
               await loadPendingNotifications(verdelers);
             }
