@@ -37,7 +37,7 @@ const loadLogoImage = (): Promise<string> => {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-          logoImageCache = canvas.toDataURL('image/jpeg', 0.85);
+          logoImageCache = canvas.toDataURL('image/png');
           logoLoadingPromise = null;
           resolve(logoImageCache);
         } else {
@@ -96,7 +96,7 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
     const logoX = pageWidth - logoWidth - margin;
     const logoY = 12;
 
-    doc.addImage(logoImage, 'JPEG', logoX, logoY, logoWidth, logoHeight);
+    doc.addImage(logoImage, 'PNG', logoX, logoY, logoWidth, logoHeight);
   } catch (error) {
     console.warn('Failed to add logo to PDF:', error);
     // Fallback to text if logo fails to load
