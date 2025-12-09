@@ -1706,11 +1706,13 @@ const Dashboard = () => {
                   {(() => {
                     const users = JSON.parse(localStorage.getItem('users') || '[]');
                     return users.filter((user: any) => {
-                      // Only count users with work in Productie projects
+                      // Only count users with verdelers that have status "Productie"
                       const hasWork = projects.some(p => {
-                        const isProductie = p.status?.toLowerCase() === 'productie';
-                        const hasAssignedVerdelers = p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
-                        return isProductie && hasAssignedVerdelers;
+                        const hasProductieVerdelers = p.distributors?.some((d: any) =>
+                          d.toegewezen_monteur === user.username &&
+                          d.status?.toLowerCase() === 'productie'
+                        );
+                        return hasProductieVerdelers;
                       });
                       return hasWork;
                     }).length;
@@ -1722,18 +1724,21 @@ const Dashboard = () => {
                 {(() => {
                   const users = JSON.parse(localStorage.getItem('users') || '[]');
                   const workload = users.map((user: any) => {
-                    // Only include projects with status "Productie"
+                    // Only include projects where user has verdelers with status "Productie"
                     const userProjects = projects.filter(p => {
-                      const isProductie = p.status?.toLowerCase() === 'productie';
-                      const hasAssignedVerdelers = p.distributors?.some((d: any) => d.toegewezen_monteur === user.username);
-                      return isProductie && hasAssignedVerdelers;
+                      const hasProductieVerdelers = p.distributors?.some((d: any) =>
+                        d.toegewezen_monteur === user.username &&
+                        d.status?.toLowerCase() === 'productie'
+                      );
+                      return hasProductieVerdelers;
                     });
 
-                    // Count verdelers only from Productie projects
+                    // Count only verdelers with status "Productie" assigned to this user
                     const verdelerCount = projects.reduce((total, p) => {
-                      const isProductie = p.status?.toLowerCase() === 'productie';
-                      if (!isProductie) return total;
-                      const userVerdelers = p.distributors?.filter((d: any) => d.toegewezen_monteur === user.username) || [];
+                      const userVerdelers = p.distributors?.filter((d: any) =>
+                        d.toegewezen_monteur === user.username &&
+                        d.status?.toLowerCase() === 'productie'
+                      ) || [];
                       return total + userVerdelers.length;
                     }, 0);
 
