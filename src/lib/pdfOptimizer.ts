@@ -62,8 +62,13 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
           continue;
         }
 
-        const project = await dataService.getProjectByDistributorId(verdeler.id);
-        if (!project) {
+        const { data: project, error: projectError } = await dataService.supabase
+          .from('projects')
+          .select('*')
+          .eq('id', doc.project_id)
+          .single();
+
+        if (projectError || !project) {
           console.log(`Skipping ${doc.name} - project not found`);
           result.skipped++;
           continue;
