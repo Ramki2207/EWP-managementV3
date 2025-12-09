@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Key, Save, Upload, CircleUser as UserCircle, Shield, Calendar, Clock, FileEdit as Edit, X, Database, RefreshCw } from 'lucide-react';
+import { User, Mail, Key, Save, Upload, CircleUser as UserCircle, Shield, Calendar, Clock, FileEdit as Edit, X, Database, RefreshCw, Image } from 'lucide-react';
 import toast from 'react-hot-toast';
 import bcrypt from 'bcryptjs';
 import { dataService } from '../lib/supabase';
 import { UserPermissions } from '../types/userRoles';
 import { migrateDocumentsToStorage } from '../lib/migrateData';
+import { convertExistingHeicFiles } from '../lib/heicMigration';
 
 interface UserData {
   id: string;
@@ -24,6 +25,8 @@ const Account = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isMigrating, setIsMigrating] = useState(false);
   const [migrationProgress, setMigrationProgress] = useState({ current: 0, total: 0 });
+  const [isConvertingHeic, setIsConvertingHeic] = useState(false);
+  const [heicConversionProgress, setHeicConversionProgress] = useState({ current: 0, total: 0 });
   const [formData, setFormData] = useState({
     email: '',
     currentPassword: '',
@@ -211,6 +214,43 @@ const Account = () => {
     } finally {
       setIsMigrating(false);
       setMigrationProgress({ current: 0, total: 0 });
+    }
+  };
+
+  const handleConvertHeicFiles = async () => {
+    if (!window.confirm('Weet u zeker dat u alle HEIC bestanden wilt converteren naar JPEG? Dit kan enkele minuten duren en kan niet ongedaan worden gemaakt.')) {
+      return;
+    }
+
+    setIsConvertingHeic(true);
+    setHeicConversionProgress({ current: 0, total: 0 });
+
+    try {
+      const result = await convertExistingHeicFiles((current, total) => {
+        setHeicConversionProgress({ current, total });
+      });
+
+      console.log('HEIC conversion result:', result);
+
+      if (result.success) {
+        toast.success(`Conversie voltooid! ${result.converted} HEIC bestanden geconverteerd naar JPEG.`);
+      } else {
+        if (result.converted > 0) {
+          toast.success(`Conversie voltooid met fouten. ${result.converted} succesvol, ${result.failed} mislukt.`);
+        } else {
+          toast.error(`Conversie mislukt. ${result.failed} bestanden konden niet worden geconverteerd.`);
+        }
+
+        if (result.errors.length > 0) {
+          console.error('Conversion errors:', result.errors);
+        }
+      }
+    } catch (error) {
+      console.error('HEIC conversion error:', error);
+      toast.error('Fout tijdens HEIC conversie');
+    } finally {
+      setIsConvertingHeic(false);
+      setHeicConversionProgress({ current: 0, total: 0 });
     }
   };
 
@@ -687,49 +727,96 @@ const Account = () => {
             <h2 className="text-xl font-semibold">Systeemtools</h2>
           </div>
 
-          <div className="p-4 bg-[#2A303C] rounded-lg">
-            <h3 className="font-medium text-gray-300 mb-2">Document Migratie naar Storage</h3>
-            <p className="text-sm text-gray-400 mb-4">
-              Migreer alle documenten van base64 opslag in de database naar Supabase Storage voor betere prestaties.
-              Dit maakt het laden van documenten veel sneller.
-            </p>
+          <div className="space-y-6">
+            <div className="p-4 bg-[#2A303C] rounded-lg">
+              <h3 className="font-medium text-gray-300 mb-2">Document Migratie naar Storage</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Migreer alle documenten van base64 opslag in de database naar Supabase Storage voor betere prestaties.
+                Dit maakt het laden van documenten veel sneller.
+              </p>
 
-            {isMigrating && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
-                  <span>Migratie bezig...</span>
-                  <span>{migrationProgress.current} / {migrationProgress.total}</span>
+              {isMigrating && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                    <span>Migratie bezig...</span>
+                    <span>{migrationProgress.current} / {migrationProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: migrationProgress.total > 0
+                          ? `${(migrationProgress.current / migrationProgress.total) * 100}%`
+                          : '0%'
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: migrationProgress.total > 0
-                        ? `${(migrationProgress.current / migrationProgress.total) * 100}%`
-                        : '0%'
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={handleMigrateDocuments}
-              disabled={isMigrating}
-              className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isMigrating ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span>Bezig met migreren...</span>
-                </>
-              ) : (
-                <>
-                  <Database size={16} />
-                  <span>Start Migratie</span>
-                </>
               )}
-            </button>
+
+              <button
+                onClick={handleMigrateDocuments}
+                disabled={isMigrating}
+                className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isMigrating ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>Bezig met migreren...</span>
+                  </>
+                ) : (
+                  <>
+                    <Database size={16} />
+                    <span>Start Migratie</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="p-4 bg-[#2A303C] rounded-lg">
+              <h3 className="font-medium text-gray-300 mb-2">HEIC naar JPEG Conversie</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Converteer alle bestaande HEIC bestanden naar JPEG formaat voor betere compatibiliteit met browsers.
+                Nieuwe uploads worden automatisch geconverteerd.
+              </p>
+
+              {isConvertingHeic && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-sm text-gray-400 mb-2">
+                    <span>Conversie bezig...</span>
+                    <span>{heicConversionProgress.current} / {heicConversionProgress.total}</span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: heicConversionProgress.total > 0
+                          ? `${(heicConversionProgress.current / heicConversionProgress.total) * 100}%`
+                          : '0%'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={handleConvertHeicFiles}
+                disabled={isConvertingHeic}
+                className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600"
+              >
+                {isConvertingHeic ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>Bezig met converteren...</span>
+                  </>
+                ) : (
+                  <>
+                    <Image size={16} />
+                    <span>Converteer HEIC Bestanden</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

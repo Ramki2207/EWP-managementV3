@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Folder, ChevronRight, ChevronDown, Server, Upload, FileText, X, Trash2, Download, Building } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { convertHeicToJpeg, isHeicFile } from '../../lib/heicConverter';
 
 interface UploadsStepProps {
   onBack: () => void;
@@ -114,11 +115,24 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
       return;
     }
 
-    const processFile = (file: File) => {
+    const processFile = async (file: File): Promise<Document> => {
+      let fileToProcess = file;
+
+      if (isHeicFile(file)) {
+        try {
+          toast.loading(`Converteren van ${file.name} naar JPEG...`, { id: `convert-${file.name}` });
+          fileToProcess = await convertHeicToJpeg(file);
+          toast.success(`${file.name} geconverteerd naar JPEG`, { id: `convert-${file.name}` });
+        } catch (error) {
+          console.error('❌ HEIC conversion failed:', error);
+          toast.error(`Conversie mislukt: ${error.message}`, { id: `convert-${file.name}` });
+          throw error;
+        }
+      }
+
       return new Promise<Document>((resolve, reject) => {
-        // Check file size (limit to 15MB)
-        if (file.size > 15 * 1024 * 1024) {
-          reject(`Bestand ${file.name} is te groot. Maximum grootte is 15MB`);
+        if (fileToProcess.size > 15 * 1024 * 1024) {
+          reject(`Bestand ${fileToProcess.name} is te groot. Maximum grootte is 15MB`);
           return;
         }
 
@@ -127,9 +141,9 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
           try {
             const newDoc: Document = {
               id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-              name: file.name,
-              type: file.type,
-              size: file.size,
+              name: fileToProcess.name,
+              type: fileToProcess.type,
+              size: fileToProcess.size,
               content: e.target?.result as string,
               folder: selectedFolder,
               distributorId: selectedDistributor || null,
@@ -137,11 +151,11 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
             };
             resolve(newDoc);
           } catch (error) {
-            reject(`Fout bij het verwerken van bestand ${file.name}`);
+            reject(`Fout bij het verwerken van bestand ${fileToProcess.name}`);
           }
         };
-        reader.onerror = () => reject(`Fout bij het lezen van bestand ${file.name}`);
-        reader.readAsDataURL(file);
+        reader.onerror = () => reject(`Fout bij het lezen van bestand ${fileToProcess.name}`);
+        reader.readAsDataURL(fileToProcess);
       });
     };
 

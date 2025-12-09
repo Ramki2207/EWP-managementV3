@@ -3,6 +3,7 @@ import { FileText, Upload, Trash2, Download, Folder, X, Archive, Clock } from 'l
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
+import { convertHeicToJpeg, isHeicFile } from '../lib/heicConverter';
 
 interface Document {
   id: string;
@@ -352,36 +353,50 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     const processFile = async (file: File): Promise<any> => {
       console.log(`📁 Processing file: ${file.name}, size: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
 
+      let fileToUpload = file;
+
+      if (isHeicFile(file)) {
+        try {
+          toast.loading(`Converteren van ${file.name} naar JPEG...`, { id: `convert-${file.name}` });
+          fileToUpload = await convertHeicToJpeg(file);
+          toast.success(`${file.name} geconverteerd naar JPEG`, { id: `convert-${file.name}` });
+        } catch (error) {
+          console.error('❌ HEIC conversion failed:', error);
+          toast.error(`Conversie mislukt: ${error.message}`, { id: `convert-${file.name}` });
+          throw error;
+        }
+      }
+
       // Check file size (limit to 50MB to match storage limit)
-      if (file.size > 50 * 1024 * 1024) {
-        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
-        const errorMsg = `Bestand ${file.name} is te groot (${sizeMB}MB). Maximum grootte is 50MB`;
+      if (fileToUpload.size > 50 * 1024 * 1024) {
+        const sizeMB = (fileToUpload.size / (1024 * 1024)).toFixed(2);
+        const errorMsg = `Bestand ${fileToUpload.name} is te groot (${sizeMB}MB). Maximum grootte is 50MB`;
         console.error('❌ File too large:', errorMsg);
         throw new Error(errorMsg);
       }
 
       try {
         // Initialize progress
-        setUploadProgress(prev => ({ ...prev, [file.name]: 0 }));
-        console.log('📤 Uploading file to storage:', file.name);
+        setUploadProgress(prev => ({ ...prev, [fileToUpload.name]: 0 }));
+        console.log('📤 Uploading file to storage:', fileToUpload.name);
 
         // Simulate progress for better UX (since Supabase doesn't provide real progress)
         const progressInterval = setInterval(() => {
           setUploadProgress(prev => {
-            const currentProgress = prev[file.name] || 0;
+            const currentProgress = prev[fileToUpload.name] || 0;
             if (currentProgress < 90) {
-              return { ...prev, [file.name]: currentProgress + 10 };
+              return { ...prev, [fileToUpload.name]: currentProgress + 10 };
             }
             return prev;
           });
         }, 200);
 
-        const storagePath = await dataService.uploadFileToStorage(file, projectId, distributorId, folder);
+        const storagePath = await dataService.uploadFileToStorage(fileToUpload, projectId, distributorId, folder);
         console.log('✅ File uploaded to storage:', storagePath);
 
         // Clear progress interval and set to 100%
         clearInterval(progressInterval);
-        setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+        setUploadProgress(prev => ({ ...prev, [fileToUpload.name]: 100 }));
 
         // Get public URL for the file (bucket is public)
         const publicUrl = dataService.getStorageUrl(storagePath);
@@ -391,7 +406,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         setTimeout(() => {
           setUploadProgress(prev => {
             const newProgress = { ...prev };
-            delete newProgress[file.name];
+            delete newProgress[fileToUpload.name];
             return newProgress;
           });
         }, 1000);
@@ -400,21 +415,21 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           projectId,
           distributorId,
           folder,
-          name: file.name,
-          type: file.type,
-          size: file.size,
+          name: fileToUpload.name,
+          type: fileToUpload.type,
+          size: fileToUpload.size,
           storagePath,
-          content: publicUrl, // Store public URL as content for immediate display
+          content: publicUrl,
         };
       } catch (error) {
-        console.error('❌ Error processing file:', file.name, error);
+        console.error('❌ Error processing file:', fileToUpload.name, error);
         setUploadProgress(prev => {
           const newProgress = { ...prev };
-          delete newProgress[file.name];
+          delete newProgress[fileToUpload.name];
           return newProgress;
         });
-        toast.error(`Fout: ${error.message}`, { id: file.name });
-        throw new Error(`Fout bij het verwerken van bestand ${file.name}: ${error.message}`);
+        toast.error(`Fout: ${error.message}`, { id: fileToUpload.name });
+        throw new Error(`Fout bij het verwerken van bestand ${fileToUpload.name}: ${error.message}`);
       }
     };
 

@@ -668,7 +668,7 @@ export const dataService = {
           type: document.type,
           size: document.size,
           storage_path: document.storagePath || null,
-          content: document.content || null // Keep for backward compatibility during migration
+          content: document.content || null
         }])
         .select()
         .single();
@@ -681,6 +681,67 @@ export const dataService = {
     } catch (err) {
       console.error('Network error in createDocument:', err);
       throw new Error(`Failed to create document: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async updateDocument(id: string, updates: any) {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .update({
+          name: updates.name,
+          type: updates.type,
+          size: updates.size,
+          storage_path: updates.storage_path !== undefined ? updates.storage_path : undefined,
+          content: updates.content !== undefined ? updates.content : undefined
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Database error in updateDocument:', error);
+        throw error;
+      }
+      return data;
+    } catch (err) {
+      console.error('Network error in updateDocument:', err);
+      throw new Error(`Failed to update document: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async getAllDocuments() {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error('Database error in getAllDocuments:', error);
+        throw error;
+      }
+      return data;
+    } catch (err) {
+      console.error('Network error in getAllDocuments:', err);
+      throw new Error(`Failed to fetch all documents: ${getErrorMessage(err)}`);
+    }
+  },
+
+  async deleteFromStorage(storagePath: string) {
+    try {
+      const { error } = await supabase.storage
+        .from('documents')
+        .remove([storagePath]);
+
+      if (error) {
+        console.error('Error deleting from storage:', error);
+        throw error;
+      }
+      console.log('✅ File deleted from storage:', storagePath);
+    } catch (err) {
+      console.error('Network error in deleteFromStorage:', err);
+      throw new Error(`Failed to delete file from storage: ${getErrorMessage(err)}`);
     }
   },
 
