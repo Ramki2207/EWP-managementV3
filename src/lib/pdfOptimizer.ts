@@ -4,6 +4,19 @@ import { generateVerdelerVanaf630PDF } from '../components/VerdelerVanaf630PDF';
 import { generateVerdelerTestSimpelPDF } from '../components/VerdelerTestSimpelPDF';
 import toast from 'react-hot-toast';
 
+interface Document {
+  id: string;
+  project_id: string;
+  distributor_id: string;
+  folder: string;
+  name: string;
+  type: string;
+  size: number;
+  content?: string;
+  uploaded_at: string;
+  storage_path?: string;
+}
+
 interface RegenerationResult {
   success: number;
   failed: number;
@@ -24,24 +37,24 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
   };
 
   try {
-    const documents = await dataService.getDocuments();
+    const documents = await dataService.getDocuments() as Document[];
 
     const testCertificates = documents.filter(
-      doc => doc.folder === 'Test certificaat' && doc.type === 'application/pdf'
+      (doc): doc is Document => doc.folder === 'Test certificaat' && doc.type === 'application/pdf'
     );
 
     console.log(`Found ${testCertificates.length} test certificate PDFs to regenerate`);
 
     for (const doc of testCertificates) {
       try {
-        if (!doc.distributorId || !doc.projectId) {
+        if (!doc.distributor_id || !doc.project_id) {
           console.log(`Skipping ${doc.name} - missing distributor or project ID`);
           result.skipped++;
           continue;
         }
 
-        const [distributor] = await dataService.getDistributors(doc.projectId);
-        const verdeler = distributor.distributors?.find((d: any) => d.id === doc.distributorId);
+        const [distributor] = await dataService.getDistributors(doc.project_id);
+        const verdeler = distributor.distributors?.find((d: any) => d.id === doc.distributor_id);
 
         if (!verdeler) {
           console.log(`Skipping ${doc.name} - distributor not found`);
@@ -150,10 +163,10 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
 
 export const getTestCertificateStats = async () => {
   try {
-    const documents = await dataService.getDocuments();
+    const documents = await dataService.getDocuments() as Document[];
 
     const testCertificates = documents.filter(
-      doc => doc.folder === 'Test certificaat' && doc.type === 'application/pdf'
+      (doc): doc is Document => doc.folder === 'Test certificaat' && doc.type === 'application/pdf'
     );
 
     const totalSize = testCertificates.reduce((sum, doc) => sum + (doc.size || 0), 0);
