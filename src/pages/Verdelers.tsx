@@ -117,9 +117,10 @@ const Verdelers = () => {
       ) {
         const beforeFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
-          return distributor.created_by === currentUser.id;
+          // Show verdelers created by this user OR legacy verdelers (created_by is null)
+          return distributor.created_by === currentUser.id || distributor.created_by === null;
         });
-        console.log(`👤 PROJECTLEIDER FILTER: Filtered ${beforeFilter} verdelers down to ${filteredDistributors.length} for ${currentUser.username} (own verdelers only)`);
+        console.log(`👤 PROJECTLEIDER FILTER: Filtered ${beforeFilter} verdelers down to ${filteredDistributors.length} for ${currentUser.username} (own verdelers + legacy verdelers)`);
       }
 
       setDistributors(filteredDistributors);
