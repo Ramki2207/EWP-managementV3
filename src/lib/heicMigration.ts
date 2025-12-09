@@ -24,46 +24,48 @@ export async function convertExistingHeicFiles(
   try {
     console.log('🔄 HEIC MIGRATION: Starting conversion of existing HEIC files...');
 
-    const allDocuments = await dataService.getAllDocuments();
-    console.log(`📁 HEIC MIGRATION: Found ${allDocuments.length} total documents`);
+    const heicDocuments = await dataService.getHeicDocuments();
+    console.log(`📁 HEIC MIGRATION: Found ${heicDocuments.length} potential HEIC documents`);
 
-    const heicDocuments = allDocuments.filter((doc: any) => {
+    if (heicDocuments.length === 0) {
+      console.log(`⚠️ HEIC MIGRATION: No HEIC files found in database`);
+      toast.info('Geen HEIC bestanden gevonden om te converteren');
+      return result;
+    }
+
+    const validHeicDocuments = heicDocuments.filter((doc: any) => {
       const fileName = doc.name?.toLowerCase() || '';
       const fileType = doc.type?.toLowerCase() || '';
 
       const isHeicByExtension = fileName.endsWith('.heic') || fileName.endsWith('.heif');
-
       const isHeicByType = fileType.includes('heic') || fileType.includes('heif');
-
       const isHeic = isHeicByExtension || isHeicByType;
 
       if (isHeic) {
-        console.log(`🔍 HEIC MIGRATION: Found HEIC file - Name: ${doc.name}, Type: ${doc.type}, Storage: ${doc.storage_path ? 'Yes' : 'No'}`);
+        console.log(`🔍 HEIC MIGRATION: Confirmed HEIC file - Name: ${doc.name}, Type: ${doc.type}, Storage: ${doc.storage_path ? 'Yes' : 'No'}`);
       }
 
       return isHeic;
     });
 
-    console.log(`🔄 HEIC MIGRATION: Found ${heicDocuments.length} HEIC files to convert`);
-    console.log(`📋 HEIC MIGRATION: File list:`, heicDocuments.map(d => ({ name: d.name, type: d.type, folder: d.folder })));
+    console.log(`🔄 HEIC MIGRATION: Validated ${validHeicDocuments.length} HEIC files to convert`);
+    console.log(`📋 HEIC MIGRATION: File list:`, validHeicDocuments.map(d => ({ name: d.name, type: d.type, folder: d.folder })));
 
-    if (heicDocuments.length === 0) {
-      console.log(`⚠️ HEIC MIGRATION: No HEIC files found. Sample of document types:`,
-        allDocuments.slice(0, 10).map(d => ({ name: d.name, type: d.type }))
-      );
+    if (validHeicDocuments.length === 0) {
+      console.log(`⚠️ HEIC MIGRATION: No valid HEIC files found after validation`);
       toast.info('Geen HEIC bestanden gevonden om te converteren');
       return result;
     }
 
     if (onProgress) {
-      onProgress(0, heicDocuments.length);
+      onProgress(0, validHeicDocuments.length);
     }
 
-    for (let i = 0; i < heicDocuments.length; i++) {
-      const doc = heicDocuments[i];
+    for (let i = 0; i < validHeicDocuments.length; i++) {
+      const doc = validHeicDocuments[i];
 
       try {
-        console.log(`🔄 HEIC MIGRATION: Converting ${i + 1}/${heicDocuments.length}: ${doc.name}`);
+        console.log(`🔄 HEIC MIGRATION: Converting ${i + 1}/${validHeicDocuments.length}: ${doc.name}`);
 
         if (!doc.storage_path) {
           console.log(`⚠️ HEIC MIGRATION: Document ${doc.name} has no storage_path, fetching from content...`);

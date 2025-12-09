@@ -728,6 +728,29 @@ export const dataService = {
     }
   },
 
+  async getHeicDocuments() {
+    try {
+      console.log('🔍 Fetching HEIC documents from database...');
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .or('name.ilike.%.heic,name.ilike.%.heif,type.ilike.%heic%,type.ilike.%heif%')
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        console.error('Database error in getHeicDocuments:', error);
+        throw error;
+      }
+
+      console.log(`✅ Found ${data?.length || 0} potential HEIC documents`);
+      return data || [];
+    } catch (err) {
+      console.error('Network error in getHeicDocuments:', err);
+      throw new Error(`Failed to fetch HEIC documents: ${getErrorMessage(err)}`);
+    }
+  },
+
   async deleteFromStorage(storagePath: string) {
     try {
       const { error } = await supabase.storage
