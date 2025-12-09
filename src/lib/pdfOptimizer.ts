@@ -96,7 +96,7 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
           }
 
           newPdfBase64 = await generateVerdelerVanaf630PDF(
-            { verdelerVanaf630Test: verdelerVanaf630Test.data },
+            verdelerVanaf630Test.data,
             verdeler,
             project.project_number
           );
@@ -108,7 +108,7 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
           }
 
           newPdfBase64 = await generateVerdelerTestSimpelPDF(
-            { verdelerTestSimpel: verdelerTestSimpel.data },
+            verdelerTestSimpel.data,
             verdeler,
             project.project_number
           );
@@ -120,7 +120,7 @@ export const regenerateTestCertificatePDFs = async (): Promise<RegenerationResul
           }
 
           newPdfBase64 = await generateVerdelerTestingPDF(
-            { workshopChecklist: workshopChecklist.data },
+            workshopChecklist.data,
             verdeler,
             project.project_number
           );

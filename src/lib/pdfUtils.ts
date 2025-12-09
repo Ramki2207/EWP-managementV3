@@ -88,28 +88,25 @@ export const addProfessionalHeader = async (doc: jsPDF): Promise<number> => {
   doc.setTextColor(0, 0, 0);
   doc.text('Keuringsrapport', margin, 25);
 
-  // Add EWP logo on the right side
-  try {
-    const logoData = await loadLogoImage();
-    // Logo dimensions maintaining 3.5:1 aspect ratio (EWP PANEELBOUW logo is wide)
-    const logoWidth = 52.5;
-    const logoHeight = 15;
-    const logoX = pageWidth - logoWidth - margin;
-    const logoY = 12;
+  // Add EWP logo box on the right side
+  const logoBoxWidth = 52.5;
+  const logoBoxHeight = 15;
+  const logoBoxX = pageWidth - logoBoxWidth - margin;
+  const logoBoxY = 12;
 
-    // Add the logo image with proper aspect ratio
-    doc.addImage(logoData, 'JPEG', logoX, logoY, logoWidth, logoHeight);
-  } catch (error) {
-    console.warn('Could not add logo to PDF:', error);
-    // Fallback to text if logo fails to load
-    const logoBoxX = pageWidth - 100;
-    const logoBoxY = 10;
+  // Draw blue rectangle background
+  doc.setFillColor(0, 51, 153); // EWP blue color
+  doc.rect(logoBoxX, logoBoxY, logoBoxWidth, logoBoxHeight, 'F');
 
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 123, 255);
-    doc.text('EWP PANEELBOUW', logoBoxX + 10, logoBoxY + 15);
-  }
+  // Add "EWP" text
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255); // White text
+  doc.text('EWP', logoBoxX + 5, logoBoxY + 8);
+
+  // Add "PANEELBOUW" text
+  doc.setFontSize(10);
+  doc.text('PANEELBOUW', logoBoxX + 5, logoBoxY + 13);
 
   // Reset text color to black for content
   doc.setTextColor(0, 0, 0);
