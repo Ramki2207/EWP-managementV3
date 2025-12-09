@@ -296,6 +296,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
         .from('distributors')
         .select('*')
         .eq('project_id', projectId)
+        .neq('status', 'Vervallen')
         .order('created_at', { ascending: true });
 
       if (error) throw error;

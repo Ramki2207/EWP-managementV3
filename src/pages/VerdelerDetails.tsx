@@ -898,6 +898,7 @@ const VerdelerDetails = () => {
                         <option value="Levering">Levering</option>
                         <option value="Gereed voor oplevering">Gereed voor oplevering</option>
                         <option value="Opgeleverd">Opgeleverd</option>
+                        <option value="Vervallen">Vervallen</option>
                       </select>
                     ) : (
                       <div className="input-field">

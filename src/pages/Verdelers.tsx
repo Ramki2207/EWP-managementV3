@@ -207,22 +207,33 @@ const Verdelers = () => {
             </thead>
             <tbody>
               {filteredDistributors.map((distributor) => (
-                <tr 
-                  key={distributor.id} 
-                  className="table-row cursor-pointer"
+                <tr
+                  key={distributor.id}
+                  className={`cursor-pointer ${
+                    distributor.status?.toLowerCase() === 'vervallen'
+                      ? 'bg-red-500/10 hover:bg-red-500/20'
+                      : 'table-row'
+                  }`}
                   onClick={() => navigate(`/verdelers/${distributor.id}`)}
                 >
                   <td className="py-4">
                     <div className="flex items-center space-x-2">
                       <div className={`w-2 h-2 rounded-full ${
+                        distributor.status?.toLowerCase() === 'vervallen' ? 'bg-red-400' :
                         distributor.status?.toLowerCase() === 'testen' ? 'bg-orange-400' : 'bg-green-400'
                       }`}></div>
                       <span className={`font-medium ${
+                        distributor.status?.toLowerCase() === 'vervallen' ? 'text-red-400' :
                         distributor.status?.toLowerCase() === 'testen' ? 'text-orange-400' : 'text-green-400'
                       }`}>{distributor.distributor_id}</span>
                       {distributor.status?.toLowerCase() === 'testen' && (
                         <span className="px-2 py-1 bg-orange-500/20 text-orange-400 text-xs rounded-full">
                           Testen
+                        </span>
+                      )}
+                      {distributor.status?.toLowerCase() === 'vervallen' && (
+                        <span className="px-2 py-1 bg-red-500/20 text-red-400 text-xs rounded-full">
+                          Vervallen
                         </span>
                       )}
                     </div>
