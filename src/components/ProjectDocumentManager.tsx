@@ -19,6 +19,7 @@ const defaultFolders = [
   'Oplever foto\'s',
   'Klant informatie',
   'Pakbon',
+  'DWG Bestanden',
 ];
 
 const projectLevelFolders = [
