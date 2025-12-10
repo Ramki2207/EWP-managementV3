@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save Test Data to Database</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .container {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status.success {
+      background: #10b981;
+      display: block;
+    }
+    .status.error {
+      background: #ef4444;
+      display: block;
+    }
+    .status.info {
+      background: #3b82f6;
+      display: block;
+    }
+    pre {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Save Test Data for VD8973</h1>
+    <p>This will save your filled-in test data to the database so Patrick can see it.</p>
+
+    <button id="saveBtn" onclick="saveTestData()">Save Test Data to Database</button>
+
+    <div id="status" class="status"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    // Get Supabase config from environment
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || localStorage.getItem('supabase_url');
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || localStorage.getItem('supabase_anon_key');
+
+    if (!supabaseUrl || !supabaseKey) {
+      showStatus('error', 'Supabase configuration not found. Please make sure you are running this from the app.');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    window.saveTestData = async function() {
+      const btn = document.getElementById('saveBtn');
+      const statusEl = document.getElementById('status');
+
+      btn.disabled = true;
+      showStatus('info', 'Looking for test data in localStorage...');
+
+      try {
+        // Find all localStorage keys that match verdeler test data
+        let testData = null;
+        let storageKey = null;
+
+        // Try different possible keys for VD8973
+        const possibleKeys = [
+          'verdeler_test_VD8973',
+          'verdeler_vanaf_630_test_VD8973',
+          'verdeler_test_simpel_VD8973'
+        ];
+
+        // Also search for any key containing VD8973
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.includes('VD8973')) {
+            possibleKeys.push(key);
+          }
+        }
+
+        for (const key of possibleKeys) {
+          const data = localStorage.getItem(key);
+          if (data) {
+            try {
+              testData = JSON.parse(data);
+              storageKey = key;
+              break;
+            } catch (e) {
+              console.error('Error parsing data from key:', key, e);
+            }
+          }
+        }
+
+        if (!testData) {
+          showStatus('error', 'No test data found in localStorage for VD8973. Make sure you are running this in the same browser where you filled in the test.');
+          btn.disabled = false;
+          return;
+        }
+
+        showStatus('info', `Found test data! Key: ${storageKey}\n\nSaving to database...`);
+
+        // Determine test type
+        let testType = 'workshop_checklist';
+        if (testData.verdelerVanaf630Test) testType = 'verdeler_vanaf_630';
+        else if (testData.verdelerTestSimpel) testType = 'verdeler_test_simpel';
+
+        // Get the distributor ID from database
+        const { data: distributors, error: distError } = await supabase
+          .from('distributors')
+          .select('id')
+          .eq('distributor_id', 'VD8973')
+          .maybeSingle();
+
+        if (distError) throw distError;
+        if (!distributors) {
+          showStatus('error', 'Distributor VD8973 not found in database.');
+          btn.disabled = false;
+          return;
+        }
+
+        const distributorId = distributors.id;
+
+        // Save to database
+        const { data: savedData, error: saveError } = await supabase
+          .from('test_data')
+          .insert({
+            distributor_id: distributorId,
+            test_type: testType,
+            data: testData
+          })
+          .select()
+          .single();
+
+        if (saveError) throw saveError;
+
+        showStatus('success', `✅ Success! Test data has been saved to the database.\n\nPatrick Herman can now see your filled-in test data for VD8973.\n\nTest Type: ${testType}\nSaved at: ${new Date().toLocaleString()}`);
+
+      } catch (error) {
+        console.error('Error:', error);
+        showStatus('error', `Error: ${error.message}\n\nDetails: ${JSON.stringify(error, null, 2)}`);
+        btn.disabled = false;
+      }
+    };
+
+    function showStatus(type, message) {
+      const statusEl = document.getElementById('status');
+      statusEl.className = `status ${type}`;
+      statusEl.innerHTML = `<pre>${message}</pre>`;
+    }
+  </script>
+</body>
+</html>
