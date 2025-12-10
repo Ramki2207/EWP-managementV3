@@ -1774,14 +1774,16 @@ export const dataService = {
         query = query.eq('status', status);
       }
 
-      const { data, error } = await query.maybeSingle();
+      const { data, error } = await query
+        .order('submitted_at', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error('Database error in getSpecificTestReviewNotification:', error);
         throw error;
       }
 
-      return data;
+      return data && data.length > 0 ? data[0] : null;
     } catch (err) {
       console.error('Network error in getSpecificTestReviewNotification:', err);
       throw new Error(`Failed to fetch test review notification: ${getErrorMessage(err)}`);
