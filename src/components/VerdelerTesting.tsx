@@ -27,6 +27,8 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
   const [showModal, setShowModal] = useState(autoOpen);
   const [currentStep, setCurrentStep] = useState(0);
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const [existingPDF, setExistingPDF] = useState<any>(null);
+  const [checkingPDF, setCheckingPDF] = useState(false);
   
   // Initialize test data with your new questions structure
   const initialTestData = useMemo(() => ({
@@ -952,15 +954,51 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
     );
   }, [showModal, verdelerInfo, currentStep, testData, handleBackdropClick, isStepComplete, handleStepComplete]);
 
+  const handleOpenModal = async () => {
+    if (!projectId || !distributorId) {
+      setShowModal(true);
+      return;
+    }
+
+    setCheckingPDF(true);
+    try {
+      const documents = await dataService.getDocumentsByDistributor(distributorId);
+      const keuringsrapport = documents.find((doc: any) =>
+        doc.folder === 'Test certificaat' &&
+        doc.name.includes('Keuringsrapport') &&
+        doc.name.toLowerCase().includes('.pdf')
+      );
+
+      if (keuringsrapport) {
+        setExistingPDF(keuringsrapport);
+        toast.error(
+          `Er bestaat al een Keuringsrapport voor deze verdeler (${keuringsrapport.name}). ` +
+          `Het formulier kan niet opnieuw worden bewerkt om dataverlies te voorkomen. ` +
+          `Bekijk het bestaande rapport in de "Test certificaat" map.`,
+          { duration: 8000 }
+        );
+        return;
+      }
+
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error checking for existing PDF:', error);
+      setShowModal(true);
+    } finally {
+      setCheckingPDF(false);
+    }
+  };
+
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
+        onClick={handleOpenModal}
         className="btn-secondary flex items-center space-x-2"
         title="Verdeler testen"
+        disabled={checkingPDF}
       >
         <CheckSquare size={16} />
-        <span>Verdeler tot 630</span>
+        <span>{checkingPDF ? 'Controleren...' : 'Verdeler tot 630'}</span>
         <div className="ml-2">{getTestStatusBadge()}</div>
       </button>
 

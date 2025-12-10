@@ -23,6 +23,8 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
   const [showModal, setShowModal] = useState(false);
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState(false);
+  const [existingPDF, setExistingPDF] = useState<any>(null);
+  const [checkingPDF, setCheckingPDF] = useState(false);
 
   // Initialize test data with the structure from the PDF
   const initialTestData = useMemo(() => ({
@@ -787,15 +789,51 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
     );
   }, [confirmationModal, confirmAndComplete]);
 
+  const handleOpenModal = async () => {
+    if (!projectId || !distributorId) {
+      setShowModal(true);
+      return;
+    }
+
+    setCheckingPDF(true);
+    try {
+      const documents = await dataService.getDocumentsByDistributor(distributorId);
+      const keuringsrapport = documents.find((doc: any) =>
+        doc.folder === 'Test certificaat' &&
+        (doc.name.includes('Keuringsrapport') || doc.name.includes('Verdeler_Test_Simpel')) &&
+        doc.name.toLowerCase().includes('.pdf')
+      );
+
+      if (keuringsrapport) {
+        setExistingPDF(keuringsrapport);
+        toast.error(
+          `Er bestaat al een test rapport voor deze verdeler (${keuringsrapport.name}). ` +
+          `Het formulier kan niet opnieuw worden bewerkt om dataverlies te voorkomen. ` +
+          `Bekijk het bestaande rapport in de "Test certificaat" map.`,
+          { duration: 8000 }
+        );
+        return;
+      }
+
+      setShowModal(true);
+    } catch (error) {
+      console.error('Error checking for existing PDF:', error);
+      setShowModal(true);
+    } finally {
+      setCheckingPDF(false);
+    }
+  };
+
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
+        onClick={handleOpenModal}
         className="btn-secondary flex items-center space-x-2"
         title="Verdeler Test Simpel"
+        disabled={checkingPDF}
       >
         <CheckSquare size={16} />
-        <span>Verdeler Test Simpel</span>
+        <span>{checkingPDF ? 'Controleren...' : 'Verdeler Test Simpel'}</span>
         {testData.verdelerTestSimpel.completed && (
           <div className="ml-2">{getTestStatusBadge()}</div>
         )}
