@@ -303,6 +303,28 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
                 testData: updatedTestData
               });
               console.log('✅ Test notification updated to approved with completed test data');
+            } else {
+              // Create new notification if it doesn't exist
+              await dataService.createTestReviewNotification({
+                projectId: projectId,
+                distributorId: distributorId,
+                testType: 'verdeler_vanaf_630',
+                submittedBy: user?.name || 'Admin',
+                testData: updatedTestData
+              });
+              // Immediately approve it since we're completing it
+              const newNotification = await dataService.getSpecificTestReviewNotification(
+                projectId,
+                distributorId,
+                'verdeler_vanaf_630'
+              );
+              if (newNotification) {
+                await dataService.updateTestReviewNotification(newNotification.id, {
+                  status: 'approved',
+                  reviewedBy: user?.name || 'Admin'
+                });
+              }
+              console.log('✅ Test notification created and approved with completed test data');
             }
           } catch (error) {
             console.error('Error updating test notification:', error);
