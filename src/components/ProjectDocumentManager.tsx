@@ -11,6 +11,7 @@ const defaultFolders = [
   'Test certificaat',
   'Algemene informatie',
   'Installatie schema',
+  'DWG Bestanden',
   'Warmte berekening',
   'RVS behuizing',
   'Onderdelen',
@@ -19,7 +20,6 @@ const defaultFolders = [
   'Oplever foto\'s',
   'Klant informatie',
   'Pakbon',
-  'DWG Bestanden',
 ];
 
 const projectLevelFolders = [
