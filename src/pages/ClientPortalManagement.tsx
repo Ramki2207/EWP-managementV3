@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Globe, Eye, Copy, Calendar, Package, Users, Mail, 
+import {
+  Globe, Eye, Copy, Calendar, Package, Users, Mail,
   ExternalLink, Trash2, RefreshCw, AlertTriangle, CheckCircle, X as CloseIcon,
-  Clock, Truck, MapPin, Search, Filter
+  Clock, Truck, MapPin, Search, Filter, FolderOpen, Edit
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientPortalService } from '../lib/clientPortalService';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { dataService } from '../lib/supabase';
+
+const availableFolders = [
+  'Verdeler aanzicht',
+  'Test certificaat',
+  'Algemene informatie',
+  'Installatie schema',
+  'DWG Bestanden',
+  'Warmte berekening',
+  'RVS behuizing',
+  'Onderdelen',
+  'Handleidingen',
+  'Documentatie',
+  'Oplever foto\'s',
+  'Klant informatie',
+  'Pakbon',
+];
 
 const ClientPortalManagement = () => {
   const { hasPermission, currentUser } = useEnhancedPermissions();
@@ -16,6 +32,8 @@ const ClientPortalManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedPortal, setSelectedPortal] = useState<any>(null);
+  const [editingFoldersPortal, setEditingFoldersPortal] = useState<any>(null);
+  const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
 
   useEffect(() => {
     loadPortals();
@@ -96,6 +114,37 @@ const ClientPortalManagement = () => {
         console.error('Error reactivating portal:', error);
         toast.error('Er is een fout opgetreden bij het heractiveren van de portal');
       }
+    }
+  };
+
+  const handleOpenFolderEditor = (portal: any) => {
+    if (!hasPermission('client_portals', 'update')) {
+      toast.error('Je hebt geen toestemming om portal instellingen te wijzigen');
+      return;
+    }
+    setEditingFoldersPortal(portal);
+    setSelectedFolders(portal.shared_folders || []);
+  };
+
+  const handleToggleFolder = (folder: string) => {
+    setSelectedFolders(prev =>
+      prev.includes(folder)
+        ? prev.filter(f => f !== folder)
+        : [...prev, folder]
+    );
+  };
+
+  const handleSaveFolders = async () => {
+    if (!editingFoldersPortal) return;
+
+    try {
+      await clientPortalService.updatePortalFolders(editingFoldersPortal.id, selectedFolders);
+      await loadPortals();
+      setEditingFoldersPortal(null);
+      toast.success('Gedeelde mappen bijgewerkt!');
+    } catch (error) {
+      console.error('Error updating shared folders:', error);
+      toast.error('Er is een fout opgetreden bij het bijwerken van de mappen');
     }
   };
   const getStatusInfo = (status: string) => {
@@ -296,6 +345,16 @@ const ClientPortalManagement = () => {
                         </button>
                         {hasPermission('client_portals', 'update') && (
                           <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenFolderEditor(portal);
+                              }}
+                              className="p-2 bg-[#2A303C] hover:bg-purple-500/20 rounded-lg transition-colors group"
+                              title="Mappen beheren"
+                            >
+                              <FolderOpen size={16} className="text-gray-400 group-hover:text-purple-400" />
+                            </button>
                             {expired || !portal.is_active ? (
                               <button
                                 onClick={(e) => {
@@ -448,6 +507,75 @@ const ClientPortalManagement = () => {
                   <span>Deactiveren</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Folder Editor Modal */}
+      {editingFoldersPortal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white">Gedeelde Mappen Beheren</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Project: {editingFoldersPortal.projects?.project_number}
+                </p>
+              </div>
+              <button
+                onClick={() => setEditingFoldersPortal(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <CloseIcon size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-300 mb-4">
+                Selecteer welke mappen zichtbaar zijn voor de klant in hun portal:
+              </p>
+
+              <div className="space-y-2">
+                {availableFolders.map((folder) => (
+                  <label
+                    key={folder}
+                    className="flex items-center space-x-3 p-3 bg-[#2A303C]/50 rounded-lg hover:bg-[#2A303C] transition-colors cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedFolders.includes(folder)}
+                      onChange={() => handleToggleFolder(folder)}
+                      className="w-5 h-5 rounded border-gray-600 bg-[#1E2530] text-blue-500 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                    />
+                    <FolderOpen size={18} className="text-gray-400" />
+                    <span className="text-white flex-1">{folder}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <p className="text-sm text-blue-400">
+                  <strong>{selectedFolders.length}</strong> van <strong>{availableFolders.length}</strong> mappen geselecteerd
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setEditingFoldersPortal(null)}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleSaveFolders}
+                className="btn-primary flex items-center space-x-2"
+                disabled={selectedFolders.length === 0}
+              >
+                <FolderOpen size={16} />
+                <span>Opslaan</span>
+              </button>
             </div>
           </div>
         </div>
