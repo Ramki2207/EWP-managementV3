@@ -169,11 +169,11 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
     const loadSavedTestData = async () => {
       if (projectId && distributorId) {
         try {
+          // Don't filter by status - load test data regardless of whether it's pending or approved
           const notification = await dataService.getSpecificTestReviewNotification(
             projectId,
             distributorId,
-            'verdeler_vanaf_630',
-            'pending_review'
+            'verdeler_vanaf_630'
           );
 
           if (notification && notification.test_data) {
@@ -208,11 +208,11 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
       console.log('🔄 VERDELER VANAF 630: Modal opened, reloading data...');
       const reloadData = async () => {
         try {
+          // Don't filter by status - load test data regardless of whether it's pending or approved
           const notification = await dataService.getSpecificTestReviewNotification(
             projectId,
             distributorId,
-            'verdeler_vanaf_630',
-            'pending_review'
+            'verdeler_vanaf_630'
           );
 
           if (notification && notification.test_data) {
@@ -701,12 +701,11 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
                   submittedBy: user?.name || 'Onbekend'
                 });
 
-                // Check if notification already exists
+                // Check if notification already exists (regardless of status)
                 const existing = await dataService.getSpecificTestReviewNotification(
                   projectId,
                   distributorId,
-                  'verdeler_vanaf_630',
-                  'pending_review'
+                  'verdeler_vanaf_630'
                 );
 
                 if (existing) {
