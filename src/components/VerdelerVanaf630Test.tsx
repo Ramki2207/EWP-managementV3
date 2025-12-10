@@ -299,9 +299,10 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
             if (notification) {
               await dataService.updateTestReviewNotification(notification.id, {
                 status: 'approved',
-                reviewedBy: user?.name || 'Admin'
+                reviewedBy: user?.name || 'Admin',
+                testData: updatedTestData
               });
-              console.log('✅ Test notification updated to approved');
+              console.log('✅ Test notification updated to approved with completed test data');
             }
           } catch (error) {
             console.error('Error updating test notification:', error);
