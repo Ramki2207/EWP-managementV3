@@ -31,7 +31,7 @@ export const generatePakbonPDF = async (
   try {
     console.log('📄 PDF: Loading logo...');
     const logoImg = new Image();
-    logoImg.src = '/EWP-logo-zwart.png';
+    logoImg.src = '/EWP logo test.png';
 
     await new Promise<void>((resolve, reject) => {
       logoImg.onload = () => resolve();
