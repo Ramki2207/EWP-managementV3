@@ -113,15 +113,20 @@ const Dashboard = () => {
       if (effectiveRole === 'tester') {
         const beforeRoleFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
-          const hasTestingStatus = project.status?.toLowerCase() === 'testen';
+          const projectHasTestingStatus = project.status?.toLowerCase() === 'testen';
+          const hasDistributorsInTesting = project.distributors?.some(
+            (dist: any) => dist.status?.toLowerCase() === 'testen'
+          );
+          const shouldShow = projectHasTestingStatus || hasDistributorsInTesting;
 
-          if (!hasTestingStatus) {
-            console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
+          if (!shouldShow) {
+            console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NO TESTING PHASE`);
           } else {
-            console.log(`🧪 DASHBOARD TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
+            const reason = projectHasTestingStatus ? 'PROJECT IN TESTING' : 'HAS DISTRIBUTORS IN TESTING';
+            console.log(`🧪 DASHBOARD TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - ${reason}`);
           }
 
-          return hasTestingStatus;
+          return shouldShow;
         });
         console.log(`🧪 DASHBOARD TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredData.length} for tester ${currentUser.username}`);
       }
