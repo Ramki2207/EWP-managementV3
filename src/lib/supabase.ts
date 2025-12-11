@@ -110,6 +110,7 @@ export const dataService = {
         .from('projects')
         .select(`
           *,
+          created_by,
           distributors (
             id,
             distributor_id,

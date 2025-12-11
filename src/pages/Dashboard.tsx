@@ -148,7 +148,22 @@ const Dashboard = () => {
         });
         console.log(`📦 DASHBOARD LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} projects down to ${filteredData.length} for logistiek ${currentUser.username}`);
       }
-      
+
+      // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
+      if (
+        currentUser &&
+        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman') &&
+        viewAsRole === 'projectleider'
+      ) {
+        const beforeFilter = filteredData.length;
+        filteredData = filteredData.filter((project: any) => {
+          const shouldShow = project.created_by === currentUser.id || project.created_by === null;
+          console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Project ${project.project_number} - created_by: ${project.created_by}, currentUser.id: ${currentUser.id}, shouldShow: ${shouldShow}`);
+          return shouldShow;
+        });
+        console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username} (own projects + legacy projects)`);
+      }
+
       // Apply location filtering if user has location restrictions
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
