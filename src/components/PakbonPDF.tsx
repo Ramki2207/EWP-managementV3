@@ -50,13 +50,13 @@ export const generatePakbonPDF = async (
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(logoImg, 0, 0, targetWidth, targetHeight);
-      const logoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      const logoDataUrl = canvas.toDataURL('image/png');
 
       const logoAspectRatio = targetWidth / targetHeight;
       const logoWidth = 60;
       const logoHeight = logoWidth / logoAspectRatio;
 
-      doc.addImage(logoDataUrl, 'JPEG', margin, yPosition, logoWidth, logoHeight);
+      doc.addImage(logoDataUrl, 'PNG', margin, yPosition, logoWidth, logoHeight);
       yPosition = Math.max(yPosition + logoHeight + 5, yPosition + 20);
     }
   } catch (error) {
