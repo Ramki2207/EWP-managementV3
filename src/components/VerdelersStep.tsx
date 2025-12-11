@@ -732,36 +732,80 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       console.log('🔍 SAVE: kastNaam:', verdelerData.kastNaam);
 
       if (editingVerdeler) {
-        // Update existing verdeler in database
-        console.log('🔄 SAVE: Updating existing verdeler in database...');
+        // Update existing verdeler
+        if (projectData.id) {
+          // Update in database if project exists
+          console.log('🔄 SAVE: Updating existing verdeler in database...');
 
-        const updateData = {
-          distributorId: verdelerData.distributorId,
-          projectId: projectData.id,
-          kastNaam: verdelerData.kastNaam,
-          systeem: finalSysteem,
-          voeding: finalVoeding,
-          stuurspanning: verdelerData.stuurspanning,
-          kaWaarde: verdelerData.kaWaarde,
-          ipWaarde: verdelerData.ipWaarde || '44',
-          bouwjaar: verdelerData.bouwjaar,
-          status: verdelerData.status,
-          fabrikant: verdelerData.fabrikant,
-          unInV: verdelerData.unInV,
-          inInA: verdelerData.inInA,
-          ikThInKA1s: verdelerData.ikThInKA1s,
-          ikDynInKA: verdelerData.ikDynInKA,
-          freqInHz: verdelerData.freqInHz,
-          typeNrHs: verdelerData.typeNrHs,
-          profilePhoto: profilePhotoUrl,
-          toegewezenMonteur: verdelerData.toegewezenMonteur,
-          expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
-          gewensteLeverDatum: verdelerData.deliveryDate || null
-        };
-        
-        await dataService.updateDistributor(editingVerdeler.id, updateData);
-        console.log('✅ SAVE: Verdeler updated in database');
-        toast.success('Verdeler bijgewerkt!');
+          const updateData = {
+            distributorId: verdelerData.distributorId,
+            projectId: projectData.id,
+            kastNaam: verdelerData.kastNaam,
+            systeem: finalSysteem,
+            voeding: finalVoeding,
+            stuurspanning: verdelerData.stuurspanning,
+            kaWaarde: verdelerData.kaWaarde,
+            ipWaarde: verdelerData.ipWaarde || '44',
+            bouwjaar: verdelerData.bouwjaar,
+            status: verdelerData.status,
+            fabrikant: verdelerData.fabrikant,
+            unInV: verdelerData.unInV,
+            inInA: verdelerData.inInA,
+            ikThInKA1s: verdelerData.ikThInKA1s,
+            ikDynInKA: verdelerData.ikDynInKA,
+            freqInHz: verdelerData.freqInHz,
+            typeNrHs: verdelerData.typeNrHs,
+            profilePhoto: profilePhotoUrl,
+            toegewezenMonteur: verdelerData.toegewezenMonteur,
+            expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+            gewensteLeverDatum: verdelerData.deliveryDate || null
+          };
+
+          await dataService.updateDistributor(editingVerdeler.id, updateData);
+          console.log('✅ SAVE: Verdeler updated in database');
+          toast.success('Verdeler bijgewerkt!');
+        } else {
+          // Update in local state during project creation
+          console.log('🔄 SAVE: Updating verdeler in local state...');
+
+          const updatedVerdeler = {
+            ...editingVerdeler,
+            distributorId: verdelerData.distributorId,
+            distributor_id: verdelerData.distributorId,
+            kastNaam: verdelerData.kastNaam,
+            kast_naam: verdelerData.kastNaam,
+            toegewezenMonteur: verdelerData.toegewezenMonteur,
+            systeem: finalSysteem,
+            voeding: finalVoeding,
+            stuurspanning: verdelerData.stuurspanning,
+            kaWaarde: verdelerData.kaWaarde,
+            ka_waarde: verdelerData.kaWaarde,
+            ipWaarde: verdelerData.ipWaarde || '44',
+            ip_waarde: verdelerData.ipWaarde || '44',
+            bouwjaar: verdelerData.bouwjaar,
+            status: verdelerData.status,
+            fabrikant: verdelerData.fabrikant,
+            unInV: verdelerData.unInV,
+            inInA: verdelerData.inInA,
+            ikThInKA1s: verdelerData.ikThInKA1s,
+            ikDynInKA: verdelerData.ikDynInKA,
+            freqInHz: verdelerData.freqInHz,
+            typeNrHs: verdelerData.typeNrHs,
+            profilePhoto: profilePhotoUrl,
+            expectedHours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+            expected_hours: verdelerData.expectedHours ? parseFloat(verdelerData.expectedHours) : null,
+            deliveryDate: verdelerData.deliveryDate || null,
+            gewenste_lever_datum: verdelerData.deliveryDate || null,
+          };
+
+          const updatedVerdelers = verdelers.map(v =>
+            v.id === editingVerdeler.id ? updatedVerdeler : v
+          );
+          setVerdelers(updatedVerdelers);
+          onVerdelersChange(updatedVerdelers);
+          console.log('✅ SAVE: Updated in local state for project creation');
+          toast.success('Verdeler bijgewerkt!');
+        }
       } else {
         // Create new verdeler in database if we have a project ID
         if (projectData.id) {
