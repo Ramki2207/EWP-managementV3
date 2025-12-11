@@ -202,11 +202,11 @@ const Projects = () => {
       ) {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
-          const shouldShow = project.created_by === currentUser.id || project.created_by === null;
+          const shouldShow = project.created_by === currentUser.id;
           console.log(`👤 PROJECTS PROJECTLEIDER FILTER: Project ${project.project_number} - created_by: ${project.created_by}, currentUser.id: ${currentUser.id}, shouldShow: ${shouldShow}`);
           return shouldShow;
         });
-        console.log(`👤 PROJECTS PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (own projects + legacy projects)`);
+        console.log(`👤 PROJECTS PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (only own projects)`);
       }
 
       setProjects(filteredProjects);

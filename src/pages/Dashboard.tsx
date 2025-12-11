@@ -157,11 +157,11 @@ const Dashboard = () => {
       ) {
         const beforeFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
-          const shouldShow = project.created_by === currentUser.id || project.created_by === null;
+          const shouldShow = project.created_by === currentUser.id;
           console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Project ${project.project_number} - created_by: ${project.created_by}, currentUser.id: ${currentUser.id}, shouldShow: ${shouldShow}`);
           return shouldShow;
         });
-        console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username} (own projects + legacy projects)`);
+        console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username} (only own projects)`);
       }
 
       // Apply location filtering if user has location restrictions
