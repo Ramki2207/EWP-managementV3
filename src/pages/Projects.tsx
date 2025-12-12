@@ -69,6 +69,7 @@ interface Project {
   status: string;
   description: string;
   created_at: string;
+  created_by?: string;
   client?: string;
   location?: string;
   distributors?: any[];
@@ -91,6 +92,7 @@ const Projects = () => {
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [selectedProjectForApproval, setSelectedProjectForApproval] = useState<Project | null>(null);
   const [pendingApprovalProjects, setPendingApprovalProjects] = useState<Set<string>>(new Set());
+  const [usersMap, setUsersMap] = useState<Record<string, string>>({});
 
   // Helper function to check for pending approvals in database
   const checkForPendingApproval = async (project: Project): Promise<boolean> => {
@@ -134,12 +136,19 @@ const Projects = () => {
   useEffect(() => {
     console.log('🚀 PROJECTS: Component mounting, setting up subscriptions...');
 
-    // Get current user info
+    // Get current user info and load all users for creator mapping
     const currentUserId = localStorage.getItem('currentUserId');
     if (currentUserId) {
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const user = users.find((u: any) => u.id === currentUserId);
       console.log('👤 PROJECTS: Current user set:', user?.username, user?.id);
+
+      // Create users map for showing creator names
+      const userMap: Record<string, string> = {};
+      users.forEach((u: any) => {
+        userMap[u.id] = u.name || u.username;
+      });
+      setUsersMap(userMap);
     }
 
     loadProjects();
@@ -849,6 +858,7 @@ const Projects = () => {
                     <th className="table-header text-left">Projectnummer</th>
                     <th className="table-header text-left">Datum</th>
                     <th className="table-header text-left">Klant</th>
+                    <th className="table-header text-left">Aangemaakt door</th>
                     <th className="table-header text-left">Locatie</th>
                     <th className="table-header text-left">Verdelers</th>
                     <th className="table-header text-left">Omschrijving</th>
@@ -871,6 +881,9 @@ const Projects = () => {
                           {new Date(project.date).toLocaleDateString('nl-NL')}
                         </td>
                         <td className="table-cell">{project.client || '-'}</td>
+                        <td className="table-cell">
+                          {project.created_by ? (usersMap[project.created_by] || '-') : '-'}
+                        </td>
                         <td className="table-cell">{project.location || '-'}</td>
                         <td className="table-cell">
                           <span className="text-gray-400">
@@ -909,6 +922,7 @@ const Projects = () => {
                 <th className="table-header text-left">Projectnummer</th>
                 <th className="table-header text-left">Datum</th>
                 <th className="table-header text-left">Klant</th>
+                <th className="table-header text-left">Aangemaakt door</th>
                 <th className="table-header text-left">Locatie</th>
                 <th className="table-header text-left">Status</th>
                 <th className="table-header text-left">Vergrendeling</th>
@@ -947,6 +961,9 @@ const Projects = () => {
                   </td>
                   <td className="py-4 text-gray-300">
                     {project.client || '-'}
+                  </td>
+                  <td className="py-4 text-gray-300">
+                    {project.created_by ? (usersMap[project.created_by] || '-') : '-'}
                   </td>
                   <td className="py-4 text-gray-300">
                     {project.location || '-'}
