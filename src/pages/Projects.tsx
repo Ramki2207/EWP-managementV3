@@ -84,6 +84,7 @@ const Projects = () => {
   const [clientFilter, setClientFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [monteurFilter, setMonteurFilter] = useState('all');
+  const [creatorFilter, setCreatorFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(true);
   const [projectLocks, setProjectLocks] = useState<ProjectLock[]>([]);
@@ -399,6 +400,16 @@ const Projects = () => {
     return Array.from(monteurs).sort();
   };
 
+  const getUniqueCreators = () => {
+    const creators = new Set<string>();
+    projects.forEach(project => {
+      if (project.created_by && usersMap[project.created_by]) {
+        creators.add(usersMap[project.created_by]);
+      }
+    });
+    return Array.from(creators).sort();
+  };
+
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
       // Special access for Annemieke - can see all projects (skip role/location filtering, but apply search/status filters)
@@ -506,6 +517,10 @@ const Projects = () => {
           (dist: any) => dist.toegewezen_monteur === monteurFilter
         );
 
+      // Creator filter
+      const matchesCreator = creatorFilter === 'all' ||
+        (project.created_by && usersMap[project.created_by] === creatorFilter);
+
       // Date filter
       let matchesDate = true;
       if (dateFilter !== 'all') {
@@ -516,7 +531,7 @@ const Projects = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesClient && matchesMonteur && matchesDate;
+      return matchesSearch && matchesStatus && matchesClient && matchesMonteur && matchesCreator && matchesDate;
     });
   };
 
@@ -538,6 +553,7 @@ const Projects = () => {
     setClientFilter('all');
     setDateFilter('all');
     setMonteurFilter('all');
+    setCreatorFilter('all');
   };
 
   const getActiveFilterCount = () => {
@@ -547,6 +563,7 @@ const Projects = () => {
     if (clientFilter !== 'all') count++;
     if (dateFilter !== 'all') count++;
     if (monteurFilter !== 'all') count++;
+    if (creatorFilter !== 'all') count++;
     return count;
   };
 
@@ -740,6 +757,20 @@ const Projects = () => {
               </div>
 
               <div>
+                <label className="block text-sm text-gray-400 mb-2">Aangemaakt door</label>
+                <select
+                  className="input-field"
+                  value={creatorFilter}
+                  onChange={(e) => setCreatorFilter(e.target.value)}
+                >
+                  <option value="all">Alle gebruikers</option>
+                  {getUniqueCreators().map(creator => (
+                    <option key={creator} value={creator}>{creator}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-sm text-gray-400 mb-2">Toegewezen monteur</label>
                 <select
                   className="input-field"
@@ -752,27 +783,28 @@ const Projects = () => {
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Zoeken in projecten</label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Projectnummer, klant, locatie..."
-                    className="input-field pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      <X size={16} />
-                    </button>
-                  )}
-                </div>
+            {/* Search Field */}
+            <div>
+              <label className="block text-sm text-gray-400 mb-2">Zoeken in projecten</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                <input
+                  type="text"
+                  placeholder="Projectnummer, klant, locatie..."
+                  className="input-field pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    <X size={16} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -800,6 +832,11 @@ const Projects = () => {
                         {clientFilter}
                       </span>
                     )}
+                    {creatorFilter !== 'all' && (
+                      <span className="px-2 py-1 bg-indigo-500/20 text-indigo-400 rounded-full text-xs">
+                        {creatorFilter}
+                      </span>
+                    )}
                     {monteurFilter !== 'all' && (
                       <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
                         {monteurFilter}
@@ -807,8 +844,8 @@ const Projects = () => {
                     )}
                     {dateFilter !== 'all' && (
                       <span className="px-2 py-1 bg-orange-500/20 text-orange-400 rounded-full text-xs">
-                        {dateFilter === 'this_week' ? 'Week' : 
-                         dateFilter === 'this_month' ? 'Maand' : 
+                        {dateFilter === 'this_week' ? 'Week' :
+                         dateFilter === 'this_month' ? 'Maand' :
                          dateFilter === 'this_quarter' ? 'Kwartaal' : dateFilter}
                       </span>
                     )}
