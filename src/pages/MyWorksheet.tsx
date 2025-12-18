@@ -391,6 +391,15 @@ export default function MyWorksheet() {
   const isRejected = selectedWeekstaat.status === 'rejected';
   const canEdit = isDraft || isRejected;
 
+  // Debug: show status and canEdit on page load
+  useEffect(() => {
+    if (selectedWeekstaat) {
+      console.log('Selected weekstaat status:', selectedWeekstaat.status);
+      console.log('canEdit:', canEdit);
+      console.log('entries count:', entries.length);
+    }
+  }, [selectedWeekstaat, canEdit, entries.length]);
+
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
@@ -487,6 +496,7 @@ export default function MyWorksheet() {
                   <td className="p-2">
                     <select
                       value={entry.activity_code}
+                      onClick={() => alert(`Clicked select. canEdit=${canEdit}, disabled=${!canEdit}`)}
                       onChange={(e) => {
                         alert(`Selected: ${e.target.value} for entry ${index}`);
                         updateEntry(index, 'activity_code', e.target.value);
