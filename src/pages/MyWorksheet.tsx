@@ -397,6 +397,8 @@ export default function MyWorksheet() {
       console.log('Selected weekstaat status:', selectedWeekstaat.status);
       console.log('canEdit:', canEdit);
       console.log('entries count:', entries.length);
+      // Show prominent alert
+      alert(`STATUS: ${selectedWeekstaat.status}\nCAN EDIT: ${canEdit}\nDRAFT: ${isDraft}\nREJECTED: ${isRejected}`);
     }
   }, [selectedWeekstaat, canEdit, entries.length]);
 
