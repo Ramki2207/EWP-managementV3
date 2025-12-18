@@ -334,6 +334,9 @@ export default function MyWorksheet() {
             <div
               key={weekstaat.id}
               onClick={() => {
+                console.log('CLICKED WEEKSTAAT:', weekstaat);
+                console.log('Status:', weekstaat.status);
+                alert(`CLICKED! Status: ${weekstaat.status}`);
                 setSelectedWeekstaat(weekstaat);
                 loadWeekstaatDetails(weekstaat.id);
               }}
