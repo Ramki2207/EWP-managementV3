@@ -159,24 +159,28 @@ export default function MyWorksheet() {
   };
 
   const updateEntry = (index: number, field: keyof WeekstaatEntry, value: any) => {
-    setEntries(prevEntries => {
-      const updated = [...prevEntries];
+    if (field === 'activity_code') {
+      const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
+      console.log('Activity code change:', { value, found: activityCode });
 
-      if (field === 'activity_code') {
-        const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
-        if (activityCode) {
-          updated[index] = {
-            ...updated[index],
-            activity_code: activityCode.code,
-            activity_description: activityCode.description
-          };
-        }
-      } else {
-        updated[index] = { ...updated[index], [field]: value };
+      if (activityCode) {
+        setEntries(prevEntries => {
+          const updatedEntries = prevEntries.map((entry, i) =>
+            i === index
+              ? { ...entry, activity_code: activityCode.code, activity_description: activityCode.description }
+              : entry
+          );
+          console.log('Updated entries:', updatedEntries[index]);
+          return updatedEntries;
+        });
       }
-
-      return updated;
-    });
+    } else {
+      setEntries(prevEntries =>
+        prevEntries.map((entry, i) =>
+          i === index ? { ...entry, [field]: value } : entry
+        )
+      );
+    }
   };
 
   const removeEntry = (index: number) => {
@@ -480,12 +484,17 @@ export default function MyWorksheet() {
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry, index) => (
+              {entries.map((entry, index) => {
+                console.log(`Entry ${index}:`, entry.activity_code, entry.activity_description);
+                return (
                 <tr key={entry.id || entry.tempId || index} className="border-b border-gray-800">
                   <td className="p-2">
                     <select
-                      value={entry.activity_code}
-                      onChange={(e) => updateEntry(index, 'activity_code', e.target.value)}
+                      value={entry.activity_code || '100'}
+                      onChange={(e) => {
+                        console.log('Select onChange:', e.target.value);
+                        updateEntry(index, 'activity_code', e.target.value);
+                      }}
                       disabled={!canEdit}
                       className="input-field text-xs p-1 w-full min-w-[220px]"
                     >
@@ -594,7 +603,8 @@ export default function MyWorksheet() {
                     </td>
                   )}
                 </tr>
-              ))}
+                );
+              })}
               <tr className="font-bold bg-gray-800/50">
                 <td colSpan={2} className="p-2 text-right">Totaal uren:</td>
                 <td className="p-2">{totals.monday.toFixed(2)}</td>
