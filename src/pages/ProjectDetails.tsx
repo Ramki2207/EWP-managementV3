@@ -965,7 +965,7 @@ const ProjectDetails = () => {
                         {verdeler.in_in_a && (
                           <div className="flex items-center space-x-1">
                             <span className="text-gray-500">In:</span>
-                            <span className="text-gray-300">{verdeler.in_in_a}A</span>
+                            <span className="text-gray-300">{verdeler.in_in_a} A</span>
                           </div>
                         )}
                         {verdeler.toegewezen_monteur && (
