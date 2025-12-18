@@ -1,6 +1,7 @@
 import React from 'react';
 import jsPDF from 'jspdf';
 import toast from 'react-hot-toast';
+import { getDisplayLocation } from '../lib/locationUtils';
 
 interface PakbonPDFProps {
   project: any;
@@ -100,7 +101,7 @@ export const generatePakbonPDF = async (
   const projectInfo = [
     { label: 'Projectnummer:', value: project.project_number || '-' },
     { label: 'Klant:', value: project.client || '-' },
-    { label: 'Locatie:', value: project.location || '-' },
+    { label: 'Locatie:', value: getDisplayLocation(project.location || '-') },
     { label: 'Referentie EWP:', value: project.referentie_ewp || '-' },
     { label: 'Referentie Klant:', value: project.referentie_klant || '-' },
   ];

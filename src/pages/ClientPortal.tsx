@@ -9,6 +9,7 @@ import { clientPortalService } from '../lib/clientPortalService';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import ewpLogo from '../assets/ewp-logo.png';
+import { getDisplayLocation } from '../lib/locationUtils';
 
 // Helper function to filter documents and show only the most actual versions
 const filterActualDocuments = (docs: any[]) => {
@@ -576,7 +577,7 @@ const ClientPortal = () => {
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Locatie</label>
-                  <p className="text-white font-medium">{portalData?.projects?.location}</p>
+                  <p className="text-white font-medium">{getDisplayLocation(portalData?.projects?.location || '')}</p>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Status</label>

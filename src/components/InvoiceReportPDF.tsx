@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
+import { getDisplayLocation } from '../lib/locationUtils';
 
 interface Material {
   id: string;
@@ -130,7 +131,7 @@ const InvoiceReportPDF: React.FC<InvoiceReportPDFProps> = ({ project, className 
       yPos += 6;
       doc.text(`Klant: ${project.client}`, 15, yPos);
       yPos += 6;
-      doc.text(`Locatie: ${project.location}`, 15, yPos);
+      doc.text(`Locatie: ${getDisplayLocation(project.location)}`, 15, yPos);
       yPos += 6;
       if (project.description) {
         doc.text(`Beschrijving: ${project.description}`, 15, yPos);
