@@ -78,6 +78,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     voeding: '',
     voedingCustom: '',
     stuurspanning: '',
+    stuurspanningCustom: '',
     kaWaarde: '',
     ipWaarde: '44',
     bouwjaar: new Date().getFullYear().toString(),
@@ -426,6 +427,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       }
     }
 
+    // Check if stuurspanning is a custom value
+    const stuurspanningOptions = ['N.V.T.', '230V AC', '24V AC', '12V AC', '8V AC', '30V DC', '24V DC', '12V DC'];
+    const isCustomStuurspanning = verdeler.stuurspanning && !stuurspanningOptions.includes(verdeler.stuurspanning);
+
     setVerdelerData({
       distributorId: verdeler.distributorId || verdeler.distributor_id,
       kastNaam: verdeler.kastNaam || verdeler.kast_naam,
@@ -434,7 +439,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       systeemCustom: isCustomSysteem ? verdeler.systeem : '',
       voeding: isCustomVoeding ? 'custom' : (verdeler.voeding || ''),
       voedingCustom: isCustomVoeding ? verdeler.voeding : '',
-      stuurspanning: verdeler.stuurspanning || '',
+      stuurspanning: isCustomStuurspanning ? 'Zelf invullen' : (verdeler.stuurspanning || ''),
+      stuurspanningCustom: isCustomStuurspanning ? verdeler.stuurspanning : '',
       kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde || '',
       ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde || '44',
       bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
@@ -723,9 +729,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         profilePhotoUrl = editingVerdeler.profilePhoto;
       }
 
-      // Get actual values for systeem and voeding
+      // Get actual values for systeem, voeding, and stuurspanning
       const finalSysteem = verdelerData.systeem === 'custom' ? verdelerData.systeemCustom : verdelerData.systeem;
       const finalVoeding = verdelerData.voeding === 'custom' ? verdelerData.voedingCustom : verdelerData.voeding;
+      const finalStuurspanning = verdelerData.stuurspanning === 'Zelf invullen' ? verdelerData.stuurspanningCustom : verdelerData.stuurspanning;
 
       console.log('🔍 SAVE: Saving verdeler with data:', verdelerData);
       console.log('🔍 SAVE: distributorId:', verdelerData.distributorId);
@@ -743,7 +750,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             kastNaam: verdelerData.kastNaam,
             systeem: finalSysteem,
             voeding: finalVoeding,
-            stuurspanning: verdelerData.stuurspanning,
+            stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ipWaarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
@@ -777,7 +784,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
-            stuurspanning: verdelerData.stuurspanning,
+            stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ka_waarde: verdelerData.kaWaarde,
             ipWaarde: verdelerData.ipWaarde || '44',
@@ -818,7 +825,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
-            stuurspanning: verdelerData.stuurspanning,
+            stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ipWaarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
@@ -850,7 +857,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             toegewezenMonteur: verdelerData.toegewezenMonteur,
             systeem: finalSysteem,
             voeding: finalVoeding,
-            stuurspanning: verdelerData.stuurspanning,
+            stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ka_waarde: verdelerData.kaWaarde, // Keep snake_case
             ipWaarde: verdelerData.ipWaarde || '44',
@@ -988,6 +995,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       voeding: '',
       voedingCustom: '',
       stuurspanning: '',
+      stuurspanningCustom: '',
       kaWaarde: '',
       ipWaarde: '44',
       bouwjaar: new Date().getFullYear().toString(),
@@ -1989,20 +1997,49 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Stuurspanning</label>
-                    <select
-                      className="input-field"
-                      value={verdelerData.stuurspanning}
-                      onChange={(e) => handleInputChange('stuurspanning', e.target.value)}
-                    >
-                      <option value="">Selecteer stuurspanning</option>
-                      <option value="N.V.T.">N.V.T.</option>
-                      <option value="230V AC">230V AC</option>
-                      <option value="24V AC">24V AC</option>
-                      <option value="12V AC">12V AC</option>
-                      <option value="8V AC">8V AC</option>
-                      <option value="24V DC">24V DC</option>
-                      <option value="12V DC">12V DC</option>
-                    </select>
+                    {verdelerData.stuurspanning !== 'Zelf invullen' ? (
+                      <select
+                        className="input-field"
+                        value={verdelerData.stuurspanning}
+                        onChange={(e) => {
+                          handleInputChange('stuurspanning', e.target.value);
+                          if (e.target.value !== 'Zelf invullen') {
+                            handleInputChange('stuurspanningCustom', '');
+                          }
+                        }}
+                      >
+                        <option value="">Selecteer stuurspanning</option>
+                        <option value="N.V.T.">N.V.T.</option>
+                        <option value="230V AC">230V AC</option>
+                        <option value="24V AC">24V AC</option>
+                        <option value="12V AC">12V AC</option>
+                        <option value="8V AC">8V AC</option>
+                        <option value="30V DC">30V DC</option>
+                        <option value="24V DC">24V DC</option>
+                        <option value="12V DC">12V DC</option>
+                        <option value="Zelf invullen">Zelf invullen</option>
+                      </select>
+                    ) : (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          className="input-field"
+                          value={verdelerData.stuurspanningCustom}
+                          onChange={(e) => handleInputChange('stuurspanningCustom', e.target.value)}
+                          placeholder="bijv. 48V DC"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleInputChange('stuurspanning', '');
+                            handleInputChange('stuurspanningCustom', '');
+                          }}
+                          className="text-sm text-blue-400 hover:text-blue-300"
+                        >
+                          ← Terug naar dropdown
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <div>
