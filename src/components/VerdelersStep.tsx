@@ -2031,8 +2031,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            handleInputChange('stuurspanning', '');
-                            handleInputChange('stuurspanningCustom', '');
+                            setVerdelerData(prev => ({
+                              ...prev,
+                              stuurspanning: '',
+                              stuurspanningCustom: ''
+                            }));
                           }}
                           className="text-sm text-blue-400 hover:text-blue-300"
                         >
