@@ -1852,7 +1852,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.kastNaam}
                       onChange={(e) => handleInputChange('kastNaam', e.target.value)}
-                      placeholder="Hoofdverdeler Hal A"
+                      placeholder="Kastnaam"
                       required
                     />
                   </div>
