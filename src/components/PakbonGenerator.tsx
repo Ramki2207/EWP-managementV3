@@ -73,6 +73,38 @@ const PakbonGenerator: React.FC<PakbonGeneratorProps> = ({ project, onClose }) =
     }
   };
 
+  const handleGenerateCombinedPakbon = async () => {
+    if (selectedVerdelers.size === 0) {
+      toast.error('Selecteer minimaal één verdeler');
+      return;
+    }
+
+    setGenerating(true);
+
+    try {
+      const selectedVerdelersList = verdelers.filter((v: any) => selectedVerdelers.has(v.id));
+      const { generateCombinedPakbonPDF } = await import('./PakbonPDF');
+      const pdfBlob = await generateCombinedPakbonPDF(project, selectedVerdelersList, null);
+
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Pakbon_${project.project_number}_Alle_Verdelers.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Gecombineerde pakbon gegenereerd!');
+      onClose();
+    } catch (error) {
+      console.error('Error generating combined pakbon:', error);
+      toast.error('Fout bij genereren van gecombineerde pakbon');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-4">
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col">
@@ -144,7 +176,7 @@ const PakbonGenerator: React.FC<PakbonGeneratorProps> = ({ project, onClose }) =
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-700 flex justify-end space-x-3">
+        <div className="p-6 border-t border-gray-700 flex justify-between items-center">
           <button
             onClick={onClose}
             className="btn-secondary"
@@ -152,14 +184,24 @@ const PakbonGenerator: React.FC<PakbonGeneratorProps> = ({ project, onClose }) =
           >
             Annuleren
           </button>
-          <button
-            onClick={handleGeneratePakbonnen}
-            disabled={selectedVerdelers.size === 0 || generating}
-            className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download size={20} />
-            <span>{generating ? 'Genereren...' : `Genereer ${selectedVerdelers.size > 0 ? `(${selectedVerdelers.size})` : ''}`}</span>
-          </button>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleGeneratePakbonnen}
+              disabled={selectedVerdelers.size === 0 || generating}
+              className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download size={20} />
+              <span>{generating ? 'Genereren...' : `Separaat (${selectedVerdelers.size})`}</span>
+            </button>
+            <button
+              onClick={handleGenerateCombinedPakbon}
+              disabled={selectedVerdelers.size === 0 || generating}
+              className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText size={20} />
+              <span>{generating ? 'Genereren...' : `Gecombineerd (${selectedVerdelers.size})`}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
