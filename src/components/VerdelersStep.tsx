@@ -80,6 +80,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     stuurspanning: '',
     stuurspanningCustom: '',
     kaWaarde: '',
+    voorbeveiliging: false,
     ipWaarde: '44',
     bouwjaar: new Date().getFullYear().toString(),
     status: 'Offerte',
@@ -442,6 +443,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       stuurspanning: isCustomStuurspanning ? 'Zelf invullen' : (verdeler.stuurspanning || ''),
       stuurspanningCustom: isCustomStuurspanning ? verdeler.stuurspanning : '',
       kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde || '',
+      voorbeveiliging: verdeler.voorbeveiliging || false,
       ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde || '44',
       bouwjaar: verdeler.bouwjaar || new Date().getFullYear().toString(),
       status: verdeler.status,
@@ -679,7 +681,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setVerdelerData({ ...verdelerData, [field]: value });
 
     // If status is changed to "Testen", automatically trigger save and open pre-test checklist
@@ -752,6 +754,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             voeding: finalVoeding,
             stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
+            voorbeveiliging: verdelerData.voorbeveiliging,
             ipWaarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
@@ -787,6 +790,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ka_waarde: verdelerData.kaWaarde,
+            voorbeveiliging: verdelerData.voorbeveiliging,
             ipWaarde: verdelerData.ipWaarde || '44',
             ip_waarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
@@ -827,6 +831,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             voeding: finalVoeding,
             stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
+            voorbeveiliging: verdelerData.voorbeveiliging,
             ipWaarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
             status: verdelerData.status,
@@ -860,6 +865,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             stuurspanning: finalStuurspanning,
             kaWaarde: verdelerData.kaWaarde,
             ka_waarde: verdelerData.kaWaarde, // Keep snake_case
+            voorbeveiliging: verdelerData.voorbeveiliging,
             ipWaarde: verdelerData.ipWaarde || '44',
             ip_waarde: verdelerData.ipWaarde || '44', // Keep snake_case
             bouwjaar: verdelerData.bouwjaar,
@@ -997,6 +1003,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       stuurspanning: '',
       stuurspanningCustom: '',
       kaWaarde: '',
+      voorbeveiliging: false,
       ipWaarde: '44',
       bouwjaar: new Date().getFullYear().toString(),
       status: projectData?.status?.toLowerCase() === 'offerte' ? 'Offerte' : 'Productie',
@@ -2062,6 +2069,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       placeholder="Bijv. 25"
                     />
                     <p className="text-xs text-gray-500 mt-1">Waarde wordt automatisch aangevuld met 'kA'</p>
+
+                    <div className="flex items-center mt-3">
+                      <input
+                        type="checkbox"
+                        id="voorbeveiliging"
+                        checked={verdelerData.voorbeveiliging}
+                        onChange={(e) => handleInputChange('voorbeveiliging', e.target.checked)}
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
+                      />
+                      <label htmlFor="voorbeveiliging" className="ml-2 text-sm text-gray-300">
+                        Voorbeveiligd volgens IEC60947-02
+                      </label>
+                    </div>
                   </div>
 
                   <div>
