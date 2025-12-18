@@ -17,6 +17,7 @@ import VerdelerDeliveryManager from '../components/VerdelerDeliveryManager';
 import VerdelerLeveringSelector from '../components/VerdelerLeveringSelector';
 import PakbonManager from '../components/PakbonManager';
 import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
+import PakbonGenerator from '../components/PakbonGenerator';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -43,6 +44,7 @@ const ProjectDetails = () => {
   const [showDeliveryChecklist, setShowDeliveryChecklist] = useState(false);
   const [showPakbonManager, setShowPakbonManager] = useState(false);
   const [showStickerGenerator, setShowStickerGenerator] = useState(false);
+  const [showPakbonGenerator, setShowPakbonGenerator] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -743,6 +745,13 @@ const ProjectDetails = () => {
               >
                 <Sticker size={20} />
                 <span>Levering Sticker</span>
+              </button>
+              <button
+                onClick={() => setShowPakbonGenerator(true)}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <FileText size={20} />
+                <span>Pakbon</span>
               </button>
               {!isEditing ? (
                 hasPermission('projects', 'update') && (
@@ -1600,6 +1609,14 @@ const ProjectDetails = () => {
         <DeliveryStickerGenerator
           project={project}
           onClose={() => setShowStickerGenerator(false)}
+        />
+      )}
+
+      {/* Pakbon Generator Modal */}
+      {showPakbonGenerator && project && (
+        <PakbonGenerator
+          project={project}
+          onClose={() => setShowPakbonGenerator(false)}
         />
       )}
     </div>
