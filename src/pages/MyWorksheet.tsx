@@ -148,13 +148,18 @@ export default function MyWorksheet() {
 
   const updateEntry = (index: number, field: keyof WeekstaatEntry, value: any) => {
     const updated = [...entries];
-    updated[index] = { ...updated[index], [field]: value };
 
     if (field === 'activity_code') {
       const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
       if (activityCode) {
-        updated[index].activity_description = activityCode.description;
+        updated[index] = {
+          ...updated[index],
+          activity_code: activityCode.code,
+          activity_description: activityCode.description
+        };
       }
+    } else {
+      updated[index] = { ...updated[index], [field]: value };
     }
 
     setEntries(updated);
