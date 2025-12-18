@@ -2002,10 +2002,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                         className="input-field"
                         value={verdelerData.stuurspanning}
                         onChange={(e) => {
-                          handleInputChange('stuurspanning', e.target.value);
-                          if (e.target.value !== 'Zelf invullen') {
-                            handleInputChange('stuurspanningCustom', '');
-                          }
+                          const newValue = e.target.value;
+                          setVerdelerData(prev => ({
+                            ...prev,
+                            stuurspanning: newValue,
+                            stuurspanningCustom: newValue !== 'Zelf invullen' ? '' : prev.stuurspanningCustom
+                          }));
                         }}
                       >
                         <option value="">Selecteer stuurspanning</option>
