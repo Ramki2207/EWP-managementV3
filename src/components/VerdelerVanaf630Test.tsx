@@ -716,12 +716,13 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
                 const currentUser = localStorage.getItem('currentUserId');
                 const users = JSON.parse(localStorage.getItem('users') || '[]');
                 const user = users.find((u: any) => u.id === currentUser);
+                const userName = user?.name || user?.email?.split('@')[0] || 'Medewerker';
 
                 console.log('Creating test review notification with:', {
                   projectId,
                   distributorId,
                   testType: 'verdeler_vanaf_630',
-                  submittedBy: user?.name || 'Onbekend'
+                  submittedBy: userName
                 });
 
                 // Check if notification already exists (regardless of status)
@@ -743,7 +744,7 @@ const VerdelerVanaf630Test: React.FC<VerdelerVanaf630TestProps> = ({
                     projectId: projectId,
                     distributorId: distributorId,
                     testType: 'verdeler_vanaf_630',
-                    submittedBy: user?.name || 'Onbekend',
+                    submittedBy: userName,
                     testData: testData
                   });
                   console.log('✅ Created new notification with test data');

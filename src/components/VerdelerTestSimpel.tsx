@@ -664,12 +664,13 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
                 const currentUser = localStorage.getItem('currentUserId');
                 const users = JSON.parse(localStorage.getItem('users') || '[]');
                 const user = users.find((u: any) => u.id === currentUser);
+                const userName = user?.name || user?.email?.split('@')[0] || 'Medewerker';
 
                 console.log('Saving test review notification with data:', {
                   projectId,
                   distributorId,
                   testType: 'verdeler_test_simpel',
-                  submittedBy: user?.name || 'Onbekend',
+                  submittedBy: userName,
                   testData
                 });
 
@@ -692,7 +693,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
                     projectId: projectId,
                     distributorId: distributorId,
                     testType: 'verdeler_test_simpel',
-                    submittedBy: user?.name || 'Onbekend',
+                    submittedBy: userName,
                     testData: testData
                   });
                   console.log('✅ Created new notification with test data');
