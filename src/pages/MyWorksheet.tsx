@@ -107,7 +107,17 @@ export default function MyWorksheet() {
       .order('created_at');
 
     setSelectedWeekstaat(weekstaat);
-    setEntries(weekstaatEntries || []);
+
+    // Ensure all entries have activity descriptions
+    const enrichedEntries = (weekstaatEntries || []).map(entry => {
+      const activityCode = ACTIVITY_CODES.find(ac => ac.code === entry.activity_code);
+      return {
+        ...entry,
+        activity_description: activityCode?.description || entry.activity_description || ''
+      };
+    });
+
+    setEntries(enrichedEntries);
   };
 
   const createNewWeekstaat = () => {
@@ -150,23 +160,21 @@ export default function MyWorksheet() {
 
   const updateEntry = (index: number, field: keyof WeekstaatEntry, value: any) => {
     setEntries(prevEntries => {
-      const updated = prevEntries.map((entry, i) => {
-        if (i !== index) return entry;
+      const updated = [...prevEntries];
 
-        if (field === 'activity_code') {
-          const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
-          if (activityCode) {
-            return {
-              ...entry,
-              activity_code: activityCode.code,
-              activity_description: activityCode.description
-            };
-          }
-          return entry;
+      if (field === 'activity_code') {
+        const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
+        if (activityCode) {
+          updated[index] = {
+            ...updated[index],
+            activity_code: activityCode.code,
+            activity_description: activityCode.description
+          };
         }
+      } else {
+        updated[index] = { ...updated[index], [field]: value };
+      }
 
-        return { ...entry, [field]: value };
-      });
       return updated;
     });
   };
@@ -458,7 +466,7 @@ export default function MyWorksheet() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left p-2 min-w-[100px]">Code</th>
+                <th className="text-left p-2 min-w-[250px]">Code</th>
                 <th className="text-left p-2 min-w-[120px]">WB nr</th>
                 <th className="text-left p-2 w-16">Ma</th>
                 <th className="text-left p-2 w-16">Di</th>
@@ -479,7 +487,7 @@ export default function MyWorksheet() {
                       value={entry.activity_code}
                       onChange={(e) => updateEntry(index, 'activity_code', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1"
+                      className="input-field text-xs p-1 w-full min-w-[220px]"
                     >
                       {ACTIVITY_CODES.map(code => (
                         <option key={code.code} value={code.code}>
