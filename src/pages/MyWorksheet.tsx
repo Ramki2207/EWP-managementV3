@@ -28,6 +28,7 @@ const ACTIVITY_CODES = [
 
 interface WeekstaatEntry {
   id?: string;
+  tempId?: string;
   activity_code: string;
   activity_description: string;
   workorder_number: string;
@@ -131,6 +132,7 @@ export default function MyWorksheet() {
 
   const addEntry = () => {
     const newEntry: WeekstaatEntry = {
+      tempId: `temp_${Date.now()}_${Math.random()}`,
       activity_code: '100',
       activity_description: 'Montage verdelers',
       workorder_number: '',
@@ -147,22 +149,26 @@ export default function MyWorksheet() {
   };
 
   const updateEntry = (index: number, field: keyof WeekstaatEntry, value: any) => {
-    const updated = [...entries];
+    setEntries(prevEntries => {
+      const updated = prevEntries.map((entry, i) => {
+        if (i !== index) return entry;
 
-    if (field === 'activity_code') {
-      const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
-      if (activityCode) {
-        updated[index] = {
-          ...updated[index],
-          activity_code: activityCode.code,
-          activity_description: activityCode.description
-        };
-      }
-    } else {
-      updated[index] = { ...updated[index], [field]: value };
-    }
+        if (field === 'activity_code') {
+          const activityCode = ACTIVITY_CODES.find(ac => ac.code === value);
+          if (activityCode) {
+            return {
+              ...entry,
+              activity_code: activityCode.code,
+              activity_description: activityCode.description
+            };
+          }
+          return entry;
+        }
 
-    setEntries(updated);
+        return { ...entry, [field]: value };
+      });
+      return updated;
+    });
   };
 
   const removeEntry = (index: number) => {
@@ -467,7 +473,7 @@ export default function MyWorksheet() {
             </thead>
             <tbody>
               {entries.map((entry, index) => (
-                <tr key={index} className="border-b border-gray-800">
+                <tr key={entry.id || entry.tempId || index} className="border-b border-gray-800">
                   <td className="p-2">
                     <select
                       value={entry.activity_code}
