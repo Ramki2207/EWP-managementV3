@@ -486,7 +486,7 @@ const ClientPortal = () => {
                 </span>
               </div>
               <p className="text-sm text-gray-400">
-                Toegang verloopt: {portalData?.expires_at ? new Date(portalData.expires_at).toLocaleDateString('nl-NL') : '-'}
+                Toegang: <span className="text-blue-400 font-medium">Onbeperkt</span>
               </p>
             </div>
           </div>

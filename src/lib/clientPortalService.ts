@@ -65,9 +65,8 @@ class ClientPortalService {
       const accessCode = this.generateAccessCode();
       const portalUrl = this.generatePortalUrl(accessCode);
 
-      // Set expiration to 30 days from now
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      // Set expiration to far future date (unlimited access)
+      const expiresAt = new Date('2099-12-31');
 
       // Use provided shared folders or default ones
       const defaultFolders = ['Verdeler aanzicht', 'Test certificaat', 'Installatie schema', 'Warmte berekening', 'RVS behuizing'];
@@ -154,7 +153,7 @@ In de portal vindt u:
 
 
 TOEGANG:
-De portal is 30 dagen toegankelijk vanaf vandaag. Wij adviseren u om alle documenten te downloaden voor uw archief.
+De portal blijft onbeperkt toegankelijk voor uw project. U kunt altijd terugkeren om documenten te raadplegen of te downloaden.
 
 VRAGEN?
 Heeft u vragen over de levering of documentatie? Neem gerust contact met ons op:
@@ -250,11 +249,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
         throw error;
       }
 
-      // Check if portal has expired
-      if (new Date() > new Date(data.expires_at)) {
-        return null;
-      }
-
+      // No expiration check - portals have unlimited access
       return data;
     } catch (error) {
       console.error('Error getting portal by access code:', error);
@@ -348,18 +343,13 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
     }
   }
 
-  // Reactivate expired portal
+  // Reactivate portal (now only updates status, no expiration changes)
   async reactivatePortal(portalId: string): Promise<void> {
     try {
-      // Extend expiration by 30 days from now
-      const newExpiryDate = new Date();
-      newExpiryDate.setDate(newExpiryDate.getDate() + 30);
-
       const { error } = await supabase
         .from('client_portals')
         .update({
           is_active: true,
-          expires_at: newExpiryDate.toISOString(),
           delivery_status: 'ready'
         })
         .eq('id', portalId);
@@ -371,22 +361,10 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
     }
   }
 
-  // Deactivate expired portals (cleanup function)
+  // Legacy function - no longer deactivates portals (unlimited access)
   async deactivateExpiredPortals(): Promise<number> {
-    try {
-      const { data, error } = await supabase
-        .from('client_portals')
-        .update({ is_active: false })
-        .lt('expires_at', new Date().toISOString())
-        .eq('is_active', true)
-        .select('id');
-
-      if (error) throw error;
-      return data?.length || 0;
-    } catch (error) {
-      console.error('Error deactivating expired portals:', error);
-      return 0;
-    }
+    console.log('Portal expiration disabled - all portals have unlimited access');
+    return 0;
   }
 }
 
