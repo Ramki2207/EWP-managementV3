@@ -139,8 +139,8 @@ export const generateVerdelerVanaf630PDF = async (
         pdf.setFont('helvetica', 'normal');
         pdf.text('Veld', 20, yPosition);
         pdf.text('Beschrijving', 35, yPosition);
-        pdf.text('Status', 140, yPosition);
-        pdf.text('Opm.', 170, yPosition);
+        pdf.text('Status', 135, yPosition);
+        pdf.text('Opm.', 165, yPosition);
         yPosition += 6;
 
         // Add items for this category
@@ -152,11 +152,11 @@ export const generateVerdelerVanaf630PDF = async (
 
           // Field number
           pdf.text(item.field || '', 20, yPosition);
-          
+
           // Description (wrap text if too long)
-          const descriptionLines = pdf.splitTextToSize(item.description, 100);
+          const descriptionLines = pdf.splitTextToSize(item.description, 93);
           pdf.text(descriptionLines, 35, yPosition);
-          
+
           // Status
           let statusText = '';
           if (item.passed === 'akkoord') {
@@ -172,16 +172,18 @@ export const generateVerdelerVanaf630PDF = async (
           } else {
             statusText = item.passed ? '☑' : item.passed === false ? '☐' : '☐';
           }
-          
-          pdf.text(statusText, 140, yPosition);
-          
+
+          const statusLines = pdf.splitTextToSize(statusText, 25);
+          pdf.text(statusLines, 135, yPosition);
+
           // Notes
           if (item.notes) {
             const notesLines = pdf.splitTextToSize(item.notes, 25);
-            pdf.text(notesLines, 170, yPosition);
+            pdf.text(notesLines, 165, yPosition);
           }
-          
-          yPosition += Math.max(descriptionLines.length * 3, 6);
+
+          const lineCount = Math.max(descriptionLines.length, statusLines.length);
+          yPosition += Math.max(lineCount * 3.5, 6);
         });
         
         yPosition += 8;
