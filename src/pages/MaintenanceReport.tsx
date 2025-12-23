@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Camera, X, Clock, Package, Plus, Trash2, Calculator, PenTool, Check } from 'lucide-react';
+import { Camera, X, Clock, Package, Plus, Trash2, Calculator, PenTool, Check, FileText, Download, Eye } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import SignaturePad from '../components/SignaturePad';
@@ -61,6 +61,9 @@ const MaintenanceReport = () => {
     photos: []
   });
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [publicDocuments, setPublicDocuments] = useState<any[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(true);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
 
   // Get URL parameters
   const verdeler_id = searchParams.get('verdeler_id');
@@ -75,6 +78,80 @@ const MaintenanceReport = () => {
     fullURL: window.location.href,
     searchParams: Object.fromEntries(searchParams.entries())
   });
+
+  // Load public documents (Installatie schema and Verdeler aanzicht) on mount
+  useEffect(() => {
+    const loadPublicDocuments = async () => {
+      if (!verdeler_id || !project_number) {
+        setLoadingDocuments(false);
+        return;
+      }
+
+      try {
+        setLoadingDocuments(true);
+        console.log('📥 Loading public documents for verdeler:', verdeler_id);
+
+        // Get project ID from project number
+        const { data: project, error: projectError } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('project_number', project_number)
+          .single();
+
+        if (projectError || !project) {
+          console.error('Failed to find project:', projectError);
+          setLoadingDocuments(false);
+          return;
+        }
+
+        // Get distributor ID from verdeler_id
+        const { data: distributor, error: distributorError } = await supabase
+          .from('distributors')
+          .select('id')
+          .eq('distributor_id', verdeler_id)
+          .eq('project_id', project.id)
+          .single();
+
+        if (distributorError || !distributor) {
+          console.error('Failed to find distributor:', distributorError);
+          setLoadingDocuments(false);
+          return;
+        }
+
+        // Fetch documents from both folders
+        const folders = ['Installatie schema', 'Verdeler aanzicht'];
+        const allDocs = [];
+
+        for (const folder of folders) {
+          const docs = await dataService.getDocuments(project.id, distributor.id, folder);
+          if (docs && docs.length > 0) {
+            // Load content for each document
+            for (const doc of docs) {
+              if (doc.storage_path) {
+                doc.content = dataService.getStorageUrl(doc.storage_path);
+              } else if (!doc.content) {
+                try {
+                  doc.content = await dataService.getDocumentContent(doc.id);
+                } catch (error) {
+                  console.error('Failed to load document content:', error);
+                }
+              }
+              allDocs.push({ ...doc, folder });
+            }
+          }
+        }
+
+        console.log('✅ Loaded public documents:', allDocs.length);
+        setPublicDocuments(allDocs);
+      } catch (error) {
+        console.error('Error loading public documents:', error);
+      } finally {
+        setLoadingDocuments(false);
+      }
+    };
+
+    loadPublicDocuments();
+  }, [verdeler_id, project_number]);
 
   // Check required info from URL
   if (!verdeler_id || !project_number) {
@@ -498,50 +575,207 @@ const MaintenanceReport = () => {
     );
   }
 
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      toast.loading('Document downloaden...', { id: 'download' });
+
+      if (doc.content.startsWith('data:')) {
+        const linkElement = document.createElement('a');
+        linkElement.href = doc.content;
+        linkElement.download = doc.name;
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        toast.success('Document gedownload!', { id: 'download' });
+      } else if (doc.content.startsWith('http')) {
+        const response = await fetch(doc.content);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const linkElement = document.createElement('a');
+        linkElement.href = blobUrl;
+        linkElement.download = doc.name;
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        toast.success('Document gedownload!', { id: 'download' });
+      }
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      toast.error('Download mislukt', { id: 'download' });
+    }
+  };
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="min-h-screen p-4">
         <Toaster position="top-right" />
-        <div className="card p-6 w-full max-w-md">
-          <h2 className="text-xl font-semibold mb-6">Toegangscode vereist</h2>
-          <p className="text-gray-400 mb-4 text-sm">
-            Voer de toegangscode in die je van EWP Paneelbouw hebt ontvangen voor verdeler <strong>{verdeler_id}</strong>.
-          </p>
-          <form onSubmit={handlePasscodeSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Toegangscode</label>
-              <input
-                type="text"
-                className="input-field uppercase"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value.toUpperCase())}
-                placeholder="Voer toegangscode in"
-                maxLength={10}
-                required
-                disabled={isValidating}
-              />
-            </div>
-            <button 
-              type="submit" 
-              className={`btn-primary w-full ${isValidating ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isValidating}
-            >
-              {isValidating ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                  <span>Valideren...</span>
-                </div>
-              ) : (
-                'Bevestigen'
-              )}
-            </button>
-          </form>
-          <div className="mt-4 p-3 bg-blue-500/10 rounded-lg">
-            <p className="text-xs text-blue-400">
-              💡 Tip: Deze toegangscode is specifiek voor verdeler {verdeler_id} en tijdelijk geldig.
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Auth Card */}
+          <div className="card p-6 w-full max-w-md mx-auto">
+            <h2 className="text-xl font-semibold mb-6">Toegangscode vereist</h2>
+            <p className="text-gray-400 mb-4 text-sm">
+              Voer de toegangscode in die je van EWP Paneelbouw hebt ontvangen voor verdeler <strong>{verdeler_id}</strong>.
             </p>
+            <form onSubmit={handlePasscodeSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Toegangscode</label>
+                <input
+                  type="text"
+                  className="input-field uppercase"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value.toUpperCase())}
+                  placeholder="Voer toegangscode in"
+                  maxLength={10}
+                  required
+                  disabled={isValidating}
+                />
+              </div>
+              <button
+                type="submit"
+                className={`btn-primary w-full ${isValidating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isValidating}
+              >
+                {isValidating ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                    <span>Valideren...</span>
+                  </div>
+                ) : (
+                  'Bevestigen'
+                )}
+              </button>
+            </form>
+            <div className="mt-4 p-3 bg-blue-500/10 rounded-lg">
+              <p className="text-xs text-blue-400">
+                💡 Tip: Deze toegangscode is specifiek voor verdeler {verdeler_id} en tijdelijk geldig.
+              </p>
+            </div>
+          </div>
+
+          {/* Public Documents Section */}
+          <div className="card p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <FileText size={24} className="text-blue-400" />
+              <div>
+                <h3 className="text-xl font-semibold">Publieke Documenten</h3>
+                <p className="text-sm text-gray-400">
+                  Deze documenten zijn altijd toegankelijk zonder inloggen
+                </p>
+              </div>
+            </div>
+
+            {loadingDocuments ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <span className="ml-3 text-gray-400">Documenten laden...</span>
+              </div>
+            ) : publicDocuments.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {publicDocuments.map((doc: any) => (
+                  <div key={doc.id} className="bg-[#2A303C] rounded-xl p-4 border border-gray-700 hover:border-blue-500/50 transition-colors">
+                    <div className="flex items-start space-x-3 mb-4">
+                      <FileText size={20} className="text-blue-400 flex-shrink-0 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-white text-sm truncate">{doc.name}</h4>
+                        <p className="text-xs text-gray-400 mt-1">{doc.folder}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setSelectedDocument(doc)}
+                        className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <Eye size={14} />
+                        <span>Bekijken</span>
+                      </button>
+                      <button
+                        onClick={() => handleDownloadDocument(doc)}
+                        className="flex-1 bg-green-500/20 hover:bg-green-500/30 text-green-400 px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-center space-x-2"
+                      >
+                        <Download size={14} />
+                        <span>Download</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <FileText size={48} className="mx-auto text-gray-600 mb-4" />
+                <p className="text-gray-400">Geen publieke documenten beschikbaar</p>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Document Preview Modal */}
+        {selectedDocument && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setSelectedDocument(null)}
+          >
+            <div
+              className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{selectedDocument.name}</h2>
+                  <p className="text-sm text-gray-400">{selectedDocument.folder}</p>
+                </div>
+                <button
+                  onClick={() => setSelectedDocument(null)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="bg-[#2A303C] rounded-lg p-4 mb-4">
+                {selectedDocument.type?.startsWith('image/') ? (
+                  <img
+                    src={selectedDocument.content}
+                    alt={selectedDocument.name}
+                    className="max-h-[500px] object-contain mx-auto"
+                  />
+                ) : selectedDocument.type === 'application/pdf' ? (
+                  <iframe
+                    src={selectedDocument.content}
+                    className="w-full h-[500px]"
+                    title={selectedDocument.name}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8">
+                    <FileText size={64} className="text-gray-400 mb-4" />
+                    <p className="text-gray-400">Preview niet beschikbaar voor dit bestandstype</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setSelectedDocument(null)}
+                  className="btn-secondary"
+                >
+                  Sluiten
+                </button>
+                <button
+                  onClick={() => handleDownloadDocument(selectedDocument)}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <Download size={20} />
+                  <span>Download</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
