@@ -137,7 +137,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     let prefix = '';
     switch (location) {
       case 'Leerdam':
-        prefix = 'PM';
+        prefix = 'PU';
         break;
       case 'Naaldwijk':
         prefix = 'PD';
@@ -146,7 +146,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
         prefix = 'PR';
         break;
       default:
-        prefix = 'PM'; // Default to PM if no location selected
+        prefix = 'PU'; // Default to PU if no location selected
     }
 
     return `${prefix}${year}${suffix}`;
@@ -423,7 +423,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   onChange={(e) => handleLocationChange(e.target.value)}
                 >
                   <option value="">Selecteer locatie</option>
-                  <option value="Leerdam">Leerdam (PM)</option>
+                  <option value="Leerdam">Leerdam (PU)</option>
                   <option value="Naaldwijk">Naaldwijk (PD)</option>
                   <option value="Rotterdam">Rotterdam (PR)</option>
                 </select>
@@ -483,7 +483,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PM25001, PD25123, PR25999)
+            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PU25001, PD25123, PR25999)
           </p>
         </div>
 
