@@ -1072,8 +1072,8 @@ const ProjectDetails = () => {
               </div>
             )}
 
-            {/* Delivery Notification Section - Only show when status is "Levering" */}
-            {project?.status === 'Levering' && (
+            {/* Delivery Notification Section - Show when at least one verdeler has "Levering" status */}
+            {project?.distributors?.some((d: any) => d.status === 'Levering') && (
               <div className="mt-8 pt-6 border-t border-gray-700">
                 <h3 className="text-lg font-semibold text-green-400 mb-4">🚚 Levering Proces</h3>
                 <DeliveryNotificationManager
