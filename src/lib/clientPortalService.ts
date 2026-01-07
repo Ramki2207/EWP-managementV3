@@ -15,6 +15,8 @@ export interface ClientPortal {
   access_count: number;
   delivery_status: 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'completed';
   created_at: string;
+  shared_folders?: string[];
+  verdeler_ids?: string[];
 }
 
 export interface DeliveryNotification {
