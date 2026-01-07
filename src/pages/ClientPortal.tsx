@@ -117,11 +117,11 @@ const ClientPortal = () => {
 
       setPortalData(portal);
       setIsAuthenticated(true);
-      
-      // Load project verdelers
-      const projectVerdelers = await clientPortalService.getPortalVerdelers(portal.project_id);
+
+      // Load project verdelers (filtered by portal.verdeler_ids if specified)
+      const projectVerdelers = await clientPortalService.getPortalVerdelers(portal.project_id, portal.verdeler_ids);
       setVerdelers(projectVerdelers);
-      
+
       toast.success('Toegang verleend tot portal!');
       
     } catch (error) {

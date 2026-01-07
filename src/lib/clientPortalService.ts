@@ -44,7 +44,7 @@ class ClientPortalService {
   }
 
   // Create client portal when project status changes to "Levering"
-  async createClientPortal(projectId: string, clientId?: string, sharedFolders?: string[]): Promise<ClientPortal> {
+  async createClientPortal(projectId: string, clientId?: string, sharedFolders?: string[], verdelerIds?: string[]): Promise<ClientPortal> {
     try {
       // First check if portal already exists for this project
       const { data: existingPortals, error: checkError } = await supabase
@@ -80,7 +80,8 @@ class ClientPortalService {
         expires_at: expiresAt.toISOString(),
         is_active: true,
         delivery_status: 'preparing',
-        shared_folders: folders
+        shared_folders: folders,
+        verdeler_ids: verdelerIds || null
       };
 
       const { data, error } = await supabase
@@ -111,6 +112,22 @@ class ClientPortalService {
     } catch (error) {
       console.error('Error updating portal folders:', error);
       throw new Error(`Failed to update portal folders: ${error.message}`);
+    }
+  }
+
+  // Update selected verdelers for an existing portal
+  async updatePortalVerdelers(portalId: string, verdelerIds: string[]): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('client_portals')
+        .update({ verdeler_ids: verdelerIds })
+        .eq('id', portalId);
+
+      if (error) throw error;
+      console.log('Portal verdelers updated:', portalId, verdelerIds);
+    } catch (error) {
+      console.error('Error updating portal verdelers:', error);
+      throw new Error(`Failed to update portal verdelers: ${error.message}`);
     }
   }
 
@@ -285,14 +302,23 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
   }
 
   // Get project verdelers for client portal
-  async getPortalVerdelers(projectId: string): Promise<any[]> {
+  // If verdelerIds is provided, only return those specific verdelers
+  // If verdelerIds is null/empty, return all verdelers (legacy behavior)
+  async getPortalVerdelers(projectId: string, verdelerIds?: string[] | null): Promise<any[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('distributors')
         .select('*')
         .eq('project_id', projectId)
         .neq('status', 'Vervallen')
         .order('created_at', { ascending: true });
+
+      // If specific verdeler IDs are provided, filter by them
+      if (verdelerIds && verdelerIds.length > 0) {
+        query = query.in('id', verdelerIds);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data || [];

@@ -26,12 +26,14 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
   onStatusChange
 }) => {
   const [showFolderSelection, setShowFolderSelection] = useState(false);
+  const [showVerdelerSelection, setShowVerdelerSelection] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [portal, setPortal] = useState<any>(null);
   const [emailTemplate, setEmailTemplate] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
-  const [verdelers, setVerdelers] = useState<any[]>([]);
+  const [allVerdelers, setAllVerdelers] = useState<any[]>([]);
+  const [selectedVerdelerIds, setSelectedVerdelerIds] = useState<string[]>([]);
   const [selectedFolders, setSelectedFolders] = useState<string[]>([
     'Verdeler aanzicht',
     'Test certificaat',
@@ -42,6 +44,19 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     try {
       console.log('Starting notification generation for project:', project.id);
       setIsGenerating(true);
+
+      // Get project verdelers
+      console.log('Loading verdelers...');
+      const verdelers = await dataService.getDistributorsByProject(project.id);
+      console.log('Verdelers:', verdelers);
+
+      if (verdelers.length === 0) {
+        toast.error('Geen verdelers gevonden voor dit project');
+        setIsGenerating(false);
+        return;
+      }
+
+      setAllVerdelers(verdelers);
 
       // Check if portal already exists for this project
       console.log('Fetching existing portals...');
@@ -56,30 +71,21 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
           setSelectedFolders(existingPortal.shared_folders);
         }
 
-        // Use existing portal
-        console.log('Loading verdelers for existing portal...');
-        const verdelers = await dataService.getDistributorsByProject(project.id);
-        console.log('Verdelers:', verdelers);
-        setVerdelers(verdelers);
-        const template = clientPortalService.generateEmailTemplate(project, existingPortal, verdelers, deliveryDate);
+        // Load existing verdeler selection or default to "Levering" status verdelers
+        if (existingPortal.verdeler_ids && existingPortal.verdeler_ids.length > 0) {
+          setSelectedVerdelerIds(existingPortal.verdeler_ids);
+        } else {
+          // Pre-select verdelers with "Levering" status
+          const leveringVerdelers = verdelers.filter((v: any) => v.status === 'Levering');
+          setSelectedVerdelerIds(leveringVerdelers.map((v: any) => v.id));
+        }
 
         setPortal(existingPortal);
-        setEmailTemplate(template);
-        console.log('Setting showPreview to true');
-        setShowPreview(true);
-
         toast.success('Bestaande portal geladen voor dit project!');
       } else {
-        // Get project verdelers
-        console.log('Creating new portal, loading verdelers...');
-        const verdelers = await dataService.getDistributorsByProject(project.id);
-        console.log('Verdelers:', verdelers);
-
-        if (verdelers.length === 0) {
-          toast.error('Geen verdelers gevonden voor dit project');
-          setIsGenerating(false);
-          return;
-        }
+        // Pre-select verdelers with "Levering" status for new portal
+        const leveringVerdelers = verdelers.filter((v: any) => v.status === 'Levering');
+        setSelectedVerdelerIds(leveringVerdelers.map((v: any) => v.id));
 
         // Find client for this project
         console.log('Finding client...');
@@ -87,26 +93,22 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         const client = clients.find((c: any) => c.name === project.client);
         console.log('Client:', client);
 
-        // Create client portal with default folders (will be updated later)
+        // Create client portal with default folders (verdelers will be set later)
         console.log('Creating new portal...');
         const newPortal = await clientPortalService.createClientPortal(
           project.id,
           client?.id,
-          selectedFolders
+          selectedFolders,
+          leveringVerdelers.map((v: any) => v.id)
         );
         console.log('New portal created:', newPortal);
 
-        // Generate email template
-        const template = clientPortalService.generateEmailTemplate(project, newPortal, verdelers, deliveryDate);
-
         setPortal(newPortal);
-        setVerdelers(verdelers);
-        setEmailTemplate(template);
-        console.log('Setting showPreview to true');
-        setShowPreview(true);
-
         toast.success('Nieuwe portal aangemaakt voor dit project!');
       }
+
+      // Show verdeler selection modal
+      setShowVerdelerSelection(true);
     } catch (error) {
       console.error('Error generating delivery notification:', error);
       toast.error(`Fout: ${error.message || 'Er is een fout opgetreden bij het genereren van de notificatie'}`);
@@ -118,6 +120,11 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
   const handleOpenFolderSelection = () => {
     setShowPreview(false);
     setShowFolderSelection(true);
+  };
+
+  const handleOpenVerdelerSelection = () => {
+    setShowPreview(false);
+    setShowVerdelerSelection(true);
   };
 
   const handleConfirmFolderSelection = async () => {
@@ -164,30 +171,80 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     });
   };
 
+  const toggleVerdeler = (verdelerId: string) => {
+    setSelectedVerdelerIds(prev => {
+      if (prev.includes(verdelerId)) {
+        // Don't allow removing all verdelers
+        if (prev.length === 1) {
+          toast.error('Er moet minimaal 1 verdeler geselecteerd zijn');
+          return prev;
+        }
+        return prev.filter(id => id !== verdelerId);
+      } else {
+        return [...prev, verdelerId];
+      }
+    });
+  };
+
+  const handleConfirmVerdelerSelection = async () => {
+    try {
+      setIsGenerating(true);
+      setShowVerdelerSelection(false);
+
+      if (!portal) {
+        toast.error('Portal niet gevonden');
+        return;
+      }
+
+      // Update portal with selected verdelers
+      await clientPortalService.updatePortalVerdelers(portal.id, selectedVerdelerIds);
+
+      // Update local portal state
+      setPortal({ ...portal, verdeler_ids: selectedVerdelerIds });
+
+      // Get only selected verdelers for email template
+      const selectedVerdelers = allVerdelers.filter((v: any) => selectedVerdelerIds.includes(v.id));
+      const template = clientPortalService.generateEmailTemplate(project, portal, selectedVerdelers, deliveryDate);
+      setEmailTemplate(template);
+
+      toast.success('Verdelers geselecteerd! De geselecteerde verdelers zijn opgeslagen.');
+
+      // Go to preview
+      setShowPreview(true);
+    } catch (error) {
+      console.error('Error confirming verdeler selection:', error);
+      toast.error('Er is een fout opgetreden bij het bevestigen van de verdelerselectie');
+      setShowPreview(true);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // Update email template when delivery date changes
   React.useEffect(() => {
     console.log('DeliveryDate changed:', deliveryDate);
     console.log('Portal exists:', !!portal);
-    console.log('Verdelers count:', verdelers.length);
-    
-    if (portal && verdelers.length > 0) {
+    console.log('Selected verdeler IDs count:', selectedVerdelerIds.length);
+
+    if (portal && selectedVerdelerIds.length > 0) {
       console.log('Regenerating email template with date:', deliveryDate);
-      const updatedTemplate = clientPortalService.generateEmailTemplate(project, portal, verdelers, deliveryDate);
+      const selectedVerdelers = allVerdelers.filter((v: any) => selectedVerdelerIds.includes(v.id));
+      const updatedTemplate = clientPortalService.generateEmailTemplate(project, portal, selectedVerdelers, deliveryDate);
       console.log('New template generated');
       setEmailTemplate(updatedTemplate);
     }
-  }, [deliveryDate, portal, verdelers, project]);
+  }, [deliveryDate, portal, selectedVerdelerIds, allVerdelers, project]);
 
   const handleSendNotification = async () => {
     if (!portal) return;
 
     try {
-      // Get verdelers for the email
-      const verdelers = await dataService.getDistributorsByProject(project.id);
-      
+      // Get only selected verdelers for the email
+      const selectedVerdelers = allVerdelers.filter((v: any) => selectedVerdelerIds.includes(v.id));
+
       // Send the notification (this will be enhanced with actual email sending later)
-      await clientPortalService.sendDeliveryNotification(portal.id, project, verdelers, deliveryDate);
-      
+      await clientPortalService.sendDeliveryNotification(portal.id, project, selectedVerdelers, deliveryDate);
+
       // Update project status to "Opgeleverd" when notification is sent
       await dataService.updateProject(project.id, {
         ...project,
@@ -196,7 +253,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
 
       toast.success('Levering notificatie verzonden naar klant!');
       setShowPreview(false);
-      
+
       if (onStatusChange) {
         onStatusChange();
       }
@@ -257,6 +314,114 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
           </button>
         </div>
       </div>
+
+      {/* Verdeler Selection Modal */}
+      {showVerdelerSelection && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-blue-400">Selecteer verdelers voor levering</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Kies welke verdelers zichtbaar zijn in het klantportaal (standaard: verdelers met status "Levering")
+                </p>
+              </div>
+              <button
+                onClick={() => setShowVerdelerSelection(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
+              <h3 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">
+                Verdelers ({selectedVerdelerIds.length} van {allVerdelers.length} geselecteerd)
+              </h3>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {allVerdelers.map((verdeler: any) => {
+                  const isSelected = selectedVerdelerIds.includes(verdeler.id);
+                  const isLevering = verdeler.status === 'Levering';
+
+                  return (
+                    <div
+                      key={verdeler.id}
+                      onClick={() => toggleVerdeler(verdeler.id)}
+                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-green-500 bg-green-500/10'
+                          : 'border-gray-600 bg-[#374151] hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'border-green-500 bg-green-500' : 'border-gray-500'
+                          }`}>
+                            {isSelected && (
+                              <CheckCircle size={16} className="text-white" />
+                            )}
+                          </div>
+                          <Package size={18} className={isSelected ? 'text-green-400' : 'text-gray-400'} />
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`text-sm font-medium ${
+                                isSelected ? 'text-white' : 'text-gray-300'
+                              }`}>
+                                {verdeler.distributor_id}
+                              </span>
+                              {isLevering && (
+                                <span className="px-2 py-0.5 bg-green-500/20 border border-green-500/30 rounded text-xs text-green-400">
+                                  Levering
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {verdeler.kast_naam || 'Geen naam'} - {verdeler.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                Minimaal 1 verdeler moet geselecteerd zijn. Verdelers met status "Levering" zijn standaard geselecteerd.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setShowVerdelerSelection(false)}
+                className="btn-secondary"
+              >
+                Annuleren
+              </button>
+              <button
+                onClick={handleConfirmVerdelerSelection}
+                disabled={selectedVerdelerIds.length === 0 || isGenerating}
+                className={`bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2 ${
+                  selectedVerdelerIds.length === 0 || isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                    <span>Bevestigen...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={20} />
+                    <span>Bevestig Selectie ({selectedVerdelerIds.length})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Folder Selection Modal */}
       {showFolderSelection && (
@@ -416,6 +581,30 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
               </div>
             </div>
 
+            {/* Selected Verdelers Info */}
+            <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-green-400 mb-4">Geselecteerde Verdelers</h3>
+              <div className="flex flex-wrap gap-2">
+                {allVerdelers
+                  .filter((v: any) => selectedVerdelerIds.includes(v.id))
+                  .map((verdeler: any) => (
+                    <div
+                      key={verdeler.id}
+                      className="flex items-center space-x-2 bg-green-500/20 border border-green-500/30 rounded-lg px-3 py-2"
+                    >
+                      <Package size={14} className="text-green-400" />
+                      <span className="text-sm text-green-300">
+                        {verdeler.distributor_id} - {verdeler.kast_naam || 'Geen naam'}
+                      </span>
+                      <span className="text-xs text-gray-400">({verdeler.status})</span>
+                    </div>
+                  ))}
+              </div>
+              <p className="text-xs text-gray-500 mt-3">
+                Deze verdelers zijn zichtbaar voor de klant in het portal. Klik op "Selecteer Verdelers" om aan te passen.
+              </p>
+            </div>
+
             {/* Shared Folders Info */}
             <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-semibold text-purple-400 mb-4">Gedeelde Mappen</h3>
@@ -503,6 +692,13 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
               </button>
               <div className="flex space-x-4">
                 <button
+                  onClick={handleOpenVerdelerSelection}
+                  className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
+                >
+                  <Package size={20} />
+                  <span>Selecteer Verdelers</span>
+                </button>
+                <button
                   onClick={handleOpenFolderSelection}
                   className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
                 >
@@ -511,7 +707,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
                 </button>
                 <button
                   onClick={handleSendNotification}
-                  className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
+                  className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
                 >
                   <Send size={20} />
                   <span>Verstuur Notificatie</span>
