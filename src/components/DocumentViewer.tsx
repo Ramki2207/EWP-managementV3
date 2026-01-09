@@ -25,7 +25,13 @@ interface DocumentViewerProps {
 // Folders that support revision management
 const REVISION_MANAGED_FOLDERS = [
   'Verdeler aanzicht',
-  'Test certificaat', 
+  'Test certificaat',
+  'Installatie schema'
+];
+
+// Folders that require drawing hours tracking
+const DRAWING_HOURS_FOLDERS = [
+  'Verdeler aanzicht',
   'Installatie schema'
 ];
 
@@ -98,6 +104,64 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
   const [isUploading, setIsUploading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [showDrawingHoursPopup, setShowDrawingHoursPopup] = useState(false);
+  const [drawingHours, setDrawingHours] = useState<string>('');
+  const [uploadedVerdelerIds, setUploadedVerdelerIds] = useState<string[]>([]);
+
+  // Function to save drawing hours to work_entries
+  const saveDrawingHours = async (hours: number, verdelerIds: string[]) => {
+    try {
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        toast.error('Gebruiker niet gevonden');
+        return;
+      }
+
+      const user = JSON.parse(userStr);
+      const today = new Date().toISOString().split('T')[0];
+
+      // Create work entries for each verdeler
+      const entries = verdelerIds.map(verdelerId => ({
+        distributor_id: verdelerId,
+        worker_id: user.id,
+        date: today,
+        hours: hours,
+        phase: 'Tekenen',
+        notes: `Tekenuren voor ${folder}`,
+        status: 'completed'
+      }));
+
+      // Save all entries
+      for (const entry of entries) {
+        await dataService.createWorkEntry(entry);
+      }
+
+      toast.success(`${hours} tekenuren toegevoegd voor ${verdelerIds.length} verdeler${verdelerIds.length > 1 ? 's' : ''}!`);
+    } catch (error) {
+      console.error('Error saving drawing hours:', error);
+      toast.error('Fout bij opslaan van tekenuren');
+    }
+  };
+
+  const handleDrawingHoursSubmit = async () => {
+    const hours = parseFloat(drawingHours);
+
+    if (isNaN(hours) || hours <= 0) {
+      toast.error('Voer een geldig aantal uren in');
+      return;
+    }
+
+    if (hours > 24) {
+      toast.error('Aantal uren kan niet meer dan 24 zijn');
+      return;
+    }
+
+    await saveDrawingHours(hours, uploadedVerdelerIds);
+    setShowDrawingHoursPopup(false);
+    setDrawingHours('');
+    setUploadedVerdelerIds([]);
+  };
 
   // Helper function to load document content on-demand
   const loadDocumentContent = useCallback(async (doc: Document): Promise<string> => {
@@ -507,6 +571,13 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       console.log('🔄 UPLOAD: Reloading documents...');
       await loadDocuments();
       toast.success(`${newDocs.length} document${newDocs.length > 1 ? 'en' : ''} succesvol geüpload!`);
+
+      // Check if we need to show drawing hours popup
+      if (distributorId && DRAWING_HOURS_FOLDERS.includes(folder)) {
+        console.log('📊 Showing drawing hours popup for folder:', folder);
+        setUploadedVerdelerIds([distributorId]);
+        setShowDrawingHoursPopup(true);
+      }
     } catch (error) {
       console.error('Error processing files:', error);
       toast.error(typeof error === 'string' ? error : 'Er is een fout opgetreden bij het uploaden van de bestanden');
@@ -1182,6 +1253,68 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
               >
                 <Trash2 size={20} />
                 <span>Verwijderen</span>
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Drawing Hours Popup */}
+      {showDrawingHoursPopup && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-6 max-w-md w-full border border-blue-500/30">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 bg-blue-500/20 rounded-xl">
+                <Clock size={24} className="text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Tekenuren registreren</h2>
+                <p className="text-sm text-gray-400">Voor map: {folder}</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm text-gray-400 mb-2">
+                Aantal uren besteed aan tekenen
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="24"
+                step="0.5"
+                value={drawingHours}
+                onChange={(e) => setDrawingHours(e.target.value)}
+                placeholder="Bijv. 2.5"
+                className="input-field w-full"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleDrawingHoursSubmit();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Deze uren worden automatisch toegevoegd aan je weekstaat en productie overzicht
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowDrawingHoursPopup(false);
+                  setDrawingHours('');
+                  setUploadedVerdelerIds([]);
+                }}
+                className="btn-secondary flex-1"
+              >
+                Overslaan
+              </button>
+              <button
+                onClick={handleDrawingHoursSubmit}
+                className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex-1"
+              >
+                Opslaan
               </button>
             </div>
           </div>
