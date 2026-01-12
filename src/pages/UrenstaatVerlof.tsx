@@ -129,8 +129,8 @@ export default function UrenstaatVerlof() {
     const weeks = [];
     const today = new Date();
 
-    // Generate 8 weeks before, current week, and 8 weeks after
-    for (let i = -8; i <= 8; i++) {
+    // Generate past 16 weeks plus current week (total 17 weeks)
+    for (let i = -16; i <= 0; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + (i * 7));
       const { week, year } = getISOWeekAndYear(date);
