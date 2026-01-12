@@ -109,6 +109,55 @@ export default function UrenstaatVerlof() {
 
   // ============ WEEKSTAAT FUNCTIONS ============
 
+  const getISOWeekAndYear = (date: Date): { week: number; year: number } => {
+    const target = new Date(date.valueOf());
+    const dayNumber = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNumber + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    const week = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+
+    // Determine the year for the week (ISO week year)
+    const targetYear = target.getFullYear();
+    return { week, year: targetYear };
+  };
+
+  const generateWeeksList = () => {
+    const weeks = [];
+    const today = new Date();
+
+    // Generate 8 weeks before, current week, and 8 weeks after
+    for (let i = -8; i <= 8; i++) {
+      const date = new Date(today);
+      date.setDate(date.getDate() + (i * 7));
+      const { week, year } = getISOWeekAndYear(date);
+
+      // Check if we already have this week in our list (avoid duplicates)
+      if (!weeks.find(w => w.week_number === week && w.year === year)) {
+        weeks.push({
+          id: `generated-${year}-${week}`,
+          week_number: week,
+          year: year,
+          status: 'draft',
+          created_at: new Date().toISOString(),
+          user_id: user?.id,
+          isGenerated: true
+        });
+      }
+    }
+
+    // Sort by year descending, then week descending
+    weeks.sort((a, b) => {
+      if (a.year !== b.year) return b.year - a.year;
+      return b.week_number - a.week_number;
+    });
+
+    return weeks;
+  };
+
   const loadWeekstaten = async () => {
     if (!user) return;
 
@@ -124,22 +173,80 @@ export default function UrenstaatVerlof() {
       return;
     }
 
-    setWeekstaten(data || []);
+    // Generate a list of all weeks (past 8 weeks + current + next 8 weeks)
+    const generatedWeeks = generateWeeksList();
+
+    // Merge with existing weekstaten from database
+    const existingWeekstaten = data || [];
+    const mergedWeekstaten = generatedWeeks.map(generatedWeek => {
+      const existing = existingWeekstaten.find(
+        w => w.week_number === generatedWeek.week_number && w.year === generatedWeek.year
+      );
+      return existing || generatedWeek;
+    });
+
+    setWeekstaten(mergedWeekstaten);
   };
 
-  const loadWeekstaatDetails = async (weekstaatId: string) => {
-    const { data: weekstaat } = await supabase
+  const loadWeekstaatDetails = async (weekstaat: any) => {
+    // If it's a generated week (doesn't exist in DB yet), create it first
+    if (weekstaat.isGenerated) {
+      const { data, error } = await supabase
+        .from('weekstaten')
+        .insert([{
+          user_id: user.id,
+          week_number: weekstaat.week_number,
+          year: weekstaat.year,
+          status: 'draft'
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          // Already exists, fetch it
+          const { data: existing } = await supabase
+            .from('weekstaten')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('week_number', weekstaat.week_number)
+            .eq('year', weekstaat.year)
+            .maybeSingle();
+
+          if (existing) {
+            setSelectedWeekstaat(existing);
+            const { data: entriesData } = await supabase
+              .from('weekstaat_entries')
+              .select('*')
+              .eq('weekstaat_id', existing.id);
+            setEntries(entriesData || []);
+            await loadWeekstaten(); // Refresh the list
+          }
+        } else {
+          toast.error('Fout bij aanmaken weekstaat');
+        }
+        return;
+      }
+
+      setSelectedWeekstaat(data);
+      setEntries([]);
+      await loadWeekstaten(); // Refresh the list
+      return;
+    }
+
+    // Load existing weekstaat
+    const { data: weekstaatData } = await supabase
       .from('weekstaten')
       .select('*')
-      .eq('id', weekstaatId)
+      .eq('id', weekstaat.id)
       .maybeSingle();
 
-    setSelectedWeekstaat(weekstaat);
+    setSelectedWeekstaat(weekstaatData);
 
     const { data: entriesData } = await supabase
       .from('weekstaat_entries')
       .select('*')
-      .eq('weekstaat_id', weekstaatId);
+      .eq('weekstaat_id', weekstaat.id);
 
     setEntries(entriesData || []);
   };
@@ -177,7 +284,7 @@ export default function UrenstaatVerlof() {
           .maybeSingle();
 
         if (existing) {
-          await loadWeekstaatDetails(existing.id);
+          await loadWeekstaatDetails(existing);
         }
       } else {
         toast.error('Fout bij aanmaken weekstaat');
@@ -187,7 +294,7 @@ export default function UrenstaatVerlof() {
 
     toast.success('Weekstaat aangemaakt');
     await loadWeekstaten();
-    await loadWeekstaatDetails(data.id);
+    await loadWeekstaatDetails(data);
   };
 
   const saveWeekstaat = async () => {
@@ -646,7 +753,7 @@ export default function UrenstaatVerlof() {
                   <div
                     key={weekstaat.id}
                     className="flex items-center justify-between p-4 rounded-lg bg-[#2A303C] hover:bg-[#323944] transition-colors cursor-pointer"
-                    onClick={() => loadWeekstaatDetails(weekstaat.id)}
+                    onClick={() => loadWeekstaatDetails(weekstaat)}
                   >
                     <div className="flex items-center space-x-4">
                       <Calendar className="w-5 h-5 text-purple-400" />
