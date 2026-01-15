@@ -282,7 +282,8 @@ const ProjectDetails = () => {
         contactpersoon_voornaam: editedProject.contactpersoon_voornaam,
         contactpersoon_achternaam: editedProject.contactpersoon_achternaam,
         contactpersoon_telefoon: editedProject.contactpersoon_telefoon,
-        contactpersoon_email: editedProject.contactpersoon_email
+        contactpersoon_email: editedProject.contactpersoon_email,
+        created_by: editedProject.created_by
       };
 
       await dataService.updateProject(editedProject.id, updateData);
@@ -995,6 +996,11 @@ const ProjectDetails = () => {
                   type: "select",
                   options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor facturatie", "Opgeleverd", "Verloren"]
                 },
+                {
+                  label: "Aangemaakt door",
+                  field: "created_by",
+                  type: "user_select"
+                },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
                 { label: "Referentie EWP Paneelbouw", field: "referentie_ewp" },
                 { label: "Referentie klant", field: "referentie_klant" },
@@ -1022,6 +1028,19 @@ const ProjectDetails = () => {
                             </option>
                           ))}
                         </select>
+                      ) : field.type === "user_select" ? (
+                        <select
+                          className="input-field"
+                          value={editedProject?.[field.field] || ''}
+                          onChange={(e) => handleInputChange(field.field, e.target.value)}
+                        >
+                          <option value="">Selecteer gebruiker</option>
+                          {users.map(user => (
+                            <option key={user.id} value={user.id}>
+                              {user.username}
+                            </option>
+                          ))}
+                        </select>
                       ) : field.type === "textarea" ? (
                         <textarea
                           className="input-field h-32"
@@ -1032,7 +1051,7 @@ const ProjectDetails = () => {
                         <input
                           type={field.type || "text"}
                           className="input-field"
-                          value={field.type === "date" && editedProject?.[field.field] 
+                          value={field.type === "date" && editedProject?.[field.field]
                             ? editedProject[field.field].split('T')[0]
                             : editedProject?.[field.field] || ''}
                           onChange={(e) => handleInputChange(field.field, e.target.value)}
@@ -1040,12 +1059,14 @@ const ProjectDetails = () => {
                       )
                     ) : (
                       <div className={`input-field ${field.type === "textarea" ? "h-32 overflow-y-auto" : ""}`}>
-                        {field.type === "date" && currentValue 
+                        {field.type === "date" && currentValue
                           ? new Date(currentValue).toLocaleDateString('nl-NL')
                           : field.field === "status" && currentValue ? (
                             <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(currentValue)}`}>
                               {currentValue}
                             </span>
+                          ) : field.field === "created_by" && currentValue ? (
+                            users.find(u => u.id === currentValue)?.username || currentValue
                           ) : currentValue || "-"}
                       </div>
                     )}
