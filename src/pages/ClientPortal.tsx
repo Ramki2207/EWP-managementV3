@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Lock, Eye, Download, Calendar, Package, CheckCircle,
+  Lock, Eye, Download, Calendar, Package,
   AlertTriangle, FileText, Server, Building, User, Mail, Phone,
   Folder, ChevronRight, ChevronDown, X, ExternalLink
 } from 'lucide-react';
@@ -575,16 +575,9 @@ const ClientPortal = () => {
                   <label className="block text-sm text-gray-400 mb-1">Klant</label>
                   <p className="text-white font-medium">{portalData?.projects?.client}</p>
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Locatie</label>
                   <p className="text-white font-medium">{getDisplayLocation(portalData?.projects?.location || '')}</p>
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-400 mb-1">Status</label>
-                  <div className="flex items-center space-x-2">
-                    <CheckCircle size={16} className="text-green-400" />
-                    <span className="text-green-400 font-medium">Gereed voor facturatie</span>
-                  </div>
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-400 mb-1">Beschrijving</label>
