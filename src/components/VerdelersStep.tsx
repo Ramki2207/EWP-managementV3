@@ -199,8 +199,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       // Load testing hours logged status in the background (don't await)
       loadTestingHoursStatus(formattedVerdelers);
+
+      return formattedVerdelers;
     } catch (error) {
       console.error('Error loading verdelers from database:', error);
+      return [];
     }
   };
 
@@ -895,8 +898,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
       // Reload verdelers from database to get fresh data
       if (projectData.id) {
-        await loadVerdelersFromDatabase();
+        const freshVerdelers = await loadVerdelersFromDatabase();
         await loadAccessCodes(); // Also reload access codes
+        // Notify parent component of the change so other tabs can see the updated verdelers
+        if (freshVerdelers && freshVerdelers.length > 0) {
+          onVerdelersChange(freshVerdelers);
+        }
       }
 
       // If status was changed to "Testen", open the pre-test checklist
