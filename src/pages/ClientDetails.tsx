@@ -190,6 +190,12 @@ const ClientDetails = () => {
 
         {[
           { label: "Organisatienaam", name: "name" },
+          {
+            label: "Locatie",
+            name: "location",
+            type: "select",
+            options: ["Leerdam", "Naaldwijk"]
+          },
           { label: "Bezoekadres Straat", name: "visit_street" },
           { label: "Bezoekadres Postcode", name: "visit_postcode" },
           { label: "Bezoekadres Plaats", name: "visit_city" },
@@ -198,16 +204,29 @@ const ClientDetails = () => {
           { label: "Afleveradres Plaats", name: "delivery_city" },
           { label: "BTW-nummer", name: "vat_number" },
           { label: "KvK-nummer", name: "kvk_number" },
-        ].map((field) => (
+        ].map((field: any) => (
           <div key={field.name} className="flex items-center mb-2">
             <label className="w-48 text-right mr-4">{field.label}:</label>
             {isEditing ? (
-              <input
-                type="text"
-                value={client[field.name]}
-                onChange={(e) => handleInputChange(field.name, e.target.value)}
-                className="flex-1 bg-[#2A303C] text-white p-2 rounded"
-              />
+              field.type === "select" ? (
+                <select
+                  value={client[field.name] || ""}
+                  onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  className="flex-1 bg-[#2A303C] text-white p-2 rounded"
+                >
+                  <option value="">Selecteer...</option>
+                  {field.options?.map((option: string) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={client[field.name] || ""}
+                  onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  className="flex-1 bg-[#2A303C] text-white p-2 rounded"
+                />
+              )
             ) : (
               <p>{client[field.name] || "-"}</p>
             )}

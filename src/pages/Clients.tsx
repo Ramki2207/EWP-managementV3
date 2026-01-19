@@ -5,15 +5,18 @@ import { Building } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import Papa from 'papaparse';
 import { dataService } from '../lib/supabase';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 
 const Clients = () => {
   const navigate = useNavigate();
+  const { currentUser } = useEnhancedPermissions();
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
   const [clientData, setClientData] = useState({
     name: "",
     status: "Actief",
+    location: "",
     visit_street: "",
     visit_postcode: "",
     visit_city: "",
@@ -34,7 +37,29 @@ const Clients = () => {
 
   const loadClients = async () => {
     try {
-      const data = await dataService.getClients();
+      let data = await dataService.getClients();
+
+      console.log('🏢 CLIENTS: Loaded clients:', data?.length);
+      console.log('🏢 CLIENTS: Current user:', currentUser?.username, 'Role:', currentUser?.role);
+      console.log('🏢 CLIENTS: Assigned locations:', currentUser?.assignedLocations);
+
+      // Location-based filtering for users with assigned locations
+      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((client: any) => {
+          const shouldShow = client.location && currentUser.assignedLocations.includes(client.location);
+
+          if (!shouldShow) {
+            console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from projectleider ${currentUser.username}`);
+          } else {
+            console.log(`📍 CLIENTS LOCATION FILTER: Showing client ${client.name} (location: ${client.location})`);
+          }
+
+          return shouldShow;
+        });
+        console.log(`📍 CLIENTS LOCATION FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for projectleider ${currentUser.username}`);
+      }
+
       setClients(data);
     } catch (error) {
       console.error('Error loading clients:', error);
@@ -84,6 +109,11 @@ const Clients = () => {
       return;
     }
 
+    if (!clientData.location) {
+      toast.error('Selecteer een locatie voor deze klant!');
+      return;
+    }
+
     try {
       let logoUrl = clientData.logo_url;
 
@@ -103,6 +133,7 @@ const Clients = () => {
       setClientData({
         name: "",
         status: "Actief",
+        location: "",
         visit_street: "",
         visit_postcode: "",
         visit_city: "",
@@ -268,11 +299,17 @@ const Clients = () => {
             <div className="grid grid-cols-2 gap-4">
               {[
                 { label: "Organisatienaam", name: "name" },
-                { 
-                  label: "Status", 
+                {
+                  label: "Status",
                   name: "status",
                   type: "select",
                   options: ["Actief", "Inactief"]
+                },
+                {
+                  label: "Locatie",
+                  name: "location",
+                  type: "select",
+                  options: ["Leerdam", "Naaldwijk"]
                 },
                 { label: "Bezoekadres Straat", name: "visit_street" },
                 { label: "Bezoekadres Postcode", name: "visit_postcode" },
