@@ -80,6 +80,16 @@ const VerdelerDetails = () => {
     }
   }, [distributor, currentUser, location.search]);
 
+  useEffect(() => {
+    if (distributor && activeTab === 'tests') {
+      console.log('🧪 TESTING BUTTONS DEBUG:');
+      console.log('  - Distributor status:', distributor.status);
+      console.log('  - hasPermission(testing, create):', hasPermission('testing', 'create'));
+      console.log('  - showTestingComponent:', showTestingComponent);
+      console.log('  - Should show buttons:', distributor.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent);
+    }
+  }, [distributor, activeTab, showTestingComponent]);
+
   const checkLeveringStatus = async () => {
     if (!distributor || distributor.status !== 'Levering') return;
 
@@ -1221,6 +1231,17 @@ const VerdelerDetails = () => {
         {activeTab === 'tests' && (
           <div>
             <h2 className="text-lg text-gradient mb-6">Testrapporten</h2>
+
+            {/* DEBUG INFO */}
+            <div className="bg-yellow-500/20 border border-yellow-500 p-4 rounded-lg mb-4">
+              <p className="text-yellow-300 font-semibold mb-2">🔍 DEBUG INFO (verwijder dit later):</p>
+              <ul className="text-sm text-yellow-200 space-y-1">
+                <li>Distributor status: <strong>{distributor?.status || 'niet geladen'}</strong></li>
+                <li>hasPermission('testing', 'create'): <strong>{String(hasPermission('testing', 'create'))}</strong></li>
+                <li>showTestingComponent: <strong>{String(showTestingComponent)}</strong></li>
+                <li>Buttons should show: <strong>{String(distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent)}</strong></li>
+              </ul>
+            </div>
 
             {distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent && (
               <div className="bg-[#2A303C] p-6 rounded-lg mb-6">
