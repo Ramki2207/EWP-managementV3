@@ -35,22 +35,24 @@ const Uploads = () => {
   const [documentError, setDocumentError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadProjects();
-    
+    if (currentUser) {
+      loadProjects();
+    }
+
     // Check for URL parameters to auto-navigate
     const urlProjectId = searchParams.get('projectId');
     const urlDistributorId = searchParams.get('distributorId');
-    
+
     if (urlProjectId) {
       setSelectedProject(urlProjectId);
       setExpandedProjects(prev => new Set([...prev, urlProjectId]));
-      
+
       if (urlDistributorId) {
         setSelectedDistributor(urlDistributorId);
         setSelectedFolder('Algemene informatie'); // Default folder
       }
     }
-  }, []);
+  }, [currentUser]);
 
   const loadProjects = async () => {
     try {
