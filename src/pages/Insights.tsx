@@ -72,7 +72,7 @@ const Insights = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // Load data from Supabase
       const { data: workEntriesData } = await dataService.supabase
         .from('work_entries')
@@ -83,27 +83,63 @@ const Insights = () => {
         `)
         .order('date', { ascending: false });
 
-      const [projectsData, distributorsData, clientsData] = await Promise.all([
+      let [projectsData, distributorsData, clientsData] = await Promise.all([
         dataService.getProjects(),
         dataService.getDistributors(),
         dataService.getClients()
       ]);
 
+      // Location-based filtering (admins see all)
+      if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+        const hasAllLocations =
+          currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+          AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+        if (!hasAllLocations) {
+          // Filter projects by location
+          const beforeProjectFilter = projectsData?.length || 0;
+          projectsData = projectsData?.filter((project: any) => {
+            const hasAccess = project.location && currentUser.assignedLocations.includes(project.location);
+            if (!hasAccess) {
+              console.log(`🌍 INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location || 'none'}) from user ${currentUser.username}`);
+            }
+            return hasAccess;
+          });
+          console.log(`🌍 INSIGHTS FILTER: Filtered ${beforeProjectFilter} projects down to ${projectsData?.length || 0} for user ${currentUser.username}`);
+
+          // Filter distributors by their project's location
+          const beforeDistributorFilter = distributorsData?.length || 0;
+          const projectIds = new Set(projectsData?.map((p: any) => p.id) || []);
+          distributorsData = distributorsData?.filter((distributor: any) => projectIds.has(distributor.project_id));
+          console.log(`🌍 INSIGHTS FILTER: Filtered ${beforeDistributorFilter} distributors down to ${distributorsData?.length || 0} for user ${currentUser.username}`);
+
+          // Filter work entries by distributor
+          const distributorIds = new Set(distributorsData?.map((d: any) => d.id) || []);
+          const beforeWorkEntriesFilter = workEntriesData?.length || 0;
+          const filteredWorkEntries = workEntriesData?.filter((entry: any) => distributorIds.has(entry.distributor_id));
+          console.log(`🌍 INSIGHTS FILTER: Filtered ${beforeWorkEntriesFilter} work entries down to ${filteredWorkEntries?.length || 0} for user ${currentUser.username}`);
+          setWorkEntries(filteredWorkEntries || []);
+        } else {
+          setWorkEntries(workEntriesData || []);
+        }
+      } else {
+        setWorkEntries(workEntriesData || []);
+      }
+
       setProjects(projectsData || []);
       setDistributors(distributorsData || []);
       setClients(clientsData || []);
-      setWorkEntries(workEntriesData || []);
-      
+
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Er is een fout opgetreden bij het laden van de gegevens');
-      
+
       // Fallback to localStorage if database fails
       try {
         const localProjects = JSON.parse(localStorage.getItem('projects') || '[]');
         const localDistributors = JSON.parse(localStorage.getItem('distributors') || '[]');
         const localClients = JSON.parse(localStorage.getItem('clients') || '[]');
-        
+
         setProjects(localProjects);
         setDistributors(localDistributors);
         setClients(localClients);
@@ -126,23 +162,14 @@ const Insights = () => {
       const beforeRoleFilter = filteredProjects.length;
       filteredProjects = filteredProjects.filter((p: any) => {
         const hasTestingStatus = p.status?.toLowerCase() === 'testen';
-        
+
         if (!hasTestingStatus) {
           console.log(`🧪 INSIGHTS TESTER FILTER: Excluding project ${p.project_number} (status: ${p.status}) from insights for tester ${currentUser.username}`);
         }
-        
+
         return hasTestingStatus;
       });
       console.log(`🧪 INSIGHTS TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
-    }
-
-    // Apply location filter based on user's assigned locations
-    if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
-      if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
-        filteredProjects = filteredProjects.filter((p: any) => 
-          !p.location || currentUser.assignedLocations.includes(p.location)
-        );
-      }
     }
 
     let filteredDistributors = selectedClient === 'all'
@@ -151,16 +178,6 @@ const Insights = () => {
           const project = projects.find((p: any) => p.id === d.project_id || p.project_number === d.projectnummer);
           return project?.client === selectedClient;
         });
-
-    // Apply location filter for distributors too
-    if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
-      if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
-        filteredDistributors = filteredDistributors.filter((d: any) => {
-          const project = projects.find((p: any) => p.id === d.project_id || p.project_number === d.projectnummer);
-          return !project?.location || currentUser.assignedLocations.includes(project.location);
-        });
-      }
-    }
 
     // Calculate date range based on selected dates
     const start = parseISO(startDate);

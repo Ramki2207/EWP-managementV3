@@ -144,10 +144,11 @@ const Meldingen = () => {
           const beforeFilter = enrichedNotifications.length;
           enrichedNotifications = enrichedNotifications.filter((notification: any) => {
             const notificationLocation = notification.location;
-            const hasAccess = notificationLocation ? currentUser.assignedLocations.includes(notificationLocation) : true;
+            // Only show notifications that have a location matching user's assigned locations
+            const hasAccess = notificationLocation && currentUser.assignedLocations.includes(notificationLocation);
 
             if (!hasAccess) {
-              console.log(`🌍 MELDINGEN FILTER: Hiding notification for project ${notification.project_number} (location: ${notificationLocation}) from user ${currentUser.username}`);
+              console.log(`🌍 MELDINGEN FILTER: Hiding notification for project ${notification.project_number} (location: ${notificationLocation || 'none'}) from user ${currentUser.username}`);
             }
 
             return hasAccess;

@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import DocumentViewer from '../components/DocumentViewer';
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 const defaultFolders = [
   'Verdeler aanzicht',
@@ -68,41 +69,47 @@ const Uploads = () => {
       clearTimeout(timeoutId);
       
       let filteredProjects = data || [];
-      
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
-          
+
           if (!hasTestingStatus) {
             console.log(`🧪 UPLOADS TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
           } else {
             console.log(`🧪 UPLOADS TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
           }
-          
+
           return hasTestingStatus;
         });
         console.log(`🧪 UPLOADS TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
       }
-      
-      // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
-        const beforeRoleFilter = filteredProjects.length;
-        filteredProjects = filteredProjects.filter((project: any) => {
-          const hasTestingStatus = project.status?.toLowerCase() === 'testen';
-          
-          if (!hasTestingStatus) {
-            console.log(`🧪 UPLOADS TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
-          } else {
-            console.log(`🧪 UPLOADS TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
-          }
-          
-          return hasTestingStatus;
-        });
-        console.log(`🧪 UPLOADS TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
+
+      // Location-based filtering (admins see all)
+      if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+        const hasAllLocations =
+          currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+          AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+        if (!hasAllLocations) {
+          const beforeLocationFilter = filteredProjects.length;
+          filteredProjects = filteredProjects.filter((project: any) => {
+            const projectLocation = project.location;
+            // Only show projects that have a location matching user's assigned locations
+            const hasAccess = projectLocation && currentUser.assignedLocations.includes(projectLocation);
+
+            if (!hasAccess) {
+              console.log(`🌍 UPLOADS LOCATION FILTER: Hiding project ${project.project_number} (location: ${projectLocation || 'none'}) from user ${currentUser.username}`);
+            }
+
+            return hasAccess;
+          });
+          console.log(`🌍 UPLOADS LOCATION FILTER: Filtered ${beforeLocationFilter} projects down to ${filteredProjects.length} for user ${currentUser.username}`);
+        }
       }
-      
+
       setProjects(filteredProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
