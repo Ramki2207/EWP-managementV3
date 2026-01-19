@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck, FileText } from 'lucide-react';
+import { Plus, Trash2, Upload, Eye, CheckSquare, Printer, Key, Copy, Clock, Users, CheckCircle, XCircle, AlertTriangle, X, FileEdit as Edit, Save, FileSpreadsheet, Truck, FileText, PlayCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import VerdelerTesting from './VerdelerTesting';
 import VerdelerVanaf630Test from './VerdelerVanaf630Test';
@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
 import { exportMultipleVerdelersToExcel } from '../lib/excelExport';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 
 interface VerdelersStepProps {
   projectData: any;
@@ -38,6 +39,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   autoOpenVerdelerId,
   onVerdelerDetailsClose
 }) => {
+  const { hasPermission } = useEnhancedPermissions();
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
   const [showVerdelerForm, setShowVerdelerForm] = useState(false);
   const [showVerdelerDetails, setShowVerdelerDetails] = useState(false);
@@ -63,6 +65,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [verdelerForTestingHours, setVerdelerForTestingHours] = useState<any>(null);
   const [previousVerdelerStatus, setPreviousVerdelerStatus] = useState<string>('');
   const [testingHoursLogged, setTestingHoursLogged] = useState<Record<string, boolean>>({});
+  const [showTestingComponent, setShowTestingComponent] = useState(false);
+  const [activeTestType, setActiveTestType] = useState<'standard' | 'vanaf630' | 'simpel'>('standard');
   const [newAccessCode, setNewAccessCode] = useState({
     code: '',
     expiresAt: '',
@@ -399,11 +403,15 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleVerdelerClick = (verdeler: any) => {
     setSelectedVerdeler(verdeler);
     setShowVerdelerDetails(true);
+    setShowTestingComponent(false);
+    setActiveTestType('standard');
   };
 
   const handleCloseDetails = () => {
     setShowVerdelerDetails(false);
     setSelectedVerdeler(null);
+    setShowTestingComponent(false);
+    setActiveTestType('standard');
     onVerdelerDetailsClose?.();
   };
 
@@ -1716,89 +1724,127 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 {/* Testing Actions */}
                 <div className="bg-[#2A303C] p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
-                  {!isPreTestApproved(selectedVerdeler) ? (
+
+                  {selectedVerdeler?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent && (
+                    <div className="space-y-4 mb-6">
+                      <div className="bg-[#1E2530] p-4 rounded-lg border border-blue-500/30">
+                        <h4 className="text-base font-semibold text-white mb-3">Start keuring</h4>
+                        <p className="text-gray-400 text-sm mb-3">Kies het type keuring dat je wilt uitvoeren:</p>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => {
+                              setActiveTestType('standard');
+                              setShowTestingComponent(true);
+                            }}
+                            className="btn-primary w-full flex items-center justify-center space-x-2 py-3"
+                          >
+                            <PlayCircle size={18} />
+                            <span>Standaard Keuring</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveTestType('vanaf630');
+                              setShowTestingComponent(true);
+                            }}
+                            className="btn-primary w-full flex items-center justify-center space-x-2 py-3 bg-purple-600 hover:bg-purple-700"
+                          >
+                            <PlayCircle size={18} />
+                            <span>Keuring Vanaf 630A</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveTestType('simpel');
+                              setShowTestingComponent(true);
+                            }}
+                            className="btn-primary w-full flex items-center justify-center space-x-2 py-3 bg-green-600 hover:bg-green-700"
+                          >
+                            <PlayCircle size={18} />
+                            <span>Simpele Keuring</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {showTestingComponent && (
+                    <div className="space-y-4">
+                      <button
+                        onClick={() => setShowTestingComponent(false)}
+                        className="btn-secondary w-full mb-4"
+                      >
+                        Terug naar keuringen overzicht
+                      </button>
+
+                      {activeTestType === 'standard' && (
+                        <VerdelerTesting
+                          verdeler={selectedVerdeler}
+                          projectNumber={projectData.project_number || projectData.projectNumber}
+                          onComplete={(testData) => {
+                            handleTestComplete(selectedVerdeler, testData);
+                            setShowTestingComponent(false);
+                          }}
+                          projectId={projectData.id}
+                          distributorId={selectedVerdeler.id}
+                          autoOpen={true}
+                        />
+                      )}
+
+                      {activeTestType === 'vanaf630' && (
+                        <VerdelerVanaf630Test
+                          verdeler={selectedVerdeler}
+                          projectNumber={projectData.project_number || ''}
+                          onComplete={(testData) => {
+                            handleTestComplete(selectedVerdeler.id, testData);
+                            setShowTestingComponent(false);
+                          }}
+                          projectId={projectData.id}
+                          distributorId={selectedVerdeler.id}
+                        />
+                      )}
+
+                      {activeTestType === 'simpel' && (
+                        <VerdelerTestSimpel
+                          verdeler={selectedVerdeler}
+                          projectNumber={projectData.project_number || ''}
+                          onComplete={(testData) => {
+                            handleTestComplete(selectedVerdeler.id, testData);
+                            setShowTestingComponent(false);
+                          }}
+                          projectId={projectData.id}
+                          distributorId={selectedVerdeler.id}
+                        />
+                      )}
+                    </div>
+                  )}
+
+                  {selectedVerdeler?.status !== 'Testen' && (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
                       <div className="flex items-start space-x-3">
                         <AlertTriangle className="text-yellow-400 flex-shrink-0 mt-0.5" size={20} />
                         <div>
                           <p className="text-yellow-400 font-medium">Testing Niet Beschikbaar</p>
-                          {verdelers.length === 1 ? (
-                            <>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Dit project heeft 1 verdeler. Gebruik project-level testing.
-                              </p>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Verander de <span className="font-semibold text-blue-400">project status</span> naar "Testen" om test functies te activeren.
-                              </p>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Huidige project status: <span className="font-semibold text-blue-400">{projectData.status || 'Onbekend'}</span>
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Dit project heeft {verdelers.length} verdelers. Gebruik verdeler-level testing.
-                              </p>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Testing is alleen beschikbaar nadat de pre-test checklist is goedgekeurd door een tester.
-                              </p>
-                              <p className="text-gray-400 text-sm mt-1">
-                                Huidige verdeler status: <span className="font-semibold text-blue-400">{selectedVerdeler.status || 'Onbekend'}</span>
-                              </p>
-                              {selectedVerdeler.status === 'Testen' && (
-                                <p className="text-gray-400 text-sm mt-2">
-                                  De pre-test checklist moet eerst ingevuld en goedgekeurd worden.
-                                </p>
-                              )}
-                            </>
-                          )}
+                          <p className="text-gray-400 text-sm mt-1">
+                            De verdeler status moet "Testen" zijn om te kunnen testen.
+                          </p>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Huidige status: <span className="font-semibold text-blue-400">{selectedVerdeler?.status || 'Onbekend'}</span>
+                          </p>
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <VerdelerTesting
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                        projectId={projectData.id}
-                        distributorId={selectedVerdeler.id}
-                        autoOpen={autoOpenTestForVerdeler === selectedVerdeler.id}
-                      />
+                  )}
 
-                      <VerdelerVanaf630Test
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || ''}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
-                        projectId={projectData.id}
-                        distributorId={selectedVerdeler.id}
-                      />
-
-                      <VerdelerTestSimpel
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || ''}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler.id, testData)}
-                        projectId={projectData.id}
-                        distributorId={selectedVerdeler.id}
-                      />
-
-                      <FATTest
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                      />
-
-                      <HighVoltageTest
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                      />
-
-                      <OnSiteTest
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        onComplete={(testData) => handleTestComplete(selectedVerdeler, testData)}
-                      />
+                  {selectedVerdeler?.status === 'Testen' && !hasPermission('testing', 'create') && (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                      <div className="flex items-start space-x-3">
+                        <AlertTriangle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
+                        <div>
+                          <p className="text-red-400 font-medium">Geen Testing Rechten</p>
+                          <p className="text-gray-400 text-sm mt-1">
+                            Je hebt geen rechten om keuringen uit te voeren. Neem contact op met een beheerder.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
