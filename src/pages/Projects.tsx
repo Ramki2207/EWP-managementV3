@@ -94,6 +94,7 @@ const Projects = () => {
   const [selectedProjectForApproval, setSelectedProjectForApproval] = useState<Project | null>(null);
   const [pendingApprovalProjects, setPendingApprovalProjects] = useState<Set<string>>(new Set());
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [users, setUsers] = useState<any[]>([]);
 
   // Helper function to check for pending approvals in database
   const checkForPendingApproval = async (project: Project): Promise<boolean> => {
@@ -150,6 +151,7 @@ const Projects = () => {
         userMap[u.id] = u.name || u.username;
       });
       setUsersMap(userMap);
+      setUsers(users);
     }
 
     loadProjects();
@@ -397,7 +399,28 @@ const Projects = () => {
         }
       });
     });
-    return Array.from(monteurs).sort();
+
+    let monteursList = Array.from(monteurs).sort();
+
+    // Filter by location if current user has assigned locations
+    if (currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
+      monteursList = monteursList.filter(monteurName => {
+        // Find the user object for this monteur
+        const monteurUser = users.find(u => u.username === monteurName || u.name === monteurName);
+
+        // If user not found or has no assigned locations, don't show them
+        if (!monteurUser || !monteurUser.assigned_locations || monteurUser.assigned_locations.length === 0) {
+          return false;
+        }
+
+        // Check if there's at least one matching location
+        return monteurUser.assigned_locations.some((loc: string) =>
+          currentUser.assigned_locations.includes(loc)
+        );
+      });
+    }
+
+    return monteursList;
   };
 
   const getUniqueCreators = () => {

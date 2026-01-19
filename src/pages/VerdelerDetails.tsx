@@ -125,45 +125,65 @@ const VerdelerDetails = () => {
   const getMontageUsersByLocation = (projectLocation?: string) => {
     console.log('🔍 VERDELER DETAILS: Getting montage users for location:', projectLocation);
     console.log('🔍 VERDELER DETAILS: Total users loaded:', users.length);
-    
+    console.log('🔍 VERDELER DETAILS: Current user:', currentUser?.username, 'Locations:', currentUser?.assigned_locations);
+
     if (!users || users.length === 0) {
       console.log('❌ VERDELER DETAILS: No users loaded yet');
       return { primary: [], other: [] };
     }
-    
+
     // Filter users with 'montage' role
-    const montageUsers = users.filter(user => {
+    let montageUsers = users.filter(user => {
       const isMontage = user.role === 'montage';
       console.log(`🔍 VERDELER DETAILS: User ${user.username} - role: ${user.role}, isMontage: ${isMontage}`);
       return isMontage;
     });
-    
-    console.log('🔍 VERDELER DETAILS: Found montage users:', montageUsers.length);
-    
+
+    // Filter by current user's assigned locations
+    if (currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
+      montageUsers = montageUsers.filter(user => {
+        // If user has no assigned locations, don't show them
+        if (!user.assigned_locations || user.assigned_locations.length === 0) {
+          console.log(`🔍 VERDELER DETAILS: Hiding ${user.username} - no assigned locations`);
+          return false;
+        }
+        // Check if there's at least one matching location with current user
+        const hasMatchingLocation = user.assigned_locations.some((loc: string) =>
+          currentUser.assigned_locations.includes(loc)
+        );
+        if (!hasMatchingLocation) {
+          console.log(`🔍 VERDELER DETAILS: Hiding ${user.username} - no matching locations (has: ${user.assigned_locations.join(', ')})`);
+        }
+        return hasMatchingLocation;
+      });
+    }
+
+    console.log('🔍 VERDELER DETAILS: Found montage users after location filter:', montageUsers.length);
+
     if (!projectLocation) {
       return { primary: montageUsers, other: [] };
     }
-    
+
     // Separate users by location
     const primary = montageUsers.filter(user => {
-      const hasLocationAccess = !user.assignedLocations || 
-                               user.assignedLocations.length === 0 || 
+      const hasLocationAccess = !user.assignedLocations ||
+                               user.assignedLocations.length === 0 ||
                                user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
                                user.assignedLocations.includes(projectLocation);
       console.log(`🔍 VERDELER DETAILS: User ${user.username} location access for ${projectLocation}:`, hasLocationAccess);
       return hasLocationAccess;
     });
-    
+
     const other = montageUsers.filter(user => {
-      const hasOtherLocationAccess = user.assignedLocations && 
-                                    user.assignedLocations.length > 0 && 
+      const hasOtherLocationAccess = user.assignedLocations &&
+                                    user.assignedLocations.length > 0 &&
                                     user.assignedLocations.length < AVAILABLE_LOCATIONS.length &&
                                     !user.assignedLocations.includes(projectLocation);
       return hasOtherLocationAccess;
     });
-    
+
     console.log('🔍 VERDELER DETAILS: Primary users:', primary.length, 'Other users:', other.length);
-    
+
     return { primary, other };
   };
   const loadDistributor = async () => {

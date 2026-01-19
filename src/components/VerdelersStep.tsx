@@ -1216,7 +1216,23 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const canEditTechnicalSpecs = !isProjectOfferte;
 
   const getMontageUsers = () => {
-    return users.filter(user => user.role === 'montage');
+    let montageUsers = users.filter(user => user.role === 'montage');
+
+    // Filter by location if current user has assigned locations
+    if (currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
+      montageUsers = montageUsers.filter(user => {
+        // If user has no assigned locations, don't show them
+        if (!user.assigned_locations || user.assigned_locations.length === 0) {
+          return false;
+        }
+        // Check if there's at least one matching location
+        return user.assigned_locations.some((loc: string) =>
+          currentUser.assigned_locations.includes(loc)
+        );
+      });
+    }
+
+    return montageUsers;
   };
 
   const handleOpenChecklist = (verdeler: any) => {
