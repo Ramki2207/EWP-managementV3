@@ -37,8 +37,10 @@ const AccessCodes = () => {
   });
 
   useEffect(() => {
-    checkConnectionAndLoadData();
-  }, []);
+    if (currentUser) {
+      checkConnectionAndLoadData();
+    }
+  }, [currentUser]);
 
   const checkConnectionAndLoadData = async () => {
     try {

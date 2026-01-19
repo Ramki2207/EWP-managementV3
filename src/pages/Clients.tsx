@@ -32,8 +32,10 @@ const Clients = () => {
   const [logoPreview, setLogoPreview] = useState<string>("");
 
   useEffect(() => {
-    loadClients();
-  }, []);
+    if (currentUser) {
+      loadClients();
+    }
+  }, [currentUser]);
 
   const loadClients = async () => {
     try {
