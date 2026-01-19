@@ -3,6 +3,8 @@ import { AlertCircle, CheckCircle, XCircle, Eye, Clock } from 'lucide-react';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 interface TestReviewNotification {
   id: string;
@@ -32,6 +34,7 @@ const TestReviewNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TestReviewNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { currentUser } = useEnhancedPermissions();
 
   const loadNotifications = async () => {
     try {
@@ -39,7 +42,31 @@ const TestReviewNotifications: React.FC = () => {
       setLoading(true);
       const data = await dataService.getTestReviewNotifications('pending_review');
       console.log('🔔 TEST REVIEW: Loaded notifications:', data);
-      setNotifications(data || []);
+
+      // Filter notifications by user's assigned locations (admins see all)
+      let filteredData = data || [];
+
+      if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+        const hasAllLocations =
+          currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+          AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+        if (!hasAllLocations) {
+          filteredData = filteredData.filter((notification: TestReviewNotification) => {
+            const projectLocation = notification.projects?.location;
+            const hasAccess = projectLocation ? currentUser.assignedLocations.includes(projectLocation) : true;
+
+            if (!hasAccess) {
+              console.log(`🌍 TEST REVIEW FILTER: Hiding notification for project ${notification.projects?.project_number} (location: ${projectLocation}) from user ${currentUser.username}`);
+            }
+
+            return hasAccess;
+          });
+          console.log(`🌍 TEST REVIEW FILTER: Filtered ${data.length} notifications down to ${filteredData.length} for user ${currentUser.username}`);
+        }
+      }
+
+      setNotifications(filteredData);
     } catch (error) {
       console.error('❌ TEST REVIEW: Error loading test review notifications:', error);
       toast.error('Kon test review meldingen niet laden');
@@ -50,12 +77,18 @@ const TestReviewNotifications: React.FC = () => {
 
   useEffect(() => {
     console.log('🔔 TEST REVIEW: Component mounted');
-    loadNotifications();
+    if (currentUser) {
+      loadNotifications();
+    }
 
     // Reload notifications every 30 seconds
-    const interval = setInterval(loadNotifications, 30000);
+    const interval = setInterval(() => {
+      if (currentUser) {
+        loadNotifications();
+      }
+    }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]);
 
   const getTestTypeLabel = (testType: string) => {
     switch (testType) {

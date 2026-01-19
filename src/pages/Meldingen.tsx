@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Bell, Search, AlertCircle, CheckCircle2, Clock, X, 
+import {
+  Bell, Search, AlertCircle, CheckCircle2, Clock, X,
   Filter, MessageSquare, UserCircle, Calendar, Building,
   FileDown, Eye, Edit, Wrench, ClipboardList, Package,
   ChevronRight, User, MapPin, Phone, Mail, Check
@@ -10,6 +10,8 @@ import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
 import ewpLogo from '../assets/ewp-logo.png';
 import ewp2Logo from '../assets/ewp2-logo.png';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 interface Notification {
   id: string;
@@ -68,29 +70,37 @@ const Meldingen = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [generatingPDF, setGeneratingPDF] = useState(false);
+  const { currentUser } = useEnhancedPermissions();
 
   useEffect(() => {
-    fetchNotifications();
+    if (currentUser) {
+      fetchNotifications();
+    }
     const subscription = supabase
       .channel('notifications')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
-        fetchNotifications();
+        if (currentUser) {
+          fetchNotifications();
+        }
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [currentUser]);
 
   const fetchNotifications = async () => {
     try {
       const { data: projects } = await supabase
         .from('projects')
-        .select('project_number, client');
+        .select('project_number, client, location');
 
       const projectClientMap = projects?.reduce((acc: any, project) => {
-        acc[project.project_number] = project.client;
+        acc[project.project_number] = {
+          client: project.client,
+          location: project.location
+        };
         return acc;
       }, {}) || {};
 
@@ -116,14 +126,37 @@ const Meldingen = () => {
 
       if (error) throw error;
 
-      const enrichedNotifications = notifications?.map(notification => ({
+      let enrichedNotifications = notifications?.map(notification => ({
         ...notification,
         client: notification.clients || {
-          name: projectClientMap[notification.project_number],
-        }
-      }));
+          name: projectClientMap[notification.project_number]?.client,
+        },
+        location: projectClientMap[notification.project_number]?.location
+      })) || [];
 
-      setNotifications(enrichedNotifications || []);
+      // Filter by location based on user's assigned locations (admins see all)
+      if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+        const hasAllLocations =
+          currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+          AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+        if (!hasAllLocations) {
+          const beforeFilter = enrichedNotifications.length;
+          enrichedNotifications = enrichedNotifications.filter((notification: any) => {
+            const notificationLocation = notification.location;
+            const hasAccess = notificationLocation ? currentUser.assignedLocations.includes(notificationLocation) : true;
+
+            if (!hasAccess) {
+              console.log(`🌍 MELDINGEN FILTER: Hiding notification for project ${notification.project_number} (location: ${notificationLocation}) from user ${currentUser.username}`);
+            }
+
+            return hasAccess;
+          });
+          console.log(`🌍 MELDINGEN FILTER: Filtered ${beforeFilter} notifications down to ${enrichedNotifications.length} for user ${currentUser.username}`);
+        }
+      }
+
+      setNotifications(enrichedNotifications);
     } catch (error) {
       console.error('Error loading notifications:', error);
       toast.error('Er is een fout opgetreden bij het laden van de meldingen');

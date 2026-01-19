@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, Plus, Edit, Trash2, Save, X, Eye, EyeOff, 
+import {
+  Users, Plus, Edit, Trash2, Save, X, Eye, EyeOff,
   Shield, UserPlus, Search, Filter, Crown, Calendar,
   Package, Truck, Wrench, DollarSign, CheckSquare, Headphones, CheckCircle
 } from 'lucide-react';
@@ -8,16 +8,17 @@ import toast from 'react-hot-toast';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
-import { 
-  SystemRole, 
-  EnhancedUser, 
-  ROLE_TEMPLATES, 
+import {
+  SystemRole,
+  EnhancedUser,
+  ROLE_TEMPLATES,
   UserPermissions,
   ModulePermissions,
   SystemModule,
   AVAILABLE_LOCATIONS,
   Location
 } from '../types/userRoles';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 
 const EnhancedUserManagement = () => {
   const [users, setUsers] = useState<EnhancedUser[]>([]);
@@ -40,6 +41,7 @@ const EnhancedUserManagement = () => {
     customPermissions: false
   });
   const [customPermissions, setCustomPermissions] = useState<UserPermissions>({});
+  const { currentUser } = useEnhancedPermissions();
 
   useEffect(() => {
     loadUsers();
@@ -448,14 +450,37 @@ const EnhancedUserManagement = () => {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = 
+    const matchesSearch =
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
 
-    return matchesSearch && matchesRole;
+    // Location filter - admins see all users
+    // Special users (admin, patrick, stefano, lysander) are always visible
+    let matchesLocation = true;
+    if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+      const hasAllLocations =
+        currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+        AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+      if (!hasAllLocations) {
+        const specialUserRoles = ['admin'];
+        const specialUsernames = ['patrick', 'stefano', 'lysander', 'Patrick', 'Stefano', 'Lysander'];
+
+        // Always show special users
+        if (specialUserRoles.includes(user.role) || specialUsernames.includes(user.username)) {
+          matchesLocation = true;
+        } else {
+          // Check if user has matching locations
+          const userLocations = user.assignedLocations || [];
+          matchesLocation = userLocations.some((loc: string) => currentUser.assignedLocations.includes(loc)) || userLocations.length === 0;
+        }
+      }
+    }
+
+    return matchesSearch && matchesRole && matchesLocation;
   });
 
   const getActiveFilterCount = () => {

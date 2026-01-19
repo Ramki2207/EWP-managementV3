@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { clientPortalService } from '../lib/clientPortalService';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { dataService } from '../lib/supabase';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 const availableFolders = [
   'Verdeler aanzicht',
@@ -169,14 +170,31 @@ const ClientPortalManagement = () => {
   };
 
   const filteredPortals = portals.filter(portal => {
-    const matchesSearch = 
+    const matchesSearch =
       portal.projects?.project_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       portal.projects?.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       portal.access_code.includes(searchTerm);
 
     const matchesStatus = statusFilter === 'all' || portal.delivery_status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    // Location filter - admins see all portals
+    let matchesLocation = true;
+    if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+      const hasAllLocations =
+        currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+        AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+      if (!hasAllLocations) {
+        const portalLocation = portal.projects?.location;
+        matchesLocation = portalLocation ? currentUser.assignedLocations.includes(portalLocation) : true;
+
+        if (!matchesLocation) {
+          console.log(`🌍 CLIENT_PORTALS FILTER: Hiding portal for project ${portal.projects?.project_number} (location: ${portalLocation}) from user ${currentUser.username}`);
+        }
+      }
+    }
+
+    return matchesSearch && matchesStatus && matchesLocation;
   });
 
   if (loading) {

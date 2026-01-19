@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle } from 'lucide-react';
+import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 
 type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie';
 
@@ -15,6 +17,7 @@ interface DayEvent {
 
 export default function Personeelsbeheer() {
   const navigate = useNavigate();
+  const { currentUser } = useEnhancedPermissions();
   const [activeTab, setActiveTab] = useState<TabType>('agenda');
   const [users, setUsers] = useState<any[]>([]);
   const [weekstaten, setWeekstaten] = useState<any[]>([]);
@@ -61,7 +64,42 @@ export default function Personeelsbeheer() {
       .from('users')
       .select('*')
       .order('username');
-    setUsers(data || []);
+
+    let filteredUsers = data || [];
+
+    // Filter by location based on user's assigned locations (admins see all)
+    // Special users (admin, patrick, stefano, lysander) are always visible
+    if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+      const hasAllLocations =
+        currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
+        AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));
+
+      if (!hasAllLocations) {
+        const beforeFilter = filteredUsers.length;
+        const specialUserRoles = ['admin'];
+        const specialUsernames = ['patrick', 'stefano', 'lysander', 'Patrick', 'Stefano', 'Lysander'];
+
+        filteredUsers = filteredUsers.filter((user: any) => {
+          // Always show special users
+          if (specialUserRoles.includes(user.role) || specialUsernames.includes(user.username)) {
+            return true;
+          }
+
+          // Check if user has matching locations
+          const userLocations = user.assigned_locations || user.assignedLocations || [];
+          const hasMatchingLocation = userLocations.some((loc: string) => currentUser.assignedLocations.includes(loc));
+
+          if (!hasMatchingLocation && userLocations.length > 0) {
+            console.log(`🌍 PERSONEELSBEHEER FILTER: Hiding user ${user.username} (locations: ${userLocations.join(', ')}) from user ${currentUser.username}`);
+          }
+
+          return hasMatchingLocation || userLocations.length === 0;
+        });
+        console.log(`🌍 PERSONEELSBEHEER FILTER: Filtered ${beforeFilter} users down to ${filteredUsers.length} for user ${currentUser.username}`);
+      }
+    }
+
+    setUsers(filteredUsers);
   };
 
   const loadWeekstaten = async () => {
