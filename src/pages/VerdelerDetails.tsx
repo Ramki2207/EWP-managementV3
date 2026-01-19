@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from 'react-dom/client';
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare, FileText } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare, FileText, PlayCircle } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
@@ -9,6 +9,9 @@ import VerdelerPreTestingApproval from '../components/VerdelerPreTestingApproval
 import VerdelerChecklistWindow from '../components/VerdelerChecklistWindow';
 import { openChecklistInNewWindow } from '../components/VerdelerChecklistPopup';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
+import VerdelerTesting from '../components/VerdelerTesting';
+import VerdelerVanaf630Test from '../components/VerdelerVanaf630Test';
+import VerdelerTestSimpel from '../components/VerdelerTestSimpel';
 import { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -42,6 +45,8 @@ const VerdelerDetails = () => {
   const [testingHours, setTestingHours] = useState('');
   const [testingHoursLogged, setTestingHoursLogged] = useState(false);
   const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
+  const [showTestingComponent, setShowTestingComponent] = useState(false);
+  const [activeTestType, setActiveTestType] = useState<'standard' | 'vanaf630' | 'simpel'>('standard');
 
   useEffect(() => {
     loadCurrentUser();
@@ -1216,19 +1221,126 @@ const VerdelerDetails = () => {
         {activeTab === 'tests' && (
           <div>
             <h2 className="text-lg text-gradient mb-6">Testrapporten</h2>
+
+            {distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent && (
+              <div className="bg-[#2A303C] p-6 rounded-lg mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Start keuring</h3>
+                <p className="text-gray-400 mb-4">Kies het type keuring dat je wilt uitvoeren:</p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => {
+                      setActiveTestType('standard');
+                      setShowTestingComponent(true);
+                    }}
+                    className="btn-primary flex items-center space-x-2"
+                  >
+                    <PlayCircle size={20} />
+                    <span>Standaard Keuring</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTestType('vanaf630');
+                      setShowTestingComponent(true);
+                    }}
+                    className="btn-primary flex items-center space-x-2 bg-purple-600 hover:bg-purple-700"
+                  >
+                    <PlayCircle size={20} />
+                    <span>Keuring vanaf 630A</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTestType('simpel');
+                      setShowTestingComponent(true);
+                    }}
+                    className="btn-primary flex items-center space-x-2 bg-orange-600 hover:bg-orange-700"
+                  >
+                    <PlayCircle size={20} />
+                    <span>Simpele Keuring</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showTestingComponent && (
+              <div className="mb-6">
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={() => setShowTestingComponent(false)}
+                    className="btn-secondary flex items-center space-x-2"
+                  >
+                    <X size={20} />
+                    <span>Sluiten</span>
+                  </button>
+                </div>
+                {activeTestType === 'standard' && (
+                  <VerdelerTesting
+                    verdeler={distributor}
+                    projectNumber={distributor.projects?.project_number || ''}
+                    onComplete={(data) => {
+                      setTestData(data);
+                      setShowTestingComponent(false);
+                      loadTestData();
+                      toast.success('Test succesvol voltooid!');
+                    }}
+                    projectId={distributor.project_id}
+                    distributorId={distributor.id}
+                    autoOpen={true}
+                  />
+                )}
+                {activeTestType === 'vanaf630' && (
+                  <VerdelerVanaf630Test
+                    verdeler={distributor}
+                    projectNumber={distributor.projects?.project_number || ''}
+                    onComplete={(data) => {
+                      setTestData(data);
+                      setShowTestingComponent(false);
+                      loadTestData();
+                      toast.success('Test succesvol voltooid!');
+                    }}
+                    projectId={distributor.project_id}
+                    distributorId={distributor.id}
+                    autoOpen={true}
+                  />
+                )}
+                {activeTestType === 'simpel' && (
+                  <VerdelerTestSimpel
+                    verdeler={distributor}
+                    projectNumber={distributor.projects?.project_number || ''}
+                    onComplete={(data) => {
+                      setTestData(data);
+                      setShowTestingComponent(false);
+                      loadTestData();
+                      toast.success('Test succesvol voltooid!');
+                    }}
+                    projectId={distributor.project_id}
+                    distributorId={distributor.id}
+                    autoOpen={true}
+                  />
+                )}
+              </div>
+            )}
+
             {testData ? (
-              <TestReportViewer 
-                testData={testData} 
+              <TestReportViewer
+                testData={testData}
                 verdeler={distributor}
                 projectNumber={distributor.projects?.project_number || ''}
               />
             ) : (
-              <div className="bg-[#2A303C] p-6 rounded-lg text-center">
-                <p className="text-gray-400">Geen testgegevens beschikbaar voor deze verdeler</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  Voer eerst tests uit via de verdeler testen functionaliteit
-                </p>
-              </div>
+              !showTestingComponent && (
+                <div className="bg-[#2A303C] p-6 rounded-lg text-center">
+                  <p className="text-gray-400">Geen testgegevens beschikbaar voor deze verdeler</p>
+                  {distributor?.status === 'Testen' && hasPermission('testing', 'create') ? (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Klik op een van de knoppen hierboven om een keuring te starten
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Voer eerst tests uit via de verdeler testen functionaliteit
+                    </p>
+                  )}
+                </div>
+              )
             )}
           </div>
         )}
