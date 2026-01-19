@@ -101,6 +101,23 @@ export const useEnhancedPermissions = () => {
       }
     }
 
+    // Special access for Ronald - projectleider + tester role
+    if (currentUser.username === 'Ronald') {
+      // Grant full testing permissions
+      if (module === 'testing') {
+        console.log(`✅ PERMISSION: Ronald - special tester access granted for`, module, permission);
+        return true;
+      }
+      if (module === 'verdelers' && (permission === 'update' || permission === 'read' || permission === 'create' || permission === 'approve')) {
+        console.log(`✅ PERMISSION: Ronald - special tester access granted for`, module, permission);
+        return true;
+      }
+      if (module === 'projects' && (permission === 'update' || permission === 'read' || permission === 'approve')) {
+        console.log(`✅ PERMISSION: Ronald - special tester access granted for`, module, permission);
+        return true;
+      }
+    }
+
     // If viewing as projectleider, use projectleider permissions
     let modulePermissions;
     if (effectiveRole === 'projectleider' && currentUser.role === 'admin') {
@@ -194,6 +211,46 @@ export const useEnhancedPermissions = () => {
       }
     }
 
+    // Special access for Ronald - projectleider + tester role
+    if (currentUser.username === 'Ronald') {
+      if (module === 'testing') {
+        return {
+          create: true,
+          read: true,
+          update: true,
+          delete: true,
+          approve: true,
+          configure: false,
+          export: true,
+          assign: true
+        };
+      }
+      if (module === 'projects') {
+        return {
+          create: true,
+          read: true,
+          update: true,
+          delete: true,
+          approve: true,
+          configure: false,
+          export: true,
+          assign: true
+        };
+      }
+      if (module === 'verdelers') {
+        return {
+          create: true,
+          read: true,
+          update: true,
+          delete: true,
+          approve: true,
+          configure: false,
+          export: true,
+          assign: true
+        };
+      }
+    }
+
     return currentUser.permissions?.[module] || {
       create: false,
       read: false,
@@ -211,7 +268,7 @@ export const useEnhancedPermissions = () => {
   }, [currentUser]);
 
   const isTester = useCallback((): boolean => {
-    return currentUser?.role === 'tester' || false;
+    return currentUser?.role === 'tester' || currentUser?.username === 'Ronald' || false;
   }, [currentUser]);
 
   const isServicedesk = useCallback((): boolean => {
