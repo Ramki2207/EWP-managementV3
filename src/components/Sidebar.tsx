@@ -118,7 +118,7 @@ const Sidebar = () => {
     if (effectiveRole === 'projectleider') {
       console.log('🔍 SIDEBAR: Admin viewing as projectleider - checking projectleider permissions for', module);
       // Projectleider has access to specific modules
-      const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account'];
+      const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account', 'meldingen', 'access_codes', 'client_portals'];
       const hasAccess = projectleiderModules.includes(module);
       console.log('✅ SIDEBAR: Projectleider access to', module, ':', hasAccess);
       return hasAccess;
