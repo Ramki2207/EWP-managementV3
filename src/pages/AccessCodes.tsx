@@ -66,36 +66,56 @@ const AccessCodes = () => {
   const loadAccessCodes = async () => {
     try {
       let data = await dataService.getAccessCodes();
-      
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         // Get all projects to check which ones are in testing phase
         const projects = await dataService.getProjects();
-        const testingProjects = projects.filter((project: any) => 
+        const testingProjects = projects.filter((project: any) =>
           project.status?.toLowerCase() === 'testen'
         );
         const testingProjectNumbers = testingProjects.map(p => p.project_number);
-        
+
         const beforeFilter = data?.length || 0;
         data = data?.filter((code: any) => {
           // Show codes that are either global (no project_number) or for testing projects
           const isGlobal = !code.project_number;
           const isForTestingProject = code.project_number && testingProjectNumbers.includes(code.project_number);
           const shouldShow = isGlobal || isForTestingProject;
-          
+
           if (!shouldShow) {
             console.log(`🧪 ACCESS_CODES TESTER FILTER: Hiding access code ${code.code} (project: ${code.project_number}) from tester ${currentUser.username} - NOT FOR TESTING PROJECT`);
           }
-          
+
           return shouldShow;
         });
         console.log(`🧪 ACCESS_CODES TESTER FILTER: Filtered ${beforeFilter} access codes down to ${data?.length || 0} for tester ${currentUser.username}`);
       }
-      
+
+      // Location-based filtering for Projectleider users
+      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+        const projects = await dataService.getProjects();
+        const allowedProjectNumbers = projects
+          .filter((project: any) => currentUser.assignedLocations.includes(project.location))
+          .map(p => p.project_number);
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((code: any) => {
+          const shouldShow = !code.project_number || allowedProjectNumbers.includes(code.project_number);
+
+          if (!shouldShow) {
+            console.log(`📍 ACCESS_CODES LOCATION FILTER: Hiding access code ${code.code} (project: ${code.project_number}) from projectleider ${currentUser.username} - LOCATION NOT ASSIGNED`);
+          }
+
+          return shouldShow;
+        });
+        console.log(`📍 ACCESS_CODES LOCATION FILTER: Filtered ${beforeFilter} access codes down to ${data?.length || 0} for projectleider ${currentUser.username} with locations:`, currentUser.assignedLocations);
+      }
+
       setAccessCodes(data || []);
     } catch (error) {
       console.error('Error loading access codes:', error);
-      
+
       // Check if it's a table not found error
       if (error.message.includes('relation "access_codes" does not exist')) {
         toast.error('De toegangscodes tabel bestaat nog niet in de database. Neem contact op met de beheerder.');
@@ -109,29 +129,49 @@ const AccessCodes = () => {
   const loadVerdelers = async () => {
     try {
       let data = await dataService.getDistributors();
-      
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         // Get all projects to check which ones are in testing phase
         const projects = await dataService.getProjects();
-        const testingProjects = projects.filter((project: any) => 
+        const testingProjects = projects.filter((project: any) =>
           project.status?.toLowerCase() === 'testen'
         );
         const testingProjectIds = testingProjects.map(p => p.id);
-        
+
         const beforeFilter = data?.length || 0;
         data = data?.filter((distributor: any) => {
           const isFromTestingProject = testingProjectIds.includes(distributor.project_id);
-          
+
           if (!isFromTestingProject) {
             console.log(`🧪 ACCESS_CODES VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} from tester ${currentUser.username} - NOT FROM TESTING PROJECT`);
           }
-          
+
           return isFromTestingProject;
         });
         console.log(`🧪 ACCESS_CODES VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${data?.length || 0} for tester ${currentUser.username}`);
       }
-      
+
+      // Location-based filtering for Projectleider users
+      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+        const projects = await dataService.getProjects();
+        const allowedProjectIds = projects
+          .filter((project: any) => currentUser.assignedLocations.includes(project.location))
+          .map(p => p.id);
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((distributor: any) => {
+          const shouldShow = allowedProjectIds.includes(distributor.project_id);
+
+          if (!shouldShow) {
+            console.log(`📍 ACCESS_CODES VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} from projectleider ${currentUser.username} - LOCATION NOT ASSIGNED`);
+          }
+
+          return shouldShow;
+        });
+        console.log(`📍 ACCESS_CODES VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${data?.length || 0} for projectleider ${currentUser.username} with locations:`, currentUser.assignedLocations);
+      }
+
       setVerdelers(data || []);
     } catch (error) {
       console.error('Error loading verdelers:', error);

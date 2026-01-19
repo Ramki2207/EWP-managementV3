@@ -44,29 +44,49 @@ const ClientPortalManagement = () => {
     try {
       setLoading(true);
       let data = await clientPortalService.getAllClientPortals();
-      
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         // Get all projects to check which ones are in testing phase
         const projects = await dataService.getProjects();
-        const testingProjects = projects.filter((project: any) => 
+        const testingProjects = projects.filter((project: any) =>
           project.status?.toLowerCase() === 'testen'
         );
         const testingProjectIds = testingProjects.map(p => p.id);
-        
+
         const beforeFilter = data?.length || 0;
         data = data?.filter((portal: any) => {
           const isFromTestingProject = testingProjectIds.includes(portal.project_id);
-          
+
           if (!isFromTestingProject) {
             console.log(`🧪 CLIENT_PORTALS TESTER FILTER: Hiding portal for project ${portal.projects?.project_number} from tester ${currentUser.username} - NOT FROM TESTING PROJECT`);
           }
-          
+
           return isFromTestingProject;
         });
         console.log(`🧪 CLIENT_PORTALS TESTER FILTER: Filtered ${beforeFilter} portals down to ${data?.length || 0} for tester ${currentUser.username}`);
       }
-      
+
+      // Location-based filtering for Projectleider users
+      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+        const projects = await dataService.getProjects();
+        const allowedProjectIds = projects
+          .filter((project: any) => currentUser.assignedLocations.includes(project.location))
+          .map(p => p.id);
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((portal: any) => {
+          const shouldShow = allowedProjectIds.includes(portal.project_id);
+
+          if (!shouldShow) {
+            console.log(`📍 CLIENT_PORTALS LOCATION FILTER: Hiding portal for project ${portal.projects?.project_number} from projectleider ${currentUser.username} - LOCATION NOT ASSIGNED`);
+          }
+
+          return shouldShow;
+        });
+        console.log(`📍 CLIENT_PORTALS LOCATION FILTER: Filtered ${beforeFilter} portals down to ${data?.length || 0} for projectleider ${currentUser.username} with locations:`, currentUser.assignedLocations);
+      }
+
       setPortals(data || []);
     } catch (error) {
       console.error('Error loading portals:', error);
