@@ -61,7 +61,7 @@ const PermissionRoute: React.FC<PermissionRouteProps> = ({ children, requiredPer
           console.log('🔐 ROUTE: Admin user - access granted to', requiredPermission.module);
         } else if (effectiveRole === 'projectleider') {
           // Projectleider has access to specific modules
-          const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account'];
+          const projectleiderModules = ['dashboard', 'projects', 'clients', 'verdelers', 'insights', 'uploads', 'account', 'meldingen', 'access_codes', 'client_portals'];
           hasAccess = projectleiderModules.includes(requiredPermission.module);
           console.log('🔐 ROUTE: Projectleider access to', requiredPermission.module, '=', hasAccess);
         } else if (currentUser.username === 'Annemieke' && requiredPermission.module === 'worksheets') {
