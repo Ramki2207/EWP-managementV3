@@ -67,6 +67,10 @@ const AccessCodes = () => {
     try {
       let data = await dataService.getAccessCodes();
 
+      console.log('🔍 ACCESS_CODES: Current user:', currentUser?.username, 'Role:', currentUser?.role);
+      console.log('🔍 ACCESS_CODES: Assigned locations:', currentUser?.assignedLocations);
+      console.log('🔍 ACCESS_CODES: Total access codes loaded:', data?.length);
+
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
         // Get all projects to check which ones are in testing phase
@@ -94,10 +98,24 @@ const AccessCodes = () => {
 
       // Location-based filtering for Projectleider users
       if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+        console.log('📍 ACCESS_CODES: Starting location-based filtering for projectleider');
         const projects = await dataService.getProjects();
+        console.log('📍 ACCESS_CODES: Total projects loaded:', projects?.length);
+        console.log('📍 ACCESS_CODES: User assigned locations:', currentUser.assignedLocations);
+
+        // Log all project locations
+        const projectLocations = projects.map(p => ({ number: p.project_number, location: p.location }));
+        console.log('📍 ACCESS_CODES: All project locations:', projectLocations);
+
         const allowedProjectNumbers = projects
-          .filter((project: any) => currentUser.assignedLocations.includes(project.location))
+          .filter((project: any) => {
+            const isAllowed = currentUser.assignedLocations.includes(project.location);
+            console.log(`📍 ACCESS_CODES: Project ${project.project_number} at location "${project.location}" - ${isAllowed ? 'ALLOWED' : 'BLOCKED'}`);
+            return isAllowed;
+          })
           .map(p => p.project_number);
+
+        console.log('📍 ACCESS_CODES: Allowed project numbers:', allowedProjectNumbers);
 
         const beforeFilter = data?.length || 0;
         data = data?.filter((code: any) => {
@@ -105,6 +123,8 @@ const AccessCodes = () => {
 
           if (!shouldShow) {
             console.log(`📍 ACCESS_CODES LOCATION FILTER: Hiding access code ${code.code} (project: ${code.project_number}) from projectleider ${currentUser.username} - LOCATION NOT ASSIGNED`);
+          } else {
+            console.log(`📍 ACCESS_CODES LOCATION FILTER: Showing access code ${code.code} (project: ${code.project_number || 'GLOBAL'})`);
           }
 
           return shouldShow;
