@@ -46,7 +46,7 @@ const Clients = () => {
       console.log('🏢 CLIENTS: Assigned locations:', currentUser?.assignedLocations);
 
       // Location-based filtering for users with assigned locations
-      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+      if (currentUser?.assignedLocations?.length > 0) {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
           // Always show clients created by the user
@@ -61,14 +61,14 @@ const Clients = () => {
           const shouldShow = client.location && currentUser.assignedLocations.includes(client.location);
 
           if (!shouldShow) {
-            console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from projectleider ${currentUser.username}`);
+            console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from ${currentUser.username}`);
           } else {
             console.log(`📍 CLIENTS LOCATION FILTER: Showing client ${client.name} (location: ${client.location})`);
           }
 
           return shouldShow;
         });
-        console.log(`📍 CLIENTS LOCATION FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for projectleider ${currentUser.username}`);
+        console.log(`📍 CLIENTS LOCATION FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for ${currentUser.username}`);
       }
 
       setClients(data);
