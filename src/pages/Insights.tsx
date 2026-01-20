@@ -17,6 +17,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { hasLocationAccess } from '../lib/locationUtils';
 import ewpLogo from '../assets/ewp-logo.png';
 
 const Insights = () => {
@@ -99,9 +100,9 @@ const Insights = () => {
           // Filter projects by location
           const beforeProjectFilter = projectsData?.length || 0;
           projectsData = projectsData?.filter((project: any) => {
-            const hasAccess = project.location && currentUser.assignedLocations.includes(project.location);
+            const hasAccess = hasLocationAccess(project.location, currentUser.assignedLocations);
             if (!hasAccess) {
-              console.log(`🌍 INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location || 'none'}) from user ${currentUser.username}`);
+              console.log(`🌍 INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location || 'none'}) from user ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')}`);
             }
             return hasAccess;
           });

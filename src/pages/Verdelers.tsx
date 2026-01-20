@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { hasLocationAccess } from '../lib/locationUtils';
 
 const Verdelers = () => {
   const navigate = useNavigate();
@@ -90,15 +91,14 @@ const Verdelers = () => {
           const beforeFilter = filteredDistributors.length;
           filteredDistributors = filteredDistributors.filter((distributor: any) => {
             const projectLocation = distributor.projects?.location;
-            // If project has a location, user must have access to that specific location
-            // If project has no location, allow access (legacy projects)
-            const hasLocationAccess = projectLocation ? currentUser.assignedLocations.includes(projectLocation) : true;
-            
-            if (!hasLocationAccess) {
-              console.log(`🌍 VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation}) from user ${currentUser.username} - NO ACCESS`);
+            // Check if user has access to this location (with backward compatibility)
+            const hasAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations);
+
+            if (!hasAccess) {
+              console.log(`🌍 VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation}) from user ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')} - NO ACCESS`);
             }
-            
-            return hasLocationAccess;
+
+            return hasAccess;
           });
           console.log(`🌍 VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${filteredDistributors.length} for user ${currentUser.username}`);
         } else {

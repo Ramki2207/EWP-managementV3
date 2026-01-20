@@ -6,6 +6,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import Papa from 'papaparse';
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { hasLocationAccess } from '../lib/locationUtils';
 
 const Clients = () => {
   const navigate = useNavigate();
@@ -57,11 +58,11 @@ const Clients = () => {
             return true;
           }
 
-          // Check if user has access based on location
-          const shouldShow = client.location && currentUser.assignedLocations.includes(client.location);
+          // Check if user has access based on location (with backward compatibility)
+          const shouldShow = hasLocationAccess(client.location, currentUser.assignedLocations);
 
           if (!shouldShow) {
-            console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from ${currentUser.username}`);
+            console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')}`);
           } else {
             console.log(`📍 CLIENTS LOCATION FILTER: Showing client ${client.name} (location: ${client.location})`);
           }
