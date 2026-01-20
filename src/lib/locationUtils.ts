@@ -5,6 +5,8 @@ export const getDisplayLocation = (location: string): string => {
   const locationMap: Record<string, string> = {
     'Leerdam': 'EWP Paneelbouw Utrecht',
     'Naaldwijk': 'EWP Paneelbouw Den Haag',
+    'Naaldwijk (PD)': 'EWP Paneelbouw Den Haag',
+    'Naaldwijk (PW)': 'EWP Paneelbouw Den Haag',
     'Rotterdam': 'EWP Paneelbouw Rotterdam'
   };
 
