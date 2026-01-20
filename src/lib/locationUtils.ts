@@ -12,3 +12,26 @@ export const getDisplayLocation = (location: string): string => {
 
   return locationMap[location] || location;
 };
+
+/**
+ * Checks if a user has access to a project based on location.
+ * Handles backward compatibility: users with "Naaldwijk" can see both "Naaldwijk (PD)" and "Naaldwijk (PW)" projects.
+ */
+export const hasLocationAccess = (projectLocation: string | undefined, userAssignedLocations: string[] | undefined): boolean => {
+  if (!projectLocation || !userAssignedLocations || userAssignedLocations.length === 0) {
+    return true;
+  }
+
+  // Check for exact match first
+  if (userAssignedLocations.includes(projectLocation)) {
+    return true;
+  }
+
+  // Backward compatibility: if user has "Naaldwijk", they can see both PD and PW variants
+  if ((projectLocation === 'Naaldwijk (PD)' || projectLocation === 'Naaldwijk (PW)') &&
+      userAssignedLocations.includes('Naaldwijk')) {
+    return true;
+  }
+
+  return false;
+};

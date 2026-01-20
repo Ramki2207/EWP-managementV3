@@ -11,6 +11,7 @@ import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
 import TestReviewNotifications from '../components/TestReviewNotifications';
+import { hasLocationAccess } from '../lib/locationUtils';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -174,9 +175,9 @@ const Dashboard = () => {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeLocationFilter = filteredData.length;
           filteredData = filteredData.filter((project: any) => {
-            const hasLocationAccess = project.location ? currentUser.assignedLocations.includes(project.location) : true;
-            console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (location: ${project.location}) - Access: ${hasLocationAccess}`);
-            return hasLocationAccess;
+            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations);
+            console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (location: ${project.location}) - Access: ${locationAccess}`);
+            return locationAccess;
           });
           console.log(`🌍 DASHBOARD: Filtered ${beforeLocationFilter} projects to ${filteredData.length} for user ${currentUser.username}`);
         } else {
@@ -406,13 +407,13 @@ const Dashboard = () => {
           filteredProjects = filteredProjects.filter((project: any) => {
             // If project has a location, user must have access to that specific location
             // If project has no location, allow access (legacy projects)
-            const hasLocationAccess = project.location ? currentUser.assignedLocations.includes(project.location) : true;
-            
-            if (!hasLocationAccess) {
+            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations);
+
+            if (!locationAccess) {
               console.log(`🌍 DASHBOARD FILTER: Hiding project ${project.project_number} (location: ${project.location}) from user ${currentUser.username} - NO ACCESS`);
             }
-            
-            return hasLocationAccess;
+
+            return locationAccess;
           });
           console.log(`🌍 DASHBOARD FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for user ${currentUser.username}`);
         } else {
@@ -537,11 +538,11 @@ const Dashboard = () => {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           filteredProjects = filteredProjects.filter((project: any) => {
             const projectLocation = project.location;
-            const hasLocationAccess = projectLocation ? currentUser.assignedLocations.includes(projectLocation) : true;
-            
-            console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (${projectLocation}) - Access: ${hasLocationAccess}`);
-            
-            return hasLocationAccess;
+            const locationAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations);
+
+            console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (${projectLocation}) - Access: ${locationAccess}`);
+
+            return locationAccess;
           });
           console.log(`🌍 DASHBOARD: Filtered to ${filteredProjects.length} projects for user ${currentUser.username}`);
         } else {

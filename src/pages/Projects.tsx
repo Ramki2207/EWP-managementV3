@@ -10,6 +10,7 @@ import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
 import HoursTrafficLight from '../components/HoursTrafficLight';
+import { hasLocationAccess } from '../lib/locationUtils';
 
 // Component to show approval status in project table
 const ProjectApprovalStatus: React.FC<{ project: any }> = ({ project }) => {
@@ -509,10 +510,10 @@ const Projects = () => {
         } else {
           // If project has a location, user must have access to that specific location
           // If project has no location, allow access (legacy projects)
-          const hasLocationAccess = project.location ? currentUser.assignedLocations.includes(project.location) : true;
-          console.log('🌍 FILTER: Location access check for', project.project_number, ':', hasLocationAccess);
+          const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations);
+          console.log('🌍 FILTER: Location access check for', project.project_number, ':', locationAccess);
           console.log('🌍 FILTER: Project location:', project.location, 'User locations:', currentUser.assignedLocations);
-          if (!hasLocationAccess) {
+          if (!locationAccess) {
             console.log(`🌍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) from user ${currentUser.username} (assigned: ${currentUser.assignedLocations.join(', ')}) - NO ACCESS`);
             return false;
           }
