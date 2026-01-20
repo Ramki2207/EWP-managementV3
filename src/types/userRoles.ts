@@ -274,7 +274,7 @@ export const ROLE_TEMPLATES: Record<SystemRole, RoleTemplate> = {
     icon: 'Wrench',
     permissions: {
       dashboard: { create: false, read: true, update: false, delete: false, approve: false, configure: false, export: false, assign: false },
-      projects: { create: false, read: true, update: false, delete: false, approve: false, configure: false, export: false, assign: false },
+      projects: { create: false, read: true, update: true, delete: false, approve: false, configure: false, export: false, assign: false },
       verdelers: { create: false, read: true, update: true, delete: false, approve: false, configure: false, export: false, assign: false },
       clients: { create: false, read: true, update: false, delete: false, approve: false, configure: false, export: false, assign: false },
       uploads: { create: true, read: true, update: false, delete: false, approve: false, configure: false, export: true, assign: false },
