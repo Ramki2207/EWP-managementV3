@@ -20,8 +20,14 @@ export const getDisplayLocation = (location: string): string => {
  * - users with "Rotterdam" can see "Rotterdam (PR)" projects
  */
 export const hasLocationAccess = (projectLocation: string | undefined, userAssignedLocations: string[] | undefined): boolean => {
-  if (!projectLocation || !userAssignedLocations || userAssignedLocations.length === 0) {
+  // If user has no location restrictions, they can see everything
+  if (!userAssignedLocations || userAssignedLocations.length === 0) {
     return true;
+  }
+
+  // If project has no location but user has location restrictions, deny access
+  if (!projectLocation) {
+    return false;
   }
 
   // Check for exact match first
