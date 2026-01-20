@@ -1088,7 +1088,9 @@ export const dataService = {
     try {
       // Extract contacts from client data
       const { contacts, ...clientOnly } = clientData;
-      
+
+      console.log('Creating client with created_by:', clientOnly.created_by);
+
       // Create the client first
       const { data: client, error: clientError } = await supabase
         .from('clients')

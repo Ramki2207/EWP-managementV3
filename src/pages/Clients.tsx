@@ -49,6 +49,15 @@ const Clients = () => {
       if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
+          // Always show clients created by the user
+          const isCreator = client.created_by === currentUser.id;
+
+          if (isCreator) {
+            console.log(`📍 CLIENTS LOCATION FILTER: Showing client ${client.name} to ${currentUser.username} - USER IS CREATOR`);
+            return true;
+          }
+
+          // Check if user has access based on location
           const shouldShow = client.location && currentUser.assignedLocations.includes(client.location);
 
           if (!shouldShow) {
@@ -128,7 +137,8 @@ const Clients = () => {
 
       const savedClient = await dataService.createClient({
         ...clientData,
-        logo_url: logoUrl
+        logo_url: logoUrl,
+        created_by: currentUser?.id
       });
       setClients([savedClient, ...clients]);
       setShowClientForm(false);
