@@ -85,27 +85,33 @@ const Verdelers = () => {
         console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} distributors down to ${filteredDistributors.length} for logistiek ${currentUser.username}`);
       }
       
-      if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+      // Apply location-based filtering for users with restricted location access
+      if (currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeFilter = filteredDistributors.length;
+          console.log(`🌍 VERDELERS LOCATION FILTER: Starting with ${beforeFilter} distributors for ${currentUser.username}`);
+          console.log(`🌍 VERDELERS LOCATION FILTER: User assigned locations:`, currentUser.assignedLocations);
+
           filteredDistributors = filteredDistributors.filter((distributor: any) => {
             const projectLocation = distributor.projects?.location;
             // Check if user has access to this location (with backward compatibility)
             const hasAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations);
 
             if (!hasAccess) {
-              console.log(`🌍 VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation}) from user ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')} - NO ACCESS`);
+              console.log(`🌍 VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation}) from user ${currentUser.username} - NO ACCESS`);
+            } else {
+              console.log(`🌍 VERDELERS FILTER: Showing distributor ${distributor.distributor_id} (project location: ${projectLocation}) to user ${currentUser.username} - HAS ACCESS`);
             }
 
             return hasAccess;
           });
           console.log(`🌍 VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${filteredDistributors.length} for user ${currentUser.username}`);
         } else {
-          console.log(`🌍 VERDELERS FILTER: User ${currentUser.username} has access to all locations - showing all distributors`);
+          console.log(`🌍 VERDELERS FILTER: User ${currentUser.username} has access to all ${AVAILABLE_LOCATIONS.length} locations - showing all distributors`);
         }
       } else {
-        console.log(`🌍 VERDELERS FILTER: User ${currentUser?.username} has no location restrictions - showing all distributors`);
+        console.log(`🌍 VERDELERS FILTER: User ${currentUser?.username} has no valid location restrictions (assignedLocations:`, currentUser?.assignedLocations, `) - showing all distributors`);
       }
 
       // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
