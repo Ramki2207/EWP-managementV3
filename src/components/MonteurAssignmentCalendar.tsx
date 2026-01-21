@@ -211,7 +211,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                       onMouseLeave={() => setHoveredVerdeler(null)}
                     >
                       <div className="truncate">
-                        {verdeler.distributor_id} - {verdeler.kast_naam}
+                        {verdeler.project_number} - {verdeler.kast_naam}
                       </div>
                     </div>
                   ))}
@@ -269,13 +269,13 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
           <div className="space-y-2">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold text-white">{hoveredVerdeler.distributor_id}</h3>
+                <h3 className="text-lg font-bold text-white">{hoveredVerdeler.project_number}</h3>
                 <p className="text-sm text-purple-400">{hoveredVerdeler.kast_naam}</p>
               </div>
             </div>
             <div className="border-t border-gray-700 pt-2">
-              <p className="text-xs text-gray-400">Project</p>
-              <p className="text-sm text-white">{hoveredVerdeler.project_number}</p>
+              <p className="text-xs text-gray-400">Verdeler ID</p>
+              <p className="text-sm text-white">{hoveredVerdeler.distributor_id}</p>
               <p className="text-xs text-gray-400 mt-1">{hoveredVerdeler.client}</p>
             </div>
             <div>
@@ -302,7 +302,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
           <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-[#1e2836] border-b border-gray-700 p-6 flex justify-between items-start">
               <div>
-                <h2 className="text-2xl font-bold text-white mb-1">{selectedVerdeler.distributor_id}</h2>
+                <h2 className="text-2xl font-bold text-white mb-1">{selectedVerdeler.project_number}</h2>
                 <p className="text-purple-400">{selectedVerdeler.kast_naam}</p>
               </div>
               <button
