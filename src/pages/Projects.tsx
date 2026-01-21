@@ -183,6 +183,24 @@ const Projects = () => {
         totalProjects: filteredProjects.length
       });
 
+      // Filter for Dave Moret - only show Productie, Levering, or Gereed voor facturatie
+      if (currentUser?.username === 'Dave Moret') {
+        const beforeFilter = filteredProjects.length;
+        const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
+        filteredProjects = filteredProjects.filter((project: Project) => {
+          const shouldShow = allowedStatuses.includes(project.status);
+
+          if (!shouldShow) {
+            console.log(`👤 DAVE MORET FILTER: Hiding project ${project.project_number} from Dave Moret - STATUS: ${project.status}`);
+          } else {
+            console.log(`👤 DAVE MORET FILTER: Showing project ${project.project_number} to Dave Moret - STATUS: ${project.status}`);
+          }
+
+          return shouldShow;
+        });
+        console.log(`👤 DAVE MORET FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for Dave Moret (Productie, Levering, Gereed voor facturatie only)`);
+      }
+
       // Filter for Logistiek users - only show projects with status "Levering"
       if (currentUser?.role === 'logistiek') {
         const beforeFilter = filteredProjects.length;
