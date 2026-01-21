@@ -11,6 +11,7 @@ import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
 import TestReviewNotifications from '../components/TestReviewNotifications';
+import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
@@ -1076,6 +1077,13 @@ const Dashboard = () => {
               )}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Dave Moret: Monteur Assignment Calendar */}
+      {currentUser?.username === 'Dave Moret' && (
+        <div className="mb-8">
+          <MonteurAssignmentCalendar />
         </div>
       )}
 
