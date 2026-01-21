@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
@@ -13,6 +14,7 @@ interface VerdelerAssignment {
   project_number: string;
   client: string;
   location: string;
+  project_id: string;
 }
 
 interface MonteurAssignmentCalendarProps {
@@ -20,9 +22,12 @@ interface MonteurAssignmentCalendarProps {
 }
 
 export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: MonteurAssignmentCalendarProps) {
+  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [verdelers, setVerdelers] = useState<VerdelerAssignment[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedVerdeler, setSelectedVerdeler] = useState<VerdelerAssignment | null>(null);
+  const [hoveredVerdeler, setHoveredVerdeler] = useState<VerdelerAssignment | null>(null);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +51,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
           toegewezen_monteur,
           gewenste_lever_datum,
           status,
+          project_id,
           projects!inner (
             project_number,
             client,
@@ -67,6 +73,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
         toegewezen_monteur: v.toegewezen_monteur,
         gewenste_lever_datum: v.gewenste_lever_datum,
         status: v.status,
+        project_id: v.project_id,
         project_number: v.projects.project_number,
         client: v.projects.client,
         location: v.projects.location
@@ -82,218 +89,325 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
     }
   };
 
-  const getDaysInMonth = () => {
+  const generateCalendarDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
 
-    return { daysInMonth, startingDayOfWeek: startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1 };
+    const days = [];
+    let currentDay = new Date(startDate);
+
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(currentDay));
+      currentDay.setDate(currentDay.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const getVerdelersForDate = (date: Date) => {
+    const dateStr = formatDateLocal(date);
     return verdelers.filter(v => {
-      const leverDatum = new Date(v.gewenste_lever_datum);
-      return leverDatum.getDate() === date.getDate() &&
-             leverDatum.getMonth() === date.getMonth() &&
-             leverDatum.getFullYear() === date.getFullYear();
+      const leverDateStr = v.gewenste_lever_datum.split('T')[0];
+      return leverDateStr === dateStr;
     });
   };
 
   const previousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-    setSelectedDate(null);
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-    setSelectedDate(null);
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const { daysInMonth, startingDayOfWeek } = getDaysInMonth();
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const emptyDays = Array.from({ length: startingDayOfWeek }, (_, i) => i);
-
-  const selectedDateVerdelers = selectedDate ? getVerdelersForDate(selectedDate) : [];
-
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="p-2 bg-purple-500/20 rounded-lg">
-            <Calendar size={20} className="text-purple-400" />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">Monteur Toewijzing Agenda</h2>
-            <p className="text-sm text-gray-400">Verdelers die monteur toewijzing nodig hebben</p>
+    <>
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <Calendar size={20} className="text-purple-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Monteur Toewijzing Agenda</h2>
+              <p className="text-sm text-gray-400">Verdelers die monteur toewijzing nodig hebben</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Calendar Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={previousMonth}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h3 className="text-lg font-semibold">
-          {currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
-        </h3>
-        <button
-          onClick={nextMonth}
-          className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center space-x-4 mb-4 text-sm">
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-          <span className="text-gray-400">Geen monteur</span>
+        {/* Calendar Navigation */}
+        <div className="flex items-center justify-between mb-4">
+          <button
+            onClick={previousMonth}
+            className="btn-secondary p-2"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <h3 className="text-lg font-semibold">
+            {currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+          </h3>
+          <button
+            onClick={nextMonth}
+            className="btn-secondary p-2"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-gray-400">Monteur toegewezen</span>
+
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 gap-2 mb-2">
+          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+            <div key={day} className="text-center font-semibold text-gray-400 text-sm py-2">
+              {day}
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-2 mb-4">
-        {/* Day headers */}
-        {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day) => (
-          <div key={day} className="text-center text-sm font-semibold text-gray-400 py-2">
-            {day}
-          </div>
-        ))}
+        <div className="grid grid-cols-7 gap-2">
+          {generateCalendarDays().map((day, index) => {
+            const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+            const isToday = day.toDateString() === new Date().toDateString();
+            const dayVerdelers = getVerdelersForDate(day);
 
-        {/* Empty cells for days before month starts */}
-        {emptyDays.map((_, index) => (
-          <div key={`empty-${index}`} className="aspect-square"></div>
-        ))}
-
-        {/* Days of the month */}
-        {days.map((day) => {
-          const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-          const dayVerdelers = getVerdelersForDate(date);
-          const hasVerdelers = dayVerdelers.length > 0;
-          const unassignedCount = dayVerdelers.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij').length;
-          const assignedCount = dayVerdelers.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij').length;
-          const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === currentDate.getMonth();
-          const isToday = new Date().getDate() === day &&
-                         new Date().getMonth() === currentDate.getMonth() &&
-                         new Date().getFullYear() === currentDate.getFullYear();
-
-          return (
-            <button
-              key={day}
-              onClick={() => setSelectedDate(date)}
-              className={`
-                aspect-square rounded-lg p-2 text-sm transition-all relative
-                ${isSelected ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''}
-                ${isToday ? 'font-bold border-2 border-blue-400' : ''}
-                ${hasVerdelers ? 'hover:bg-gray-700 cursor-pointer' : 'text-gray-600'}
-              `}
-            >
-              <div className="flex flex-col items-center justify-center h-full">
-                <span>{day}</span>
-                {hasVerdelers && (
-                  <div className="flex items-center space-x-1 mt-1">
-                    {unassignedCount > 0 && (
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                        <span className="text-xs ml-0.5">{unassignedCount}</span>
-                      </div>
-                    )}
-                    {assignedCount > 0 && (
-                      <div className="flex items-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="text-xs ml-0.5">{assignedCount}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected Date Details */}
-      {selectedDate && selectedDateVerdelers.length > 0 && (
-        <div className="mt-6 border-t border-gray-700 pt-4">
-          <h4 className="text-lg font-semibold mb-3">
-            {selectedDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </h4>
-          <div className="space-y-3">
-            {selectedDateVerdelers.map((verdeler) => (
+            return (
               <div
-                key={verdeler.id}
-                className={`p-3 rounded-lg border ${
-                  !verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij'
-                    ? 'border-yellow-500/30 bg-yellow-500/5'
-                    : 'border-green-500/30 bg-green-500/5'
+                key={index}
+                className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
+                  isCurrentMonth
+                    ? isToday
+                      ? 'bg-purple-500/10 border-purple-500'
+                      : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
+                    : 'bg-[#1a1f2a] border-gray-800 opacity-50'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-semibold">{verdeler.distributor_id}</span>
-                      <span className="text-gray-400">•</span>
-                      <span className="text-sm text-gray-400">{verdeler.kast_naam}</span>
+                <div className="text-sm font-medium text-gray-400 mb-1">
+                  {day.getDate()}
+                </div>
+                <div className="space-y-1">
+                  {dayVerdelers.map((verdeler, idx) => (
+                    <div
+                      key={idx}
+                      className={`text-xs p-1 rounded transition-all cursor-pointer ${
+                        !verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij'
+                          ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
+                          : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
+                      }`}
+                      onClick={() => setSelectedVerdeler(verdeler)}
+                      onMouseEnter={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoverPosition({ x: rect.left, y: rect.bottom + 5 });
+                        setHoveredVerdeler(verdeler);
+                      }}
+                      onMouseLeave={() => setHoveredVerdeler(null)}
+                    >
+                      <div className="truncate">
+                        {verdeler.distributor_id} - {verdeler.kast_naam}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-400 mb-2">
-                      <div>{verdeler.project_number} - {verdeler.client}</div>
-                      <div className="text-xs">{verdeler.location}</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      {!verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij' ? (
-                        <>
-                          <AlertCircle size={16} className="text-yellow-500" />
-                          <span className="text-sm text-yellow-500">Geen monteur toegewezen</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle size={16} className="text-green-500" />
-                          <User size={16} className="text-green-500" />
-                          <span className="text-sm text-green-500">{verdeler.toegewezen_monteur}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="mt-6 flex items-center space-x-6 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded bg-yellow-500/20"></div>
+            <span className="text-gray-400">Geen monteur</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 rounded bg-green-500/20"></div>
+            <span className="text-gray-400">Monteur toegewezen</span>
+          </div>
+        </div>
+
+        {/* Summary Stats */}
+        <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-500">
+              {verdelers.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij').length}
+            </div>
+            <div className="text-sm text-gray-400">Zonder monteur</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-500">
+              {verdelers.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij').length}
+            </div>
+            <div className="text-sm text-gray-400">Toegewezen</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-500">
+              {verdelers.length}
+            </div>
+            <div className="text-sm text-gray-400">Totaal</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hover Popup */}
+      {hoveredVerdeler && (
+        <div
+          className="fixed z-50 bg-[#1E2530] border border-purple-500/30 rounded-lg shadow-2xl p-4 max-w-md pointer-events-none"
+          style={{
+            left: `${hoverPosition.x}px`,
+            top: `${hoverPosition.y}px`,
+            transform: 'translateX(-50%)'
+          }}
+        >
+          <div className="space-y-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white">{hoveredVerdeler.distributor_id}</h3>
+                <p className="text-sm text-purple-400">{hoveredVerdeler.kast_naam}</p>
+              </div>
+            </div>
+            <div className="border-t border-gray-700 pt-2">
+              <p className="text-xs text-gray-400">Project</p>
+              <p className="text-sm text-white">{hoveredVerdeler.project_number}</p>
+              <p className="text-xs text-gray-400 mt-1">{hoveredVerdeler.client}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Locatie</p>
+              <p className="text-sm text-white">{hoveredVerdeler.location}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">Monteur</p>
+              <p className={`text-sm font-medium ${
+                !hoveredVerdeler.toegewezen_monteur || hoveredVerdeler.toegewezen_monteur === 'Vrij'
+                  ? 'text-yellow-400'
+                  : 'text-green-400'
+              }`}>
+                {hoveredVerdeler.toegewezen_monteur || 'Niet toegewezen'}
+              </p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Summary Stats */}
-      <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-yellow-500">
-            {verdelers.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij').length}
+      {/* Verdeler Details Modal */}
+      {selectedVerdeler && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedVerdeler(null)}>
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-[#1e2836] border-b border-gray-700 p-6 flex justify-between items-start">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">{selectedVerdeler.distributor_id}</h2>
+                <p className="text-purple-400">{selectedVerdeler.kast_naam}</p>
+              </div>
+              <button
+                onClick={() => setSelectedVerdeler(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Verdeler Info */}
+              <div className="bg-[#2A303C] rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Verdeler Informatie</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Verdeler ID:</span>
+                    <span className="text-white font-medium">{selectedVerdeler.distributor_id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Kast Naam:</span>
+                    <span className="text-white">{selectedVerdeler.kast_naam}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Status:</span>
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      selectedVerdeler.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                      selectedVerdeler.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {selectedVerdeler.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Toegewezen Monteur:</span>
+                    {!selectedVerdeler.toegewezen_monteur || selectedVerdeler.toegewezen_monteur === 'Vrij' ? (
+                      <span className="text-yellow-400 flex items-center space-x-1">
+                        <AlertCircle size={14} />
+                        <span>Niet toegewezen</span>
+                      </span>
+                    ) : (
+                      <span className="text-green-400 flex items-center space-x-1">
+                        <CheckCircle size={14} />
+                        <span>{selectedVerdeler.toegewezen_monteur}</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Gewenste Leverdatum:</span>
+                    <span className="text-white">
+                      {new Date(selectedVerdeler.gewenste_lever_datum).toLocaleDateString('nl-NL', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Project Info */}
+              <div className="bg-[#2A303C] rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Project Informatie</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Projectnummer:</span>
+                    <span className="text-white font-medium">{selectedVerdeler.project_number}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Klant:</span>
+                    <span className="text-white">{selectedVerdeler.client}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Locatie:</span>
+                    <span className="text-white">{selectedVerdeler.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    setSelectedVerdeler(null);
+                    navigate(`/project/${selectedVerdeler.project_id}`);
+                  }}
+                  className="flex-1 btn-primary"
+                >
+                  Ga naar Project
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedVerdeler(null);
+                    navigate(`/verdeler/${selectedVerdeler.id}`);
+                  }}
+                  className="flex-1 btn-secondary"
+                >
+                  Ga naar Verdeler
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="text-sm text-gray-400">Zonder monteur</div>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-green-500">
-            {verdelers.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij').length}
-          </div>
-          <div className="text-sm text-gray-400">Toegewezen</div>
-        </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-blue-500">
-            {verdelers.length}
-          </div>
-          <div className="text-sm text-gray-400">Totaal</div>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
