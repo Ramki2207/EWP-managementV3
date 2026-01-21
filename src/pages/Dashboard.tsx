@@ -155,6 +155,24 @@ const Dashboard = () => {
         console.log(`📦 DASHBOARD LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} projects down to ${filteredData.length} for logistiek ${currentUser.username}`);
       }
 
+      // Status-based filtering for Dave Moret
+      if (currentUser?.username === 'Dave Moret') {
+        const beforeDaveFilter = filteredData.length;
+        const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
+        filteredData = filteredData.filter((project: any) => {
+          const hasAllowedStatus = allowedStatuses.includes(project.status);
+
+          if (!hasAllowedStatus) {
+            console.log(`👤 DAVE MORET FILTER (loadData): Hiding project ${project.project_number} (status: ${project.status}) - NOT IN ALLOWED STATUSES`);
+          } else {
+            console.log(`👤 DAVE MORET FILTER (loadData): Showing project ${project.project_number} (status: ${project.status}) - IN ALLOWED STATUSES`);
+          }
+
+          return hasAllowedStatus;
+        });
+        console.log(`👤 DAVE MORET FILTER (loadData): Filtered ${beforeDaveFilter} projects down to ${filteredData.length} for Dave Moret (only Productie, Levering, Gereed voor facturatie)`);
+      }
+
       // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
       if (
         currentUser &&
@@ -400,6 +418,24 @@ const Dashboard = () => {
         console.log(`📦 DASHBOARD LOGISTIEK FILTER (loadProjects): Filtered ${beforeLogistiekFilter} projects down to ${filteredProjects.length} for logistiek ${currentUser.username}`);
       }
 
+      // Status-based filtering for Dave Moret
+      if (currentUser?.username === 'Dave Moret') {
+        const beforeDaveFilter = filteredProjects.length;
+        const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
+        filteredProjects = filteredProjects.filter((project: any) => {
+          const hasAllowedStatus = allowedStatuses.includes(project.status);
+
+          if (!hasAllowedStatus) {
+            console.log(`👤 DAVE MORET FILTER: Hiding project ${project.project_number} (status: ${project.status}) - NOT IN ALLOWED STATUSES`);
+          } else {
+            console.log(`👤 DAVE MORET FILTER: Showing project ${project.project_number} (status: ${project.status}) - IN ALLOWED STATUSES`);
+          }
+
+          return hasAllowedStatus;
+        });
+        console.log(`👤 DAVE MORET FILTER: Filtered ${beforeDaveFilter} projects down to ${filteredProjects.length} for Dave Moret (only Productie, Levering, Gereed voor facturatie)`);
+      }
+
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
@@ -633,6 +669,14 @@ const Dashboard = () => {
           (dist: any) => dist.toegewezen_monteur === currentUser.username
         );
         if (!hasAssignedVerdelers) {
+          return false;
+        }
+      }
+
+      // Status-based filtering for Dave Moret
+      if (currentUser?.username === 'Dave Moret') {
+        const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
+        if (!allowedStatuses.includes(project.status)) {
           return false;
         }
       }
