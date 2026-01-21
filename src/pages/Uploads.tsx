@@ -69,25 +69,8 @@ const Uploads = () => {
       
       const data = await dataService.getProjects();
       clearTimeout(timeoutId);
-      
+
       let filteredProjects = data || [];
-
-      // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
-        const beforeRoleFilter = filteredProjects.length;
-        filteredProjects = filteredProjects.filter((project: any) => {
-          const hasTestingStatus = project.status?.toLowerCase() === 'testen';
-
-          if (!hasTestingStatus) {
-            console.log(`🧪 UPLOADS TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
-          } else {
-            console.log(`🧪 UPLOADS TESTER FILTER: Showing project ${project.project_number} (status: ${project.status}) to tester ${currentUser.username} - IN TESTING PHASE`);
-          }
-
-          return hasTestingStatus;
-        });
-        console.log(`🧪 UPLOADS TESTER FILTER: Filtered ${beforeRoleFilter} projects down to ${filteredProjects.length} for tester ${currentUser.username}`);
-      }
 
       // Location-based filtering (admins see all)
       if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
