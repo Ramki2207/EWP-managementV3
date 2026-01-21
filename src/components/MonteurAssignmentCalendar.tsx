@@ -397,7 +397,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                 <button
                   onClick={() => {
                     setSelectedVerdeler(null);
-                    navigate(`/verdeler/${selectedVerdeler.id}`);
+                    navigate(`/verdelers/${selectedVerdeler.id}`);
                   }}
                   className="flex-1 btn-secondary"
                 >
