@@ -26,6 +26,7 @@ const Clients = () => {
     delivery_city: "",
     vat_number: "",
     kvk_number: "",
+    telefoonnummer: "",
     logo_url: "",
     contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
   });
@@ -155,6 +156,7 @@ const Clients = () => {
         delivery_city: "",
         vat_number: "",
         kvk_number: "",
+        telefoonnummer: "",
         logo_url: "",
         contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
       });
@@ -183,6 +185,7 @@ const Clients = () => {
             const client = {
               name: row['Organisatienaam'],
               status: row['Status'] || 'Actief',
+              telefoonnummer: row['Telefoonnummer'],
               visit_street: row['Bezoekadres Straat'],
               visit_postcode: row['Bezoekadres Postcode'],
               visit_city: row['Bezoekadres Plaats'],
@@ -324,6 +327,7 @@ const Clients = () => {
                   type: "select",
                   options: ["Leerdam", "Naaldwijk"]
                 },
+                { label: "Telefoonnummer", name: "telefoonnummer" },
                 { label: "Bezoekadres Straat", name: "visit_street" },
                 { label: "Bezoekadres Postcode", name: "visit_postcode" },
                 { label: "Bezoekadres Plaats", name: "visit_city" },

@@ -29,6 +29,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   });
   const [newClientData, setNewClientData] = useState({
     name: '',
+    telefoonnummer: '',
     visit_street: '',
     visit_postcode: '',
     visit_city: '',
@@ -303,6 +304,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       // Reset form
       setNewClientData({
         name: '',
+        telefoonnummer: '',
         visit_street: '',
         visit_postcode: '',
         visit_city: '',
@@ -1153,6 +1155,17 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                     value={newClientData.name}
                     onChange={(e) => setNewClientData({ ...newClientData, name: e.target.value })}
                     placeholder="Bedrijfsnaam"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm text-gray-400 mb-2">Telefoonnummer</label>
+                  <input
+                    type="tel"
+                    className="input-field"
+                    value={newClientData.telefoonnummer}
+                    onChange={(e) => setNewClientData({ ...newClientData, telefoonnummer: e.target.value })}
+                    placeholder="06 12345678"
                   />
                 </div>
 
