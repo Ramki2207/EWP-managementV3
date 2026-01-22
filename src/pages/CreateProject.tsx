@@ -121,35 +121,62 @@ const CreateProject = () => {
       // Save documents after project and distributors are created
       if (Object.keys(tempDocuments).length > 0) {
         console.log('Saving temporary documents to database...');
-        
+
         // Get the created distributors to map IDs
         const createdDistributors = await dataService.getDistributorsByProject(savedProject.id);
-        
+
         for (const [key, docs] of Object.entries(tempDocuments)) {
-          const [distributorId, folder] = key.split('-');
-          
-          // Find the actual database ID for this distributor
-          const dbDistributor = createdDistributors.find((d: any) => d.distributor_id === distributorId);
-          
-          if (dbDistributor && docs.length > 0) {
-            for (const doc of docs) {
-              try {
-                await dataService.createDocument({
-                  projectId: savedProject.id,
-                  distributorId: dbDistributor.id,
-                  folder: folder,
-                  name: doc.name,
-                  type: doc.type,
-                  size: doc.size,
-                  content: doc.content
-                });
-              } catch (error) {
-                console.error(`Error saving document ${doc.name}:`, error);
+          // Split only on the first dash to handle folder names with dashes
+          const firstDashIndex = key.indexOf('-');
+          const distributorId = key.substring(0, firstDashIndex);
+          const folder = key.substring(firstDashIndex + 1);
+
+          // Check if this is a project-level document or distributor-level document
+          if (distributorId === 'project') {
+            // Save project-level documents with distributorId: null
+            if (docs.length > 0) {
+              for (const doc of docs) {
+                try {
+                  await dataService.createDocument({
+                    projectId: savedProject.id,
+                    distributorId: null,
+                    folder: folder,
+                    name: doc.name,
+                    type: doc.type,
+                    size: doc.size,
+                    content: doc.content
+                  });
+                  console.log(`Saved project-level document: ${doc.name} in folder: ${folder}`);
+                } catch (error) {
+                  console.error(`Error saving project-level document ${doc.name}:`, error);
+                }
+              }
+            }
+          } else {
+            // Find the actual database ID for this distributor
+            const dbDistributor = createdDistributors.find((d: any) => d.distributor_id === distributorId);
+
+            if (dbDistributor && docs.length > 0) {
+              for (const doc of docs) {
+                try {
+                  await dataService.createDocument({
+                    projectId: savedProject.id,
+                    distributorId: dbDistributor.id,
+                    folder: folder,
+                    name: doc.name,
+                    type: doc.type,
+                    size: doc.size,
+                    content: doc.content
+                  });
+                  console.log(`Saved distributor document: ${doc.name} for ${distributorId} in folder: ${folder}`);
+                } catch (error) {
+                  console.error(`Error saving document ${doc.name}:`, error);
+                }
               }
             }
           }
         }
-        
+
         console.log('All temporary documents saved to database');
       }
 
