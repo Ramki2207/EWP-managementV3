@@ -131,7 +131,8 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         const currentHours = parseFloat(existingEntry[dayColumn] || 0);
         const updateData = {
           [dayColumn]: currentHours + hours,
-          activity_description: activityDescription
+          activity_description: activityDescription,
+          workorder_number: `${projectNumber} - ${distributorName}`
         };
 
         const { error: updateError } = await supabase
@@ -147,7 +148,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
             weekstaat_id: weekstaatId,
             activity_code: activityCode,
             activity_description: activityDescription,
-            workorder_number: weekNumber.toString(),
+            workorder_number: `${projectNumber} - ${distributorName}`,
             [dayColumn]: hours
           });
 

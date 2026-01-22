@@ -598,7 +598,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       if (existingEntry) {
         const currentHours = parseFloat(existingEntry[dayColumn] || 0);
         const updateData = {
-          [dayColumn]: currentHours + hours
+          [dayColumn]: currentHours + hours,
+          workorder_number: `${projectNumber} - ${verdelerName}`
         };
 
         const { error: updateError } = await dataService.supabase
@@ -614,7 +615,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             weekstaat_id: weekstaatId,
             activity_code: activityCode,
             activity_description: activityDescription,
-            workorder_number: weekNumber.toString(),
+            workorder_number: `${projectNumber} - ${verdelerName}`,
             [dayColumn]: hours
           });
 
