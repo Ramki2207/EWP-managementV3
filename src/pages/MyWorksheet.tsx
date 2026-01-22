@@ -10,6 +10,8 @@ const ACTIVITY_CODES = [
   { code: '104', description: 'Regieklus' },
   { code: '105', description: 'Montage Halyester' },
   { code: '181', description: 'Werkvoorbereiding/magazijn' },
+  { code: '200', description: 'Teken uren' },
+  { code: '301', description: 'Offerte uren' },
   { code: '302', description: 'Administratie' },
   { code: '402', description: 'Scholing' },
   { code: '403', description: 'Afdelingsoverleg' },

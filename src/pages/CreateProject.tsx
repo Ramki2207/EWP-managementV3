@@ -269,8 +269,8 @@ const CreateProject = () => {
       if (hours.teken > 0) {
         entries.push({
           weekstaat_id: weekstaat.id,
-          activity_code: savedProjectData.project_number,
-          activity_description: `Teken uren - ${savedProjectData.project_number}`,
+          activity_code: '200',
+          activity_description: 'Teken uren',
           workorder_number: `${savedProjectData.project_number}${savedProjectData.client ? ` - ${savedProjectData.client}` : ''}`,
           [dayColumn]: hours.teken,
           monday: dayColumn === 'monday' ? hours.teken : 0,
@@ -286,8 +286,8 @@ const CreateProject = () => {
       if (hours.offerte > 0) {
         entries.push({
           weekstaat_id: weekstaat.id,
-          activity_code: savedProjectData.project_number,
-          activity_description: `Offerte uren - ${savedProjectData.project_number}`,
+          activity_code: '301',
+          activity_description: 'Offerte uren',
           workorder_number: `${savedProjectData.project_number}${savedProjectData.client ? ` - ${savedProjectData.client}` : ''}`,
           [dayColumn]: hours.offerte,
           monday: dayColumn === 'monday' ? hours.offerte : 0,
@@ -303,8 +303,8 @@ const CreateProject = () => {
       if (hours.administratie > 0) {
         entries.push({
           weekstaat_id: weekstaat.id,
-          activity_code: savedProjectData.project_number,
-          activity_description: `Administratie uren - ${savedProjectData.project_number}`,
+          activity_code: '302',
+          activity_description: 'Administratie',
           workorder_number: `${savedProjectData.project_number}${savedProjectData.client ? ` - ${savedProjectData.client}` : ''}`,
           [dayColumn]: hours.administratie,
           monday: dayColumn === 'monday' ? hours.administratie : 0,
