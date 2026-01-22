@@ -482,7 +482,7 @@ export default function MyWorksheet() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-700">
-                <th className="text-left p-2 min-w-[250px]">Code</th>
+                <th className="text-left p-2 min-w-[250px]">Activiteit</th>
                 <th className="text-left p-2 min-w-[120px]">WB nr</th>
                 <th className="text-left p-2 w-16">Ma</th>
                 <th className="text-left p-2 w-16">Di</th>
