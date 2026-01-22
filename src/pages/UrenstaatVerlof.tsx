@@ -868,7 +868,7 @@ export default function UrenstaatVerlof() {
                                       updateEntry(index, 'activity_code', e.target.value);
                                       updateEntry(index, 'activity_description', code?.description || '');
                                     }}
-                                    className="input-field text-sm min-w-[220px]"
+                                    className="w-full px-3 py-2 bg-[#2A303C] border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                                   >
                                     {ACTIVITY_CODES.map(code => (
                                       <option key={code.code} value={code.code}>
