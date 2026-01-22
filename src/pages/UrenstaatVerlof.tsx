@@ -845,7 +845,7 @@ export default function UrenstaatVerlof() {
                         <thead>
                           <tr className="border-b border-gray-700">
                             <th className="text-left p-2 text-gray-400 text-sm min-w-[250px]">Activiteit</th>
-                            <th className="text-left p-2 text-gray-400 text-sm">Werknr</th>
+                            <th className="text-left p-2 text-gray-400 text-sm">Omschrijving</th>
                             <th className="text-center p-2 text-gray-400 text-sm">Ma</th>
                             <th className="text-center p-2 text-gray-400 text-sm">Di</th>
                             <th className="text-center p-2 text-gray-400 text-sm">Wo</th>
@@ -892,7 +892,7 @@ export default function UrenstaatVerlof() {
                                     value={entry.workorder_number}
                                     onChange={(e) => updateEntry(index, 'workorder_number', e.target.value)}
                                     className="input-field text-sm"
-                                    placeholder="Werknr"
+                                    placeholder="Omschrijving"
                                   />
                                 ) : (
                                   <span className="text-white">{entry.workorder_number || '-'}</span>
