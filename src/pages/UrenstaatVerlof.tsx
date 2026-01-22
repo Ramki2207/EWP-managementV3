@@ -864,9 +864,14 @@ export default function UrenstaatVerlof() {
                                   <select
                                     value={entry.activity_code}
                                     onChange={(e) => {
-                                      const code = ACTIVITY_CODES.find(c => c.code === e.target.value);
-                                      updateEntry(index, 'activity_code', e.target.value);
-                                      updateEntry(index, 'activity_description', code?.description || '');
+                                      const selectedCode = ACTIVITY_CODES.find(c => c.code === e.target.value);
+                                      const newEntries = [...entries];
+                                      newEntries[index] = {
+                                        ...newEntries[index],
+                                        activity_code: e.target.value,
+                                        activity_description: selectedCode?.description || ''
+                                      };
+                                      setEntries(newEntries);
                                     }}
                                     className="w-full px-3 py-2 bg-[#2A303C] border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                                   >
