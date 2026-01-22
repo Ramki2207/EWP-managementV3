@@ -844,8 +844,7 @@ export default function UrenstaatVerlof() {
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-gray-700">
-                            <th className="text-left p-2 text-gray-400 text-sm">Code</th>
-                            <th className="text-left p-2 text-gray-400 text-sm">Activiteit</th>
+                            <th className="text-left p-2 text-gray-400 text-sm min-w-[250px]">Activiteit</th>
                             <th className="text-left p-2 text-gray-400 text-sm">Werknr</th>
                             <th className="text-center p-2 text-gray-400 text-sm">Ma</th>
                             <th className="text-center p-2 text-gray-400 text-sm">Di</th>
@@ -869,28 +868,16 @@ export default function UrenstaatVerlof() {
                                       updateEntry(index, 'activity_code', e.target.value);
                                       updateEntry(index, 'activity_description', code?.description || '');
                                     }}
-                                    className="input-field text-sm"
+                                    className="input-field text-sm min-w-[220px]"
                                   >
                                     {ACTIVITY_CODES.map(code => (
                                       <option key={code.code} value={code.code}>
-                                        {code.code}
+                                        {code.code} - {code.description}
                                       </option>
                                     ))}
                                   </select>
                                 ) : (
-                                  <span className="text-white">{entry.activity_code}</span>
-                                )}
-                              </td>
-                              <td className="p-2">
-                                {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
-                                  <input
-                                    type="text"
-                                    value={entry.activity_description}
-                                    onChange={(e) => updateEntry(index, 'activity_description', e.target.value)}
-                                    className="input-field text-sm"
-                                  />
-                                ) : (
-                                  <span className="text-white">{entry.activity_description}</span>
+                                  <span className="text-white">{entry.activity_code} - {entry.activity_description}</span>
                                 )}
                               </td>
                               <td className="p-2">
@@ -938,7 +925,7 @@ export default function UrenstaatVerlof() {
                           {/* Totals Row */}
                           {entries.length > 0 && (
                             <tr className="bg-purple-500/10 font-semibold">
-                              <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
+                              <td colSpan={2} className="p-2 text-right text-white">Totaal:</td>
                               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
                                 const totals = calculateTotals();
                                 return (
