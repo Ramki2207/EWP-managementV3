@@ -1158,7 +1158,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm text-gray-400 mb-2">Telefoonnummer</label>
                   <input
                     type="tel"
@@ -1166,6 +1166,17 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                     value={newClientData.telefoonnummer}
                     onChange={(e) => setNewClientData({ ...newClientData, telefoonnummer: e.target.value })}
                     placeholder="06 12345678"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Email</label>
+                  <input
+                    type="email"
+                    className="input-field"
+                    value={newClientData.email || ''}
+                    onChange={(e) => setNewClientData({ ...newClientData, email: e.target.value })}
+                    placeholder="info@bedrijf.nl"
                   />
                 </div>
 
@@ -1206,7 +1217,23 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
 
                 {/* Delivery Address */}
                 <div className="md:col-span-2">
-                  <h3 className="text-lg font-semibold text-purple-400 mb-4">Afleveradres</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-purple-400">Afleveradres</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewClientData({
+                          ...newClientData,
+                          delivery_street: newClientData.visit_street,
+                          delivery_postcode: newClientData.visit_postcode,
+                          delivery_city: newClientData.visit_city
+                        });
+                      }}
+                      className="btn-secondary flex items-center space-x-2 text-sm"
+                    >
+                      <span>Zelfde als bezoekadres</span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-2">Straat</label>

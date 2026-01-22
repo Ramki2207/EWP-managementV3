@@ -27,6 +27,7 @@ const Clients = () => {
     vat_number: "",
     kvk_number: "",
     telefoonnummer: "",
+    email: "",
     logo_url: "",
     contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
   });
@@ -157,6 +158,7 @@ const Clients = () => {
         vat_number: "",
         kvk_number: "",
         telefoonnummer: "",
+        email: "",
         logo_url: "",
         contacts: [{ first_name: "", last_name: "", email: "", phone: "", department: "", function: "" }],
       });
@@ -186,6 +188,7 @@ const Clients = () => {
               name: row['Organisatienaam'],
               status: row['Status'] || 'Actief',
               telefoonnummer: row['Telefoonnummer'],
+              email: row['Email'],
               visit_street: row['Bezoekadres Straat'],
               visit_postcode: row['Bezoekadres Postcode'],
               visit_city: row['Bezoekadres Plaats'],
@@ -328,6 +331,7 @@ const Clients = () => {
                   options: ["Leerdam", "Naaldwijk"]
                 },
                 { label: "Telefoonnummer", name: "telefoonnummer" },
+                { label: "Email", name: "email", type: "email" },
                 { label: "Bezoekadres Straat", name: "visit_street" },
                 { label: "Bezoekadres Postcode", name: "visit_postcode" },
                 { label: "Bezoekadres Plaats", name: "visit_city" },
@@ -353,9 +357,9 @@ const Clients = () => {
                     </select>
                   ) : (
                     <input
-                      type="text"
+                      type={field.type || "text"}
                       className="input-field"
-                      value={(clientData as any)[field.name]}
+                      value={(clientData as any)[field.name] || ''}
                       onChange={(e) =>
                         setClientData({ ...clientData, [field.name]: e.target.value })
                       }
