@@ -50,7 +50,7 @@ const CreateProject = () => {
 
   const shouldShowHoursPopup = () => {
     if (!currentUser) return false;
-    const allowedUsers = ['Raja', 'Ronald', 'Michel de Ruiter'];
+    const allowedUsers = ['Raja', 'Radjesh', 'Ronald', 'Michel de Ruiter'];
     return allowedUsers.includes(currentUser.username);
   };
 
