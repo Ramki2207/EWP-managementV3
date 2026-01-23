@@ -11,6 +11,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import PreTestingApproval from '../components/PreTestingApproval';
 import HoursTrafficLight from '../components/HoursTrafficLight';
 import { hasLocationAccess } from '../lib/locationUtils';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 // Component to show approval status in project table
 const ProjectApprovalStatus: React.FC<{ project: any }> = ({ project }) => {
@@ -79,6 +80,7 @@ interface Project {
 const Projects = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
+  const { filterMode, setFilterMode, isLocationVisible } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -501,6 +503,14 @@ const Projects = () => {
         }
       }
 
+      // Lysander's location filter (applies regardless of role/location filters)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        if (!isLocationVisible(project.location)) {
+          console.log(`📍 LYSANDER FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN FILTER MODE: ${filterMode}`);
+          return false;
+        }
+      }
+
       // Location filter based on user's assigned locations (skip for Annemieke)
       console.log('🌍 FILTER: Checking project:', project.project_number, 'Location:', project.location);
       console.log('🌍 FILTER: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
@@ -695,6 +705,41 @@ const Projects = () => {
             <p className="text-gray-400">Beheer al je projecten op één plek</p>
           </div>
           <div className="flex items-center space-x-4">
+            {currentUser?.username === 'Lysander Koenraadt' && (
+              <div className="flex items-center space-x-2 border-r border-gray-700 pr-4">
+                <span className="text-sm text-gray-400 mr-2">Locatie filter:</span>
+                <button
+                  onClick={() => setFilterMode('all')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterMode === 'all'
+                      ? 'bg-blue-500 text-white shadow-lg'
+                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                  }`}
+                >
+                  Alles
+                </button>
+                <button
+                  onClick={() => setFilterMode('naaldwijk')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterMode === 'naaldwijk'
+                      ? 'bg-green-500 text-white shadow-lg'
+                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                  }`}
+                >
+                  Naaldwijk
+                </button>
+                <button
+                  onClick={() => setFilterMode('leerdam')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    filterMode === 'leerdam'
+                      ? 'bg-orange-500 text-white shadow-lg'
+                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                  }`}
+                >
+                  Leerdam
+                </button>
+              </div>
+            )}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`btn-secondary flex items-center space-x-2 ${

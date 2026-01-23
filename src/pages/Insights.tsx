@@ -18,11 +18,13 @@ import html2canvas from 'html2canvas';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 import ewpLogo from '../assets/ewp-logo.png';
 
 const Insights = () => {
   const { hasPermission } = useEnhancedPermissions();
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [timeRange, setTimeRange] = useState('12m');
   const [selectedClient, setSelectedClient] = useState('all');
   const [startDate, setStartDate] = useState(() => {
@@ -89,6 +91,32 @@ const Insights = () => {
         dataService.getDistributors(),
         dataService.getClients()
       ]);
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeProjectFilter = projectsData?.length || 0;
+        projectsData = projectsData?.filter((project: any) => {
+          if (!isLocationVisible(project.location)) {
+            console.log(`📍 LYSANDER INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeProjectFilter} projects down to ${projectsData?.length || 0} for Lysander`);
+
+        // Filter distributors by their project's location
+        const beforeDistributorFilter = distributorsData?.length || 0;
+        const projectIds = new Set(projectsData?.map((p: any) => p.id) || []);
+        distributorsData = distributorsData?.filter((distributor: any) => projectIds.has(distributor.project_id));
+        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeDistributorFilter} distributors down to ${distributorsData?.length || 0} for Lysander`);
+
+        // Filter work entries by distributor
+        const distributorIds = new Set(distributorsData?.map((d: any) => d.id) || []);
+        const beforeWorkEntriesFilter = workEntriesData?.length || 0;
+        const filteredWorkEntries = workEntriesData?.filter((entry: any) => distributorIds.has(entry.distributor_id));
+        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeWorkEntriesFilter} work entries down to ${filteredWorkEntries?.length || 0} for Lysander`);
+        setWorkEntries(filteredWorkEntries || []);
+      }
 
       // Location-based filtering (admins see all)
       if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {

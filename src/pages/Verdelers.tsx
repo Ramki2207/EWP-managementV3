@@ -6,10 +6,12 @@ import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 const Verdelers = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [distributors, setDistributors] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -85,6 +87,20 @@ const Verdelers = () => {
         console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} distributors down to ${filteredDistributors.length} for logistiek ${currentUser.username}`);
       }
       
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = filteredDistributors.length;
+        filteredDistributors = filteredDistributors.filter((distributor: any) => {
+          const projectLocation = distributor.projects?.location;
+          if (!isLocationVisible(projectLocation)) {
+            console.log(`📍 LYSANDER VERDELER FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER VERDELER FILTER: Filtered ${beforeFilter} distributors down to ${filteredDistributors.length} for Lysander`);
+      }
+
       // Apply location-based filtering for users with restricted location access
       if (currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations

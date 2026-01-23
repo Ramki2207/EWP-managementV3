@@ -7,10 +7,12 @@ import Papa from 'papaparse';
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { hasLocationAccess } from '../lib/locationUtils';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 const Clients = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
@@ -47,6 +49,19 @@ const Clients = () => {
       console.log('🏢 CLIENTS: Loaded clients:', data?.length);
       console.log('🏢 CLIENTS: Current user:', currentUser?.username, 'Role:', currentUser?.role);
       console.log('🏢 CLIENTS: Assigned locations:', currentUser?.assignedLocations);
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((client: any) => {
+          if (!isLocationVisible(client.location)) {
+            console.log(`📍 LYSANDER CLIENTS FILTER: Hiding client ${client.name} (location: ${client.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER CLIENTS FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for Lysander`);
+      }
 
       // Location-based filtering for users with assigned locations
       if (currentUser?.assignedLocations?.length > 0) {

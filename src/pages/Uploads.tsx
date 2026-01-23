@@ -6,6 +6,7 @@ import DocumentViewer from '../components/DocumentViewer';
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 const defaultFolders = [
   'Verdeler aanzicht',
@@ -25,6 +26,7 @@ const defaultFolders = [
 const Uploads = () => {
   const [searchParams] = useSearchParams();
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
   const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
@@ -71,6 +73,19 @@ const Uploads = () => {
       clearTimeout(timeoutId);
 
       let filteredProjects = data || [];
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: any) => {
+          if (!isLocationVisible(project.location)) {
+            console.log(`📍 LYSANDER UPLOADS FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER UPLOADS FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for Lysander`);
+      }
 
       // Location-based filtering (admins see all)
       if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {

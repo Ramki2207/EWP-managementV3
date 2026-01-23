@@ -13,6 +13,7 @@ import HoursTrafficLight from '../components/HoursTrafficLight';
 import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -46,6 +47,7 @@ interface Notification {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -187,6 +189,19 @@ const Dashboard = () => {
           return shouldShow;
         });
         console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username} (only own projects)`);
+      }
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = filteredData.length;
+        filteredData = filteredData.filter((project: any) => {
+          if (!isLocationVisible(project.location)) {
+            console.log(`📍 LYSANDER DASHBOARD FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER DASHBOARD FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for Lysander`);
       }
 
       // Apply location filtering if user has location restrictions

@@ -19,6 +19,7 @@ import {
   Location
 } from '../types/userRoles';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 const EnhancedUserManagement = () => {
   const [users, setUsers] = useState<EnhancedUser[]>([]);
@@ -42,6 +43,7 @@ const EnhancedUserManagement = () => {
   });
   const [customPermissions, setCustomPermissions] = useState<UserPermissions>({});
   const { currentUser } = useEnhancedPermissions();
+  const { getFilteredLocations } = useLocationFilter();
 
   useEffect(() => {
     loadUsers();
@@ -454,6 +456,20 @@ const EnhancedUserManagement = () => {
       user.role.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+
+    // Lysander's location filter
+    if (currentUser?.username === 'Lysander Koenraadt') {
+      const lysanderFilteredLocations = getFilteredLocations();
+      const userLocations = user.assignedLocations || [];
+
+      // User must have at least one location that matches Lysander's current filter
+      const matchesLysanderFilter = userLocations.length === 0 ||
+        userLocations.some((loc: string) => lysanderFilteredLocations.includes(loc));
+
+      if (!matchesLysanderFilter) {
+        return false;
+      }
+    }
 
     // Location filter - admins see all users
     // Special users (admin, patrick, stefano, lysander) are always visible
