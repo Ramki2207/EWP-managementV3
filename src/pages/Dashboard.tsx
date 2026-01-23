@@ -1945,7 +1945,8 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Combined Deliveries & Workload Chart */}
+          {/* Combined Deliveries & Workload Chart - Hidden for admins */}
+          {currentUser?.role !== 'admin' && (
           <div className="card p-6 mb-8">
             <div className="flex items-center space-x-3 mb-6">
               <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg">
@@ -2232,6 +2233,7 @@ const Dashboard = () => {
               })()}
             </div>
           </div>
+          )}
 
           {/* Project & Verdeler Timeline Agenda */}
           <div className="card p-6 mt-8">
