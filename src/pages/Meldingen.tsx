@@ -12,6 +12,7 @@ import ewpLogo from '../assets/ewp-logo.png';
 import ewp2Logo from '../assets/ewp2-logo.png';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 interface Notification {
   id: string;
@@ -71,6 +72,7 @@ const Meldingen = () => {
   const [newComment, setNewComment] = useState('');
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const { currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
 
   useEffect(() => {
     if (currentUser) {
@@ -133,6 +135,19 @@ const Meldingen = () => {
         },
         location: projectClientMap[notification.project_number]?.location
       })) || [];
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = enrichedNotifications.length;
+        enrichedNotifications = enrichedNotifications.filter((notification: any) => {
+          if (!isLocationVisible(notification.location)) {
+            console.log(`📍 LYSANDER MELDINGEN FILTER: Hiding notification for project ${notification.project_number} (location: ${notification.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER MELDINGEN FILTER: Filtered ${beforeFilter} notifications down to ${enrichedNotifications.length} for Lysander`);
+      }
 
       // Filter by location based on user's assigned locations (admins see all)
       if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {

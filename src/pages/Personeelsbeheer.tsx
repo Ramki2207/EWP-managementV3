@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie';
 
@@ -18,6 +19,7 @@ interface DayEvent {
 export default function Personeelsbeheer() {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
+  const { getFilteredLocations } = useLocationFilter();
   const [activeTab, setActiveTab] = useState<TabType>('agenda');
   const [users, setUsers] = useState<any[]>([]);
   const [weekstaten, setWeekstaten] = useState<any[]>([]);
@@ -66,6 +68,33 @@ export default function Personeelsbeheer() {
       .order('username');
 
     let filteredUsers = data || [];
+
+    // Lysander's location filter (applies first)
+    if (currentUser?.username === 'Lysander Koenraadt') {
+      const lysanderFilteredLocations = getFilteredLocations();
+      const beforeFilter = filteredUsers.length;
+
+      filteredUsers = filteredUsers.filter((user: any) => {
+        const userLocations = user.assigned_locations || user.assignedLocations || [];
+
+        // User must have at least one location that matches Lysander's current filter
+        const hasMatchingLocation = userLocations.some((loc: string) =>
+          lysanderFilteredLocations.includes(loc)
+        );
+
+        // Special users (admin, patrick, stefano) are always visible
+        const specialUserRoles = ['admin'];
+        const specialUsernames = ['patrick', 'stefano', 'Patrick', 'Stefano'];
+        const isSpecialUser = specialUserRoles.includes(user.role) || specialUsernames.includes(user.username);
+
+        if (!hasMatchingLocation && !isSpecialUser && userLocations.length > 0) {
+          console.log(`📍 LYSANDER PERSONEELSBEHEER FILTER: Hiding user ${user.username} (locations: ${userLocations.join(', ')})`);
+        }
+
+        return hasMatchingLocation || isSpecialUser || userLocations.length === 0;
+      });
+      console.log(`📍 LYSANDER PERSONEELSBEHEER FILTER: Filtered ${beforeFilter} users down to ${filteredUsers.length} for Lysander`);
+    }
 
     // Filter by location based on user's assigned locations (admins see all)
     // Special users (admin, patrick, stefano, lysander) are always visible

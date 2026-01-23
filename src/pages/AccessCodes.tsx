@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { dataService, testConnection } from '../lib/supabase';
 import VerdelerSearchSelect from '../components/VerdelerSearchSelect';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 interface AccessCode {
   id: string;
@@ -21,6 +22,7 @@ interface AccessCode {
 
 const AccessCodes = () => {
   const { hasPermission, currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [accessCodes, setAccessCodes] = useState<AccessCode[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCodeForm, setShowCodeForm] = useState(false);
@@ -72,6 +74,29 @@ const AccessCodes = () => {
       console.log('🔍 ACCESS_CODES: Current user:', currentUser?.username, 'Role:', currentUser?.role);
       console.log('🔍 ACCESS_CODES: Assigned locations:', currentUser?.assignedLocations);
       console.log('🔍 ACCESS_CODES: Total access codes loaded:', data?.length);
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const projects = await dataService.getProjects();
+        const projectLocationMap = projects.reduce((acc: any, project: any) => {
+          acc[project.project_number] = project.location;
+          return acc;
+        }, {});
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((code: any) => {
+          // If code has no project_number, show it (global code)
+          if (!code.project_number) return true;
+
+          const projectLocation = projectLocationMap[code.project_number];
+          if (!isLocationVisible(projectLocation)) {
+            console.log(`📍 LYSANDER ACCESS_CODES FILTER: Hiding access code for project ${code.project_number} (location: ${projectLocation})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER ACCESS_CODES FILTER: Filtered ${beforeFilter} access codes down to ${data?.length || 0} for Lysander`);
+      }
 
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
@@ -151,6 +176,26 @@ const AccessCodes = () => {
   const loadVerdelers = async () => {
     try {
       let data = await dataService.getDistributors();
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const projects = await dataService.getProjects();
+        const projectLocationMap = projects.reduce((acc: any, project: any) => {
+          acc[project.id] = project.location;
+          return acc;
+        }, {});
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((distributor: any) => {
+          const projectLocation = projectLocationMap[distributor.project_id];
+          if (!isLocationVisible(projectLocation)) {
+            console.log(`📍 LYSANDER ACCESS_CODES VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (location: ${projectLocation})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER ACCESS_CODES VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${data?.length || 0} for Lysander`);
+      }
 
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {

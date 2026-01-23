@@ -9,6 +9,7 @@ import { clientPortalService } from '../lib/clientPortalService';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { dataService } from '../lib/supabase';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
 
 const availableFolders = [
   'Verdeler aanzicht',
@@ -28,6 +29,7 @@ const availableFolders = [
 
 const ClientPortalManagement = () => {
   const { hasPermission, currentUser } = useEnhancedPermissions();
+  const { isLocationVisible } = useLocationFilter();
   const [portals, setPortals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +46,26 @@ const ClientPortalManagement = () => {
     try {
       setLoading(true);
       let data = await clientPortalService.getAllClientPortals();
+
+      // Lysander's location filter (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const projects = await dataService.getProjects();
+        const projectLocationMap = projects.reduce((acc: any, project: any) => {
+          acc[project.id] = project.location;
+          return acc;
+        }, {});
+
+        const beforeFilter = data?.length || 0;
+        data = data?.filter((portal: any) => {
+          const projectLocation = projectLocationMap[portal.project_id];
+          if (!isLocationVisible(projectLocation)) {
+            console.log(`📍 LYSANDER CLIENT_PORTALS FILTER: Hiding portal for project ${portal.projects?.project_number} (location: ${projectLocation})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER CLIENT_PORTALS FILTER: Filtered ${beforeFilter} portals down to ${data?.length || 0} for Lysander`);
+      }
 
       // Role-based filtering for Tester users
       if (currentUser?.role === 'tester') {
