@@ -361,6 +361,14 @@ const Dashboard = () => {
     };
   }, [currentUser]);
 
+  // Separate effect to reload projects when filterMode changes
+  useEffect(() => {
+    if (currentUser) {
+      console.log('🔄 DASHBOARD: FilterMode changed, reloading projects...', filterMode);
+      loadProjects();
+    }
+  }, [filterMode]);
+
   const loadProjects = async () => {
     try {
       setLoading(true);
@@ -450,6 +458,19 @@ const Dashboard = () => {
           return hasAllowedStatus;
         });
         console.log(`👤 DAVE MORET FILTER: Filtered ${beforeDaveFilter} projects down to ${filteredProjects.length} for Dave Moret (only Productie, Levering, Gereed voor facturatie)`);
+      }
+
+      // Lysander's location filter (based on filterMode)
+      if (currentUser?.username === 'Lysander Koenraadt') {
+        const beforeFilter = filteredProjects.length;
+        filteredProjects = filteredProjects.filter((project: any) => {
+          if (!isLocationVisible(project.location)) {
+            console.log(`📍 LYSANDER DASHBOARD FILTER (loadProjects): Hiding project ${project.project_number} (location: ${project.location})`);
+            return false;
+          }
+          return true;
+        });
+        console.log(`📍 LYSANDER DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for Lysander (filterMode: ${filterMode})`);
       }
 
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
