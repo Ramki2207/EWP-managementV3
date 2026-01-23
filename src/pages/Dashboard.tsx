@@ -802,10 +802,15 @@ const Dashboard = () => {
     );
   }
 
+  // Debug logging for Lysander
+  console.log('🎯 DASHBOARD RENDER: Username =', currentUser?.username);
+  console.log('🎯 DASHBOARD RENDER: Is Lysander check =', currentUser?.username === 'Lysander Koenraadt');
+  console.log('🎯 DASHBOARD RENDER: Filter mode =', filterMode);
+
   return (
     <div className="min-h-screen p-8">
       <Toaster position="top-right" />
-      
+
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden">
         {/* Animated Background Pattern */}
@@ -875,49 +880,61 @@ const Dashboard = () => {
                     </select>
                   </div>
                 )}
-
-                {/* Lysander Location Filter */}
-                {currentUser?.username === 'Lysander Koenraadt' && (
-                  <div className="mt-4 flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
-                    <span className="text-sm text-gray-300">
-                      Locatie filter:
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setFilterMode('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          filterMode === 'all'
-                            ? 'bg-blue-500 text-white shadow-lg'
-                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                        }`}
-                      >
-                        Alles
-                      </button>
-                      <button
-                        onClick={() => setFilterMode('naaldwijk')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          filterMode === 'naaldwijk'
-                            ? 'bg-green-500 text-white shadow-lg'
-                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                        }`}
-                      >
-                        Naaldwijk
-                      </button>
-                      <button
-                        onClick={() => setFilterMode('leerdam')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          filterMode === 'leerdam'
-                            ? 'bg-orange-500 text-white shadow-lg'
-                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                        }`}
-                      >
-                        Leerdam
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
+
+            {/* Lysander Location Filter - Prominent Position */}
+            {currentUser?.username === 'Lysander Koenraadt' && (
+              <div className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-900/30 to-blue-800/30 px-6 py-4 rounded-lg border border-blue-700/50 shadow-lg">
+                <span className="text-sm font-medium text-gray-200">
+                  Locatie filter:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      console.log('Setting filter to: all');
+                      setFilterMode('all');
+                    }}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                      filterMode === 'all'
+                        ? 'bg-blue-500 text-white shadow-lg scale-105'
+                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                    }`}
+                  >
+                    Alles
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('Setting filter to: naaldwijk');
+                      setFilterMode('naaldwijk');
+                    }}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                      filterMode === 'naaldwijk'
+                        ? 'bg-green-500 text-white shadow-lg scale-105'
+                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                    }`}
+                  >
+                    Naaldwijk
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('Setting filter to: leerdam');
+                      setFilterMode('leerdam');
+                    }}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                      filterMode === 'leerdam'
+                        ? 'bg-orange-500 text-white shadow-lg scale-105'
+                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                    }`}
+                  >
+                    Leerdam
+                  </button>
+                </div>
+                <span className="text-xs text-gray-400 ml-2">
+                  (Huidig: <span className="font-semibold text-blue-400">{filterMode}</span>)
+                </span>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4">
