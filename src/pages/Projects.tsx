@@ -80,7 +80,7 @@ interface Project {
 const Projects = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
-  const { filterMode, setFilterMode, isLocationVisible } = useLocationFilter();
+  const { filterMode, isLocationVisible } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -705,41 +705,6 @@ const Projects = () => {
             <p className="text-gray-400">Beheer al je projecten op één plek</p>
           </div>
           <div className="flex items-center space-x-4">
-            {currentUser?.username === 'Lysander Koenraadt' && (
-              <div className="flex items-center space-x-2 border-r border-gray-700 pr-4">
-                <span className="text-sm text-gray-400 mr-2">Locatie filter:</span>
-                <button
-                  onClick={() => setFilterMode('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterMode === 'all'
-                      ? 'bg-blue-500 text-white shadow-lg'
-                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                  }`}
-                >
-                  Alles
-                </button>
-                <button
-                  onClick={() => setFilterMode('naaldwijk')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterMode === 'naaldwijk'
-                      ? 'bg-green-500 text-white shadow-lg'
-                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                  }`}
-                >
-                  Naaldwijk
-                </button>
-                <button
-                  onClick={() => setFilterMode('leerdam')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    filterMode === 'leerdam'
-                      ? 'bg-orange-500 text-white shadow-lg'
-                      : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                  }`}
-                >
-                  Leerdam
-                </button>
-              </div>
-            )}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`btn-secondary flex items-center space-x-2 ${

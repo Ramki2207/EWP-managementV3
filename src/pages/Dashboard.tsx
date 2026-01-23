@@ -47,7 +47,7 @@ interface Notification {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
-  const { isLocationVisible } = useLocationFilter();
+  const { isLocationVisible, filterMode, setFilterMode } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -873,6 +873,47 @@ const Dashboard = () => {
                       <option value="inkoop">Inkoop</option>
                       <option value="engineering">Engineering</option>
                     </select>
+                  </div>
+                )}
+
+                {/* Lysander Location Filter */}
+                {currentUser?.username === 'Lysander Koenraadt' && (
+                  <div className="mt-4 flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                    <span className="text-sm text-gray-300">
+                      Locatie filter:
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setFilterMode('all')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          filterMode === 'all'
+                            ? 'bg-blue-500 text-white shadow-lg'
+                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                        }`}
+                      >
+                        Alles
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('naaldwijk')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          filterMode === 'naaldwijk'
+                            ? 'bg-green-500 text-white shadow-lg'
+                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                        }`}
+                      >
+                        Naaldwijk
+                      </button>
+                      <button
+                        onClick={() => setFilterMode('leerdam')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          filterMode === 'leerdam'
+                            ? 'bg-orange-500 text-white shadow-lg'
+                            : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
+                        }`}
+                      >
+                        Leerdam
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
