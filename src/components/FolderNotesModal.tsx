@@ -18,7 +18,6 @@ interface FolderNotesModalProps {
   projectId: string;
   distributorId: string | null;
   folderName: string;
-  currentUserId: string;
 }
 
 export default function FolderNotesModal({
@@ -26,20 +25,32 @@ export default function FolderNotesModal({
   onClose,
   projectId,
   distributorId,
-  folderName,
-  currentUserId
+  folderName
 }: FolderNotesModalProps) {
   const [notes, setNotes] = useState<FolderNote[]>([]);
   const [newNote, setNewNote] = useState('');
   const [loading, setLoading] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
+      loadCurrentUser();
       loadNotes();
     }
   }, [isOpen, projectId, distributorId, folderName]);
+
+  const loadCurrentUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    } catch (error) {
+      console.error('Error loading current user:', error);
+    }
+  };
 
   const loadNotes = async () => {
     try {
@@ -93,6 +104,11 @@ export default function FolderNotesModal({
       return;
     }
 
+    if (!currentUserId) {
+      toast.error('Gebruiker niet ingelogd');
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -100,7 +116,7 @@ export default function FolderNotesModal({
         .from('folder_notes')
         .insert({
           project_id: projectId,
-          distributor_id: distributorId,
+          distributor_id: distributorId || null,
           folder_name: folderName,
           note: newNote.trim(),
           created_by: currentUserId
@@ -308,7 +324,7 @@ export default function FolderNotesModal({
               <button
                 onClick={handleAddNote}
                 className="btn-primary"
-                disabled={loading || !newNote.trim()}
+                disabled={loading || !newNote.trim() || !currentUserId}
               >
                 <MessageSquare size={16} />
                 <span>Notitie toevoegen</span>

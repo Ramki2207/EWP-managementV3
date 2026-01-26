@@ -44,19 +44,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [notesModalOpen, setNotesModalOpen] = useState(false);
   const [notesModalFolder, setNotesModalFolder] = useState<string | null>(null);
   const [notesModalDistributor, setNotesModalDistributor] = useState<string | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [folderNoteCounts, setFolderNoteCounts] = useState<Record<string, number>>({});
-
-  // Get current user
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   // Load note counts for all folders
   useEffect(() => {
@@ -460,7 +448,6 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
           projectId={project.id}
           distributorId={notesModalDistributor}
           folderName={notesModalFolder}
-          currentUserId={currentUserId}
         />
       )}
     </div>
