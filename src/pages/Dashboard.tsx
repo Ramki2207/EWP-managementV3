@@ -944,8 +944,8 @@ const Dashboard = () => {
                         className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="all">Alles</option>
-                        <option value="naaldwijk">Naaldwijk</option>
-                        <option value="leerdam">Leerdam</option>
+                        <option value="naaldwijk">Den Haag</option>
+                        <option value="leerdam">Utrecht</option>
                       </select>
                     </div>
                   )}
