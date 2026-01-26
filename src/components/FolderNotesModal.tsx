@@ -43,9 +43,13 @@ export default function FolderNotesModal({
 
   const loadCurrentUser = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log('Loading current user:', { user, error });
       if (user) {
         setCurrentUserId(user.id);
+        console.log('Current user ID set:', user.id);
+      } else {
+        console.log('No user found');
       }
     } catch (error) {
       console.error('Error loading current user:', error);
@@ -99,6 +103,14 @@ export default function FolderNotesModal({
   };
 
   const handleAddNote = async () => {
+    console.log('handleAddNote called', {
+      newNote: newNote.trim(),
+      currentUserId,
+      projectId,
+      distributorId,
+      folderName
+    });
+
     if (!newNote.trim()) {
       toast.error('Notitie mag niet leeg zijn');
       return;
@@ -112,15 +124,22 @@ export default function FolderNotesModal({
     try {
       setLoading(true);
 
-      const { error } = await supabase
+      const insertData = {
+        project_id: projectId,
+        distributor_id: distributorId || null,
+        folder_name: folderName,
+        note: newNote.trim(),
+        created_by: currentUserId
+      };
+
+      console.log('Inserting note:', insertData);
+
+      const { data, error } = await supabase
         .from('folder_notes')
-        .insert({
-          project_id: projectId,
-          distributor_id: distributorId || null,
-          folder_name: folderName,
-          note: newNote.trim(),
-          created_by: currentUserId
-        });
+        .insert(insertData)
+        .select();
+
+      console.log('Insert result:', { data, error });
 
       if (error) throw error;
 
@@ -318,13 +337,19 @@ export default function FolderNotesModal({
               onChange={(e) => setNewNote(e.target.value)}
               className="input-field w-full min-h-[80px] resize-none"
               placeholder="Voeg een notitie toe..."
-              disabled={loading}
+              disabled={loading || !currentUserId}
             />
+            {!currentUserId && (
+              <p className="text-sm text-yellow-500">
+                Gebruiker laden...
+              </p>
+            )}
             <div className="flex justify-end">
               <button
                 onClick={handleAddNote}
                 className="btn-primary"
                 disabled={loading || !newNote.trim() || !currentUserId}
+                title={!currentUserId ? 'Wacht tot gebruiker is geladen' : ''}
               >
                 <MessageSquare size={16} />
                 <span>Notitie toevoegen</span>
