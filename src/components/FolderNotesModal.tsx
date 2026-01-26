@@ -41,18 +41,14 @@ export default function FolderNotesModal({
     }
   }, [isOpen, projectId, distributorId, folderName]);
 
-  const loadCurrentUser = async () => {
-    try {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      console.log('Loading current user:', { user, error });
-      if (user) {
-        setCurrentUserId(user.id);
-        console.log('Current user ID set:', user.id);
-      } else {
-        console.log('No user found');
-      }
-    } catch (error) {
-      console.error('Error loading current user:', error);
+  const loadCurrentUser = () => {
+    const userId = localStorage.getItem('currentUserId');
+    console.log('Loading current user from localStorage:', userId);
+    if (userId) {
+      setCurrentUserId(userId);
+      console.log('Current user ID set:', userId);
+    } else {
+      console.log('No user found in localStorage');
     }
   };
 
