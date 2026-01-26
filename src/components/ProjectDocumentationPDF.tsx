@@ -138,16 +138,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           doc.setFontSize(9);
           doc.text(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, margin, margin + 16);
         }
-      } else {
-        doc.addPage();
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : `Document: ${document.name}`;
-        doc.text(title, margin, margin);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text(`Bestandstype: ${fileExtension?.toUpperCase() || 'Onbekend'}`, margin, margin + 10);
       }
+      // Skip non-PDF/image files - don't create placeholder pages
     } catch (error) {
       console.error('Error adding document to PDF:', error);
     }
@@ -193,25 +185,25 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         const logoDataUrl = canvas.toDataURL('image/png');
 
         const logoAspectRatio = targetWidth / targetHeight;
-        const logoWidth = 60;
+        const logoWidth = 150;
         const logoHeight = logoWidth / logoAspectRatio;
 
         doc.addImage(logoDataUrl, 'PNG', margin, yPosition, logoWidth, logoHeight);
-        yPosition = Math.max(yPosition + logoHeight + 10, yPosition + 20);
+        yPosition = Math.max(yPosition + logoHeight + 20, yPosition + 40);
       }
 
-      doc.setFontSize(22);
+      doc.setFontSize(48);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text('Verdeler Documentatie', margin, yPosition);
-      yPosition += 15;
+      yPosition += 25;
 
       doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.5);
+      doc.setLineWidth(1);
       doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 10;
+      yPosition += 20;
 
-      doc.setFontSize(10);
+      doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(50, 50, 50);
 
@@ -235,10 +227,12 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
       for (const field of fields) {
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
         doc.text(field.label, margin, yPosition);
         doc.setFont('helvetica', 'normal');
-        doc.text(field.value, margin + 60, yPosition);
-        yPosition += 7;
+        doc.setFontSize(16);
+        doc.text(field.value, margin + 80, yPosition);
+        yPosition += 15;
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
