@@ -112,23 +112,6 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             const pdfBytes = await response.arrayBuffer();
             console.log('📄 PDF loaded, size:', pdfBytes.byteLength, 'bytes');
 
-            // Add separator page before the PDF
-            doc.addPage();
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 102, 204);
-            const title = document.verdelerName ? `${document.verdelerName}` : 'Document';
-            doc.text(title, margin, margin);
-
-            doc.setFontSize(11);
-            doc.setTextColor(0, 0, 0);
-            doc.text(document.name, margin, margin + 8);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.setTextColor(100, 100, 100);
-            doc.text('Het volgende PDF document wordt hierna ingevoegd:', margin, margin + 16);
-
             // Store the PDF bytes for merging later
             pdfPages.push(new Uint8Array(pdfBytes));
             console.log('✅ PDF added to merge queue');
