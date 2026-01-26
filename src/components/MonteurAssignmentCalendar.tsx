@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle, X } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle, X, Table as TableIcon, Download, Filter, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
 
 interface VerdelerAssignment {
   id: string;
@@ -15,24 +16,54 @@ interface VerdelerAssignment {
   client: string;
   location: string;
   project_id: string;
+  project_naam: string | null;
+  project_leader: string | null;
+  project_leader_name: string | null;
+  installateur_type: string | null;
+  expected_hours: number | null;
+  delivery_week: number | null;
+  is_closed: boolean;
+  is_ready: boolean;
+  is_tested: boolean;
+  is_delivered: boolean;
+  week_status: string | null;
 }
 
 interface MonteurAssignmentCalendarProps {
   onAssignmentNeeded?: () => void;
 }
 
+type ViewMode = 'calendar' | 'table';
+
 export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: MonteurAssignmentCalendarProps) {
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [verdelers, setVerdelers] = useState<VerdelerAssignment[]>([]);
+  const [filteredVerdelers, setFilteredVerdelers] = useState<VerdelerAssignment[]>([]);
   const [selectedVerdeler, setSelectedVerdeler] = useState<VerdelerAssignment | null>(null);
   const [hoveredVerdeler, setHoveredVerdeler] = useState<VerdelerAssignment | null>(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(true);
 
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterProjectLeader, setFilterProjectLeader] = useState<string>('all');
+  const [filterInstallateur, setFilterInstallateur] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Get unique values for filters
+  const projectLeaders = Array.from(new Set(verdelers.map(v => v.project_leader_name).filter(Boolean)));
+  const installateurs = Array.from(new Set(verdelers.map(v => v.installateur_type).filter(Boolean)));
+
   useEffect(() => {
     loadVerdelers();
   }, [currentDate]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [verdelers, searchTerm, filterProjectLeader, filterInstallateur, filterStatus]);
 
   const loadVerdelers = async () => {
     try {
@@ -52,10 +83,21 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
           gewenste_lever_datum,
           status,
           project_id,
+          expected_hours,
+          delivery_week,
+          is_closed,
+          is_ready,
+          is_tested,
+          is_delivered,
+          week_status,
           projects!inner (
             project_number,
             client,
-            location
+            location,
+            project_naam,
+            installateur_type,
+            project_leader,
+            created_by
           )
         `)
         .in('projects.location', ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'])
@@ -66,18 +108,51 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
 
       if (error) throw error;
 
-      const formattedVerdelers = data?.map((v: any) => ({
-        id: v.id,
-        distributor_id: v.distributor_id,
-        kast_naam: v.kast_naam,
-        toegewezen_monteur: v.toegewezen_monteur,
-        gewenste_lever_datum: v.gewenste_lever_datum,
-        status: v.status,
-        project_id: v.project_id,
-        project_number: v.projects.project_number,
-        client: v.projects.client,
-        location: v.projects.location
-      })) || [];
+      // Get user names for project leaders
+      const projectLeaderIds = data?.map((v: any) => v.projects.project_leader || v.projects.created_by).filter(Boolean) || [];
+      const uniqueLeaderIds = Array.from(new Set(projectLeaderIds));
+
+      let leaderNames: Record<string, string> = {};
+      if (uniqueLeaderIds.length > 0) {
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, username')
+          .in('id', uniqueLeaderIds);
+
+        if (users) {
+          leaderNames = users.reduce((acc: any, user: any) => {
+            acc[user.id] = user.username;
+            return acc;
+          }, {});
+        }
+      }
+
+      const formattedVerdelers = data?.map((v: any) => {
+        const leaderId = v.projects.project_leader || v.projects.created_by;
+        return {
+          id: v.id,
+          distributor_id: v.distributor_id,
+          kast_naam: v.kast_naam,
+          toegewezen_monteur: v.toegewezen_monteur,
+          gewenste_lever_datum: v.gewenste_lever_datum,
+          status: v.status,
+          project_id: v.project_id,
+          project_number: v.projects.project_number,
+          client: v.projects.client,
+          location: v.projects.location,
+          project_naam: v.projects.project_naam,
+          project_leader: leaderId,
+          project_leader_name: leaderId ? leaderNames[leaderId] : null,
+          installateur_type: v.projects.installateur_type,
+          expected_hours: v.expected_hours,
+          delivery_week: v.delivery_week,
+          is_closed: v.is_closed,
+          is_ready: v.is_ready,
+          is_tested: v.is_tested,
+          is_delivered: v.is_delivered,
+          week_status: v.week_status
+        };
+      }) || [];
 
       setVerdelers(formattedVerdelers);
       console.log('📅 Calendar: Loaded', formattedVerdelers.length, 'verdelers for', currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' }));
@@ -87,6 +162,104 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...verdelers];
+
+    // Search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(v =>
+        v.project_number?.toLowerCase().includes(search) ||
+        v.distributor_id?.toLowerCase().includes(search) ||
+        v.kast_naam?.toLowerCase().includes(search) ||
+        v.client?.toLowerCase().includes(search) ||
+        v.project_naam?.toLowerCase().includes(search) ||
+        v.toegewezen_monteur?.toLowerCase().includes(search)
+      );
+    }
+
+    // Project leader filter
+    if (filterProjectLeader !== 'all') {
+      filtered = filtered.filter(v => v.project_leader_name === filterProjectLeader);
+    }
+
+    // Installateur filter
+    if (filterInstallateur !== 'all') {
+      filtered = filtered.filter(v => v.installateur_type === filterInstallateur);
+    }
+
+    // Status filter
+    if (filterStatus !== 'all') {
+      switch (filterStatus) {
+        case 'no_monteur':
+          filtered = filtered.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij');
+          break;
+        case 'assigned':
+          filtered = filtered.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij');
+          break;
+        case 'tested':
+          filtered = filtered.filter(v => v.is_tested);
+          break;
+        case 'delivered':
+          filtered = filtered.filter(v => v.is_delivered);
+          break;
+      }
+    }
+
+    setFilteredVerdelers(filtered);
+  };
+
+  const exportToExcel = () => {
+    const exportData = filteredVerdelers.map(v => ({
+      'Projectleider': v.project_leader_name || '',
+      'Projectnummer': v.project_number,
+      'Installateur': v.installateur_type || '',
+      'Naam project': v.project_naam || v.client,
+      'Verdeler': v.distributor_id,
+      'Kast Naam': v.kast_naam,
+      'Aantal uren': v.expected_hours || 0,
+      'Wanneer leveren': v.gewenste_lever_datum ? new Date(v.gewenste_lever_datum).toLocaleDateString('nl-NL') : '',
+      'Levering week': v.delivery_week || '',
+      'Welke monteur': v.toegewezen_monteur || 'Niet toegewezen',
+      'Gesl?': v.is_closed ? 'Ja' : '',
+      'Klaar?': v.is_ready ? 'Ja' : '',
+      'Getest': v.is_tested ? 'Ja' : '',
+      'Afgeleverd': v.is_delivered ? 'Ja' : '',
+      'Week status': v.week_status || '',
+      'Locatie': v.location,
+      'Status': v.status
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Monteur Planning');
+
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 15 }, // Projectleider
+      { wch: 15 }, // Projectnummer
+      { wch: 20 }, // Installateur
+      { wch: 30 }, // Naam project
+      { wch: 15 }, // Verdeler
+      { wch: 20 }, // Kast Naam
+      { wch: 12 }, // Aantal uren
+      { wch: 15 }, // Wanneer leveren
+      { wch: 12 }, // Levering week
+      { wch: 30 }, // Welke monteur
+      { wch: 8 },  // Gesl?
+      { wch: 8 },  // Klaar?
+      { wch: 8 },  // Getest
+      { wch: 10 }, // Afgeleverd
+      { wch: 12 }, // Week status
+      { wch: 20 }, // Locatie
+      { wch: 15 }  // Status
+    ];
+
+    const fileName = `Monteur_Planning_${currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    toast.success('Excel bestand geëxporteerd!');
   };
 
   const generateCalendarDays = () => {
@@ -116,7 +289,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
 
   const getVerdelersForDate = (date: Date) => {
     const dateStr = formatDateLocal(date);
-    return verdelers.filter(v => {
+    return filteredVerdelers.filter(v => {
       const leverDateStr = v.gewenste_lever_datum.split('T')[0];
       return leverDateStr === dateStr;
     });
@@ -130,128 +303,412 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
+  const getStatusBadgeColor = (verdeler: VerdelerAssignment): string => {
+    if (verdeler.is_delivered) return 'bg-blue-500/20 text-blue-300';
+    if (verdeler.is_tested) return 'bg-green-500/20 text-green-300';
+    if (verdeler.is_ready) return 'bg-cyan-500/20 text-cyan-300';
+    if (verdeler.is_closed) return 'bg-gray-500/20 text-gray-300';
+    return 'bg-yellow-500/20 text-yellow-300';
+  };
+
+  const renderCalendarView = () => (
+    <>
+      {/* Calendar Navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={previousMonth} className="btn-secondary p-2">
+          <ChevronLeft size={20} />
+        </button>
+        <h3 className="text-lg font-semibold">
+          {currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+        </h3>
+        <button onClick={nextMonth} className="btn-secondary p-2">
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-2 mb-2">
+        {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+          <div key={day} className="text-center font-semibold text-gray-400 text-sm py-2">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-2">
+        {generateCalendarDays().map((day, index) => {
+          const isCurrentMonth = day.getMonth() === currentDate.getMonth();
+          const isToday = day.toDateString() === new Date().toDateString();
+          const dayVerdelers = getVerdelersForDate(day);
+
+          return (
+            <div
+              key={index}
+              className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
+                isCurrentMonth
+                  ? isToday
+                    ? 'bg-blue-500/10 border-blue-500'
+                    : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
+                  : 'bg-[#1a1f2a] border-gray-800 opacity-50'
+              }`}
+            >
+              <div className="text-sm font-medium text-gray-400 mb-1">
+                {day.getDate()}
+              </div>
+              <div className="space-y-1">
+                {dayVerdelers.map((verdeler, idx) => (
+                  <div
+                    key={idx}
+                    className={`text-xs p-1 rounded transition-all cursor-pointer ${
+                      !verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij'
+                        ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
+                        : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
+                    }`}
+                    onClick={() => setSelectedVerdeler(verdeler)}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setHoverPosition({ x: rect.left, y: rect.bottom + 5 });
+                      setHoveredVerdeler(verdeler);
+                    }}
+                    onMouseLeave={() => setHoveredVerdeler(null)}
+                  >
+                    <div className="truncate">
+                      {verdeler.project_number} - {verdeler.kast_naam}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  const renderTableView = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-[#1a1f2a] sticky top-0">
+          <tr>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectleid</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectnumm</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Installateur</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Naam project</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Verdeler</th>
+            <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Aantal ure</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Wanneer leveren</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Welke monteur</th>
+            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Gesl?</th>
+            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Klaar?</th>
+            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Getest</th>
+            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Afgeleverd</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Week</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-700">
+          {filteredVerdelers.map((verdeler, idx) => {
+            const weekNum = verdeler.gewenste_lever_datum
+              ? getWeekNumber(new Date(verdeler.gewenste_lever_datum))
+              : null;
+
+            return (
+              <tr
+                key={idx}
+                className="hover:bg-[#2A303C] transition-colors cursor-pointer"
+                onClick={() => setSelectedVerdeler(verdeler)}
+              >
+                <td className="px-3 py-3 whitespace-nowrap text-white">
+                  {verdeler.project_leader_name || '-'}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-white font-medium">
+                  {verdeler.project_number}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-gray-300">
+                  {verdeler.installateur_type || '-'}
+                </td>
+                <td className="px-3 py-3 text-gray-300">
+                  {verdeler.project_naam || verdeler.client}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-gray-300">
+                  {verdeler.distributor_id}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-right text-gray-300">
+                  {verdeler.expected_hours || 0}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-gray-300">
+                  {verdeler.gewenste_lever_datum
+                    ? new Date(verdeler.gewenste_lever_datum).toLocaleDateString('nl-NL')
+                    : '-'}
+                </td>
+                <td className="px-3 py-3 text-gray-300">
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    !verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij'
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-green-500/20 text-green-300'
+                  }`}>
+                    {verdeler.toegewezen_monteur || 'Niet toegewezen'}
+                  </span>
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {verdeler.is_closed && <CheckCircle size={16} className="inline text-gray-400" />}
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {verdeler.is_ready && <CheckCircle size={16} className="inline text-cyan-400" />}
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {verdeler.is_tested && <CheckCircle size={16} className="inline text-green-400" />}
+                </td>
+                <td className="px-3 py-3 text-center">
+                  {verdeler.is_delivered && <CheckCircle size={16} className="inline text-blue-400" />}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap">
+                  <span className={`px-2 py-1 rounded text-xs ${
+                    verdeler.week_status === 'yellow' ? 'bg-yellow-500 text-black' :
+                    verdeler.week_status === 'green' ? 'bg-green-500 text-black' :
+                    verdeler.week_status === 'cyan' ? 'bg-cyan-500 text-black' :
+                    verdeler.week_status === 'blue' ? 'bg-blue-500 text-white' :
+                    'bg-gray-700 text-gray-300'
+                  }`}>
+                    Week {weekNum || verdeler.delivery_week || '-'}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {filteredVerdelers.length === 0 && (
+        <div className="text-center py-12 text-gray-400">
+          Geen verdelers gevonden voor de geselecteerde filters
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <div className="card p-6">
+        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-purple-500/20 rounded-lg">
-              <Calendar size={20} className="text-purple-400" />
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Calendar size={20} className="text-blue-400" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">Monteur Toewijzing Agenda</h2>
-              <p className="text-sm text-gray-400">Verdelers die monteur toewijzing nodig hebben</p>
+              <p className="text-sm text-gray-400">Geavanceerde planning en toewijzing</p>
             </div>
           </div>
-        </div>
 
-        {/* Calendar Navigation */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={previousMonth}
-            className="btn-secondary p-2"
-          >
-            <ChevronLeft size={20} />
-          </button>
-          <h3 className="text-lg font-semibold">
-            {currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
-          </h3>
-          <button
-            onClick={nextMonth}
-            className="btn-secondary p-2"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2 mb-2">
-          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
-            <div key={day} className="text-center font-semibold text-gray-400 text-sm py-2">
-              {day}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-2">
-          {generateCalendarDays().map((day, index) => {
-            const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-            const isToday = day.toDateString() === new Date().toDateString();
-            const dayVerdelers = getVerdelersForDate(day);
-
-            return (
-              <div
-                key={index}
-                className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
-                  isCurrentMonth
-                    ? isToday
-                      ? 'bg-purple-500/10 border-purple-500'
-                      : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
-                    : 'bg-[#1a1f2a] border-gray-800 opacity-50'
+          {/* View Toggle and Actions */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`btn-secondary p-2 ${showFilters ? 'bg-blue-500/20' : ''}`}
+              title="Filters tonen/verbergen"
+            >
+              <Filter size={20} />
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="btn-secondary p-2"
+              title="Exporteer naar Excel"
+            >
+              <Download size={20} />
+            </button>
+            <div className="flex bg-[#1a1f2a] rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`px-4 py-2 rounded transition-colors ${
+                  viewMode === 'calendar'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-400 hover:text-white'
                 }`}
               >
-                <div className="text-sm font-medium text-gray-400 mb-1">
-                  {day.getDate()}
-                </div>
-                <div className="space-y-1">
-                  {dayVerdelers.map((verdeler, idx) => (
-                    <div
-                      key={idx}
-                      className={`text-xs p-1 rounded transition-all cursor-pointer ${
-                        !verdeler.toegewezen_monteur || verdeler.toegewezen_monteur === 'Vrij'
-                          ? 'bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30'
-                          : 'bg-green-500/20 text-green-300 hover:bg-green-500/30'
-                      }`}
-                      onClick={() => setSelectedVerdeler(verdeler)}
-                      onMouseEnter={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoverPosition({ x: rect.left, y: rect.bottom + 5 });
-                        setHoveredVerdeler(verdeler);
-                      }}
-                      onMouseLeave={() => setHoveredVerdeler(null)}
-                    >
-                      <div className="truncate">
-                        {verdeler.project_number} - {verdeler.kast_naam}
-                      </div>
-                    </div>
-                  ))}
+                <Calendar size={18} className="inline mr-2" />
+                Kalender
+              </button>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`px-4 py-2 rounded transition-colors ${
+                  viewMode === 'table'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <TableIcon size={18} className="inline mr-2" />
+                Tabel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        {showFilters && (
+          <div className="mb-6 p-4 bg-[#1a1f2a] rounded-lg border border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Search */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Zoeken</label>
+                <div className="relative">
+                  <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Project, verdeler, klant..."
+                    className="input pl-10 w-full"
+                  />
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              {/* Project Leader Filter */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Projectleider</label>
+                <select
+                  value={filterProjectLeader}
+                  onChange={(e) => setFilterProjectLeader(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="all">Alle projectleiders</option>
+                  {projectLeaders.map(leader => (
+                    <option key={leader} value={leader}>{leader}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Installateur Filter */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Installateur</label>
+                <select
+                  value={filterInstallateur}
+                  onChange={(e) => setFilterInstallateur(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="all">Alle installateurs</option>
+                  {installateurs.map(inst => (
+                    <option key={inst} value={inst}>{inst}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="block text-sm text-gray-400 mb-2">Status</label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="all">Alle statussen</option>
+                  <option value="no_monteur">Geen monteur</option>
+                  <option value="assigned">Monteur toegewezen</option>
+                  <option value="tested">Getest</option>
+                  <option value="delivered">Afgeleverd</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Active Filters Display */}
+            {(searchTerm || filterProjectLeader !== 'all' || filterInstallateur !== 'all' || filterStatus !== 'all') && (
+              <div className="mt-4 flex items-center space-x-2 text-sm">
+                <span className="text-gray-400">Actieve filters:</span>
+                {searchTerm && (
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                    Zoeken: {searchTerm}
+                  </span>
+                )}
+                {filterProjectLeader !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                    Projectleider: {filterProjectLeader}
+                  </span>
+                )}
+                {filterInstallateur !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                    Installateur: {filterInstallateur}
+                  </span>
+                )}
+                {filterStatus !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
+                    Status: {filterStatus}
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterProjectLeader('all');
+                    setFilterInstallateur('all');
+                    setFilterStatus('all');
+                  }}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  Wis filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* View Content */}
+        {loading ? (
+          <div className="text-center py-12 text-gray-400">
+            Laden...
+          </div>
+        ) : (
+          <>
+            {viewMode === 'calendar' ? renderCalendarView() : renderTableView()}
+          </>
+        )}
 
         {/* Legend */}
-        <div className="mt-6 flex items-center space-x-6 text-sm">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-yellow-500/20"></div>
-            <span className="text-gray-400">Geen monteur</span>
+        <div className="mt-6 flex items-center justify-between text-sm border-t border-gray-700 pt-4">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-yellow-500/20"></div>
+              <span className="text-gray-400">Geen monteur</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-green-500/20"></div>
+              <span className="text-gray-400">Monteur toegewezen</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-cyan-500/20"></div>
+              <span className="text-gray-400">Klaar</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-blue-500/20"></div>
+              <span className="text-gray-400">Afgeleverd</span>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 rounded bg-green-500/20"></div>
-            <span className="text-gray-400">Monteur toegewezen</span>
-          </div>
-        </div>
 
-        {/* Summary Stats */}
-        <div className="mt-6 grid grid-cols-3 gap-4 pt-4 border-t border-gray-700">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-yellow-500">
-              {verdelers.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij').length}
+          {/* Summary Stats */}
+          <div className="flex items-center space-x-6">
+            <div className="text-center">
+              <div className="text-lg font-bold text-yellow-500">
+                {filteredVerdelers.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij').length}
+              </div>
+              <div className="text-xs text-gray-400">Zonder monteur</div>
             </div>
-            <div className="text-sm text-gray-400">Zonder monteur</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-500">
-              {verdelers.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij').length}
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-500">
+                {filteredVerdelers.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij').length}
+              </div>
+              <div className="text-xs text-gray-400">Toegewezen</div>
             </div>
-            <div className="text-sm text-gray-400">Toegewezen</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-500">
-              {verdelers.length}
+            <div className="text-center">
+              <div className="text-lg font-bold text-blue-500">
+                {filteredVerdelers.length}
+              </div>
+              <div className="text-xs text-gray-400">Totaal</div>
             </div>
-            <div className="text-sm text-gray-400">Totaal</div>
           </div>
         </div>
       </div>
@@ -259,7 +716,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
       {/* Hover Popup */}
       {hoveredVerdeler && (
         <div
-          className="fixed z-50 bg-[#1E2530] border border-purple-500/30 rounded-lg shadow-2xl p-4 max-w-md pointer-events-none"
+          className="fixed z-50 bg-[#1E2530] border border-blue-500/30 rounded-lg shadow-2xl p-4 max-w-md pointer-events-none"
           style={{
             left: `${hoverPosition.x}px`,
             top: `${hoverPosition.y}px`,
@@ -270,27 +727,40 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-lg font-bold text-white">{hoveredVerdeler.project_number}</h3>
-                <p className="text-sm text-purple-400">{hoveredVerdeler.kast_naam}</p>
+                <p className="text-sm text-blue-400">{hoveredVerdeler.kast_naam}</p>
               </div>
             </div>
-            <div className="border-t border-gray-700 pt-2">
-              <p className="text-xs text-gray-400">Verdeler ID</p>
-              <p className="text-sm text-white">{hoveredVerdeler.distributor_id}</p>
-              <p className="text-xs text-gray-400 mt-1">{hoveredVerdeler.client}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Locatie</p>
-              <p className="text-sm text-white">{hoveredVerdeler.location}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Monteur</p>
-              <p className={`text-sm font-medium ${
-                !hoveredVerdeler.toegewezen_monteur || hoveredVerdeler.toegewezen_monteur === 'Vrij'
-                  ? 'text-yellow-400'
-                  : 'text-green-400'
-              }`}>
-                {hoveredVerdeler.toegewezen_monteur || 'Niet toegewezen'}
-              </p>
+            <div className="border-t border-gray-700 pt-2 space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">Verdeler ID:</span>
+                <span className="text-white">{hoveredVerdeler.distributor_id}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">Klant:</span>
+                <span className="text-white">{hoveredVerdeler.client}</span>
+              </div>
+              {hoveredVerdeler.project_leader_name && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Projectleider:</span>
+                  <span className="text-white">{hoveredVerdeler.project_leader_name}</span>
+                </div>
+              )}
+              {hoveredVerdeler.expected_hours && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-400">Verwachte uren:</span>
+                  <span className="text-white">{hoveredVerdeler.expected_hours}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xs">
+                <span className="text-gray-400">Monteur:</span>
+                <span className={`font-medium ${
+                  !hoveredVerdeler.toegewezen_monteur || hoveredVerdeler.toegewezen_monteur === 'Vrij'
+                    ? 'text-yellow-400'
+                    : 'text-green-400'
+                }`}>
+                  {hoveredVerdeler.toegewezen_monteur || 'Niet toegewezen'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -299,11 +769,11 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
       {/* Verdeler Details Modal */}
       {selectedVerdeler && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedVerdeler(null)}>
-          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto m-4" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-[#1e2836] border-b border-gray-700 p-6 flex justify-between items-start">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-1">{selectedVerdeler.project_number}</h2>
-                <p className="text-purple-400">{selectedVerdeler.kast_naam}</p>
+                <p className="text-blue-400">{selectedVerdeler.kast_naam}</p>
               </div>
               <button
                 onClick={() => setSelectedVerdeler(null)}
@@ -317,49 +787,53 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
               {/* Verdeler Info */}
               <div className="bg-[#2A303C] rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3">Verdeler Informatie</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Verdeler ID:</span>
-                    <span className="text-white font-medium">{selectedVerdeler.distributor_id}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-400">Verdeler ID</p>
+                    <p className="text-sm text-white font-medium">{selectedVerdeler.distributor_id}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Kast Naam:</span>
-                    <span className="text-white">{selectedVerdeler.kast_naam}</span>
+                  <div>
+                    <p className="text-xs text-gray-400">Kast Naam</p>
+                    <p className="text-sm text-white">{selectedVerdeler.kast_naam}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Status:</span>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      selectedVerdeler.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                      selectedVerdeler.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                      'bg-yellow-500/20 text-yellow-400'
-                    }`}>
-                      {selectedVerdeler.status}
+                  <div>
+                    <p className="text-xs text-gray-400">Status</p>
+                    <span className={`inline-block px-2 py-1 rounded text-xs ${getStatusBadgeColor(selectedVerdeler)}`}>
+                      {selectedVerdeler.is_delivered ? 'Afgeleverd' :
+                       selectedVerdeler.is_tested ? 'Getest' :
+                       selectedVerdeler.is_ready ? 'Klaar' :
+                       selectedVerdeler.is_closed ? 'Gesloten' :
+                       'In behandeling'}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Toegewezen Monteur:</span>
+                  <div>
+                    <p className="text-xs text-gray-400">Verwachte uren</p>
+                    <p className="text-sm text-white">{selectedVerdeler.expected_hours || 0} uur</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Toegewezen Monteur</p>
                     {!selectedVerdeler.toegewezen_monteur || selectedVerdeler.toegewezen_monteur === 'Vrij' ? (
-                      <span className="text-yellow-400 flex items-center space-x-1">
+                      <span className="text-yellow-400 flex items-center space-x-1 text-sm">
                         <AlertCircle size={14} />
                         <span>Niet toegewezen</span>
                       </span>
                     ) : (
-                      <span className="text-green-400 flex items-center space-x-1">
+                      <span className="text-green-400 flex items-center space-x-1 text-sm">
                         <CheckCircle size={14} />
                         <span>{selectedVerdeler.toegewezen_monteur}</span>
                       </span>
                     )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Gewenste Leverdatum:</span>
-                    <span className="text-white">
+                  <div>
+                    <p className="text-xs text-gray-400">Gewenste Leverdatum</p>
+                    <p className="text-sm text-white">
                       {new Date(selectedVerdeler.gewenste_lever_datum).toLocaleDateString('nl-NL', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                       })}
-                    </span>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -367,18 +841,73 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
               {/* Project Info */}
               <div className="bg-[#2A303C] rounded-lg p-4">
                 <h3 className="text-lg font-semibold text-white mb-3">Project Informatie</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Projectnummer:</span>
-                    <span className="text-white font-medium">{selectedVerdeler.project_number}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-400">Projectnummer</p>
+                    <p className="text-sm text-white font-medium">{selectedVerdeler.project_number}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Klant:</span>
-                    <span className="text-white">{selectedVerdeler.client}</span>
+                  <div>
+                    <p className="text-xs text-gray-400">Projectleider</p>
+                    <p className="text-sm text-white">{selectedVerdeler.project_leader_name || '-'}</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Locatie:</span>
-                    <span className="text-white">{selectedVerdeler.location}</span>
+                  <div>
+                    <p className="text-xs text-gray-400">Klant</p>
+                    <p className="text-sm text-white">{selectedVerdeler.client}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Locatie</p>
+                    <p className="text-sm text-white">{selectedVerdeler.location}</p>
+                  </div>
+                  {selectedVerdeler.project_naam && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400">Project Naam</p>
+                      <p className="text-sm text-white">{selectedVerdeler.project_naam}</p>
+                    </div>
+                  )}
+                  {selectedVerdeler.installateur_type && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-400">Installateur Type</p>
+                      <p className="text-sm text-white">{selectedVerdeler.installateur_type}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Indicators */}
+              <div className="bg-[#2A303C] rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Status Overzicht</h3>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="text-center">
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                      selectedVerdeler.is_closed ? 'bg-gray-500' : 'bg-gray-800'
+                    }`}>
+                      {selectedVerdeler.is_closed && <CheckCircle size={24} className="text-white" />}
+                    </div>
+                    <p className="text-xs text-gray-400">Gesloten</p>
+                  </div>
+                  <div className="text-center">
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                      selectedVerdeler.is_ready ? 'bg-cyan-500' : 'bg-gray-800'
+                    }`}>
+                      {selectedVerdeler.is_ready && <CheckCircle size={24} className="text-white" />}
+                    </div>
+                    <p className="text-xs text-gray-400">Klaar</p>
+                  </div>
+                  <div className="text-center">
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                      selectedVerdeler.is_tested ? 'bg-green-500' : 'bg-gray-800'
+                    }`}>
+                      {selectedVerdeler.is_tested && <CheckCircle size={24} className="text-white" />}
+                    </div>
+                    <p className="text-xs text-gray-400">Getest</p>
+                  </div>
+                  <div className="text-center">
+                    <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
+                      selectedVerdeler.is_delivered ? 'bg-blue-500' : 'bg-gray-800'
+                    }`}>
+                      {selectedVerdeler.is_delivered && <CheckCircle size={24} className="text-white" />}
+                    </div>
+                    <p className="text-xs text-gray-400">Afgeleverd</p>
                   </div>
                 </div>
               </div>
