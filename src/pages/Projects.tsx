@@ -503,10 +503,12 @@ const Projects = () => {
         }
       }
 
-      // Lysander's location filter (applies regardless of role/location filters)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies regardless of role/location filters)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         if (!isLocationVisible(project.location)) {
-          console.log(`📍 LYSANDER FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN FILTER MODE: ${filterMode}`);
+          console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN FILTER MODE: ${filterMode}`);
           return false;
         }
       }

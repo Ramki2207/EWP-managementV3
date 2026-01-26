@@ -87,18 +87,20 @@ const Verdelers = () => {
         console.log(`📦 LOGISTIEK FILTER: Filtered ${beforeLogistiekFilter} distributors down to ${filteredDistributors.length} for logistiek ${currentUser.username}`);
       }
       
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectLocation = distributor.projects?.location;
           if (!isLocationVisible(projectLocation)) {
-            console.log(`📍 LYSANDER VERDELER FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation})`);
+            console.log(`📍 LOCATION FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER VERDELER FILTER: Filtered ${beforeFilter} distributors down to ${filteredDistributors.length} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} distributors down to ${filteredDistributors.length} for ${currentUser.username}`);
       }
 
       // Apply location-based filtering for users with restricted location access

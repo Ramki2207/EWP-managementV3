@@ -69,15 +69,17 @@ export default function Personeelsbeheer() {
 
     let filteredUsers = data || [];
 
-    // Lysander's location filter (applies first)
-    if (currentUser?.username === 'Lysander Koenraadt') {
+    // Location filter for specific users (applies first)
+    if (currentUser?.username === 'Lysander Koenraadt' ||
+        currentUser?.username === 'Patrick Herman' ||
+        currentUser?.username === 'Stefano de Weger') {
       const lysanderFilteredLocations = getFilteredLocations();
       const beforeFilter = filteredUsers.length;
 
       filteredUsers = filteredUsers.filter((user: any) => {
         const userLocations = user.assigned_locations || user.assignedLocations || [];
 
-        // User must have at least one location that matches Lysander's current filter
+        // User must have at least one location that matches current filter
         const hasMatchingLocation = userLocations.some((loc: string) =>
           lysanderFilteredLocations.includes(loc)
         );
@@ -88,12 +90,12 @@ export default function Personeelsbeheer() {
         const isSpecialUser = specialUserRoles.includes(user.role) || specialUsernames.includes(user.username);
 
         if (!hasMatchingLocation && !isSpecialUser && userLocations.length > 0) {
-          console.log(`📍 LYSANDER PERSONEELSBEHEER FILTER: Hiding user ${user.username} (locations: ${userLocations.join(', ')})`);
+          console.log(`📍 LOCATION FILTER: Hiding user ${user.username} (locations: ${userLocations.join(', ')})`);
         }
 
         return hasMatchingLocation || isSpecialUser || userLocations.length === 0;
       });
-      console.log(`📍 LYSANDER PERSONEELSBEHEER FILTER: Filtered ${beforeFilter} users down to ${filteredUsers.length} for Lysander`);
+      console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} users down to ${filteredUsers.length} for ${currentUser.username}`);
     }
 
     // Filter by location based on user's assigned locations (admins see all)

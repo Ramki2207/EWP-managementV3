@@ -92,29 +92,31 @@ const Insights = () => {
         dataService.getClients()
       ]);
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeProjectFilter = projectsData?.length || 0;
         projectsData = projectsData?.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
-            console.log(`📍 LYSANDER INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeProjectFilter} projects down to ${projectsData?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeProjectFilter} projects down to ${projectsData?.length || 0} for ${currentUser.username}`);
 
         // Filter distributors by their project's location
         const beforeDistributorFilter = distributorsData?.length || 0;
         const projectIds = new Set(projectsData?.map((p: any) => p.id) || []);
         distributorsData = distributorsData?.filter((distributor: any) => projectIds.has(distributor.project_id));
-        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeDistributorFilter} distributors down to ${distributorsData?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeDistributorFilter} distributors down to ${distributorsData?.length || 0} for ${currentUser.username}`);
 
         // Filter work entries by distributor
         const distributorIds = new Set(distributorsData?.map((d: any) => d.id) || []);
         const beforeWorkEntriesFilter = workEntriesData?.length || 0;
         const filteredWorkEntries = workEntriesData?.filter((entry: any) => distributorIds.has(entry.distributor_id));
-        console.log(`📍 LYSANDER INSIGHTS FILTER: Filtered ${beforeWorkEntriesFilter} work entries down to ${filteredWorkEntries?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeWorkEntriesFilter} work entries down to ${filteredWorkEntries?.length || 0} for ${currentUser.username}`);
         setWorkEntries(filteredWorkEntries || []);
       }
 

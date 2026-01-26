@@ -75,8 +75,10 @@ const AccessCodes = () => {
       console.log('🔍 ACCESS_CODES: Assigned locations:', currentUser?.assignedLocations);
       console.log('🔍 ACCESS_CODES: Total access codes loaded:', data?.length);
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.project_number] = project.location;
@@ -90,12 +92,12 @@ const AccessCodes = () => {
 
           const projectLocation = projectLocationMap[code.project_number];
           if (!isLocationVisible(projectLocation)) {
-            console.log(`📍 LYSANDER ACCESS_CODES FILTER: Hiding access code for project ${code.project_number} (location: ${projectLocation})`);
+            console.log(`📍 LOCATION FILTER: Hiding access code for project ${code.project_number} (location: ${projectLocation})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER ACCESS_CODES FILTER: Filtered ${beforeFilter} access codes down to ${data?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} access codes down to ${data?.length || 0} for ${currentUser.username}`);
       }
 
       // Role-based filtering for Tester users
@@ -177,8 +179,10 @@ const AccessCodes = () => {
     try {
       let data = await dataService.getDistributors();
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.id] = project.location;
@@ -189,12 +193,12 @@ const AccessCodes = () => {
         data = data?.filter((distributor: any) => {
           const projectLocation = projectLocationMap[distributor.project_id];
           if (!isLocationVisible(projectLocation)) {
-            console.log(`📍 LYSANDER ACCESS_CODES VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (location: ${projectLocation})`);
+            console.log(`📍 LOCATION FILTER: Hiding distributor ${distributor.distributor_id} (location: ${projectLocation})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER ACCESS_CODES VERDELERS FILTER: Filtered ${beforeFilter} distributors down to ${data?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} distributors down to ${data?.length || 0} for ${currentUser.username}`);
       }
 
       // Role-based filtering for Tester users

@@ -47,8 +47,10 @@ const ClientPortalManagement = () => {
       setLoading(true);
       let data = await clientPortalService.getAllClientPortals();
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.id] = project.location;
@@ -59,12 +61,12 @@ const ClientPortalManagement = () => {
         data = data?.filter((portal: any) => {
           const projectLocation = projectLocationMap[portal.project_id];
           if (!isLocationVisible(projectLocation)) {
-            console.log(`📍 LYSANDER CLIENT_PORTALS FILTER: Hiding portal for project ${portal.projects?.project_number} (location: ${projectLocation})`);
+            console.log(`📍 LOCATION FILTER: Hiding portal for project ${portal.projects?.project_number} (location: ${projectLocation})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER CLIENT_PORTALS FILTER: Filtered ${beforeFilter} portals down to ${data?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} portals down to ${data?.length || 0} for ${currentUser.username}`);
       }
 
       // Role-based filtering for Tester users

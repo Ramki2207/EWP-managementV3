@@ -50,17 +50,19 @@ const Clients = () => {
       console.log('🏢 CLIENTS: Current user:', currentUser?.username, 'Role:', currentUser?.role);
       console.log('🏢 CLIENTS: Assigned locations:', currentUser?.assignedLocations);
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
           if (!isLocationVisible(client.location)) {
-            console.log(`📍 LYSANDER CLIENTS FILTER: Hiding client ${client.name} (location: ${client.location})`);
+            console.log(`📍 LOCATION FILTER: Hiding client ${client.name} (location: ${client.location})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER CLIENTS FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} clients down to ${data?.length || 0} for ${currentUser.username}`);
       }
 
       // Location-based filtering for users with assigned locations

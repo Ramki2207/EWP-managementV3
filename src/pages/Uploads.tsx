@@ -74,17 +74,19 @@ const Uploads = () => {
 
       let filteredProjects = data || [];
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
-            console.log(`📍 LYSANDER UPLOADS FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER UPLOADS FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username}`);
       }
 
       // Location-based filtering (admins see all)

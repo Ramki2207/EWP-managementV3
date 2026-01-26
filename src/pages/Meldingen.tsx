@@ -136,17 +136,19 @@ const Meldingen = () => {
         location: projectClientMap[notification.project_number]?.location
       })) || [];
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for specific users (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = enrichedNotifications.length;
         enrichedNotifications = enrichedNotifications.filter((notification: any) => {
           if (!isLocationVisible(notification.location)) {
-            console.log(`📍 LYSANDER MELDINGEN FILTER: Hiding notification for project ${notification.project_number} (location: ${notification.location})`);
+            console.log(`📍 LOCATION FILTER: Hiding notification for project ${notification.project_number} (location: ${notification.location})`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER MELDINGEN FILTER: Filtered ${beforeFilter} notifications down to ${enrichedNotifications.length} for Lysander`);
+        console.log(`📍 LOCATION FILTER: Filtered ${beforeFilter} notifications down to ${enrichedNotifications.length} for ${currentUser.username}`);
       }
 
       // Filter by location based on user's assigned locations (admins see all)
