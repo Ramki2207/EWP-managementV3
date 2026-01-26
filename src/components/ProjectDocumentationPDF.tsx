@@ -13,6 +13,8 @@ interface ProjectDocumentationPDFProps {
 
 const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ project, onClose }) => {
   const [generating, setGenerating] = useState(false);
+  const [selectedVerdeler, setSelectedVerdeler] = useState<any>(null);
+  const [showVerdelerSelection, setShowVerdelerSelection] = useState(true);
 
   const loadImageAsDataUrl = async (url: string): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -152,6 +154,11 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
   };
 
   const generatePDF = async () => {
+    if (!selectedVerdeler) {
+      toast.error('Selecteer eerst een verdeler');
+      return;
+    }
+
     setGenerating(true);
 
     try {
@@ -196,7 +203,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text('Project Documentatie', margin, yPosition);
+      doc.text('Verdeler Documentatie', margin, yPosition);
       yPosition += 15;
 
       doc.setDrawColor(200, 200, 200);
@@ -211,28 +218,19 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const creator = users.find((u: any) => u.id === project.created_by);
 
-      const totalHours = project.distributors?.reduce((sum: number, d: any) => {
-        const hours = parseFloat(d.expected_hours || d.expectedHours || 0);
-        return sum + hours;
-      }, 0) || 0;
-
-      const uniqueFabrikanten = [...new Set(
-        project.distributors
-          ?.map((d: any) => d.fabrikant)
-          .filter((f: string) => f && f.trim())
-      )];
-      const fabrikantValue = uniqueFabrikanten.length > 0 ? uniqueFabrikanten.join(', ') : '-';
+      const verdelerHours = parseFloat(selectedVerdeler.expected_hours || selectedVerdeler.expectedHours || 0);
 
       const fields = [
         { label: 'Aangemaakt door:', value: creator?.username || '-' },
         { label: 'Klant:', value: project.client || '-' },
         { label: 'Projectnummer:', value: project.project_number || '-' },
         { label: 'Referentie klant:', value: project.referentie_klant || '-' },
-        { label: 'Fabrikant:', value: fabrikantValue },
+        { label: 'Verdeler:', value: selectedVerdeler.kast_naam || selectedVerdeler.distributor_id || '-' },
+        { label: 'Fabrikant:', value: selectedVerdeler.fabrikant || '-' },
         { label: 'Verwachte leverdatum:', value: project.expected_delivery_date
           ? new Date(project.expected_delivery_date).toLocaleDateString('nl-NL')
           : '-' },
-        { label: 'Voorcalculatorische uren:', value: totalHours > 0 ? `${totalHours} uur` : '-' }
+        { label: 'Voorcalculatorische uren:', value: verdelerHours > 0 ? `${verdelerHours} uur` : '-' }
       ];
 
       for (const field of fields) {
@@ -244,75 +242,61 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
-      const projectFolders = ['Bestelling', 'Calculatie'];
 
       for (const folderName of distributorFolders) {
-        const allDocs: any[] = [];
+        toast.loading(`Laden van ${folderName}...`);
 
-        console.log(`📄 Loading documents from distributor folder: ${folderName}`);
-        console.log(`📄 Project has ${project.distributors?.length || 0} distributors`);
+        try {
+          console.log(`📄 Loading ${folderName} for distributor ${selectedVerdeler.id} (${selectedVerdeler.kast_naam})`);
+          const docs = await dataService.getDocuments(project.id, selectedVerdeler.id, folderName);
+          console.log(`📄 Found ${docs?.length || 0} documents in ${folderName}`);
 
-        if (project.distributors && project.distributors.length > 0) {
-          for (const distributor of project.distributors) {
-            toast.loading(`Laden van ${folderName} voor ${distributor.kast_naam || distributor.distributor_id}...`);
+          const allDocs: any[] = [];
+          if (docs && docs.length > 0) {
+            allDocs.push(...docs);
+          }
 
-            try {
-              console.log(`📄 Loading ${folderName} for distributor ${distributor.id} (${distributor.kast_naam})`);
-              const docs = await dataService.getDocuments(project.id, distributor.id, folderName);
-              console.log(`📄 Found ${docs?.length || 0} documents in ${folderName} for ${distributor.kast_naam}`);
+          // Also check for Actueel subfolder
+          try {
+            const actueleFolder = `${folderName}/Actueel`;
+            const actueleDocs = await dataService.getDocuments(project.id, selectedVerdeler.id, actueleFolder);
+            console.log(`📄 Found ${actueleDocs?.length || 0} documents in ${actueleFolder}`);
+            if (actueleDocs && actueleDocs.length > 0) {
+              allDocs.push(...actueleDocs);
+            }
+          } catch (error) {
+            console.log(`📄 No Actueel subfolder for ${folderName}`);
+          }
 
-              if (docs && docs.length > 0) {
-                docs.forEach((doc: any) => {
-                  doc.verdelerName = distributor.kast_naam || distributor.distributor_id;
-                });
-                allDocs.push(...docs);
-              }
+          if (allDocs.length > 0) {
+            doc.addPage();
+            yPosition = margin;
 
-              try {
-                const actueleFolder = `${folderName}/Actueel`;
-                const actueleDocs = await dataService.getDocuments(project.id, distributor.id, actueleFolder);
-                console.log(`📄 Found ${actueleDocs?.length || 0} documents in ${actueleFolder}`);
-                if (actueleDocs && actueleDocs.length > 0) {
-                  actueleDocs.forEach((doc: any) => {
-                    doc.verdelerName = distributor.kast_naam || distributor.distributor_id;
-                  });
-                  allDocs.push(...actueleDocs);
-                }
-              } catch (error) {
-                console.log(`📄 No Actueel subfolder for ${folderName}`);
-              }
-            } catch (error) {
-              console.error(`Error loading ${folderName} for distributor ${distributor.id}:`, error);
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 102, 204);
+            doc.text(folderName, margin, yPosition);
+            yPosition += 10;
+
+            doc.setDrawColor(0, 102, 204);
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPosition, pageWidth - margin, yPosition);
+            yPosition += 10;
+
+            console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
+            for (const document of allDocs) {
+              console.log(`📄 Processing document:`, document);
+              await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
             }
           }
-        }
-
-        console.log(`📄 Total documents collected for ${folderName}: ${allDocs.length}`);
-
-        if (allDocs.length > 0) {
-          doc.addPage();
-          yPosition = margin;
-
-          doc.setFontSize(16);
-          doc.setFont('helvetica', 'bold');
-          doc.setTextColor(0, 102, 204);
-          doc.text(folderName, margin, yPosition);
-          yPosition += 10;
-
-          doc.setDrawColor(0, 102, 204);
-          doc.setLineWidth(0.5);
-          doc.line(margin, yPosition, pageWidth - margin, yPosition);
-          yPosition += 10;
-
-          console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
-          for (const document of allDocs) {
-            console.log(`📄 Processing document:`, document);
-            await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
-          }
+        } catch (error) {
+          console.error(`Error loading ${folderName} for distributor:`, error);
         }
 
         toast.dismiss();
       }
+
+      const projectFolders = ['Bestelling', 'Calculatie'];
 
       for (const folderName of projectFolders) {
         toast.loading(`Laden van documenten uit ${folderName}...`);
@@ -350,7 +334,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         toast.dismiss();
       }
 
-      const fileName = `Documentatie_${project.project_number}_${new Date().toISOString().split('T')[0]}.pdf`;
+      const verdelerName = (selectedVerdeler.kast_naam || selectedVerdeler.distributor_id || 'verdeler').replace(/[^a-zA-Z0-9]/g, '_');
+      const fileName = `Documentatie_${project.project_number}_${verdelerName}_${new Date().toISOString().split('T')[0]}.pdf`;
 
       // If we have PDFs to merge, use pdf-lib to combine them
       if (pdfPages.length > 0) {
@@ -420,6 +405,75 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
     }
   };
 
+  if (showVerdelerSelection) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-[#1E2530] rounded-lg shadow-xl max-w-md w-full">
+          <div className="flex items-center justify-between p-6 border-b border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-500/20 rounded-lg">
+                <FileText size={24} className="text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-white">Verdeler Documentatie</h2>
+                <p className="text-sm text-gray-400">Selecteer een verdeler</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="p-6">
+            <p className="text-sm text-gray-300 mb-4">
+              Selecteer de verdeler waarvoor u documentatie wilt genereren:
+            </p>
+
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {project.distributors && project.distributors.length > 0 ? (
+                project.distributors.map((verdeler: any) => (
+                  <button
+                    key={verdeler.id}
+                    onClick={() => {
+                      setSelectedVerdeler(verdeler);
+                      setShowVerdelerSelection(false);
+                    }}
+                    className="w-full text-left p-4 bg-[#2A303C] hover:bg-[#323948] rounded-lg transition-colors border border-gray-700 hover:border-blue-500"
+                  >
+                    <div className="font-medium text-white">
+                      {verdeler.kast_naam || verdeler.distributor_id}
+                    </div>
+                    {verdeler.fabrikant && (
+                      <div className="text-sm text-gray-400 mt-1">
+                        Fabrikant: {verdeler.fabrikant}
+                      </div>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400">
+                  Geen verdelers beschikbaar
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6">
+              <button
+                onClick={onClose}
+                className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+              >
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-[#1E2530] rounded-lg shadow-xl max-w-md w-full">
@@ -429,8 +483,10 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
               <FileText size={24} className="text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-white">Project Documentatie</h2>
-              <p className="text-sm text-gray-400">Genereer complete project documentatie PDF</p>
+              <h2 className="text-xl font-semibold text-white">Verdeler Documentatie</h2>
+              <p className="text-sm text-gray-400">
+                {selectedVerdeler?.kast_naam || selectedVerdeler?.distributor_id || 'Verdeler'}
+              </p>
             </div>
           </div>
           <button
@@ -450,7 +506,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             <ul className="space-y-2 text-sm text-gray-400">
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">•</span>
-                <span>Project informatie (klant, projectnummer, uren, etc.)</span>
+                <span>Verdeler informatie (klant, projectnummer, fabrikant, etc.)</span>
               </li>
               <li className="flex items-start">
                 <span className="text-blue-400 mr-2">•</span>
@@ -473,11 +529,11 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
           <div className="flex space-x-3">
             <button
-              onClick={onClose}
+              onClick={() => setShowVerdelerSelection(true)}
               disabled={generating}
               className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
             >
-              Annuleren
+              Andere verdeler
             </button>
             <button
               onClick={generatePDF}
