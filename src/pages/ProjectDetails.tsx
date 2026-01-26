@@ -18,6 +18,7 @@ import VerdelerLeveringSelector from '../components/VerdelerLeveringSelector';
 import PakbonManager from '../components/PakbonManager';
 import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 import PakbonGenerator from '../components/PakbonGenerator';
+import ProjectDocumentationPDF from '../components/ProjectDocumentationPDF';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -45,6 +46,7 @@ const ProjectDetails = () => {
   const [showPakbonManager, setShowPakbonManager] = useState(false);
   const [showStickerGenerator, setShowStickerGenerator] = useState(false);
   const [showPakbonGenerator, setShowPakbonGenerator] = useState(false);
+  const [showDocumentationPDF, setShowDocumentationPDF] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -754,6 +756,15 @@ const ProjectDetails = () => {
                 <FileText size={20} />
                 <span>Pakbon</span>
               </button>
+              {currentUser?.username === 'Dave Moret' && (
+                <button
+                  onClick={() => setShowDocumentationPDF(true)}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <FileText size={20} />
+                  <span>Documentatie</span>
+                </button>
+              )}
               {!isEditing ? (
                 hasPermission('projects', 'update') && (
                 <button
@@ -1638,6 +1649,14 @@ const ProjectDetails = () => {
         <PakbonGenerator
           project={project}
           onClose={() => setShowPakbonGenerator(false)}
+        />
+      )}
+
+      {/* Project Documentation PDF Modal */}
+      {showDocumentationPDF && project && (
+        <ProjectDocumentationPDF
+          project={project}
+          onClose={() => setShowDocumentationPDF(false)}
         />
       )}
     </div>
