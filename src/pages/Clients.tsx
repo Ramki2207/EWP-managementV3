@@ -66,7 +66,12 @@ const Clients = () => {
       }
 
       // Location-based filtering for users with assigned locations
-      if (currentUser?.assignedLocations?.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter && currentUser?.assignedLocations?.length > 0) {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
           // Always show clients created by the user

@@ -104,7 +104,12 @@ const Verdelers = () => {
       }
 
       // Apply location-based filtering for users with restricted location access
-      if (currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter && currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeFilter = filteredDistributors.length;

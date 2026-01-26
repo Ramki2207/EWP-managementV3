@@ -207,7 +207,12 @@ const Dashboard = () => {
       }
 
       // Apply location filtering if user has location restrictions
-      if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeLocationFilter = filteredData.length;
           filteredData = filteredData.filter((project: any) => {
@@ -477,7 +482,12 @@ const Dashboard = () => {
         console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (filterMode: ${filterMode})`);
       }
 
-      if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
+                                   currentUser?.username === 'Patrick Herman' ||
+                                   currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter2 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeFilter = filteredProjects.length;
@@ -609,8 +619,13 @@ const Dashboard = () => {
       console.log('🌍 DASHBOARD: Loading projects for user:', currentUser?.username);
       console.log('🌍 DASHBOARD: User assigned locations:', currentUser?.assignedLocations);
       console.log('🌍 DASHBOARD: Total projects before filtering:', filteredProjects.length);
-      
-      if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter3 = currentUser?.username === 'Lysander Koenraadt' ||
+                                   currentUser?.username === 'Patrick Herman' ||
+                                   currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter3 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           filteredProjects = filteredProjects.filter((project: any) => {

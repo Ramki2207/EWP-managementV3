@@ -224,7 +224,12 @@ const AccessCodes = () => {
       }
 
       // Location-based filtering for Projectleider users
-      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
+                                   currentUser?.username === 'Patrick Herman' ||
+                                   currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter2 && currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const projects = await dataService.getProjects();
         const allowedProjectIds = projects
           .filter((project: any) => currentUser.assignedLocations.includes(project.location))

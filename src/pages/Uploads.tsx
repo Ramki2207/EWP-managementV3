@@ -90,7 +90,12 @@ const Uploads = () => {
       }
 
       // Location-based filtering (admins see all)
-      if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
         const hasAllLocations =
           currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
           AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));

@@ -92,7 +92,12 @@ const ClientPortalManagement = () => {
       }
 
       // Location-based filtering for Projectleider users
-      if (currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!usesDropdownFilter && currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const projects = await dataService.getProjects();
         const allowedProjectIds = projects
           .filter((project: any) => currentUser.assignedLocations.includes(project.location))
@@ -223,7 +228,12 @@ const ClientPortalManagement = () => {
 
     // Location filter - admins see all portals
     let matchesLocation = true;
-    if (currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
+    // Skip assignedLocations filter for users who use the location dropdown filter
+    const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
+                                 currentUser?.username === 'Patrick Herman' ||
+                                 currentUser?.username === 'Stefano de Weger';
+
+    if (!usesDropdownFilter2 && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
       const hasAllLocations =
         currentUser.assignedLocations.length >= AVAILABLE_LOCATIONS.length ||
         AVAILABLE_LOCATIONS.every(loc => currentUser.assignedLocations.includes(loc));

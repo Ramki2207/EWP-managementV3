@@ -513,11 +513,16 @@ const Projects = () => {
         }
       }
 
-      // Location filter based on user's assigned locations (skip for Annemieke)
+      // Location filter based on user's assigned locations (skip for Annemieke and users with dropdown filter)
       console.log('🌍 FILTER: Checking project:', project.project_number, 'Location:', project.location);
       console.log('🌍 FILTER: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
 
-      if (!isAnnemieke && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+      // Skip assignedLocations filter for users who use the location dropdown filter
+      const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
+                                  currentUser?.username === 'Patrick Herman' ||
+                                  currentUser?.username === 'Stefano de Weger';
+
+      if (!isAnnemieke && !usesDropdownFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // Debug user's location data
         console.log('🔍 LOCATION DEBUG: User assignedLocations type:', typeof currentUser.assignedLocations);
         console.log('🔍 LOCATION DEBUG: User assignedLocations value:', currentUser.assignedLocations);
