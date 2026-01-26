@@ -191,17 +191,19 @@ const Dashboard = () => {
         console.log(`👤 DASHBOARD PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username} (only own projects)`);
       }
 
-      // Lysander's location filter (applies first)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for Lysander, Patrick Herman, and Stefano de Weger (applies first)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
-            console.log(`📍 LYSANDER DASHBOARD FILTER: Hiding project ${project.project_number} (location: ${project.location})`);
+            console.log(`📍 LOCATION DASHBOARD FILTER: Hiding project ${project.project_number} (location: ${project.location}) for ${currentUser.username}`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER DASHBOARD FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for Lysander`);
+        console.log(`📍 LOCATION DASHBOARD FILTER: Filtered ${beforeFilter} projects down to ${filteredData.length} for ${currentUser.username}`);
       }
 
       // Apply location filtering if user has location restrictions
@@ -460,17 +462,19 @@ const Dashboard = () => {
         console.log(`👤 DAVE MORET FILTER: Filtered ${beforeDaveFilter} projects down to ${filteredProjects.length} for Dave Moret (only Productie, Levering, Gereed voor facturatie)`);
       }
 
-      // Lysander's location filter (based on filterMode)
-      if (currentUser?.username === 'Lysander Koenraadt') {
+      // Location filter for Lysander, Patrick Herman, and Stefano de Weger (based on filterMode)
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
-            console.log(`📍 LYSANDER DASHBOARD FILTER (loadProjects): Hiding project ${project.project_number} (location: ${project.location})`);
+            console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Hiding project ${project.project_number} (location: ${project.location}) for ${currentUser.username}`);
             return false;
           }
           return true;
         });
-        console.log(`📍 LYSANDER DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for Lysander (filterMode: ${filterMode})`);
+        console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (filterMode: ${filterMode})`);
       }
 
       if (currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
@@ -823,9 +827,13 @@ const Dashboard = () => {
     );
   }
 
-  // Debug logging for Lysander
+  // Debug logging for location filter users
   console.log('🎯 DASHBOARD RENDER: Username =', currentUser?.username);
-  console.log('🎯 DASHBOARD RENDER: Is Lysander check =', currentUser?.username === 'Lysander Koenraadt');
+  console.log('🎯 DASHBOARD RENDER: Has location filter =',
+    currentUser?.username === 'Lysander Koenraadt' ||
+    currentUser?.username === 'Patrick Herman' ||
+    currentUser?.username === 'Stefano de Weger'
+  );
   console.log('🎯 DASHBOARD RENDER: Filter mode =', filterMode);
 
   return (
@@ -904,56 +912,27 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Lysander Location Filter - Prominent Position */}
-            {currentUser?.username === 'Lysander Koenraadt' && (
-              <div className="flex items-center justify-center gap-3 bg-gradient-to-r from-blue-900/30 to-blue-800/30 px-6 py-4 rounded-lg border border-blue-700/50 shadow-lg">
-                <span className="text-sm font-medium text-gray-200">
+            {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
+            {(currentUser?.username === 'Lysander Koenraadt' ||
+              currentUser?.username === 'Patrick Herman' ||
+              currentUser?.username === 'Stefano de Weger') && (
+              <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                <span className="text-sm text-gray-300">
                   Locatie filter:
                 </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      console.log('Setting filter to: all');
-                      setFilterMode('all');
-                    }}
-                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                      filterMode === 'all'
-                        ? 'bg-blue-500 text-white shadow-lg scale-105'
-                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                    }`}
-                  >
-                    Alles
-                  </button>
-                  <button
-                    onClick={() => {
-                      console.log('Setting filter to: naaldwijk');
-                      setFilterMode('naaldwijk');
-                    }}
-                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                      filterMode === 'naaldwijk'
-                        ? 'bg-green-500 text-white shadow-lg scale-105'
-                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                    }`}
-                  >
-                    Naaldwijk
-                  </button>
-                  <button
-                    onClick={() => {
-                      console.log('Setting filter to: leerdam');
-                      setFilterMode('leerdam');
-                    }}
-                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                      filterMode === 'leerdam'
-                        ? 'bg-orange-500 text-white shadow-lg scale-105'
-                        : 'bg-[#2A303C] text-gray-400 hover:bg-[#374151] hover:text-white'
-                    }`}
-                  >
-                    Leerdam
-                  </button>
-                </div>
-                <span className="text-xs text-gray-400 ml-2">
-                  (Huidig: <span className="font-semibold text-blue-400">{filterMode}</span>)
-                </span>
+                <select
+                  value={filterMode}
+                  onChange={(e) => {
+                    const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
+                    console.log('Setting filter to:', newMode);
+                    setFilterMode(newMode);
+                  }}
+                  className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">Alles</option>
+                  <option value="naaldwijk">Naaldwijk</option>
+                  <option value="leerdam">Leerdam</option>
+                </select>
               </div>
             )}
 

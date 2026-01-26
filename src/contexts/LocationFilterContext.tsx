@@ -16,14 +16,14 @@ export const LocationFilterProvider: React.FC<{ children: React.ReactNode }> = (
 
   // Save filter preference to localStorage
   useEffect(() => {
-    const savedFilter = localStorage.getItem('lysander_location_filter');
+    const savedFilter = localStorage.getItem('location_filter_preference');
     if (savedFilter === 'naaldwijk' || savedFilter === 'leerdam' || savedFilter === 'all') {
       setFilterMode(savedFilter);
     }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('lysander_location_filter', filterMode);
+    localStorage.setItem('location_filter_preference', filterMode);
   }, [filterMode]);
 
   const getFilteredLocations = (): string[] => {
