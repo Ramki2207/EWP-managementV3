@@ -51,7 +51,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
       if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExtension || '')) {
         console.log('📄 Loading image URL for:', document.storage_path);
-        const imageUrl = await dataService.getFileUrl(document.storage_path);
+        const imageUrl = dataService.getStorageUrl(document.storage_path);
         console.log('📄 Image URL:', imageUrl ? 'Retrieved' : 'Failed');
         if (imageUrl) {
           doc.addPage();
@@ -105,7 +105,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         console.log('📄 PDF document detected, loading for embedding...');
 
         try {
-          const pdfUrl = await dataService.getFileUrl(document.storage_path);
+          const pdfUrl = dataService.getStorageUrl(document.storage_path);
           if (pdfUrl) {
             console.log('📄 Fetching PDF from:', pdfUrl);
             const response = await fetch(pdfUrl);
