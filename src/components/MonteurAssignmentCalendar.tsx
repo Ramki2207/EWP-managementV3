@@ -190,22 +190,9 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
       filtered = filtered.filter(v => v.installateur_type === filterInstallateur);
     }
 
-    // Status filter
+    // Status filter - filter by verdeler/project status
     if (filterStatus !== 'all') {
-      switch (filterStatus) {
-        case 'no_monteur':
-          filtered = filtered.filter(v => !v.toegewezen_monteur || v.toegewezen_monteur === 'Vrij');
-          break;
-        case 'assigned':
-          filtered = filtered.filter(v => v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij');
-          break;
-        case 'tested':
-          filtered = filtered.filter(v => v.is_tested);
-          break;
-        case 'delivered':
-          filtered = filtered.filter(v => v.is_delivered);
-          break;
-      }
+      filtered = filtered.filter(v => v.status === filterStatus);
     }
 
     setFilteredVerdelers(filtered);
@@ -565,7 +552,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     placeholder="Project, verdeler, klant..."
-                    className="input pl-10 w-full"
+                    className="input-field pl-10 w-full"
                   />
                 </div>
               </div>
@@ -576,7 +563,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                 <select
                   value={filterProjectLeader}
                   onChange={(e) => setFilterProjectLeader(e.target.value)}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   <option value="all">Alle projectleiders</option>
                   {projectLeaders.map(leader => (
@@ -591,7 +578,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                 <select
                   value={filterInstallateur}
                   onChange={(e) => setFilterInstallateur(e.target.value)}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   <option value="all">Alle installateurs</option>
                   {installateurs.map(inst => (
@@ -606,13 +593,19 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
                 <select
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   <option value="all">Alle statussen</option>
-                  <option value="no_monteur">Geen monteur</option>
-                  <option value="assigned">Monteur toegewezen</option>
-                  <option value="tested">Getest</option>
-                  <option value="delivered">Afgeleverd</option>
+                  <option value="Intake">Intake</option>
+                  <option value="Offerte">Offerte</option>
+                  <option value="Order">Order</option>
+                  <option value="Werkvoorbereiding">Werkvoorbereiding</option>
+                  <option value="Productie">Productie</option>
+                  <option value="Testen">Testen</option>
+                  <option value="Levering">Levering</option>
+                  <option value="Gereed voor facturatie">Gereed voor facturatie</option>
+                  <option value="Opgeleverd">Opgeleverd</option>
+                  <option value="Verloren">Verloren</option>
                 </select>
               </div>
             </div>
