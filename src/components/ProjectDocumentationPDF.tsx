@@ -269,20 +269,6 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           }
 
           if (allDocs.length > 0) {
-            doc.addPage();
-            yPosition = margin;
-
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 102, 204);
-            doc.text(folderName, margin, yPosition);
-            yPosition += 10;
-
-            doc.setDrawColor(0, 102, 204);
-            doc.setLineWidth(0.5);
-            doc.line(margin, yPosition, pageWidth - margin, yPosition);
-            yPosition += 10;
-
             console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
             for (const document of allDocs) {
               console.log(`📄 Processing document:`, document);
@@ -307,20 +293,6 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           console.log(`📄 Found ${documents?.length || 0} documents in ${folderName}`);
 
           if (documents && documents.length > 0) {
-            doc.addPage();
-            yPosition = margin;
-
-            doc.setFontSize(16);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(0, 102, 204);
-            doc.text(folderName, margin, yPosition);
-            yPosition += 10;
-
-            doc.setDrawColor(0, 102, 204);
-            doc.setLineWidth(0.5);
-            doc.line(margin, yPosition, pageWidth - margin, yPosition);
-            yPosition += 10;
-
             console.log(`📄 Adding ${documents.length} documents to PDF for ${folderName}`);
             for (const document of documents) {
               console.log(`📄 Processing document:`, document);
