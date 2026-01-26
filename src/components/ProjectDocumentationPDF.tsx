@@ -38,15 +38,20 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
     try {
       const margin = 15;
 
+      console.log('📄 addDocumentToPDF called for:', document.name, 'storage_path:', document.storage_path);
+
       if (!document.storage_path) {
-        console.log('Document has no storage path:', document.name);
+        console.log('❌ Document has no storage path:', document.name);
         return;
       }
 
       const fileExtension = document.name.split('.').pop()?.toLowerCase();
+      console.log('📄 File extension:', fileExtension);
 
       if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExtension || '')) {
+        console.log('📄 Loading image URL for:', document.storage_path);
         const imageUrl = await dataService.getFileUrl(document.storage_path);
+        console.log('📄 Image URL:', imageUrl ? 'Retrieved' : 'Failed');
         if (imageUrl) {
           doc.addPage();
 
@@ -55,12 +60,15 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : document.name;
           doc.text(title, margin, margin);
 
+          console.log('📄 Converting image to data URL...');
           const imgData = await loadImageAsDataUrl(imageUrl);
+          console.log('📄 Image data URL created, length:', imgData.length);
           const img = new Image();
           img.src = imgData;
 
-          await new Promise<void>((resolve) => {
+          await new Promise<void>((resolve, reject) => {
             img.onload = () => {
+              console.log('📄 Image loaded successfully, dimensions:', img.width, 'x', img.height);
               const imgWidth = img.width;
               const imgHeight = img.height;
               const maxWidth = pageWidth - 2 * margin;
@@ -79,20 +87,62 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
                 height = maxHeight;
               }
 
+              console.log('📄 Adding image to PDF at dimensions:', width, 'x', height);
               doc.addImage(imgData, 'PNG', margin, margin + 10, width, height);
+              console.log('✅ Image added to PDF successfully');
               resolve();
             };
+            img.onerror = (e) => {
+              console.error('❌ Image failed to load:', e);
+              reject(e);
+            };
           });
+        } else {
+          console.log('❌ No image URL retrieved');
         }
       } else if (fileExtension === 'pdf') {
+        console.log('📄 PDF document detected, adding placeholder page');
         doc.addPage();
-        doc.setFontSize(10);
+
+        doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
-        const title = document.verdelerName ? `${document.verdelerName} - PDF Document: ${document.name}` : `PDF Document: ${document.name}`;
+        doc.setTextColor(0, 102, 204);
+        const title = document.verdelerName ? `${document.verdelerName}` : 'Document';
         doc.text(title, margin, margin);
+
+        doc.setFontSize(11);
+        doc.setTextColor(0, 0, 0);
+        doc.text(document.name, margin, margin + 8);
+
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
-        doc.text('(PDF documents worden niet getoond in deze preview)', margin, margin + 10);
+        doc.setTextColor(100, 100, 100);
+
+        const infoText = [
+          '',
+          'Dit is een PDF document dat niet kan worden ingesloten in deze preview.',
+          '',
+          'Locatie van het document:',
+          `• Map: ${document.folder}`,
+          `• Bestand: ${document.name}`,
+          '',
+          'Dit document is beschikbaar via:',
+          '1. De Verdeler Details pagina',
+          '2. De Project Details pagina onder Documenten',
+          '3. Het Client Portal (indien gedeeld)',
+          '',
+          'Download het originele PDF bestand om de volledige inhoud te bekijken.'
+        ];
+
+        let textY = margin + 20;
+        infoText.forEach(line => {
+          doc.text(line, margin, textY);
+          textY += 5;
+        });
+
+        doc.setDrawColor(200, 200, 200);
+        doc.setLineWidth(0.3);
+        doc.rect(margin, margin + 15, pageWidth - 2 * margin, textY - margin - 15);
       } else {
         doc.addPage();
         doc.setFontSize(10);
@@ -258,7 +308,9 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           doc.line(margin, yPosition, pageWidth - margin, yPosition);
           yPosition += 10;
 
+          console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
           for (const document of allDocs) {
+            console.log(`📄 Processing document:`, document);
             await addDocumentToPDF(doc, document, pageWidth, pageHeight);
           }
         }
@@ -289,7 +341,9 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             doc.line(margin, yPosition, pageWidth - margin, yPosition);
             yPosition += 10;
 
+            console.log(`📄 Adding ${documents.length} documents to PDF for ${folderName}`);
             for (const document of documents) {
+              console.log(`📄 Processing document:`, document);
               await addDocumentToPDF(doc, document, pageWidth, pageHeight);
             }
           }
