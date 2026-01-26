@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
+import { PDFDocument } from 'pdf-lib';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import { X, FileText, Loader } from 'lucide-react';
@@ -34,7 +35,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
     });
   };
 
-  const addDocumentToPDF = async (doc: jsPDF, document: any, pageWidth: number, pageHeight: number) => {
+  const addDocumentToPDF = async (doc: jsPDF, document: any, pageWidth: number, pageHeight: number, pdfPages: Uint8Array[]) => {
     try {
       const margin = 15;
 
@@ -101,48 +102,57 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           console.log('❌ No image URL retrieved');
         }
       } else if (fileExtension === 'pdf') {
-        console.log('📄 PDF document detected, adding placeholder page');
-        doc.addPage();
+        console.log('📄 PDF document detected, loading for embedding...');
 
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(0, 102, 204);
-        const title = document.verdelerName ? `${document.verdelerName}` : 'Document';
-        doc.text(title, margin, margin);
+        try {
+          const pdfUrl = await dataService.getFileUrl(document.storage_path);
+          if (pdfUrl) {
+            console.log('📄 Fetching PDF from:', pdfUrl);
+            const response = await fetch(pdfUrl);
+            const pdfBytes = await response.arrayBuffer();
+            console.log('📄 PDF loaded, size:', pdfBytes.byteLength, 'bytes');
 
-        doc.setFontSize(11);
-        doc.setTextColor(0, 0, 0);
-        doc.text(document.name, margin, margin + 8);
+            // Add separator page before the PDF
+            doc.addPage();
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 102, 204);
+            const title = document.verdelerName ? `${document.verdelerName}` : 'Document';
+            doc.text(title, margin, margin);
 
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 100);
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            doc.text(document.name, margin, margin + 8);
 
-        const infoText = [
-          '',
-          'Dit is een PDF document dat niet kan worden ingesloten in deze preview.',
-          '',
-          'Locatie van het document:',
-          `• Map: ${document.folder}`,
-          `• Bestand: ${document.name}`,
-          '',
-          'Dit document is beschikbaar via:',
-          '1. De Verdeler Details pagina',
-          '2. De Project Details pagina onder Documenten',
-          '3. Het Client Portal (indien gedeeld)',
-          '',
-          'Download het originele PDF bestand om de volledige inhoud te bekijken.'
-        ];
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Het volgende PDF document wordt hierna ingevoegd:', margin, margin + 16);
 
-        let textY = margin + 20;
-        infoText.forEach(line => {
-          doc.text(line, margin, textY);
-          textY += 5;
-        });
+            // Store the PDF bytes for merging later
+            pdfPages.push(new Uint8Array(pdfBytes));
+            console.log('✅ PDF added to merge queue');
+          } else {
+            console.log('❌ Failed to get PDF URL');
+          }
+        } catch (error) {
+          console.error('❌ Error loading PDF:', error);
 
-        doc.setDrawColor(200, 200, 200);
-        doc.setLineWidth(0.3);
-        doc.rect(margin, margin + 15, pageWidth - 2 * margin, textY - margin - 15);
+          // Fallback to placeholder page if loading fails
+          doc.addPage();
+          doc.setFontSize(14);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(200, 0, 0);
+          doc.text('Fout bij laden van PDF', margin, margin);
+
+          doc.setFontSize(11);
+          doc.setTextColor(0, 0, 0);
+          doc.text(document.name, margin, margin + 8);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.text(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`, margin, margin + 16);
+        }
       } else {
         doc.addPage();
         doc.setFontSize(10);
@@ -167,6 +177,9 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 15;
       let yPosition = margin;
+
+      // Array to collect PDF documents for merging
+      const pdfPages: Uint8Array[] = [];
 
       const logoImg = new Image();
       logoImg.src = ewp2Logo;
@@ -311,7 +324,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
           for (const document of allDocs) {
             console.log(`📄 Processing document:`, document);
-            await addDocumentToPDF(doc, document, pageWidth, pageHeight);
+            await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
           }
         }
 
@@ -344,7 +357,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             console.log(`📄 Adding ${documents.length} documents to PDF for ${folderName}`);
             for (const document of documents) {
               console.log(`📄 Processing document:`, document);
-              await addDocumentToPDF(doc, document, pageWidth, pageHeight);
+              await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
             }
           }
         } catch (error) {
@@ -355,9 +368,66 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       }
 
       const fileName = `Documentatie_${project.project_number}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(fileName);
 
-      toast.success('Documentatie PDF gegenereerd!');
+      // If we have PDFs to merge, use pdf-lib to combine them
+      if (pdfPages.length > 0) {
+        console.log(`🔄 Merging ${pdfPages.length} PDF documents...`);
+        toast.loading('Samenvoegen van PDF documenten...');
+
+        try {
+          // Get the main PDF bytes from jsPDF
+          const mainPdfBytes = doc.output('arraybuffer');
+
+          // Create a new PDF document for merging
+          const mergedPdf = await PDFDocument.create();
+
+          // Load and copy all pages from the main PDF
+          console.log('📄 Loading main PDF...');
+          const mainPdf = await PDFDocument.load(mainPdfBytes);
+          const mainPages = await mergedPdf.copyPages(mainPdf, mainPdf.getPageIndices());
+          mainPages.forEach(page => mergedPdf.addPage(page));
+          console.log(`✅ Added ${mainPages.length} pages from main PDF`);
+
+          // Load and copy all pages from each collected PDF
+          for (let i = 0; i < pdfPages.length; i++) {
+            console.log(`📄 Loading PDF ${i + 1}/${pdfPages.length}...`);
+            try {
+              const pdfDoc = await PDFDocument.load(pdfPages[i]);
+              const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+              pages.forEach(page => mergedPdf.addPage(page));
+              console.log(`✅ Added ${pages.length} pages from PDF ${i + 1}`);
+            } catch (error) {
+              console.error(`❌ Error loading PDF ${i + 1}:`, error);
+            }
+          }
+
+          // Save the merged PDF
+          console.log('💾 Saving merged PDF...');
+          const mergedPdfBytes = await mergedPdf.save();
+          const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          URL.revokeObjectURL(url);
+
+          console.log('✅ Merged PDF saved successfully');
+          toast.dismiss();
+          toast.success('Documentatie PDF met ingesloten documenten gegenereerd!');
+        } catch (error) {
+          console.error('❌ Error merging PDFs:', error);
+          toast.dismiss();
+          toast.error('Er is een fout opgetreden bij het samenvoegen van PDFs. Eenvoudige versie wordt opgeslagen.');
+          // Fallback to simple save
+          doc.save(fileName);
+        }
+      } else {
+        // No PDFs to merge, just save the jsPDF document
+        doc.save(fileName);
+        toast.success('Documentatie PDF gegenereerd!');
+      }
+
       onClose();
     } catch (error) {
       console.error('Error generating PDF:', error);
