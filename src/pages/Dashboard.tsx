@@ -888,53 +888,55 @@ const Dashboard = () => {
                   })}
                 </p>
 
-                {/* Admin Role Selector */}
-                {currentUser?.role === 'admin' && (
-                  <div className="mt-4 flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
-                    <span className="text-sm text-gray-300">
-                      Weergave als:
-                    </span>
-                    <select
-                      value={viewAsRole}
-                      onChange={(e) => handleRoleChange(e.target.value)}
-                      className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="projectleider">Projectleider</option>
-                      <option value="montage">Montage</option>
-                      <option value="tester">Tester</option>
-                      <option value="logistiek">Logistiek</option>
-                      <option value="inkoop">Inkoop</option>
-                      <option value="engineering">Engineering</option>
-                    </select>
-                  </div>
-                )}
+                {/* Admin Role Selector and Location Filter */}
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  {currentUser?.role === 'admin' && (
+                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                      <span className="text-sm text-gray-300">
+                        Weergave als:
+                      </span>
+                      <select
+                        value={viewAsRole}
+                        onChange={(e) => handleRoleChange(e.target.value)}
+                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="projectleider">Projectleider</option>
+                        <option value="montage">Montage</option>
+                        <option value="tester">Tester</option>
+                        <option value="logistiek">Logistiek</option>
+                        <option value="inkoop">Inkoop</option>
+                        <option value="engineering">Engineering</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
+                  {(currentUser?.username === 'Lysander Koenraadt' ||
+                    currentUser?.username === 'Patrick Herman' ||
+                    currentUser?.username === 'Stefano de Weger') && (
+                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                      <span className="text-sm text-gray-300">
+                        Locatie filter:
+                      </span>
+                      <select
+                        value={filterMode}
+                        onChange={(e) => {
+                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
+                          console.log('Setting filter to:', newMode);
+                          setFilterMode(newMode);
+                        }}
+                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="all">Alles</option>
+                        <option value="naaldwijk">Naaldwijk</option>
+                        <option value="leerdam">Leerdam</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
-            {(currentUser?.username === 'Lysander Koenraadt' ||
-              currentUser?.username === 'Patrick Herman' ||
-              currentUser?.username === 'Stefano de Weger') && (
-              <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
-                <span className="text-sm text-gray-300">
-                  Locatie filter:
-                </span>
-                <select
-                  value={filterMode}
-                  onChange={(e) => {
-                    const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
-                    console.log('Setting filter to:', newMode);
-                    setFilterMode(newMode);
-                  }}
-                  className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">Alles</option>
-                  <option value="naaldwijk">Naaldwijk</option>
-                  <option value="leerdam">Leerdam</option>
-                </select>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-4">
