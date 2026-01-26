@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Folder, ChevronRight, ChevronDown, Server, Building, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Folder, ChevronRight, ChevronDown, Server, Building, FileText, MessageSquare } from 'lucide-react';
 import DocumentViewer from './DocumentViewer';
+import FolderNotesModal from './FolderNotesModal';
+import { supabase } from '../lib/supabase';
 
 interface ProjectDocumentManagerProps {
   project: any;
@@ -39,6 +41,75 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [expandedDistributors, setExpandedDistributors] = useState<Set<string>>(new Set());
+  const [notesModalOpen, setNotesModalOpen] = useState(false);
+  const [notesModalFolder, setNotesModalFolder] = useState<string | null>(null);
+  const [notesModalDistributor, setNotesModalDistributor] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [folderNoteCounts, setFolderNoteCounts] = useState<Record<string, number>>({});
+
+  // Get current user
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
+
+  // Load note counts for all folders
+  useEffect(() => {
+    if (project?.id) {
+      loadFolderNoteCounts();
+    }
+  }, [project?.id]);
+
+  const loadFolderNoteCounts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('folder_notes')
+        .select('folder_name, distributor_id')
+        .eq('project_id', project.id);
+
+      if (error) throw error;
+
+      const counts: Record<string, number> = {};
+      data?.forEach(note => {
+        const key = note.distributor_id
+          ? `${note.distributor_id}-${note.folder_name}`
+          : note.folder_name;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+
+      setFolderNoteCounts(counts);
+    } catch (error) {
+      console.error('Error loading note counts:', error);
+    }
+  };
+
+  const openNotesModal = (folderName: string, distributorId: string | null, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setNotesModalFolder(folderName);
+    setNotesModalDistributor(distributorId);
+    setNotesModalOpen(true);
+  };
+
+  const closeNotesModal = () => {
+    setNotesModalOpen(false);
+    setNotesModalFolder(null);
+    setNotesModalDistributor(null);
+    loadFolderNoteCounts();
+  };
+
+  const getFolderNoteCount = (folderName: string, distributorId: string | null): number => {
+    const key = distributorId
+      ? `${distributorId}-${folderName}`
+      : folderName;
+    return folderNoteCounts[key] || 0;
+  };
 
   // Debug: Log project data when component receives it
   React.useEffect(() => {
@@ -136,20 +207,43 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
           <div className="w-80 bg-[#2A303C] rounded-lg p-4 overflow-y-auto">
             <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Project Mappen</h3>
             <div className="space-y-1">
-              {projectLevelFolders.map((folder) => (
-                <div
-                  key={folder}
-                  className={`flex items-center p-3 rounded-lg transition-all cursor-pointer group ${
-                    selectedFolder === folder
-                      ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
-                      : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
-                  }`}
-                  onClick={() => handleSelectProjectFolder(folder)}
-                >
-                  <Folder size={16} className="mr-3 flex-shrink-0 text-blue-400" />
-                  <span className="text-sm font-medium truncate">{folder}</span>
-                </div>
-              ))}
+              {projectLevelFolders.map((folder) => {
+                const noteCount = getFolderNoteCount(folder, null);
+                return (
+                  <div
+                    key={folder}
+                    className={`flex items-center p-3 rounded-lg transition-all group ${
+                      selectedFolder === folder
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
+                        : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
+                    }`}
+                  >
+                    <div
+                      className="flex items-center flex-1 min-w-0 cursor-pointer"
+                      onClick={() => handleSelectProjectFolder(folder)}
+                    >
+                      <Folder size={16} className="mr-3 flex-shrink-0 text-blue-400" />
+                      <span className="text-sm font-medium truncate">{folder}</span>
+                    </div>
+                    <button
+                      onClick={(e) => openNotesModal(folder, null, e)}
+                      className={`ml-2 p-1 rounded transition-colors flex-shrink-0 relative ${
+                        selectedFolder === folder
+                          ? 'hover:bg-white/20 text-white'
+                          : 'hover:bg-blue-500/20 text-gray-400 hover:text-blue-400'
+                      }`}
+                      title="Bekijk notities"
+                    >
+                      <MessageSquare size={14} />
+                      {noteCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                          {noteCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -239,20 +333,43 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                   {/* Folders Level */}
                   {expandedDistributors.has(distributor.id) && (
                     <div className="ml-6 space-y-1">
-                      {defaultFolders.map((folder) => (
-                        <div
-                          key={folder}
-                          className={`flex items-center p-2 rounded-lg transition-all cursor-pointer group ${
-                            selectedDistributor === distributor.id && selectedFolder === folder
-                              ? 'bg-gradient-to-r from-purple-600 to-purple-400 text-white'
-                              : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
-                          }`}
-                          onClick={() => handleSelectFolder(distributor.id, folder)}
-                        >
-                          <Folder size={12} className="mr-2 flex-shrink-0 text-purple-400" />
-                          <span className="text-xs truncate">{folder}</span>
-                        </div>
-                      ))}
+                      {defaultFolders.map((folder) => {
+                        const noteCount = getFolderNoteCount(folder, distributor.id);
+                        return (
+                          <div
+                            key={folder}
+                            className={`flex items-center p-2 rounded-lg transition-all group ${
+                              selectedDistributor === distributor.id && selectedFolder === folder
+                                ? 'bg-gradient-to-r from-purple-600 to-purple-400 text-white'
+                                : 'hover:bg-[#1E2530] text-gray-300 hover:text-white'
+                            }`}
+                          >
+                            <div
+                              className="flex items-center flex-1 min-w-0 cursor-pointer"
+                              onClick={() => handleSelectFolder(distributor.id, folder)}
+                            >
+                              <Folder size={12} className="mr-2 flex-shrink-0 text-purple-400" />
+                              <span className="text-xs truncate">{folder}</span>
+                            </div>
+                            <button
+                              onClick={(e) => openNotesModal(folder, distributor.id, e)}
+                              className={`ml-2 p-1 rounded transition-colors flex-shrink-0 relative ${
+                                selectedDistributor === distributor.id && selectedFolder === folder
+                                  ? 'hover:bg-white/20 text-white'
+                                  : 'hover:bg-purple-500/20 text-gray-400 hover:text-purple-400'
+                              }`}
+                              title="Bekijk notities"
+                            >
+                              <MessageSquare size={12} />
+                              {noteCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold rounded-full w-3 h-3 flex items-center justify-center">
+                                  {noteCount}
+                                </span>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -333,6 +450,18 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
             )}
           </div>
         </div>
+      )}
+
+      {/* Notes Modal */}
+      {notesModalOpen && notesModalFolder && (
+        <FolderNotesModal
+          isOpen={notesModalOpen}
+          onClose={closeNotesModal}
+          projectId={project.id}
+          distributorId={notesModalDistributor}
+          folderName={notesModalFolder}
+          currentUserId={currentUserId}
+        />
       )}
     </div>
   );
