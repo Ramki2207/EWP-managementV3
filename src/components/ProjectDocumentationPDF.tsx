@@ -52,7 +52,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
           doc.setFontSize(10);
           doc.setFont('helvetica', 'bold');
-          doc.text(document.name, margin, margin);
+          const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : document.name;
+          doc.text(title, margin, margin);
 
           const imgData = await loadImageAsDataUrl(imageUrl);
           const img = new Image();
@@ -87,7 +88,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         doc.addPage();
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`PDF Document: ${document.name}`, margin, margin);
+        const title = document.verdelerName ? `${document.verdelerName} - PDF Document: ${document.name}` : `PDF Document: ${document.name}`;
+        doc.text(title, margin, margin);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.text('(PDF documents worden niet getoond in deze preview)', margin, margin + 10);
@@ -95,7 +97,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         doc.addPage();
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`Document: ${document.name}`, margin, margin);
+        const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : `Document: ${document.name}`;
+        doc.text(title, margin, margin);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.text(`Bestandstype: ${fileExtension?.toUpperCase() || 'Onbekend'}`, margin, margin + 10);
@@ -162,16 +165,28 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const creator = users.find((u: any) => u.id === project.created_by);
 
+      const totalHours = project.distributors?.reduce((sum: number, d: any) => {
+        const hours = parseFloat(d.expected_hours || d.expectedHours || 0);
+        return sum + hours;
+      }, 0) || 0;
+
+      const uniqueFabrikanten = [...new Set(
+        project.distributors
+          ?.map((d: any) => d.fabrikant)
+          .filter((f: string) => f && f.trim())
+      )];
+      const fabrikantValue = uniqueFabrikanten.length > 0 ? uniqueFabrikanten.join(', ') : '-';
+
       const fields = [
         { label: 'Aangemaakt door:', value: creator?.username || '-' },
         { label: 'Klant:', value: project.client || '-' },
         { label: 'Projectnummer:', value: project.project_number || '-' },
-        { label: 'Referentie klant:', value: project.client_reference || '-' },
-        { label: 'Fabrikant:', value: project.manufacturer || '-' },
+        { label: 'Referentie klant:', value: project.referentie_klant || '-' },
+        { label: 'Fabrikant:', value: fabrikantValue },
         { label: 'Verwachte leverdatum:', value: project.expected_delivery_date
           ? new Date(project.expected_delivery_date).toLocaleDateString('nl-NL')
           : '-' },
-        { label: 'Voorcalculatorische uren:', value: project.estimated_hours?.toString() || '-' }
+        { label: 'Voorcalculatorische uren:', value: totalHours > 0 ? `${totalHours} uur` : '-' }
       ];
 
       for (const field of fields) {
@@ -182,18 +197,82 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         yPosition += 7;
       }
 
-      const folders = [
-        { name: 'Verdeler aanzicht', folder: 'Verdeler aanzicht' },
-        { name: 'Installatie schema', folder: 'Installatie schema' },
-        { name: 'Bestelling', folder: 'Bestelling' },
-        { name: 'Calculatie', folder: 'Calculatie' }
-      ];
+      const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
+      const projectFolders = ['Bestelling', 'Calculatie'];
 
-      for (const folderInfo of folders) {
-        toast.loading(`Laden van documenten uit ${folderInfo.name}...`);
+      for (const folderName of distributorFolders) {
+        const allDocs: any[] = [];
+
+        console.log(`📄 Loading documents from distributor folder: ${folderName}`);
+        console.log(`📄 Project has ${project.distributors?.length || 0} distributors`);
+
+        if (project.distributors && project.distributors.length > 0) {
+          for (const distributor of project.distributors) {
+            toast.loading(`Laden van ${folderName} voor ${distributor.kast_naam || distributor.distributor_id}...`);
+
+            try {
+              console.log(`📄 Loading ${folderName} for distributor ${distributor.id} (${distributor.kast_naam})`);
+              const docs = await dataService.getDocuments(project.id, distributor.id, folderName);
+              console.log(`📄 Found ${docs?.length || 0} documents in ${folderName} for ${distributor.kast_naam}`);
+
+              if (docs && docs.length > 0) {
+                docs.forEach((doc: any) => {
+                  doc.verdelerName = distributor.kast_naam || distributor.distributor_id;
+                });
+                allDocs.push(...docs);
+              }
+
+              try {
+                const actueleFolder = `${folderName}/Actueel`;
+                const actueleDocs = await dataService.getDocuments(project.id, distributor.id, actueleFolder);
+                console.log(`📄 Found ${actueleDocs?.length || 0} documents in ${actueleFolder}`);
+                if (actueleDocs && actueleDocs.length > 0) {
+                  actueleDocs.forEach((doc: any) => {
+                    doc.verdelerName = distributor.kast_naam || distributor.distributor_id;
+                  });
+                  allDocs.push(...actueleDocs);
+                }
+              } catch (error) {
+                console.log(`📄 No Actueel subfolder for ${folderName}`);
+              }
+            } catch (error) {
+              console.error(`Error loading ${folderName} for distributor ${distributor.id}:`, error);
+            }
+          }
+        }
+
+        console.log(`📄 Total documents collected for ${folderName}: ${allDocs.length}`);
+
+        if (allDocs.length > 0) {
+          doc.addPage();
+          yPosition = margin;
+
+          doc.setFontSize(16);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(0, 102, 204);
+          doc.text(folderName, margin, yPosition);
+          yPosition += 10;
+
+          doc.setDrawColor(0, 102, 204);
+          doc.setLineWidth(0.5);
+          doc.line(margin, yPosition, pageWidth - margin, yPosition);
+          yPosition += 10;
+
+          for (const document of allDocs) {
+            await addDocumentToPDF(doc, document, pageWidth, pageHeight);
+          }
+        }
+
+        toast.dismiss();
+      }
+
+      for (const folderName of projectFolders) {
+        toast.loading(`Laden van documenten uit ${folderName}...`);
 
         try {
-          const documents = await dataService.getDocuments(project.id, null, folderInfo.folder);
+          console.log(`📄 Loading documents from project folder: ${folderName}`);
+          const documents = await dataService.getDocuments(project.id, null, folderName);
+          console.log(`📄 Found ${documents?.length || 0} documents in ${folderName}`);
 
           if (documents && documents.length > 0) {
             doc.addPage();
@@ -202,7 +281,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             doc.setFontSize(16);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(0, 102, 204);
-            doc.text(`${folderInfo.name}`, margin, yPosition);
+            doc.text(folderName, margin, yPosition);
             yPosition += 10;
 
             doc.setDrawColor(0, 102, 204);
@@ -215,7 +294,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             }
           }
         } catch (error) {
-          console.error(`Error loading documents from ${folderInfo.name}:`, error);
+          console.error(`Error loading documents from ${folderName}:`, error);
         }
 
         toast.dismiss();
