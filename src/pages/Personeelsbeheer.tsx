@@ -47,6 +47,7 @@ export default function Personeelsbeheer() {
     week: '',
     year: ''
   });
+  const [locationFilter, setLocationFilter] = useState<'all' | 'utrecht' | 'denhaag'>('all');
 
   useEffect(() => {
     loadUsers();
@@ -1115,13 +1116,65 @@ export default function Personeelsbeheer() {
           {/* Pending Weekstaten */}
           {weekstaten.filter(w => w.status === 'submitted').length > 0 && (
             <div className="card p-6">
-              <h2 className="text-xl font-semibold text-white mb-4 flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-yellow-400" />
-                <span>Te Beoordelen ({pendingCount.weekstaten})</span>
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-yellow-400" />
+                  <span>Te Beoordelen ({pendingCount.weekstaten})</span>
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-400 mr-2">Locatie:</span>
+                  <button
+                    onClick={() => setLocationFilter('all')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      locationFilter === 'all'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-[#2A303C] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Alle
+                  </button>
+                  <button
+                    onClick={() => setLocationFilter('utrecht')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      locationFilter === 'utrecht'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-[#2A303C] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Utrecht
+                  </button>
+                  <button
+                    onClick={() => setLocationFilter('denhaag')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      locationFilter === 'denhaag'
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-[#2A303C] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Den Haag
+                  </button>
+                </div>
+              </div>
               <div className="space-y-3">
                 {weekstaten
-                  .filter(w => w.status === 'submitted')
+                  .filter(w => {
+                    if (w.status !== 'submitted') return false;
+
+                    // Apply location filter
+                    if (locationFilter !== 'all') {
+                      const userLocations = w.user?.assigned_locations || w.user?.assignedLocations || [];
+
+                      if (locationFilter === 'utrecht') {
+                        // Show only users with Leerdam location
+                        if (!userLocations.includes('Leerdam')) return false;
+                      } else if (locationFilter === 'denhaag') {
+                        // Show only users with Naaldwijk or Rotterdam location
+                        if (!userLocations.includes('Naaldwijk') && !userLocations.includes('Rotterdam')) return false;
+                      }
+                    }
+
+                    return true;
+                  })
                   .map(weekstaat => (
                     <div
                       key={weekstaat.id}
