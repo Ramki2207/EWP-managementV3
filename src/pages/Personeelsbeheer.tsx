@@ -139,7 +139,7 @@ export default function Personeelsbeheer() {
       .from('weekstaten')
       .select(`
         *,
-        user:users!weekstaten_user_id_fkey(id, username, email)
+        user:users!weekstaten_user_id_fkey(id, username, email, assigned_locations)
       `)
       .order('created_at', { ascending: false });
 
@@ -164,7 +164,7 @@ export default function Personeelsbeheer() {
       .from('leave_requests')
       .select(`
         *,
-        user:users!leave_requests_user_id_fkey(id, username, email)
+        user:users!leave_requests_user_id_fkey(id, username, email, assigned_locations)
       `)
       .order('created_at', { ascending: false });
 
@@ -183,7 +183,7 @@ export default function Personeelsbeheer() {
       .from('vacation_requests')
       .select(`
         *,
-        user:users!vacation_requests_user_id_fkey(id, username, email)
+        user:users!vacation_requests_user_id_fkey(id, username, email, assigned_locations)
       `)
       .order('created_at', { ascending: false});
 
