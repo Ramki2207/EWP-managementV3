@@ -96,3 +96,64 @@
     @apply flex flex-col md:flex-row gap-2 justify-end;
   }
 }
+
+/* Print Styles */
+@media print {
+  body {
+    @apply bg-white text-black;
+  }
+
+  .card {
+    @apply border border-gray-300 shadow-none bg-white;
+  }
+
+  h1, h2, h3, h4, h5, h6, p, span, div, td, th {
+    @apply text-black;
+  }
+
+  .text-white {
+    @apply text-black;
+  }
+
+  .text-gray-400,
+  .text-gray-300 {
+    @apply text-gray-600;
+  }
+
+  .bg-purple-500\/10 {
+    @apply bg-gray-100;
+  }
+
+  .text-purple-400 {
+    @apply text-gray-800;
+  }
+
+  table {
+    @apply border-collapse w-full;
+  }
+
+  thead th {
+    @apply border border-gray-400 bg-gray-200 text-black;
+  }
+
+  tbody td {
+    @apply border border-gray-400 text-black;
+  }
+
+  .border-gray-700,
+  .border-gray-800 {
+    @apply border-gray-400;
+  }
+
+  /* Hide elements that shouldn't be printed */
+  nav,
+  .print\:hidden,
+  button.print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .card {
+    page-break-inside: avoid;
+  }
+}

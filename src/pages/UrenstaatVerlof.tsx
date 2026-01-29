@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Plus, Save, Trash2, FileText, Send, Calendar, Briefcase, Umbrella, Sun } from 'lucide-react';
+import { Plus, Save, Trash2, FileText, Send, Calendar, Briefcase, Umbrella, Sun, Printer } from 'lucide-react';
 
 const ACTIVITY_CODES = [
   { code: '100', description: 'Montage verdelers' },
@@ -684,6 +684,10 @@ export default function UrenstaatVerlof() {
     return totals;
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -786,6 +790,14 @@ export default function UrenstaatVerlof() {
           {selectedWeekstaat && (
             <div className="space-y-6">
               <div className="card p-6">
+                {/* Print-only header with user info */}
+                <div className="hidden print:block mb-6 pb-4 border-b border-gray-400">
+                  <h1 className="text-2xl font-bold text-black mb-2">Urenstaat</h1>
+                  <p className="text-gray-800"><strong>Medewerker:</strong> {user.username}</p>
+                  <p className="text-gray-800"><strong>Week:</strong> {selectedWeekstaat.week_number} - {selectedWeekstaat.year}</p>
+                  <p className="text-gray-800"><strong>Status:</strong> {getStatusLabel(selectedWeekstaat.status)}</p>
+                </div>
+
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-semibold text-white">
@@ -795,19 +807,28 @@ export default function UrenstaatVerlof() {
                       {getStatusLabel(selectedWeekstaat.status)}
                     </span>
                   </div>
-                  <button
-                    onClick={() => {
-                      setSelectedWeekstaat(null);
-                      setEntries([]);
-                    }}
-                    className="btn-secondary"
-                  >
-                    Terug
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={handlePrint}
+                      className="btn-secondary flex items-center space-x-2 print:hidden"
+                    >
+                      <Printer className="w-4 h-4" />
+                      <span>Afdrukken</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedWeekstaat(null);
+                        setEntries([]);
+                      }}
+                      className="btn-secondary print:hidden"
+                    >
+                      Terug
+                    </button>
+                  </div>
                 </div>
 
                 {selectedWeekstaat.status === 'rejected' && selectedWeekstaat.rejection_reason && (
-                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg print:hidden">
                     <h3 className="text-red-400 font-semibold mb-2">Afgekeurd - Aanpassingen vereist</h3>
                     <p className="text-red-300 text-sm mb-1"><strong>Reden:</strong></p>
                     <p className="text-red-200">{selectedWeekstaat.rejection_reason}</p>
@@ -816,7 +837,7 @@ export default function UrenstaatVerlof() {
                 )}
 
                 {(selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected') && (
-                  <div className="mb-4 flex items-center justify-between">
+                  <div className="mb-4 flex items-center justify-between print:hidden">
                     <button onClick={addEntry} className="btn-secondary flex items-center space-x-2">
                       <Plus className="w-4 h-4" />
                       <span>Regel toevoegen</span>
