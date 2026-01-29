@@ -756,7 +756,7 @@ const ProjectDetails = () => {
                 <FileText size={20} />
                 <span>Pakbon</span>
               </button>
-              {currentUser?.username === 'Dave Moret' && (
+              {['Dave Moret', 'Ronald', 'Radjesh'].includes(currentUser?.username || '') && (
                 <button
                   onClick={() => setShowDocumentationPDF(true)}
                   className="btn-secondary flex items-center space-x-2"
