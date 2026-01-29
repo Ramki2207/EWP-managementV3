@@ -99,61 +99,58 @@
 
 /* Print Styles */
 @media print {
+  @page {
+    margin: 1.5cm;
+    size: A4 landscape;
+  }
+
   body {
-    @apply bg-white text-black;
+    background: white !important;
+    color: black !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .card {
-    @apply border border-gray-300 shadow-none bg-white;
+    border: none !important;
+    shadow: none !important;
+    background: white !important;
+    padding: 0 !important;
   }
 
-  h1, h2, h3, h4, h5, h6, p, span, div, td, th {
-    @apply text-black;
-  }
-
-  .text-white {
-    @apply text-black;
-  }
-
-  .text-gray-400,
-  .text-gray-300 {
-    @apply text-gray-600;
-  }
-
-  .bg-purple-500\/10 {
-    @apply bg-gray-100;
-  }
-
-  .text-purple-400 {
-    @apply text-gray-800;
-  }
-
-  table {
-    @apply border-collapse w-full;
-  }
-
-  thead th {
-    @apply border border-gray-400 bg-gray-200 text-black;
-  }
-
-  tbody td {
-    @apply border border-gray-400 text-black;
-  }
-
-  .border-gray-700,
-  .border-gray-800 {
-    @apply border-gray-400;
+  h1, h2, h3, h4, h5, h6, p, span, div, td, th, label {
+    color: black !important;
   }
 
   /* Hide elements that shouldn't be printed */
   nav,
   .print\:hidden,
-  button.print\:hidden {
+  button,
+  .btn-primary,
+  .btn-secondary {
     display: none !important;
   }
 
+  /* Show print-only elements */
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:table {
+    display: table !important;
+  }
+
   /* Ensure proper page breaks */
-  .card {
+  .weekstaat-print-container {
+    page-break-inside: avoid;
+  }
+
+  table {
     page-break-inside: avoid;
   }
 }

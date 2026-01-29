@@ -789,15 +789,184 @@ export default function UrenstaatVerlof() {
           {/* Weekstaat Editor - continues in next message due to length */}
           {selectedWeekstaat && (
             <div className="space-y-6">
-              <div className="card p-6">
-                {/* Print-only header with user info */}
-                <div className="hidden print:block mb-6 pb-4 border-b border-gray-400">
-                  <h1 className="text-2xl font-bold text-black mb-2">Urenstaat</h1>
-                  <p className="text-gray-800"><strong>Medewerker:</strong> {user.username}</p>
-                  <p className="text-gray-800"><strong>Week:</strong> {selectedWeekstaat.week_number} - {selectedWeekstaat.year}</p>
-                  <p className="text-gray-800"><strong>Status:</strong> {getStatusLabel(selectedWeekstaat.status)}</p>
+              {/* Print-only view with Excel-like styling */}
+              <div className="hidden print:block weekstaat-print-container" style={{ padding: '20px', backgroundColor: 'white' }}>
+                <style>{`
+                  @media print {
+                    .print-table {
+                      width: 100%;
+                      border-collapse: collapse;
+                      font-family: Arial, sans-serif;
+                      font-size: 11pt;
+                    }
+                    .print-table th,
+                    .print-table td {
+                      border: 1px solid #000;
+                      padding: 8px;
+                      text-align: left;
+                      color: #000 !important;
+                    }
+                    .print-table th {
+                      background-color: #f0f0f0 !important;
+                      font-weight: bold;
+                      text-align: center;
+                    }
+                    .print-table td {
+                      background-color: white !important;
+                    }
+                    .print-header {
+                      margin-bottom: 20px;
+                      display: flex;
+                      justify-content: space-between;
+                      align-items: flex-start;
+                    }
+                    .print-logo {
+                      width: 150px;
+                      height: auto;
+                    }
+                    .print-info {
+                      text-align: right;
+                    }
+                    .print-info-table {
+                      border-collapse: collapse;
+                      margin-left: auto;
+                    }
+                    .print-info-table td {
+                      border: 1px solid #000;
+                      padding: 5px 10px;
+                      color: #000 !important;
+                    }
+                    .print-info-table td:first-child {
+                      font-weight: bold;
+                      background-color: #f0f0f0 !important;
+                    }
+                    .print-totals-row {
+                      background-color: #e0e0e0 !important;
+                      font-weight: bold;
+                    }
+                    .print-day-cell {
+                      text-align: center;
+                      width: 60px;
+                    }
+                    .print-activity-cell {
+                      min-width: 200px;
+                    }
+                    .print-description-cell {
+                      min-width: 150px;
+                      word-wrap: break-word;
+                      white-space: normal;
+                    }
+                  }
+                `}</style>
+
+                {/* Header with logo and info */}
+                <div className="print-header" style={{ marginBottom: '30px' }}>
+                  <img src="/EWP-Logo_blauw.png" alt="EWP Logo" className="print-logo" />
+                  <table className="print-info-table">
+                    <tbody>
+                      <tr>
+                        <td>Medewerker:</td>
+                        <td>{user.username}</td>
+                      </tr>
+                      <tr>
+                        <td>Week:</td>
+                        <td>{selectedWeekstaat.week_number}</td>
+                      </tr>
+                      <tr>
+                        <td>Jaar:</td>
+                        <td>{selectedWeekstaat.year}</td>
+                      </tr>
+                      <tr>
+                        <td>Status:</td>
+                        <td>{getStatusLabel(selectedWeekstaat.status)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
+                <h2 style={{ fontSize: '18pt', fontWeight: 'bold', marginBottom: '15px', color: '#000' }}>
+                  Urenstaat Week {selectedWeekstaat.week_number} - {selectedWeekstaat.year}
+                </h2>
+
+                {/* Excel-like table */}
+                <table className="print-table">
+                  <thead>
+                    <tr>
+                      <th className="print-activity-cell">Activiteit</th>
+                      <th className="print-description-cell">Omschrijving</th>
+                      <th className="print-day-cell">Ma</th>
+                      <th className="print-day-cell">Di</th>
+                      <th className="print-day-cell">Wo</th>
+                      <th className="print-day-cell">Do</th>
+                      <th className="print-day-cell">Vr</th>
+                      <th className="print-day-cell">Za</th>
+                      <th className="print-day-cell">Zo</th>
+                      <th className="print-day-cell">Totaal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entries.map((entry, index) => {
+                      const rowTotal =
+                        (parseFloat(entry.monday?.toString()) || 0) +
+                        (parseFloat(entry.tuesday?.toString()) || 0) +
+                        (parseFloat(entry.wednesday?.toString()) || 0) +
+                        (parseFloat(entry.thursday?.toString()) || 0) +
+                        (parseFloat(entry.friday?.toString()) || 0) +
+                        (parseFloat(entry.saturday?.toString()) || 0) +
+                        (parseFloat(entry.sunday?.toString()) || 0);
+
+                      return (
+                        <tr key={index}>
+                          <td className="print-activity-cell">
+                            {entry.activity_code} - {entry.activity_description}
+                          </td>
+                          <td className="print-description-cell">
+                            {entry.workorder_number || '-'}
+                          </td>
+                          <td className="print-day-cell">{entry.monday || '-'}</td>
+                          <td className="print-day-cell">{entry.tuesday || '-'}</td>
+                          <td className="print-day-cell">{entry.wednesday || '-'}</td>
+                          <td className="print-day-cell">{entry.thursday || '-'}</td>
+                          <td className="print-day-cell">{entry.friday || '-'}</td>
+                          <td className="print-day-cell">{entry.saturday || '-'}</td>
+                          <td className="print-day-cell">{entry.sunday || '-'}</td>
+                          <td className="print-day-cell">{rowTotal.toFixed(1)}</td>
+                        </tr>
+                      );
+                    })}
+                    {entries.length === 0 && (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '20px' }}>
+                          Geen uren geregistreerd
+                        </td>
+                      </tr>
+                    )}
+                    {entries.length > 0 && (() => {
+                      const totals = calculateTotals();
+                      return (
+                        <tr className="print-totals-row">
+                          <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>TOTAAL:</td>
+                          <td className="print-day-cell">{totals.monday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.tuesday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.wednesday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.thursday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.friday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.saturday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.sunday.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.total.toFixed(1)}</td>
+                        </tr>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+
+                {/* Footer */}
+                <div style={{ marginTop: '30px', fontSize: '9pt', color: '#666' }}>
+                  <p>Afgedrukt op: {new Date().toLocaleDateString('nl-NL', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+              </div>
+
+              <div className="card p-6 print:hidden">
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h2 className="text-xl font-semibold text-white">
