@@ -9,6 +9,8 @@ const ACTIVITY_CODES = [
   { code: '103', description: 'Montage buiten' },
   { code: '104', description: 'Regieklus' },
   { code: '105', description: 'Montage Halyester' },
+  { code: '106', description: 'Algemeen' },
+  { code: '107', description: 'Transport' },
   { code: '181', description: 'Werkvoorbereiding/magazijn' },
   { code: '200', description: 'Teken uren' },
   { code: '301', description: 'Offerte uren' },
@@ -17,6 +19,7 @@ const ACTIVITY_CODES = [
   { code: '403', description: 'Afdelingsoverleg' },
   { code: '404', description: 'Opruimwerkzaamheden' },
   { code: '405', description: 'Corvee' },
+  { code: '506', description: 'Dokter/Tandarts' },
 ];
 
 const LEAVE_TYPES = [
