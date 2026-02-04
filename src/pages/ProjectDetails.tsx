@@ -1140,7 +1140,7 @@ const ProjectDetails = () => {
                   {project.distributors.map((verdeler: any) => (
                     <button
                       key={verdeler.id}
-                      onClick={() => setSelectedVerdelerForChecklist(verdeler)}
+                      onClick={() => setSelectedVerdelerForChecklist({ ...verdeler, project_id: project.id })}
                       className="bg-[#2A303C] hover:bg-[#374151] rounded-lg p-4 text-left transition-colors"
                     >
                       <div className="flex items-center justify-between mb-2">

@@ -155,12 +155,22 @@ const VerdelerLeveringChecklist: React.FC<VerdelerLeveringChecklistProps> = ({
   };
 
   const handleSave = async () => {
+    if (!verdeler.project_id || !verdeler.id) {
+      toast.error('Ontbrekende project of verdeler gegevens');
+      console.error('Missing data:', { verdeler });
+      return;
+    }
+
     try {
       console.log('🚚 Starting save...', {
         project_id: verdeler.project_id,
         verdeler_id: verdeler.id,
-        isComplete: isComplete()
+        isComplete: isComplete(),
+        fysiekChecklist,
+        documentatieChecklist,
+        uploadedPhotos
       });
+
       setSaving(true);
 
       const result = await dataService.saveVerdelerDelivery(verdeler.project_id, verdeler.id, {
@@ -171,17 +181,22 @@ const VerdelerLeveringChecklist: React.FC<VerdelerLeveringChecklistProps> = ({
       });
 
       console.log('🚚 Save result:', result);
-      toast.success('Levering checklist opgeslagen');
 
-      console.log('🚚 Calling onComplete...');
-      if (onComplete) {
-        onComplete();
+      if (result) {
+        toast.success('Levering checklist succesvol opgeslagen!');
+
+        console.log('🚚 Calling onComplete...');
+        if (onComplete) {
+          onComplete();
+        } else {
+          console.warn('🚚 onComplete is not defined!');
+        }
       } else {
-        console.warn('🚚 onComplete is not defined!');
+        toast.error('Geen resultaat ontvangen van database');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving delivery checklist:', error);
-      toast.error('Fout bij opslaan van checklist');
+      toast.error(error?.message || 'Fout bij opslaan van checklist');
     } finally {
       setSaving(false);
     }
