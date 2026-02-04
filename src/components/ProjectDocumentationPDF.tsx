@@ -192,18 +192,18 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         yPosition = Math.max(yPosition + logoHeight + 20, yPosition + 40);
       }
 
-      doc.setFontSize(48);
+      doc.setFontSize(72);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text('Verdeler Documentatie', margin, yPosition);
-      yPosition += 25;
+      yPosition += 35;
 
       doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(1);
+      doc.setLineWidth(1.5);
       doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 20;
+      yPosition += 30;
 
-      doc.setFontSize(18);
+      doc.setFontSize(28);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(50, 50, 50);
 
@@ -213,26 +213,26 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       const verdelerHours = parseFloat(selectedVerdeler.expected_hours || selectedVerdeler.expectedHours || 0);
 
       const fields = [
-        { label: 'Aangemaakt door:', value: creator?.username || '-' },
-        { label: 'Klant:', value: project.client || '-' },
-        { label: 'Projectnummer:', value: project.project_number || '-' },
-        { label: 'Referentie klant:', value: project.referentie_klant || '-' },
-        { label: 'Verdeler:', value: selectedVerdeler.kast_naam || selectedVerdeler.distributor_id || '-' },
-        { label: 'Fabrikant:', value: selectedVerdeler.fabrikant || '-' },
+        { label: 'Aangemaakt door:', value: creator?.username || '-', boldValue: false },
+        { label: 'Klant:', value: project.client || '-', boldValue: false },
+        { label: 'Projectnummer:', value: project.project_number || '-', boldValue: true },
+        { label: 'Referentie klant:', value: project.referentie_klant || '-', boldValue: false },
+        { label: 'Verdeler:', value: selectedVerdeler.kast_naam || selectedVerdeler.distributor_id || '-', boldValue: false },
+        { label: 'Fabrikant:', value: selectedVerdeler.fabrikant || '-', boldValue: false },
         { label: 'Verwachte leverdatum:', value: project.expected_delivery_date
           ? new Date(project.expected_delivery_date).toLocaleDateString('nl-NL')
-          : '-' },
-        { label: 'Voorcalculatorische uren:', value: verdelerHours > 0 ? `${verdelerHours} uur` : '-' }
+          : '-', boldValue: false },
+        { label: 'Voorcalculatorische uren:', value: verdelerHours > 0 ? `${verdelerHours} uur` : '-', boldValue: false }
       ];
 
       for (const field of fields) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
+        doc.setFontSize(28);
         doc.text(field.label, margin, yPosition);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(16);
-        doc.text(field.value, margin + 80, yPosition);
-        yPosition += 15;
+        doc.setFont('helvetica', field.boldValue ? 'bold' : 'normal');
+        doc.setFontSize(26);
+        doc.text(field.value, margin + 110, yPosition);
+        yPosition += 22;
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
