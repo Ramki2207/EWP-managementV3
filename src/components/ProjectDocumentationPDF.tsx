@@ -192,11 +192,11 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         yPosition = Math.max(yPosition + logoHeight + 20, yPosition + 40);
       }
 
-      doc.setFontSize(52);
+      doc.setFontSize(44);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text('Verdeler Documentatie', margin, yPosition);
-      yPosition += 28;
+      yPosition += 25;
 
       doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(1.5);
