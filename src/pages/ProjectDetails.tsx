@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker, CheckCircle } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
@@ -19,6 +19,7 @@ import PakbonManager from '../components/PakbonManager';
 import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 import PakbonGenerator from '../components/PakbonGenerator';
 import ProjectDocumentationPDF from '../components/ProjectDocumentationPDF';
+import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -47,6 +48,7 @@ const ProjectDetails = () => {
   const [showStickerGenerator, setShowStickerGenerator] = useState(false);
   const [showPakbonGenerator, setShowPakbonGenerator] = useState(false);
   const [showDocumentationPDF, setShowDocumentationPDF] = useState(false);
+  const [selectedVerdelerForChecklist, setSelectedVerdelerForChecklist] = useState<any | null>(null);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -1126,6 +1128,48 @@ const ProjectDetails = () => {
                 <InvoiceReportPDF project={project} />
               </div>
             )}
+
+            {/* Manual Delivery Checklist Section - Show buttons for each verdeler */}
+            {project?.distributors && project.distributors.length > 0 && (
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                <h3 className="text-lg font-semibold text-green-400 mb-4">✅ Levering Checklists</h3>
+                <p className="text-gray-400 text-sm mb-4">
+                  Open de levering checklist voor een specifieke verdeler om foto's toe te voegen en de checklist in te vullen.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {project.distributors.map((verdeler: any) => (
+                    <button
+                      key={verdeler.id}
+                      onClick={() => setSelectedVerdelerForChecklist(verdeler)}
+                      className="bg-[#2A303C] hover:bg-[#374151] rounded-lg p-4 text-left transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-white text-sm">
+                          {verdeler.kast_naam || 'Naamloze Verdeler'}
+                        </h4>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          verdeler.status === 'Opgeleverd' ? 'bg-green-900/30 text-green-400' :
+                          verdeler.status === 'Levering' ? 'bg-blue-900/30 text-blue-400' :
+                          verdeler.status === 'Testen' ? 'bg-yellow-900/30 text-yellow-400' :
+                          'bg-gray-700 text-gray-300'
+                        }`}>
+                          {verdeler.status || 'Geen status'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {verdeler.systeem && (
+                          <div>Systeem: <span className="text-gray-300">{verdeler.systeem}</span></div>
+                        )}
+                        <div className="mt-1 text-blue-400 flex items-center">
+                          <CheckCircle size={14} className="mr-1" />
+                          Open Checklist
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1658,6 +1702,40 @@ const ProjectDetails = () => {
           project={project}
           onClose={() => setShowDocumentationPDF(false)}
         />
+      )}
+
+      {/* Verdeler Levering Checklist Modal */}
+      {selectedVerdelerForChecklist && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-[#1e2836] rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  Levering Checklist - {selectedVerdelerForChecklist.kast_naam || 'Naamloze Verdeler'}
+                </h2>
+                <p className="text-gray-400 text-sm mt-1">
+                  Vul de checklist in en voeg foto's toe voor de levering
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedVerdelerForChecklist(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              <VerdelerLeveringChecklist
+                verdeler={selectedVerdelerForChecklist}
+                onComplete={() => {
+                  setSelectedVerdelerForChecklist(null);
+                  loadProject();
+                }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
