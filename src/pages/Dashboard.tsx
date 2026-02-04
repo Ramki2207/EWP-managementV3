@@ -1177,6 +1177,13 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Peter Visser: Monteur Assignment Calendar (Table Only) */}
+      {currentUser?.username === 'Peter Visser' && (
+        <div className="mb-8">
+          <MonteurAssignmentCalendar tableOnly={true} />
+        </div>
+      )}
+
       {/* Info cards */}
       {/* Enhanced Project Table Section - Top Priority Position */}
       {/* Project Activity Banner */}

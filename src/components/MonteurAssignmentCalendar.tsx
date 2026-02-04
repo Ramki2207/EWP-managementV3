@@ -31,13 +31,14 @@ interface VerdelerAssignment {
 
 interface MonteurAssignmentCalendarProps {
   onAssignmentNeeded?: () => void;
+  tableOnly?: boolean;
 }
 
 type ViewMode = 'calendar' | 'table';
 
-export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: MonteurAssignmentCalendarProps) {
+export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnly = false }: MonteurAssignmentCalendarProps) {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>(tableOnly ? 'table' : 'calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [verdelers, setVerdelers] = useState<VerdelerAssignment[]>([]);
   const [filteredVerdelers, setFilteredVerdelers] = useState<VerdelerAssignment[]>([]);
@@ -511,30 +512,32 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded }: Monteu
             >
               <Download size={20} />
             </button>
-            <div className="flex bg-[#1a1f2a] rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('calendar')}
-                className={`px-4 py-2 rounded transition-colors ${
-                  viewMode === 'calendar'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <Calendar size={18} className="inline mr-2" />
-                Kalender
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                className={`px-4 py-2 rounded transition-colors ${
-                  viewMode === 'table'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                <TableIcon size={18} className="inline mr-2" />
-                Tabel
-              </button>
-            </div>
+            {!tableOnly && (
+              <div className="flex bg-[#1a1f2a] rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('calendar')}
+                  className={`px-4 py-2 rounded transition-colors ${
+                    viewMode === 'calendar'
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Calendar size={18} className="inline mr-2" />
+                  Kalender
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-4 py-2 rounded transition-colors ${
+                    viewMode === 'table'
+                      ? 'bg-blue-500 text-white'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <TableIcon size={18} className="inline mr-2" />
+                  Tabel
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
