@@ -1296,6 +1296,20 @@ export default function Personeelsbeheer() {
                       if (weekstaatFilters.status && weekstaat.status !== weekstaatFilters.status) return false;
                       if (weekstaatFilters.week && weekstaat.week_number !== parseInt(weekstaatFilters.week)) return false;
                       if (weekstaatFilters.year && weekstaat.year !== parseInt(weekstaatFilters.year)) return false;
+
+                      // Apply location filter
+                      if (locationFilter !== 'all') {
+                        const userLocations = weekstaat.user?.assigned_locations || weekstaat.user?.assignedLocations || [];
+
+                        if (locationFilter === 'utrecht') {
+                          // Show only users with Leerdam location
+                          if (!userLocations.includes('Leerdam')) return false;
+                        } else if (locationFilter === 'denhaag') {
+                          // Show only users with Naaldwijk or Rotterdam location
+                          if (!userLocations.includes('Naaldwijk') && !userLocations.includes('Rotterdam')) return false;
+                        }
+                      }
+
                       return true;
                     })
                     .map(weekstaat => {
@@ -1345,6 +1359,20 @@ export default function Personeelsbeheer() {
                 if (weekstaatFilters.status && weekstaat.status !== weekstaatFilters.status) return false;
                 if (weekstaatFilters.week && weekstaat.week_number !== parseInt(weekstaatFilters.week)) return false;
                 if (weekstaatFilters.year && weekstaat.year !== parseInt(weekstaatFilters.year)) return false;
+
+                // Apply location filter
+                if (locationFilter !== 'all') {
+                  const userLocations = weekstaat.user?.assigned_locations || weekstaat.user?.assignedLocations || [];
+
+                  if (locationFilter === 'utrecht') {
+                    // Show only users with Leerdam location
+                    if (!userLocations.includes('Leerdam')) return false;
+                  } else if (locationFilter === 'denhaag') {
+                    // Show only users with Naaldwijk or Rotterdam location
+                    if (!userLocations.includes('Naaldwijk') && !userLocations.includes('Rotterdam')) return false;
+                  }
+                }
+
                 return true;
               }).length === 0 && (
                 <p className="text-center text-gray-400 py-8">
