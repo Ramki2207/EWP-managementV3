@@ -1129,15 +1129,16 @@ const ProjectDetails = () => {
               </div>
             )}
 
-            {/* Manual Delivery Checklist Section - Show buttons for each verdeler */}
-            {project?.distributors && project.distributors.length > 0 && (
+            {/* Manual Delivery Checklist Section - Show buttons for each verdeler with Levering status */}
+            {project?.distributors && project.distributors.length > 0 &&
+             (project.status === 'Levering' || project.distributors.some((v: any) => v.status === 'Levering')) && (
               <div className="mt-8 pt-6 border-t border-gray-700">
                 <h3 className="text-lg font-semibold text-green-400 mb-4">✅ Levering Checklists</h3>
                 <p className="text-gray-400 text-sm mb-4">
                   Open de levering checklist voor een specifieke verdeler om foto's toe te voegen en de checklist in te vullen.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {project.distributors.map((verdeler: any) => (
+                  {project.distributors.filter((v: any) => v.status === 'Levering').map((verdeler: any) => (
                     <button
                       key={verdeler.id}
                       onClick={() => setSelectedVerdelerForChecklist({ ...verdeler, project_id: project.id })}
