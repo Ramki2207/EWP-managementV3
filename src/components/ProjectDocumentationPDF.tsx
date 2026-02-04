@@ -192,18 +192,18 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         yPosition = Math.max(yPosition + logoHeight + 20, yPosition + 40);
       }
 
-      doc.setFontSize(72);
+      doc.setFontSize(52);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
       doc.text('Verdeler Documentatie', margin, yPosition);
-      yPosition += 35;
+      yPosition += 28;
 
       doc.setDrawColor(200, 200, 200);
       doc.setLineWidth(1.5);
       doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 30;
+      yPosition += 25;
 
-      doc.setFontSize(28);
+      doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(50, 50, 50);
 
@@ -227,12 +227,12 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
       for (const field of fields) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(28);
+        doc.setFontSize(22);
         doc.text(field.label, margin, yPosition);
         doc.setFont('helvetica', field.boldValue ? 'bold' : 'normal');
-        doc.setFontSize(26);
-        doc.text(field.value, margin + 110, yPosition);
-        yPosition += 22;
+        doc.setFontSize(20);
+        doc.text(field.value, margin + 100, yPosition);
+        yPosition += 18;
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
