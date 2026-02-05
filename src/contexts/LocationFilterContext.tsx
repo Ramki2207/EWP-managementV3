@@ -31,10 +31,10 @@ export const LocationFilterProvider: React.FC<{ children: React.ReactNode }> = (
       case 'naaldwijk':
         return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
       case 'leerdam':
-        return ['Leerdam'];
+        return ['Leerdam', 'Leerdam (PM)'];
       case 'all':
       default:
-        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam'];
+        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam', 'Leerdam (PM)'];
     }
   };
 
