@@ -16,6 +16,17 @@ const Verdelers = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Load saved search term from localStorage on mount
+  useEffect(() => {
+    const savedSearchTerm = localStorage.getItem('verdelers_searchTerm');
+    if (savedSearchTerm) setSearchTerm(savedSearchTerm);
+  }, []);
+
+  // Save search term to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('verdelers_searchTerm', searchTerm);
+  }, [searchTerm]);
+
   useEffect(() => {
     loadDistributors();
   }, [currentUser]);

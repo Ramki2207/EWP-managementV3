@@ -16,6 +16,17 @@ const Clients = () => {
   const [clients, setClients] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showClientForm, setShowClientForm] = useState(false);
+
+  // Load saved search term from localStorage on mount
+  useEffect(() => {
+    const savedSearchTerm = localStorage.getItem('clients_searchTerm');
+    if (savedSearchTerm) setSearchTerm(savedSearchTerm);
+  }, []);
+
+  // Save search term to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('clients_searchTerm', searchTerm);
+  }, [searchTerm]);
   const [clientData, setClientData] = useState({
     name: "",
     status: "Actief",

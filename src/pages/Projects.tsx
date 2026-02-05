@@ -99,6 +99,54 @@ const Projects = () => {
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<any[]>([]);
 
+  // Load saved filters from localStorage on mount
+  useEffect(() => {
+    const savedSearchTerm = localStorage.getItem('projects_searchTerm');
+    const savedStatusFilter = localStorage.getItem('projects_statusFilter');
+    const savedClientFilter = localStorage.getItem('projects_clientFilter');
+    const savedDateFilter = localStorage.getItem('projects_dateFilter');
+    const savedMonteurFilter = localStorage.getItem('projects_monteurFilter');
+    const savedCreatorFilter = localStorage.getItem('projects_creatorFilter');
+    const savedShowFilters = localStorage.getItem('projects_showFilters');
+
+    if (savedSearchTerm) setSearchTerm(savedSearchTerm);
+    if (savedStatusFilter) setStatusFilter(savedStatusFilter);
+    if (savedClientFilter) setClientFilter(savedClientFilter);
+    if (savedDateFilter) setDateFilter(savedDateFilter);
+    if (savedMonteurFilter) setMonteurFilter(savedMonteurFilter);
+    if (savedCreatorFilter) setCreatorFilter(savedCreatorFilter);
+    if (savedShowFilters) setShowFilters(savedShowFilters === 'true');
+  }, []);
+
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('projects_searchTerm', searchTerm);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_statusFilter', statusFilter);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_clientFilter', clientFilter);
+  }, [clientFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_dateFilter', dateFilter);
+  }, [dateFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_monteurFilter', monteurFilter);
+  }, [monteurFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_creatorFilter', creatorFilter);
+  }, [creatorFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('projects_showFilters', showFilters.toString());
+  }, [showFilters]);
+
   // Helper function to check for pending approvals in database
   const checkForPendingApproval = async (project: Project): Promise<boolean> => {
     console.log('🔍 APPROVAL CHECK: Checking project:', project.project_number, 'ID:', project.id);
