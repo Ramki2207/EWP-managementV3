@@ -140,6 +140,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       case 'Leerdam':
         prefix = 'PU';
         break;
+      case 'Leerdam (PM)':
+        prefix = 'PM';
+        break;
       case 'Naaldwijk (PD)':
         prefix = 'PD';
         break;
@@ -429,6 +432,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                 >
                   <option value="">Selecteer locatie</option>
                   <option value="Leerdam">Leerdam (PU)</option>
+                  <option value="Leerdam (PM)">Leerdam (PM)</option>
                   <option value="Naaldwijk (PD)">Naaldwijk (PD)</option>
                   <option value="Naaldwijk (PW)">Naaldwijk (PW)</option>
                   <option value="Rotterdam">Rotterdam (PR)</option>
@@ -489,7 +493,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PU25001, PD25123, PW25456, PR25999)
+            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PU25001, PM25002, PD25123, PW25456, PR25999)
           </p>
         </div>
 

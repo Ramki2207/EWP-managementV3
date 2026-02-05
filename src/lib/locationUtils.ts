@@ -4,6 +4,7 @@
 export const getDisplayLocation = (location: string): string => {
   const locationMap: Record<string, string> = {
     'Leerdam': 'EWP Paneelbouw Utrecht',
+    'Leerdam (PM)': 'EWP Paneelbouw Utrecht',
     'Naaldwijk': 'EWP Paneelbouw Den Haag',
     'Naaldwijk (PD)': 'EWP Paneelbouw Den Haag',
     'Naaldwijk (PW)': 'EWP Paneelbouw Den Haag',
@@ -26,6 +27,11 @@ export const hasLocationAccess = (projectLocation: string | undefined, userAssig
 
   // Check for exact match first
   if (userAssignedLocations.includes(projectLocation)) {
+    return true;
+  }
+
+  // Backward compatibility: if user has "Leerdam", they can see Leerdam (PM) projects
+  if (projectLocation === 'Leerdam (PM)' && userAssignedLocations.includes('Leerdam')) {
     return true;
   }
 
