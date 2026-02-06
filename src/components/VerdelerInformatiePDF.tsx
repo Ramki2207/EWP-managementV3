@@ -15,7 +15,6 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
   const generatePDF = async () => {
     try {
       setGenerating(true);
-      console.log('Starting PDF generation for verdeler:', verdeler.distributorId);
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -28,22 +27,25 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
       const margin = 20;
       let yPosition = margin;
 
-      // Load and add logo
-      console.log('Loading logo:', logo);
+      // Convert logo to data URL and add to PDF
+      const logoDataUrl = await fetch(logo)
+        .then(res => res.blob())
+        .then(blob => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        }));
+
       const img = new Image();
-      img.src = logo;
-      await new Promise<void>((resolve, reject) => {
+      img.src = logoDataUrl;
+      await new Promise<void>((resolve) => {
         img.onload = () => {
-          console.log('Logo loaded successfully');
           const imgWidth = 50;
           const imgHeight = (img.height * imgWidth) / img.width;
-          pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
+          pdf.addImage(logoDataUrl, 'PNG', margin, yPosition, imgWidth, imgHeight);
           yPosition += imgHeight + 15;
           resolve();
-        };
-        img.onerror = (error) => {
-          console.error('Failed to load logo:', error);
-          reject(error);
         };
       });
 
@@ -202,7 +204,6 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
 
     // Save PDF
     const filename = `Verdeler_Informatie_${verdeler.distributorId}_${projectNumber}.pdf`;
-    console.log('Saving PDF:', filename);
     pdf.save(filename);
 
     toast.success('PDF succesvol gegenereerd!');
