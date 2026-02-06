@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import { FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface VerdelerInformatiePDFProps {
   verdeler: any;
@@ -9,31 +10,42 @@ interface VerdelerInformatiePDFProps {
 }
 
 const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler, projectNumber, logo }) => {
+  const [generating, setGenerating] = useState(false);
 
   const generatePDF = async () => {
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4'
-    });
+    try {
+      setGenerating(true);
+      console.log('Starting PDF generation for verdeler:', verdeler.distributorId);
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 20;
-    let yPosition = margin;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
 
-    // Load and add logo
-    const img = new Image();
-    img.src = logo;
-    await new Promise<void>((resolve) => {
-      img.onload = () => {
-        const imgWidth = 50;
-        const imgHeight = (img.height * imgWidth) / img.width;
-        pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
-        yPosition += imgHeight + 15;
-        resolve();
-      };
-    });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      let yPosition = margin;
+
+      // Load and add logo
+      console.log('Loading logo:', logo);
+      const img = new Image();
+      img.src = logo;
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => {
+          console.log('Logo loaded successfully');
+          const imgWidth = 50;
+          const imgHeight = (img.height * imgWidth) / img.width;
+          pdf.addImage(img, 'PNG', margin, yPosition, imgWidth, imgHeight);
+          yPosition += imgHeight + 15;
+          resolve();
+        };
+        img.onerror = (error) => {
+          console.error('Failed to load logo:', error);
+          reject(error);
+        };
+      });
 
     // Add title
     pdf.setFontSize(20);
@@ -190,16 +202,37 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
 
     // Save PDF
     const filename = `Verdeler_Informatie_${verdeler.distributorId}_${projectNumber}.pdf`;
+    console.log('Saving PDF:', filename);
     pdf.save(filename);
+
+    toast.success('PDF succesvol gegenereerd!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Fout bij het genereren van PDF');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
     <button
       onClick={generatePDF}
-      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+      disabled={generating}
+      className={`w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors ${
+        generating ? 'opacity-50 cursor-not-allowed' : ''
+      }`}
     >
-      <FileText size={16} />
-      <span>Verdeler Informatie</span>
+      {generating ? (
+        <>
+          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+          <span>Genereren...</span>
+        </>
+      ) : (
+        <>
+          <FileText size={16} />
+          <span>Verdeler Informatie</span>
+        </>
+      )}
     </button>
   );
 };

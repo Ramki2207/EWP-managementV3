@@ -1810,13 +1810,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       logo={ewpLogo}
                     />
-                    {currentUser?.username === 'Radjesh' && (
-                      <VerdelerInformatiePDF
-                        verdeler={selectedVerdeler}
-                        projectNumber={projectData.project_number || projectData.projectNumber}
-                        logo={ewpLogo}
-                      />
-                    )}
+                    {(() => {
+                      console.log('🔍 VERDELER INFO PDF CHECK:', {
+                        username: currentUser?.username,
+                        isRadjesh: currentUser?.username === 'Radjesh',
+                        currentUser
+                      });
+                      return currentUser?.username === 'Radjesh' && (
+                        <VerdelerInformatiePDF
+                          verdeler={selectedVerdeler}
+                          projectNumber={projectData.project_number || projectData.projectNumber}
+                          logo={ewpLogo}
+                        />
+                      );
+                    })()}
                     {selectedVerdeler?.status === 'Levering' && (
                       <button
                         onClick={() => handleGeneratePakbon(selectedVerdeler)}
