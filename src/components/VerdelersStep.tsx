@@ -10,6 +10,7 @@ import HighVoltageTest from './HighVoltageTest';
 import OnSiteTest from './OnSiteTest';
 import PrintLabel from './PrintLabel';
 import MPrintLabel from './MPrintLabel';
+import VerdelerInformatiePDF from './VerdelerInformatiePDF';
 import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
 import VerdelerChecklistWindow from './VerdelerChecklistWindow';
 import VerdelerLeveringChecklist from './VerdelerLeveringChecklist';
@@ -1809,6 +1810,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       logo={ewpLogo}
                     />
+                    {currentUser?.username === 'Radjesh' && (
+                      <VerdelerInformatiePDF
+                        verdeler={selectedVerdeler}
+                        projectNumber={projectData.project_number || projectData.projectNumber}
+                        logo={ewpLogo}
+                      />
+                    )}
                     {selectedVerdeler?.status === 'Levering' && (
                       <button
                         onClick={() => handleGeneratePakbon(selectedVerdeler)}
