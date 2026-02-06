@@ -41,13 +41,25 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
       img.src = logoDataUrl;
       await new Promise<void>((resolve) => {
         img.onload = () => {
-          const imgWidth = 50;
+          const imgWidth = 70;
           const imgHeight = (img.height * imgWidth) / img.width;
           pdf.addImage(logoDataUrl, 'PNG', margin, yPosition, imgWidth, imgHeight);
-          yPosition += imgHeight + 15;
+          yPosition += imgHeight + 5;
           resolve();
         };
       });
+
+    // Add company contact information
+    pdf.setFontSize(9);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text('0174 – 625816', margin, yPosition);
+    yPosition += 4;
+    pdf.text('info@ewp-paneelbouw.nl', margin, yPosition);
+    yPosition += 4;
+    pdf.text('Ambachtstraat 6-E', margin, yPosition);
+    yPosition += 4;
+    pdf.text('2671 CN Naaldwijk', margin, yPosition);
+    yPosition += 15;
 
     // Add title
     pdf.setFontSize(20);

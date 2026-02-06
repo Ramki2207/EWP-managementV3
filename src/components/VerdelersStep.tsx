@@ -18,6 +18,7 @@ import { generatePakbonPDF } from './PakbonPDF';
 import { v4 as uuidv4 } from 'uuid';
 import { dataService } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
+import ewpLogoBlauw from '../../public/EWP-Logo_blauw.png';
 import { exportMultipleVerdelersToExcel } from '../lib/excelExport';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 
@@ -1814,7 +1815,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <VerdelerInformatiePDF
                         verdeler={selectedVerdeler}
                         projectNumber={projectData.project_number || projectData.projectNumber}
-                        logo={ewpLogo}
+                        logo={ewpLogoBlauw}
                       />
                     )}
                     {selectedVerdeler?.status === 'Levering' && (
