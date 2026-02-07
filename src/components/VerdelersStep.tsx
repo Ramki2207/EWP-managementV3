@@ -54,6 +54,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const [accessCodes, setAccessCodes] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [testDataCache, setTestDataCache] = useState<Record<string, any>>({});
+  const [testNotificationsCache, setTestNotificationsCache] = useState<Record<string, any>>({});
   const [showPreTestingApproval, setShowPreTestingApproval] = useState(false);
   const [verdelerForTesting, setVerdelerForTesting] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -121,6 +122,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   useEffect(() => {
     const loadAllTestData = async () => {
       const cache: Record<string, any> = {};
+      const notificationsCache: Record<string, any> = {};
 
       for (const verdeler of verdelers) {
         try {
@@ -128,18 +130,47 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           if (testData && testData.length > 0) {
             cache[verdeler.id] = testData;
           }
+
+          // Also load test review notifications for this verdeler
+          if (projectData?.id) {
+            const notifications: any[] = [];
+
+            // Check for each test type
+            const testTypes = ['verdeler_vanaf_630', 'verdeler_test_simpel', 'verdeler_testing_tot_630'];
+
+            for (const testType of testTypes) {
+              try {
+                const notification = await dataService.getSpecificTestReviewNotification(
+                  projectData.id,
+                  verdeler.id,
+                  testType
+                );
+
+                if (notification && notification.status === 'approved') {
+                  notifications.push(notification);
+                }
+              } catch (error) {
+                console.error(`Error loading ${testType} notification:`, error);
+              }
+            }
+
+            if (notifications.length > 0) {
+              notificationsCache[verdeler.id] = notifications;
+            }
+          }
         } catch (error) {
           console.error('Error loading test data for verdeler:', verdeler.id, error);
         }
       }
 
       setTestDataCache(cache);
+      setTestNotificationsCache(notificationsCache);
     };
 
     if (verdelers.length > 0) {
       loadAllTestData();
     }
-  }, [verdelers]);
+  }, [verdelers, projectData?.id]);
 
   // Load testing hours status when currentUser or verdelers change
   useEffect(() => {
@@ -1113,6 +1144,34 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
 
     // Load from database cache first
     const cachedTests = testDataCache[verdeler.id];
+    const cachedNotifications = testNotificationsCache[verdeler.id];
+
+    // Check test review notifications first (for newer test types)
+    if (cachedNotifications && cachedNotifications.length > 0) {
+      // Check for verdeler_vanaf_630 test
+      const vanaf630Test = cachedNotifications.find((n: any) => n.test_type === 'verdeler_vanaf_630');
+      if (vanaf630Test?.test_data?.verdelerVanaf630Test?.completed) {
+        status = 'Vanaf 630A Test Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+
+      // Check for verdeler_test_simpel
+      const simpelTest = cachedNotifications.find((n: any) => n.test_type === 'verdeler_test_simpel');
+      if (simpelTest?.test_data?.verdelerTestSimpel?.completed) {
+        status = 'Test Simpel Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+
+      // Check for verdeler_testing_tot_630
+      const tot630Test = cachedNotifications.find((n: any) => n.test_type === 'verdeler_testing_tot_630');
+      if (tot630Test?.test_data?.workshopChecklist?.completed) {
+        status = 'Tot 630A Test Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+    }
 
     if (cachedTests && cachedTests.length > 0) {
       // Check for workshop_checklist test
@@ -1151,9 +1210,30 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     } else {
       // Fallback to localStorage if no database data
       try {
+        // Check for new test types first
+        const vanaf630TestData = localStorage.getItem(`verdeler_vanaf_630_test_${verdeler.id}`);
+        const simpelTestData = localStorage.getItem(`verdeler_test_simpel_${verdeler.id}`);
         const verdelerTestData = localStorage.getItem(`verdeler_test_${verdeler.id}`);
         const fatTestData = localStorage.getItem(`fat_test_${verdeler.id}`);
         const hvTestData = localStorage.getItem(`hv_test_${verdeler.id}`);
+
+        if (vanaf630TestData) {
+          const testData = JSON.parse(vanaf630TestData);
+          if (testData.verdelerVanaf630Test?.completed) {
+            status = 'Vanaf 630A Test Voltooid';
+            color = 'bg-green-500/20 text-green-400';
+            return { status, color };
+          }
+        }
+
+        if (simpelTestData) {
+          const testData = JSON.parse(simpelTestData);
+          if (testData.verdelerTestSimpel?.completed) {
+            status = 'Test Simpel Voltooid';
+            color = 'bg-green-500/20 text-green-400';
+            return { status, color };
+          }
+        }
 
         if (verdelerTestData) {
           const testData = JSON.parse(verdelerTestData);
