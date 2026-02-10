@@ -6,7 +6,7 @@ import {
   Folder, ChevronRight, ChevronDown, X, ExternalLink
 } from 'lucide-react';
 import { clientPortalService } from '../lib/clientPortalService';
-import { dataService } from '../lib/supabase';
+import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import ewpLogo from '../assets/ewp-logo.png';
 import { getDisplayLocation } from '../lib/locationUtils';
@@ -117,6 +117,23 @@ const ClientPortal = () => {
 
       console.log('Portal data loaded:', portal);
       console.log('Shared folders from portal:', portal.shared_folders);
+
+      // Fetch contacts separately if client_id exists
+      if (portal.client_id) {
+        const { data: contacts } = await supabase
+          .from('contacts')
+          .select('*')
+          .eq('client_id', portal.client_id)
+          .eq('is_primary', true);
+
+        if (contacts && contacts.length > 0) {
+          // Add contacts to the clients object
+          portal.clients = {
+            ...portal.clients,
+            contacts: contacts
+          };
+        }
+      }
 
       setPortalData(portal);
       setIsAuthenticated(true);
