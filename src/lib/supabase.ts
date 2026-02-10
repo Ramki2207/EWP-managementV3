@@ -133,11 +133,14 @@ export const dataService = {
             toegewezen_monteur,
             gewenste_lever_datum,
             expected_hours
+          ),
+          project_shared_locations (
+            location
           )
         `)
         .order('project_number', { ascending: false })
         .order('created_at', { referencedTable: 'distributors', ascending: true });
-      
+
       if (error) {
         console.error('Database error in getProjects:', error);
         throw error;

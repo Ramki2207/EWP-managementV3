@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker, CheckCircle } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, Server, Key, Package, Sticker, CheckCircle, Share2 } from 'lucide-react';
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
@@ -20,6 +20,7 @@ import DeliveryStickerGenerator from '../components/DeliveryStickerGenerator';
 import PakbonGenerator from '../components/PakbonGenerator';
 import ProjectDocumentationPDF from '../components/ProjectDocumentationPDF';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
+import ProjectSharingModal from '../components/ProjectSharingModal';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -49,6 +50,7 @@ const ProjectDetails = () => {
   const [showPakbonGenerator, setShowPakbonGenerator] = useState(false);
   const [showDocumentationPDF, setShowDocumentationPDF] = useState(false);
   const [selectedVerdelerForChecklist, setSelectedVerdelerForChecklist] = useState<any | null>(null);
+  const [showSharingModal, setShowSharingModal] = useState(false);
   const [approvalStatus, setApprovalStatus] = useState<{
     hasApproval: boolean;
     status: 'submitted' | 'approved' | 'declined' | null;
@@ -758,6 +760,15 @@ const ProjectDetails = () => {
                 <FileText size={20} />
                 <span>Pakbon</span>
               </button>
+              {(currentUser?.role === 'admin' || currentUser?.role === 'super_admin') && project?.location && (
+                <button
+                  onClick={() => setShowSharingModal(true)}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <Share2 size={20} />
+                  <span>Delen</span>
+                </button>
+              )}
               {['Dave Moret', 'Ronald', 'Radjesh'].includes(currentUser?.username || '') && (
                 <button
                   onClick={() => setShowDocumentationPDF(true)}
@@ -1737,6 +1748,17 @@ const ProjectDetails = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Project Sharing Modal */}
+      {showSharingModal && project && (
+        <ProjectSharingModal
+          projectId={project.id}
+          projectNumber={project.project_number}
+          projectLocation={project.location}
+          onClose={() => setShowSharingModal(false)}
+          onUpdate={() => loadProject()}
+        />
       )}
     </div>
   );

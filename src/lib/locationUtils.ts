@@ -19,13 +19,18 @@ export const getDisplayLocation = (location: string): string => {
  * Handles backward compatibility:
  * - users with "Naaldwijk" can see both "Naaldwijk (PD)" and "Naaldwijk (PW)" projects
  * - users with "Rotterdam" can see "Rotterdam (PR)" projects
+ * Also checks if the project is shared with any of the user's locations
  */
-export const hasLocationAccess = (projectLocation: string | undefined, userAssignedLocations: string[] | undefined): boolean => {
+export const hasLocationAccess = (
+  projectLocation: string | undefined,
+  userAssignedLocations: string[] | undefined,
+  projectSharedLocations?: Array<{ location: string }>
+): boolean => {
   if (!projectLocation || !userAssignedLocations || userAssignedLocations.length === 0) {
     return true;
   }
 
-  // Check for exact match first
+  // Check for exact match with primary location
   if (userAssignedLocations.includes(projectLocation)) {
     return true;
   }
@@ -44,6 +49,17 @@ export const hasLocationAccess = (projectLocation: string | undefined, userAssig
   // Backward compatibility: if user has "Rotterdam", they can see Rotterdam (PR)
   if (projectLocation === 'Rotterdam (PR)' && userAssignedLocations.includes('Rotterdam')) {
     return true;
+  }
+
+  // Check if project is shared with any of the user's locations
+  if (projectSharedLocations && projectSharedLocations.length > 0) {
+    const sharedLocationNames = projectSharedLocations.map(sl => sl.location);
+    const hasSharedAccess = userAssignedLocations.some(userLoc =>
+      sharedLocationNames.includes(userLoc)
+    );
+    if (hasSharedAccess) {
+      return true;
+    }
   }
 
   return false;
