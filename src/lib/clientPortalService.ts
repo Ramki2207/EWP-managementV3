@@ -264,7 +264,8 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
             visit_street,
             visit_city,
             visit_postcode,
-            logo_url
+            logo_url,
+            contacts
           )
         `)
         .eq('access_code', accessCode)
