@@ -724,13 +724,13 @@ export default function UrenstaatVerlof() {
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto">
-      <div className="mb-6">
+      <div className="mb-6 print:hidden">
         <h1 className="text-3xl font-bold text-white mb-2">Urenstaat & Verlof</h1>
         <p className="text-gray-400">Beheer uw urenregistratie, verlof en vakantiedagen</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-2 mb-6 border-b border-gray-700">
+      <div className="flex space-x-2 mb-6 border-b border-gray-700 print:hidden">
         <button
           onClick={() => setActiveTab('weekstaat')}
           className={`px-6 py-3 font-medium transition-colors flex items-center space-x-2 ${
@@ -816,19 +816,26 @@ export default function UrenstaatVerlof() {
           {selectedWeekstaat && (
             <div className="space-y-6">
               {/* Print-only view with Excel-like styling */}
-              <div className="hidden print:block weekstaat-print-container" style={{ padding: '20px', backgroundColor: 'white' }}>
+              <div className="hidden print:block weekstaat-print-container" style={{ padding: '10px', backgroundColor: 'white' }}>
                 <style>{`
                   @media print {
+                    @page {
+                      margin: 10mm;
+                    }
+                    body {
+                      margin: 0;
+                      padding: 0;
+                    }
                     .print-table {
                       width: 100%;
                       border-collapse: collapse;
                       font-family: Arial, sans-serif;
-                      font-size: 11pt;
+                      font-size: 9pt;
                     }
                     .print-table th,
                     .print-table td {
                       border: 1px solid #000;
-                      padding: 8px;
+                      padding: 4px 6px;
                       text-align: left;
                       color: #000 !important;
                     }
@@ -836,18 +843,19 @@ export default function UrenstaatVerlof() {
                       background-color: #f0f0f0 !important;
                       font-weight: bold;
                       text-align: center;
+                      font-size: 9pt;
                     }
                     .print-table td {
                       background-color: white !important;
                     }
                     .print-header {
-                      margin-bottom: 20px;
+                      margin-bottom: 15px;
                       display: flex;
                       justify-content: space-between;
                       align-items: flex-start;
                     }
                     .print-logo {
-                      width: 150px;
+                      width: 120px;
                       height: auto;
                     }
                     .print-info {
@@ -856,10 +864,11 @@ export default function UrenstaatVerlof() {
                     .print-info-table {
                       border-collapse: collapse;
                       margin-left: auto;
+                      font-size: 9pt;
                     }
                     .print-info-table td {
                       border: 1px solid #000;
-                      padding: 5px 10px;
+                      padding: 3px 8px;
                       color: #000 !important;
                     }
                     .print-info-table td:first-child {
@@ -872,13 +881,13 @@ export default function UrenstaatVerlof() {
                     }
                     .print-day-cell {
                       text-align: center;
-                      width: 60px;
+                      width: 50px;
                     }
                     .print-activity-cell {
-                      min-width: 200px;
+                      min-width: 180px;
                     }
                     .print-description-cell {
-                      min-width: 150px;
+                      min-width: 120px;
                       word-wrap: break-word;
                       white-space: normal;
                     }
@@ -886,7 +895,7 @@ export default function UrenstaatVerlof() {
                 `}</style>
 
                 {/* Header with logo and info */}
-                <div className="print-header" style={{ marginBottom: '30px' }}>
+                <div className="print-header" style={{ marginBottom: '15px' }}>
                   <img src="/EWP-Logo_blauw.png" alt="EWP Logo" className="print-logo" />
                   <table className="print-info-table">
                     <tbody>
@@ -910,7 +919,7 @@ export default function UrenstaatVerlof() {
                   </table>
                 </div>
 
-                <h2 style={{ fontSize: '18pt', fontWeight: 'bold', marginBottom: '15px', color: '#000' }}>
+                <h2 style={{ fontSize: '14pt', fontWeight: 'bold', marginBottom: '10px', color: '#000' }}>
                   Urenstaat Week {selectedWeekstaat.week_number} - {selectedWeekstaat.year}
                 </h2>
 
@@ -987,7 +996,7 @@ export default function UrenstaatVerlof() {
                 </table>
 
                 {/* Footer */}
-                <div style={{ marginTop: '30px', fontSize: '9pt', color: '#666' }}>
+                <div style={{ marginTop: '15px', fontSize: '8pt', color: '#666' }}>
                   <p>Afgedrukt op: {new Date().toLocaleDateString('nl-NL', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                 </div>
               </div>
