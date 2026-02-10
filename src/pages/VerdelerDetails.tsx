@@ -147,11 +147,19 @@ const VerdelerDetails = () => {
       return { primary: [], other: [] };
     }
 
-    // Filter users with 'montage' role
+    // Helper function to check if locations match (handles "Naaldwijk" vs "Naaldwijk (PD)"/"Naaldwijk (PW)")
+    const locationsMatch = (userLoc: string, targetLoc: string): boolean => {
+      if (userLoc === targetLoc) return true;
+      if (userLoc === 'Naaldwijk' && targetLoc.startsWith('Naaldwijk')) return true;
+      if (targetLoc === 'Naaldwijk' && userLoc.startsWith('Naaldwijk')) return true;
+      return false;
+    };
+
+    // Filter users with roles that can be assigned to verdelers (montage, tester, logistiek)
     let montageUsers = users.filter(user => {
-      const isMontage = user.role === 'montage';
-      console.log(`🔍 VERDELER DETAILS: User ${user.username} - role: ${user.role}, isMontage: ${isMontage}`);
-      return isMontage;
+      const canBeAssigned = user.role === 'montage' || user.role === 'tester' || user.role === 'logistiek';
+      console.log(`🔍 VERDELER DETAILS: User ${user.username} - role: ${user.role}, canBeAssigned: ${canBeAssigned}`);
+      return canBeAssigned;
     });
 
     // Check if current user has assign permissions for verdelers
@@ -171,8 +179,8 @@ const VerdelerDetails = () => {
           return false;
         }
         // Check if there's at least one matching location with current user
-        const hasMatchingLocation = user.assigned_locations.some((loc: string) =>
-          currentUser.assigned_locations.includes(loc)
+        const hasMatchingLocation = user.assigned_locations.some((userLoc: string) =>
+          currentUser.assigned_locations.some((currentLoc: string) => locationsMatch(userLoc, currentLoc))
         );
         if (!hasMatchingLocation) {
           console.log(`🔍 VERDELER DETAILS: Hiding ${user.username} - no matching locations (has: ${user.assigned_locations.join(', ')})`);
@@ -192,7 +200,7 @@ const VerdelerDetails = () => {
       const hasLocationAccess = !user.assignedLocations ||
                                user.assignedLocations.length === 0 ||
                                user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
-                               user.assignedLocations.includes(projectLocation);
+                               user.assignedLocations.some((loc: string) => locationsMatch(loc, projectLocation));
       console.log(`🔍 VERDELER DETAILS: User ${user.username} location access for ${projectLocation}:`, hasLocationAccess);
       return hasLocationAccess;
     });
@@ -201,7 +209,7 @@ const VerdelerDetails = () => {
       const hasOtherLocationAccess = user.assignedLocations &&
                                     user.assignedLocations.length > 0 &&
                                     user.assignedLocations.length < AVAILABLE_LOCATIONS.length &&
-                                    !user.assignedLocations.includes(projectLocation);
+                                    !user.assignedLocations.some((loc: string) => locationsMatch(loc, projectLocation));
       return hasOtherLocationAccess;
     });
 
