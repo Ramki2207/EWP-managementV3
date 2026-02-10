@@ -322,13 +322,13 @@ export default function UrenstaatVerlof() {
             activity_code: entry.activity_code,
             activity_description: entry.activity_description,
             workorder_number: entry.workorder_number,
-            monday: entry.monday,
-            tuesday: entry.tuesday,
-            wednesday: entry.wednesday,
-            thursday: entry.thursday,
-            friday: entry.friday,
-            saturday: entry.saturday,
-            sunday: entry.sunday
+            monday: entry.monday === '' ? 0 : (parseFloat(entry.monday.toString()) || 0),
+            tuesday: entry.tuesday === '' ? 0 : (parseFloat(entry.tuesday.toString()) || 0),
+            wednesday: entry.wednesday === '' ? 0 : (parseFloat(entry.wednesday.toString()) || 0),
+            thursday: entry.thursday === '' ? 0 : (parseFloat(entry.thursday.toString()) || 0),
+            friday: entry.friday === '' ? 0 : (parseFloat(entry.friday.toString()) || 0),
+            saturday: entry.saturday === '' ? 0 : (parseFloat(entry.saturday.toString()) || 0),
+            sunday: entry.sunday === '' ? 0 : (parseFloat(entry.sunday.toString()) || 0)
           })));
 
         if (error) throw error;
@@ -369,13 +369,13 @@ export default function UrenstaatVerlof() {
       activity_code: '100',
       activity_description: 'Montage verdelers',
       workorder_number: '',
-      monday: 0,
-      tuesday: 0,
-      wednesday: 0,
-      thursday: 0,
-      friday: 0,
-      saturday: 0,
-      sunday: 0
+      monday: '' as any,
+      tuesday: '' as any,
+      wednesday: '' as any,
+      thursday: '' as any,
+      friday: '' as any,
+      saturday: '' as any,
+      sunday: '' as any
     }]);
   };
 
@@ -672,13 +672,13 @@ export default function UrenstaatVerlof() {
     };
 
     entries.forEach(entry => {
-      totals.monday += parseFloat(entry.monday.toString()) || 0;
-      totals.tuesday += parseFloat(entry.tuesday.toString()) || 0;
-      totals.wednesday += parseFloat(entry.wednesday.toString()) || 0;
-      totals.thursday += parseFloat(entry.thursday.toString()) || 0;
-      totals.friday += parseFloat(entry.friday.toString()) || 0;
-      totals.saturday += parseFloat(entry.saturday.toString()) || 0;
-      totals.sunday += parseFloat(entry.sunday.toString()) || 0;
+      totals.monday += (entry.monday === '' || entry.monday === null || entry.monday === undefined) ? 0 : parseFloat(entry.monday.toString());
+      totals.tuesday += (entry.tuesday === '' || entry.tuesday === null || entry.tuesday === undefined) ? 0 : parseFloat(entry.tuesday.toString());
+      totals.wednesday += (entry.wednesday === '' || entry.wednesday === null || entry.wednesday === undefined) ? 0 : parseFloat(entry.wednesday.toString());
+      totals.thursday += (entry.thursday === '' || entry.thursday === null || entry.thursday === undefined) ? 0 : parseFloat(entry.thursday.toString());
+      totals.friday += (entry.friday === '' || entry.friday === null || entry.friday === undefined) ? 0 : parseFloat(entry.friday.toString());
+      totals.saturday += (entry.saturday === '' || entry.saturday === null || entry.saturday === undefined) ? 0 : parseFloat(entry.saturday.toString());
+      totals.sunday += (entry.sunday === '' || entry.sunday === null || entry.sunday === undefined) ? 0 : parseFloat(entry.sunday.toString());
     });
 
     totals.total = totals.monday + totals.tuesday + totals.wednesday + totals.thursday +
@@ -926,13 +926,13 @@ export default function UrenstaatVerlof() {
                           <td className="print-description-cell">
                             {entry.workorder_number || '-'}
                           </td>
-                          <td className="print-day-cell">{entry.monday || '-'}</td>
-                          <td className="print-day-cell">{entry.tuesday || '-'}</td>
-                          <td className="print-day-cell">{entry.wednesday || '-'}</td>
-                          <td className="print-day-cell">{entry.thursday || '-'}</td>
-                          <td className="print-day-cell">{entry.friday || '-'}</td>
-                          <td className="print-day-cell">{entry.saturday || '-'}</td>
-                          <td className="print-day-cell">{entry.sunday || '-'}</td>
+                          <td className="print-day-cell">{entry.monday === '' || entry.monday === 0 ? '-' : entry.monday}</td>
+                          <td className="print-day-cell">{entry.tuesday === '' || entry.tuesday === 0 ? '-' : entry.tuesday}</td>
+                          <td className="print-day-cell">{entry.wednesday === '' || entry.wednesday === 0 ? '-' : entry.wednesday}</td>
+                          <td className="print-day-cell">{entry.thursday === '' || entry.thursday === 0 ? '-' : entry.thursday}</td>
+                          <td className="print-day-cell">{entry.friday === '' || entry.friday === 0 ? '-' : entry.friday}</td>
+                          <td className="print-day-cell">{entry.saturday === '' || entry.saturday === 0 ? '-' : entry.saturday}</td>
+                          <td className="print-day-cell">{entry.sunday === '' || entry.sunday === 0 ? '-' : entry.sunday}</td>
                           <td className="print-day-cell">{rowTotal.toFixed(1)}</td>
                         </tr>
                       );
@@ -1101,8 +1101,8 @@ export default function UrenstaatVerlof() {
                                       step="0.5"
                                       min="0"
                                       max="24"
-                                      value={entry[day as keyof WeekstaatEntry] || 0}
-                                      onChange={(e) => updateEntry(index, day, parseFloat(e.target.value) || 0)}
+                                      value={entry[day as keyof WeekstaatEntry] === 0 ? 0 : (entry[day as keyof WeekstaatEntry] || '')}
+                                      onChange={(e) => updateEntry(index, day, e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
                                       className="input-field text-sm text-center w-16"
                                     />
                                   ) : (
