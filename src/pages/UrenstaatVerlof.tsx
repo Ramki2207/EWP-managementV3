@@ -224,7 +224,18 @@ export default function UrenstaatVerlof() {
               .from('weekstaat_entries')
               .select('*')
               .eq('weekstaat_id', existing.id);
-            setEntries(entriesData || []);
+            // Convert 0 values to empty strings for editing
+            const processedEntries = (entriesData || []).map((entry: any) => ({
+              ...entry,
+              monday: entry.monday === 0 ? '' : entry.monday,
+              tuesday: entry.tuesday === 0 ? '' : entry.tuesday,
+              wednesday: entry.wednesday === 0 ? '' : entry.wednesday,
+              thursday: entry.thursday === 0 ? '' : entry.thursday,
+              friday: entry.friday === 0 ? '' : entry.friday,
+              saturday: entry.saturday === 0 ? '' : entry.saturday,
+              sunday: entry.sunday === 0 ? '' : entry.sunday
+            }));
+            setEntries(processedEntries);
             await loadWeekstaten(); // Refresh the list
           }
         } else {
@@ -253,7 +264,19 @@ export default function UrenstaatVerlof() {
       .select('*')
       .eq('weekstaat_id', weekstaat.id);
 
-    setEntries(entriesData || []);
+    // Convert 0 values to empty strings for editing
+    const processedEntries = (entriesData || []).map((entry: any) => ({
+      ...entry,
+      monday: entry.monday === 0 ? '' : entry.monday,
+      tuesday: entry.tuesday === 0 ? '' : entry.tuesday,
+      wednesday: entry.wednesday === 0 ? '' : entry.wednesday,
+      thursday: entry.thursday === 0 ? '' : entry.thursday,
+      friday: entry.friday === 0 ? '' : entry.friday,
+      saturday: entry.saturday === 0 ? '' : entry.saturday,
+      sunday: entry.sunday === 0 ? '' : entry.sunday
+    }));
+
+    setEntries(processedEntries);
   };
 
   const createNewWeekstaat = async () => {
