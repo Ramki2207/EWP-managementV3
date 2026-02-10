@@ -14,11 +14,15 @@ const availableVerdelerFolders = [
   'Test certificaat',
   'Algemene informatie',
   'Installatie schema',
+  'DWG Bestanden',
+  'Warmte berekening',
+  'RVS behuizing',
   'Onderdelen',
   'Handleidingen',
   'Documentatie',
   'Oplever foto\'s',
   'Klant informatie',
+  'Pakbon',
 ];
 
 const availableProjectFolders = [
