@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle, X, Table as TableIcon, Download, Filter, Search } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, User, AlertCircle, CheckCircle, X, Table as TableIcon, Download, Filter, Search, EyeOff, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -27,6 +27,7 @@ interface VerdelerAssignment {
   is_tested: boolean;
   is_delivered: boolean;
   week_status: string | null;
+  hidden_from_monteur_agenda: boolean;
 }
 
 interface MonteurAssignmentCalendarProps {
@@ -52,6 +53,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
   const [filterProjectLeader, setFilterProjectLeader] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [showHidden, setShowHidden] = useState(false);
 
   // Get unique values for filters
   const projectLeaders = Array.from(new Set(verdelers.map(v => v.project_leader_name).filter(Boolean)));
@@ -62,7 +64,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
 
   useEffect(() => {
     applyFilters();
-  }, [verdelers, searchTerm, filterProjectLeader, filterStatus]);
+  }, [verdelers, searchTerm, filterProjectLeader, filterStatus, showHidden]);
 
   const loadVerdelers = async () => {
     try {
@@ -89,6 +91,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
           is_tested,
           is_delivered,
           week_status,
+          hidden_from_monteur_agenda,
           projects!inner (
             project_number,
             client,
@@ -149,7 +152,8 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
           is_ready: v.is_ready,
           is_tested: v.is_tested,
           is_delivered: v.is_delivered,
-          week_status: v.week_status
+          week_status: v.week_status,
+          hidden_from_monteur_agenda: v.hidden_from_monteur_agenda || false
         };
       }) || [];
 
@@ -165,6 +169,11 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
 
   const applyFilters = () => {
     let filtered = [...verdelers];
+
+    // Hide hidden items unless showHidden is true
+    if (!showHidden) {
+      filtered = filtered.filter(v => !v.hidden_from_monteur_agenda);
+    }
 
     // Search filter
     if (searchTerm) {
@@ -190,6 +199,33 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
     }
 
     setFilteredVerdelers(filtered);
+  };
+
+  const toggleVerdelerVisibility = async (verdeler: VerdelerAssignment, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
+
+    try {
+      const newHiddenState = !verdeler.hidden_from_monteur_agenda;
+
+      const { error } = await supabase
+        .from('distributors')
+        .update({ hidden_from_monteur_agenda: newHiddenState })
+        .eq('id', verdeler.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setVerdelers(prev => prev.map(v =>
+        v.id === verdeler.id
+          ? { ...v, hidden_from_monteur_agenda: newHiddenState }
+          : v
+      ));
+
+      toast.success(newHiddenState ? 'Verdeler verborgen uit agenda' : 'Verdeler zichtbaar in agenda');
+    } catch (error) {
+      console.error('Error toggling verdeler visibility:', error);
+      toast.error('Fout bij wijzigen zichtbaarheid');
+    }
   };
 
   const exportToExcel = () => {
@@ -378,6 +414,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Welke monteur</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Week</th>
+            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Acties</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-700">
@@ -389,7 +426,9 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             return (
               <tr
                 key={idx}
-                className="hover:bg-[#2A303C] transition-colors cursor-pointer"
+                className={`hover:bg-[#2A303C] transition-colors cursor-pointer ${
+                  verdeler.hidden_from_monteur_agenda ? 'opacity-50' : ''
+                }`}
                 onClick={() => setSelectedVerdeler(verdeler)}
               >
                 <td className="px-3 py-3 whitespace-nowrap text-white">
@@ -435,6 +474,23 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                     Week {weekNum || verdeler.delivery_week || '-'}
                   </span>
                 </td>
+                <td className="px-3 py-3 text-center">
+                  <button
+                    onClick={(e) => toggleVerdelerVisibility(verdeler, e)}
+                    className={`p-1 rounded transition-colors ${
+                      verdeler.hidden_from_monteur_agenda
+                        ? 'text-gray-400 hover:text-green-400'
+                        : 'text-gray-400 hover:text-red-400'
+                    }`}
+                    title={verdeler.hidden_from_monteur_agenda ? 'Tonen in agenda' : 'Verbergen uit agenda'}
+                  >
+                    {verdeler.hidden_from_monteur_agenda ? (
+                      <Eye size={16} />
+                    ) : (
+                      <EyeOff size={16} />
+                    )}
+                  </button>
+                </td>
               </tr>
             );
           })}
@@ -465,6 +521,13 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
 
           {/* View Toggle and Actions */}
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowHidden(!showHidden)}
+              className={`btn-secondary p-2 ${showHidden ? 'bg-blue-500/20' : ''}`}
+              title={showHidden ? 'Verberg verborgen items' : 'Toon verborgen items'}
+            >
+              {showHidden ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`btn-secondary p-2 ${showFilters ? 'bg-blue-500/20' : ''}`}
@@ -649,8 +712,16 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
               <div className="text-lg font-bold text-blue-500">
                 {filteredVerdelers.length}
               </div>
-              <div className="text-xs text-gray-400">Totaal</div>
+              <div className="text-xs text-gray-400">Totaal {showHidden ? '(incl. verborgen)' : ''}</div>
             </div>
+            {!showHidden && verdelers.filter(v => v.hidden_from_monteur_agenda).length > 0 && (
+              <div className="text-center">
+                <div className="text-lg font-bold text-gray-500">
+                  {verdelers.filter(v => v.hidden_from_monteur_agenda).length}
+                </div>
+                <div className="text-xs text-gray-400">Verborgen</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
