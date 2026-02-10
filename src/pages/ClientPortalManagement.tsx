@@ -11,7 +11,7 @@ import { dataService } from '../lib/supabase';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 
-const availableFolders = [
+const availableVerdelerFolders = [
   'Verdeler aanzicht',
   'Test certificaat',
   'Algemene informatie',
@@ -27,6 +27,18 @@ const availableFolders = [
   'Pakbon',
 ];
 
+const availableProjectFolders = [
+  'Aanvraag',
+  'Bestelling',
+  'Calculatie',
+  'Offerte',
+  'Ondersteuning',
+  'Opdracht',
+  'Opname Locatie',
+  'Software bestand',
+  'Verzend foto\'s',
+];
+
 const ClientPortalManagement = () => {
   const { hasPermission, currentUser } = useEnhancedPermissions();
   const { isLocationVisible } = useLocationFilter();
@@ -37,6 +49,7 @@ const ClientPortalManagement = () => {
   const [selectedPortal, setSelectedPortal] = useState<any>(null);
   const [editingFoldersPortal, setEditingFoldersPortal] = useState<any>(null);
   const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
+  const [selectedProjectFolders, setSelectedProjectFolders] = useState<string[]>([]);
 
   useEffect(() => {
     loadPortals();
@@ -174,6 +187,7 @@ const ClientPortalManagement = () => {
     }
     setEditingFoldersPortal(portal);
     setSelectedFolders(portal.shared_folders || []);
+    setSelectedProjectFolders(portal.shared_project_folders || []);
   };
 
   const handleToggleFolder = (folder: string) => {
@@ -184,11 +198,23 @@ const ClientPortalManagement = () => {
     );
   };
 
+  const handleToggleProjectFolder = (folder: string) => {
+    setSelectedProjectFolders(prev =>
+      prev.includes(folder)
+        ? prev.filter(f => f !== folder)
+        : [...prev, folder]
+    );
+  };
+
   const handleSaveFolders = async () => {
     if (!editingFoldersPortal) return;
 
     try {
-      await clientPortalService.updatePortalFolders(editingFoldersPortal.id, selectedFolders);
+      await clientPortalService.updatePortalFolders(
+        editingFoldersPortal.id,
+        selectedFolders,
+        selectedProjectFolders
+      );
       await loadPortals();
       setEditingFoldersPortal(null);
       toast.success('Gedeelde mappen bijgewerkt!');
@@ -608,27 +634,56 @@ const ClientPortalManagement = () => {
                 Selecteer welke mappen zichtbaar zijn voor de klant in hun portal:
               </p>
 
-              <div className="space-y-2">
-                {availableFolders.map((folder) => (
-                  <label
-                    key={folder}
-                    className="flex items-center space-x-3 p-3 bg-[#2A303C]/50 rounded-lg hover:bg-[#2A303C] transition-colors cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedFolders.includes(folder)}
-                      onChange={() => handleToggleFolder(folder)}
-                      className="w-5 h-5 rounded border-gray-600 bg-[#1E2530] text-blue-500 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
-                    />
-                    <FolderOpen size={18} className="text-gray-400" />
-                    <span className="text-white flex-1">{folder}</span>
-                  </label>
-                ))}
+              {/* Verdeler folders section */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-400 mb-3">Verdeler Documenten</h4>
+                <div className="space-y-2">
+                  {availableVerdelerFolders.map((folder) => (
+                    <label
+                      key={folder}
+                      className="flex items-center space-x-3 p-3 bg-[#2A303C]/50 rounded-lg hover:bg-[#2A303C] transition-colors cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedFolders.includes(folder)}
+                        onChange={() => handleToggleFolder(folder)}
+                        className="w-5 h-5 rounded border-gray-600 bg-[#1E2530] text-blue-500 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                      />
+                      <FolderOpen size={18} className="text-gray-400" />
+                      <span className="text-white flex-1">{folder}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              {/* Project folders section */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-400 mb-3">Project Documenten</h4>
+                <div className="space-y-2">
+                  {availableProjectFolders.map((folder) => (
+                    <label
+                      key={folder}
+                      className="flex items-center space-x-3 p-3 bg-[#2A303C]/50 rounded-lg hover:bg-[#2A303C] transition-colors cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedProjectFolders.includes(folder)}
+                        onChange={() => handleToggleProjectFolder(folder)}
+                        className="w-5 h-5 rounded border-gray-600 bg-[#1E2530] text-green-500 focus:ring-green-500 focus:ring-offset-0 cursor-pointer"
+                      />
+                      <FolderOpen size={18} className="text-gray-400" />
+                      <span className="text-white flex-1">{folder}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <p className="text-sm text-blue-400">
-                  <strong>{selectedFolders.length}</strong> van <strong>{availableFolders.length}</strong> mappen geselecteerd
+                  <strong>{selectedFolders.length + selectedProjectFolders.length}</strong> van <strong>{availableVerdelerFolders.length + availableProjectFolders.length}</strong> mappen geselecteerd
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  ({selectedFolders.length} verdeler, {selectedProjectFolders.length} project)
                 </p>
               </div>
             </div>
@@ -643,7 +698,7 @@ const ClientPortalManagement = () => {
               <button
                 onClick={handleSaveFolders}
                 className="btn-primary flex items-center space-x-2"
-                disabled={selectedFolders.length === 0}
+                disabled={selectedFolders.length === 0 && selectedProjectFolders.length === 0}
               >
                 <FolderOpen size={16} />
                 <span>Opslaan</span>

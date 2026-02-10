@@ -16,6 +16,7 @@ export interface ClientPortal {
   delivery_status: 'preparing' | 'ready' | 'in_transit' | 'delivered' | 'completed';
   created_at: string;
   shared_folders?: string[];
+  shared_project_folders?: string[];
   verdeler_ids?: string[];
 }
 
@@ -102,11 +103,18 @@ class ClientPortalService {
   }
 
   // Update shared folders for an existing portal
-  async updatePortalFolders(portalId: string, sharedFolders: string[]): Promise<void> {
+  async updatePortalFolders(
+    portalId: string,
+    sharedFolders: string[],
+    sharedProjectFolders: string[] = []
+  ): Promise<void> {
     try {
       const { error } = await supabase
         .from('client_portals')
-        .update({ shared_folders: sharedFolders })
+        .update({
+          shared_folders: sharedFolders,
+          shared_project_folders: sharedProjectFolders
+        })
         .eq('id', portalId);
 
       if (error) throw error;

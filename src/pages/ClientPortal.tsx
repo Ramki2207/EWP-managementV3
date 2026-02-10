@@ -81,8 +81,11 @@ const ClientPortal = () => {
     'RVS behuizing'
   ];
 
+  const sharedProjectFolders = portalData?.shared_project_folders || [];
+
   console.log('Current portalData:', portalData);
-  console.log('Shared folders being used:', sharedFolders);
+  console.log('Shared verdeler folders being used:', sharedFolders);
+  console.log('Shared project folders being used:', sharedProjectFolders);
 
   useEffect(() => {
     // Never auto-authenticate - always require manual code entry
@@ -197,9 +200,11 @@ const ClientPortal = () => {
   const handleSelectFolder = (distributorId?: string, folder?: string) => {
     setSelectedDistributor(distributorId || null);
     setSelectedFolder(folder || null);
-    
+
     if (distributorId && folder && portalData) {
-      loadDocuments(portalData.project_id, distributorId, folder);
+      // If selecting a project folder, pass null as distributor_id
+      const actualDistributorId = distributorId === 'project' ? undefined : distributorId;
+      loadDocuments(portalData.project_id, actualDistributorId, folder);
     } else {
       setDocuments([]);
     }
@@ -327,16 +332,23 @@ const ClientPortal = () => {
   };
 
   const getBreadcrumb = () => {
-    const selectedDistributorData = verdelers.find(d => d.id === selectedDistributor);
-    
     const parts = [portalData?.projects?.project_number || 'Project'];
-    if (selectedDistributorData) {
-      parts.push(`${selectedDistributorData.distributor_id} - ${selectedDistributorData.kast_naam || 'Naamloos'}`);
+
+    if (selectedDistributor === 'project') {
+      // For project-level documents
+      parts.push('Project Documenten');
+    } else {
+      // For verdeler-level documents
+      const selectedDistributorData = verdelers.find(d => d.id === selectedDistributor);
+      if (selectedDistributorData) {
+        parts.push(`${selectedDistributorData.distributor_id} - ${selectedDistributorData.kast_naam || 'Naamloos'}`);
+      }
     }
+
     if (selectedFolder) {
       parts.push(selectedFolder);
     }
-    
+
     return parts.join(' / ');
   };
 
@@ -714,17 +726,58 @@ const ClientPortal = () => {
               <h3 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wide">Document Explorer</h3>
               <div className="space-y-2">
                 {/* Project Level */}
-                <div className="flex items-center p-2 rounded-lg bg-blue-500/20 text-blue-400">
-                  <Building size={16} className="mr-2 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium truncate">{portalData?.projects?.project_number}</div>
-                    {portalData?.projects?.client && (
-                      <div className="text-xs opacity-75 truncate">{portalData.projects.client}</div>
+                <div>
+                  <div
+                    className={`flex items-center p-2 rounded-lg cursor-pointer transition-all ${
+                      selectedDistributor === 'project' && !selectedFolder
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
+                        : 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                    }`}
+                    onClick={() => {
+                      if (sharedProjectFolders.length > 0) {
+                        handleSelectFolder('project');
+                        toggleDistributorExpansion('project');
+                      }
+                    }}
+                  >
+                    {sharedProjectFolders.length > 0 && (
+                      expandedDistributors.has('project') ? (
+                        <ChevronDown size={14} className="mr-2 flex-shrink-0" />
+                      ) : (
+                        <ChevronRight size={14} className="mr-2 flex-shrink-0" />
+                      )
                     )}
+                    <Building size={16} className="mr-2 flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{portalData?.projects?.project_number}</div>
+                      {portalData?.projects?.client && (
+                        <div className="text-xs opacity-75 truncate">{portalData.projects.client}</div>
+                      )}
+                    </div>
+                    <div className="text-xs opacity-60 ml-2 flex-shrink-0">
+                      {verdelers.length}
+                    </div>
                   </div>
-                  <div className="text-xs opacity-60 ml-2 flex-shrink-0">
-                    {verdelers.length}
-                  </div>
+
+                  {/* Project Folders */}
+                  {expandedDistributors.has('project') && sharedProjectFolders.length > 0 && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      {sharedProjectFolders.map((folder) => (
+                        <div
+                          key={folder}
+                          className={`flex items-center p-2 rounded-lg transition-all cursor-pointer group ${
+                            selectedDistributor === 'project' && selectedFolder === folder
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white'
+                              : 'hover:bg-[#2A303C] text-gray-300 hover:text-white'
+                          }`}
+                          onClick={() => handleSelectFolder('project', folder)}
+                        >
+                          <Folder size={12} className="mr-2 flex-shrink-0 text-blue-400" />
+                          <span className="text-xs truncate">{folder}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Distributors Level */}
@@ -883,12 +936,16 @@ const ClientPortal = () => {
                 <div>
                   <div className="flex items-center text-sm text-gray-400 space-x-2 mb-6">
                     <span>Selecteer een map voor:</span>
-                    <span className="text-green-400">
-                      {verdelers.find(v => v.id === selectedDistributor)?.distributor_id}
-                    </span>
+                    {selectedDistributor === 'project' ? (
+                      <span className="text-blue-400">Project Documenten</span>
+                    ) : (
+                      <span className="text-green-400">
+                        {verdelers.find(v => v.id === selectedDistributor)?.distributor_id}
+                      </span>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {sharedFolders.map((folderName) => (
+                    {(selectedDistributor === 'project' ? sharedProjectFolders : sharedFolders).map((folderName) => (
                       <div
                         key={folderName}
                         onClick={() => handleSelectFolder(selectedDistributor, folderName)}
@@ -896,7 +953,11 @@ const ClientPortal = () => {
                       >
                         <Folder
                           size={40}
-                          className="text-gray-400 group-hover:text-purple-400 transition-colors"
+                          className={`text-gray-400 transition-colors ${
+                            selectedDistributor === 'project'
+                              ? 'group-hover:text-blue-400'
+                              : 'group-hover:text-purple-400'
+                          }`}
                         />
                         <span className="text-sm text-center font-medium group-hover:text-white transition-colors">
                           {folderName}
@@ -910,9 +971,9 @@ const ClientPortal = () => {
                 <div>
                   <div className="text-center py-8">
                     <Server size={48} className="mx-auto text-gray-600 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer een verdeler</h3>
+                    <h3 className="text-lg font-semibold text-gray-300 mb-2">Selecteer documenten</h3>
                     <p className="text-gray-400">
-                      Kies een verdeler uit de lijst links om documenten te bekijken
+                      Kies project documenten of een verdeler uit de lijst links om documenten te bekijken
                     </p>
                   </div>
                 </div>
