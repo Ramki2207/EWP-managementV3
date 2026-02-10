@@ -140,7 +140,7 @@ const VerdelerDetails = () => {
   const getMontageUsersByLocation = (projectLocation?: string) => {
     console.log('🔍 VERDELER DETAILS: Getting montage users for location:', projectLocation);
     console.log('🔍 VERDELER DETAILS: Total users loaded:', users.length);
-    console.log('🔍 VERDELER DETAILS: Current user:', currentUser?.username, 'Locations:', currentUser?.assigned_locations);
+    console.log('🔍 VERDELER DETAILS: Current user:', currentUser?.username, 'Role:', currentUser?.role, 'Locations:', currentUser?.assigned_locations);
 
     if (!users || users.length === 0) {
       console.log('❌ VERDELER DETAILS: No users loaded yet');
@@ -154,8 +154,16 @@ const VerdelerDetails = () => {
       return isMontage;
     });
 
-    // Filter by current user's assigned locations
-    if (currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
+    // Check if current user has assign permissions for verdelers
+    const canAssignAcrossLocations = currentUser?.permissions?.verdelers?.assign === true ||
+                                    currentUser?.role === 'admin' ||
+                                    currentUser?.role === 'planner' ||
+                                    currentUser?.role === 'projectleider';
+
+    console.log('🔍 VERDELER DETAILS: Can assign across locations:', canAssignAcrossLocations);
+
+    // Only apply location filter if user doesn't have assign permissions
+    if (!canAssignAcrossLocations && currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
       montageUsers = montageUsers.filter(user => {
         // If user has no assigned locations, don't show them
         if (!user.assigned_locations || user.assigned_locations.length === 0) {
