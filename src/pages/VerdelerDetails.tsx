@@ -197,19 +197,19 @@ const VerdelerDetails = () => {
 
     // Separate users by location
     const primary = montageUsers.filter(user => {
-      const hasLocationAccess = !user.assignedLocations ||
-                               user.assignedLocations.length === 0 ||
-                               user.assignedLocations.length === AVAILABLE_LOCATIONS.length ||
-                               user.assignedLocations.some((loc: string) => locationsMatch(loc, projectLocation));
+      const hasLocationAccess = !user.assigned_locations ||
+                               user.assigned_locations.length === 0 ||
+                               user.assigned_locations.length === AVAILABLE_LOCATIONS.length ||
+                               user.assigned_locations.some((loc: string) => locationsMatch(loc, projectLocation));
       console.log(`🔍 VERDELER DETAILS: User ${user.username} location access for ${projectLocation}:`, hasLocationAccess);
       return hasLocationAccess;
     });
 
     const other = montageUsers.filter(user => {
-      const hasOtherLocationAccess = user.assignedLocations &&
-                                    user.assignedLocations.length > 0 &&
-                                    user.assignedLocations.length < AVAILABLE_LOCATIONS.length &&
-                                    !user.assignedLocations.some((loc: string) => locationsMatch(loc, projectLocation));
+      const hasOtherLocationAccess = user.assigned_locations &&
+                                    user.assigned_locations.length > 0 &&
+                                    user.assigned_locations.length < AVAILABLE_LOCATIONS.length &&
+                                    !user.assigned_locations.some((loc: string) => locationsMatch(loc, projectLocation));
       return hasOtherLocationAccess;
     });
 
@@ -1193,7 +1193,7 @@ const VerdelerDetails = () => {
                                 <optgroup label="Andere locaties">
                                   {other.map(user => (
                                     <option key={user.id} value={user.username}>
-                                      {user.username} ({user.assignedLocations?.join(', ') || 'Alle locaties'})
+                                      {user.username} ({user.assigned_locations?.join(', ') || 'Alle locaties'})
                                     </option>
                                   ))}
                                 </optgroup>
