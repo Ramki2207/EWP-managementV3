@@ -9,7 +9,7 @@ interface DeliveryNotificationManagerProps {
   onStatusChange?: () => void;
 }
 
-const allAvailableFolders = [
+const availableVerdelerFolders = [
   'Verdeler aanzicht',
   'Test certificaat',
   'Algemene informatie',
@@ -19,6 +19,18 @@ const allAvailableFolders = [
   'Documentatie',
   'Oplever foto\'s',
   'Klant informatie',
+];
+
+const availableProjectFolders = [
+  'Aanvraag',
+  'Bestelling',
+  'Calculatie',
+  'Offerte',
+  'Ondersteuning',
+  'Opdracht',
+  'Opname Locatie',
+  'Software bestand',
+  'Verzend foto\'s',
 ];
 
 const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = ({
@@ -39,6 +51,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     'Test certificaat',
     'Installatie schema'
   ]);
+  const [selectedProjectFolders, setSelectedProjectFolders] = useState<string[]>([]);
 
   const handleGenerateDeliveryNotification = async () => {
     try {
@@ -69,6 +82,11 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         // Load existing folder selection
         if (existingPortal.shared_folders && existingPortal.shared_folders.length > 0) {
           setSelectedFolders(existingPortal.shared_folders);
+        }
+
+        // Load existing project folder selection
+        if (existingPortal.shared_project_folders && existingPortal.shared_project_folders.length > 0) {
+          setSelectedProjectFolders(existingPortal.shared_project_folders);
         }
 
         // Load existing verdeler selection or default to "Levering" status verdelers
@@ -137,11 +155,26 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         return;
       }
 
+      // Check if at least one folder is selected
+      if (selectedFolders.length === 0 && selectedProjectFolders.length === 0) {
+        toast.error('Er moet minimaal 1 map geselecteerd zijn');
+        setShowFolderSelection(true);
+        return;
+      }
+
       // Update portal with selected folders
-      await clientPortalService.updatePortalFolders(portal.id, selectedFolders);
+      await clientPortalService.updatePortalFolders(
+        portal.id,
+        selectedFolders,
+        selectedProjectFolders
+      );
 
       // Update local portal state
-      setPortal({ ...portal, shared_folders: selectedFolders });
+      setPortal({
+        ...portal,
+        shared_folders: selectedFolders,
+        shared_project_folders: selectedProjectFolders
+      });
 
       toast.success('Mappen geselecteerd! De geselecteerde mappen zijn opgeslagen.');
 
@@ -159,11 +192,16 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
   const toggleFolder = (folder: string) => {
     setSelectedFolders(prev => {
       if (prev.includes(folder)) {
-        // Don't allow removing all folders
-        if (prev.length === 1) {
-          toast.error('Er moet minimaal 1 map geselecteerd zijn');
-          return prev;
-        }
+        return prev.filter(f => f !== folder);
+      } else {
+        return [...prev, folder];
+      }
+    });
+  };
+
+  const toggleProjectFolder = (folder: string) => {
+    setSelectedProjectFolders(prev => {
+      if (prev.includes(folder)) {
         return prev.filter(f => f !== folder);
       } else {
         return [...prev, folder];
@@ -444,42 +482,85 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
 
             <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
               <h3 className="text-sm font-semibold text-gray-300 mb-4 uppercase tracking-wide">
-                Beschikbare Mappen ({selectedFolders.length} geselecteerd)
+                Beschikbare Mappen ({selectedFolders.length + selectedProjectFolders.length} geselecteerd)
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {allAvailableFolders.map((folder) => {
-                  const isSelected = selectedFolders.includes(folder);
-                  return (
-                    <div
-                      key={folder}
-                      onClick={() => toggleFolder(folder)}
-                      className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-500/10'
-                          : 'border-gray-600 bg-[#374151] hover:border-gray-500'
-                      }`}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-500'
-                        }`}>
-                          {isSelected && (
-                            <CheckCircle size={16} className="text-white" />
-                          )}
+
+              {/* Verdeler Folders Section */}
+              <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-400 mb-3">Verdeler Documenten</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableVerdelerFolders.map((folder) => {
+                    const isSelected = selectedFolders.includes(folder);
+                    return (
+                      <div
+                        key={folder}
+                        onClick={() => toggleFolder(folder)}
+                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border-gray-600 bg-[#374151] hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-500'
+                          }`}>
+                            {isSelected && (
+                              <CheckCircle size={16} className="text-white" />
+                            )}
+                          </div>
+                          <Folder size={18} className={isSelected ? 'text-blue-400' : 'text-gray-400'} />
+                          <span className={`text-sm font-medium ${
+                            isSelected ? 'text-white' : 'text-gray-300'
+                          }`}>
+                            {folder}
+                          </span>
                         </div>
-                        <Folder size={18} className={isSelected ? 'text-blue-400' : 'text-gray-400'} />
-                        <span className={`text-sm font-medium ${
-                          isSelected ? 'text-white' : 'text-gray-300'
-                        }`}>
-                          {folder}
-                        </span>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
+
+              {/* Project Folders Section */}
+              <div>
+                <h4 className="text-sm font-semibold text-gray-400 mb-3">Project Documenten</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableProjectFolders.map((folder) => {
+                    const isSelected = selectedProjectFolders.includes(folder);
+                    return (
+                      <div
+                        key={folder}
+                        onClick={() => toggleProjectFolder(folder)}
+                        className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                          isSelected
+                            ? 'border-green-500 bg-green-500/10'
+                            : 'border-gray-600 bg-[#374151] hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'border-green-500 bg-green-500' : 'border-gray-500'
+                          }`}>
+                            {isSelected && (
+                              <CheckCircle size={16} className="text-white" />
+                            )}
+                          </div>
+                          <Folder size={18} className={isSelected ? 'text-green-400' : 'text-gray-400'} />
+                          <span className={`text-sm font-medium ${
+                            isSelected ? 'text-white' : 'text-gray-300'
+                          }`}>
+                            {folder}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               <p className="text-xs text-gray-500 mt-4">
-                Minimaal 1 map moet geselecteerd zijn
+                Minimaal 1 map moet geselecteerd zijn (verdeler of project)
               </p>
             </div>
 
@@ -493,9 +574,9 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
               </button>
               <button
                 onClick={handleConfirmFolderSelection}
-                disabled={selectedFolders.length === 0 || isGenerating}
+                disabled={(selectedFolders.length === 0 && selectedProjectFolders.length === 0) || isGenerating}
                 className={`bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2 ${
-                  selectedFolders.length === 0 || isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+                  (selectedFolders.length === 0 && selectedProjectFolders.length === 0) || isGenerating ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {isGenerating ? (
@@ -608,17 +689,45 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
             {/* Shared Folders Info */}
             <div className="bg-[#2A303C]/50 rounded-xl p-6 mb-6">
               <h3 className="text-lg font-semibold text-purple-400 mb-4">Gedeelde Mappen</h3>
-              <div className="flex flex-wrap gap-2">
-                {selectedFolders.map((folder) => (
-                  <div
-                    key={folder}
-                    className="flex items-center space-x-2 bg-purple-500/20 border border-purple-500/30 rounded-lg px-3 py-2"
-                  >
-                    <Folder size={14} className="text-purple-400" />
-                    <span className="text-sm text-purple-300">{folder}</span>
+
+              {selectedFolders.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-semibold text-gray-400 mb-2">Verdeler Documenten</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedFolders.map((folder) => (
+                      <div
+                        key={folder}
+                        className="flex items-center space-x-2 bg-blue-500/20 border border-blue-500/30 rounded-lg px-3 py-2"
+                      >
+                        <Folder size={14} className="text-blue-400" />
+                        <span className="text-sm text-blue-300">{folder}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {selectedProjectFolders.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-400 mb-2">Project Documenten</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedProjectFolders.map((folder) => (
+                      <div
+                        key={folder}
+                        className="flex items-center space-x-2 bg-green-500/20 border border-green-500/30 rounded-lg px-3 py-2"
+                      >
+                        <Folder size={14} className="text-green-400" />
+                        <span className="text-sm text-green-300">{folder}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedFolders.length === 0 && selectedProjectFolders.length === 0 && (
+                <p className="text-sm text-gray-400">Geen mappen geselecteerd</p>
+              )}
+
               <p className="text-xs text-gray-500 mt-3">
                 Deze mappen zijn zichtbaar voor de klant in het portal. Klik op "Selecteer Mappen" om aan te passen.
               </p>
