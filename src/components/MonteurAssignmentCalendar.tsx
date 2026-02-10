@@ -50,13 +50,11 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProjectLeader, setFilterProjectLeader] = useState<string>('all');
-  const [filterInstallateur, setFilterInstallateur] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
   // Get unique values for filters
   const projectLeaders = Array.from(new Set(verdelers.map(v => v.project_leader_name).filter(Boolean)));
-  const installateurs = Array.from(new Set(verdelers.map(v => v.installateur_type).filter(Boolean)));
 
   useEffect(() => {
     loadVerdelers();
@@ -64,7 +62,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
 
   useEffect(() => {
     applyFilters();
-  }, [verdelers, searchTerm, filterProjectLeader, filterInstallateur, filterStatus]);
+  }, [verdelers, searchTerm, filterProjectLeader, filterStatus]);
 
   const loadVerdelers = async () => {
     try {
@@ -186,11 +184,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       filtered = filtered.filter(v => v.project_leader_name === filterProjectLeader);
     }
 
-    // Installateur filter
-    if (filterInstallateur !== 'all') {
-      filtered = filtered.filter(v => v.installateur_type === filterInstallateur);
-    }
-
     // Status filter - filter by verdeler/project status
     if (filterStatus !== 'all') {
       filtered = filtered.filter(v => v.status === filterStatus);
@@ -203,7 +196,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
     const exportData = filteredVerdelers.map(v => ({
       'Projectleider': v.project_leader_name || '',
       'Projectnummer': v.project_number,
-      'Installateur': v.installateur_type || '',
       'Naam project': v.project_naam || v.client,
       'Verdeler': v.distributor_id,
       'Kast Naam': v.kast_naam,
@@ -211,13 +203,9 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       'Wanneer leveren': v.gewenste_lever_datum ? new Date(v.gewenste_lever_datum).toLocaleDateString('nl-NL') : '',
       'Levering week': v.delivery_week || '',
       'Welke monteur': v.toegewezen_monteur || 'Niet toegewezen',
-      'Gesl?': v.is_closed ? 'Ja' : '',
-      'Klaar?': v.is_ready ? 'Ja' : '',
-      'Getest': v.is_tested ? 'Ja' : '',
-      'Afgeleverd': v.is_delivered ? 'Ja' : '',
+      'Status': v.status,
       'Week status': v.week_status || '',
-      'Locatie': v.location,
-      'Status': v.status
+      'Locatie': v.location
     }));
 
     const ws = XLSX.utils.json_to_sheet(exportData);
@@ -228,7 +216,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
     ws['!cols'] = [
       { wch: 15 }, // Projectleider
       { wch: 15 }, // Projectnummer
-      { wch: 20 }, // Installateur
       { wch: 30 }, // Naam project
       { wch: 15 }, // Verdeler
       { wch: 20 }, // Kast Naam
@@ -236,13 +223,9 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       { wch: 15 }, // Wanneer leveren
       { wch: 12 }, // Levering week
       { wch: 30 }, // Welke monteur
-      { wch: 8 },  // Gesl?
-      { wch: 8 },  // Klaar?
-      { wch: 8 },  // Getest
-      { wch: 10 }, // Afgeleverd
+      { wch: 20 }, // Status
       { wch: 12 }, // Week status
-      { wch: 20 }, // Locatie
-      { wch: 15 }  // Status
+      { wch: 20 }  // Locatie
     ];
 
     const fileName = `Monteur_Planning_${currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}.xlsx`;
@@ -388,16 +371,12 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
           <tr>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectleid</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectnumm</th>
-            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Installateur</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Naam project</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Verdeler</th>
             <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Aantal ure</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Wanneer leveren</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Welke monteur</th>
-            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Gesl?</th>
-            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Klaar?</th>
-            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Getest</th>
-            <th className="px-3 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Afgeleverd</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Week</th>
           </tr>
         </thead>
@@ -418,9 +397,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-white font-medium">
                   {verdeler.project_number}
-                </td>
-                <td className="px-3 py-3 whitespace-nowrap text-gray-300">
-                  {verdeler.installateur_type || '-'}
                 </td>
                 <td className="px-3 py-3 text-gray-300">
                   {verdeler.project_naam || verdeler.client}
@@ -445,17 +421,8 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                     {verdeler.toegewezen_monteur || 'Niet toegewezen'}
                   </span>
                 </td>
-                <td className="px-3 py-3 text-center">
-                  {verdeler.is_closed && <CheckCircle size={16} className="inline text-gray-400" />}
-                </td>
-                <td className="px-3 py-3 text-center">
-                  {verdeler.is_ready && <CheckCircle size={16} className="inline text-cyan-400" />}
-                </td>
-                <td className="px-3 py-3 text-center">
-                  {verdeler.is_tested && <CheckCircle size={16} className="inline text-green-400" />}
-                </td>
-                <td className="px-3 py-3 text-center">
-                  {verdeler.is_delivered && <CheckCircle size={16} className="inline text-blue-400" />}
+                <td className="px-3 py-3 whitespace-nowrap text-gray-300">
+                  <span className="text-sm">{verdeler.status}</span>
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap">
                   <span className={`px-2 py-1 rounded text-xs ${
@@ -544,7 +511,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
         {/* Filters */}
         {showFilters && (
           <div className="mb-6 p-4 bg-[#1a1f2a] rounded-lg border border-gray-700">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Search */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Zoeken</label>
@@ -575,21 +542,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                 </select>
               </div>
 
-              {/* Installateur Filter */}
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Installateur</label>
-                <select
-                  value={filterInstallateur}
-                  onChange={(e) => setFilterInstallateur(e.target.value)}
-                  className="input-field w-full"
-                >
-                  <option value="all">Alle installateurs</option>
-                  {installateurs.map(inst => (
-                    <option key={inst} value={inst}>{inst}</option>
-                  ))}
-                </select>
-              </div>
-
               {/* Status Filter */}
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Status</label>
@@ -614,7 +566,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             </div>
 
             {/* Active Filters Display */}
-            {(searchTerm || filterProjectLeader !== 'all' || filterInstallateur !== 'all' || filterStatus !== 'all') && (
+            {(searchTerm || filterProjectLeader !== 'all' || filterStatus !== 'all') && (
               <div className="mt-4 flex items-center space-x-2 text-sm">
                 <span className="text-gray-400">Actieve filters:</span>
                 {searchTerm && (
@@ -627,11 +579,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                     Projectleider: {filterProjectLeader}
                   </span>
                 )}
-                {filterInstallateur !== 'all' && (
-                  <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
-                    Installateur: {filterInstallateur}
-                  </span>
-                )}
                 {filterStatus !== 'all' && (
                   <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
                     Status: {filterStatus}
@@ -641,7 +588,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                   onClick={() => {
                     setSearchTerm('');
                     setFilterProjectLeader('all');
-                    setFilterInstallateur('all');
                     setFilterStatus('all');
                   }}
                   className="text-blue-400 hover:text-blue-300"
@@ -858,12 +804,6 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                     <div className="col-span-2">
                       <p className="text-xs text-gray-400">Project Naam</p>
                       <p className="text-sm text-white">{selectedVerdeler.project_naam}</p>
-                    </div>
-                  )}
-                  {selectedVerdeler.installateur_type && (
-                    <div className="col-span-2">
-                      <p className="text-xs text-gray-400">Installateur Type</p>
-                      <p className="text-sm text-white">{selectedVerdeler.installateur_type}</p>
                     </div>
                   )}
                 </div>
