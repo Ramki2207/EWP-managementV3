@@ -11,7 +11,7 @@ interface ProjectSharingModalProps {
   onUpdate?: () => void;
 }
 
-const LOCATIONS = ['Leerdam', 'Naaldwijk', 'Rotterdam', 'Leerdam - PM'];
+const LOCATIONS = ['Leerdam', 'Leerdam (PM)', 'Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
 
 export default function ProjectSharingModal({
   projectId,
@@ -23,8 +23,13 @@ export default function ProjectSharingModal({
   const [sharedLocations, setSharedLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   useEffect(() => {
+    const userId = localStorage.getItem('currentUserId');
+    if (userId) {
+      setCurrentUserId(userId);
+    }
     loadSharedLocations();
   }, [projectId]);
 
@@ -37,26 +42,32 @@ export default function ProjectSharingModal({
 
       if (error) throw error;
 
-      setSharedLocations(data?.map(d => d.location) || []);
+      const locations = data?.map(d => d.location) || [];
+      console.log('📋 SHARING MODAL: Loaded shared locations for project', projectId, ':', locations);
+      setSharedLocations(locations);
     } catch (error) {
       console.error('Error loading shared locations:', error);
-      toast.error('Failed to load shared locations');
+      toast.error('Kon gedeelde locaties niet laden');
     } finally {
       setLoading(false);
     }
   };
 
   const toggleLocation = async (location: string) => {
+    console.log('🔄 SHARING: Toggle location clicked:', location, 'for project', projectId);
+
     if (location === projectLocation) {
-      toast.error('Cannot share with the project\'s own location');
+      toast.error('Kan niet delen met de eigen locatie van het project');
       return;
     }
 
     setSaving(true);
     try {
       const isShared = sharedLocations.includes(location);
+      console.log('🔄 SHARING: Location', location, 'is currently shared:', isShared);
 
       if (isShared) {
+        console.log('🗑️ SHARING: Removing shared location:', location);
         const { error } = await supabase
           .from('project_shared_locations')
           .delete()
@@ -66,28 +77,32 @@ export default function ProjectSharingModal({
         if (error) throw error;
 
         setSharedLocations(prev => prev.filter(loc => loc !== location));
-        toast.success(`Removed access for ${location}`);
+        console.log('✅ SHARING: Successfully removed shared location');
+        toast.success(`Toegang verwijderd voor ${location}`);
       } else {
-        const { data: userData } = await supabase.auth.getUser();
-
+        console.log('➕ SHARING: Adding shared location:', location, 'by user:', currentUserId);
         const { error } = await supabase
           .from('project_shared_locations')
           .insert({
             project_id: projectId,
             location,
-            shared_by: userData?.user?.id,
+            shared_by: currentUserId || null,
           });
 
-        if (error) throw error;
+        if (error) {
+          console.error('❌ SHARING: Error sharing project:', error);
+          throw error;
+        }
 
         setSharedLocations(prev => [...prev, location]);
-        toast.success(`Shared with ${location}`);
+        console.log('✅ SHARING: Successfully added shared location');
+        toast.success(`Gedeeld met ${location}`);
       }
 
       onUpdate?.();
     } catch (error) {
-      console.error('Error toggling location share:', error);
-      toast.error('Failed to update sharing settings');
+      console.error('❌ SHARING: Error toggling location share:', error);
+      toast.error('Kon delen niet bijwerken');
     } finally {
       setSaving(false);
     }
@@ -96,83 +111,93 @@ export default function ProjectSharingModal({
   const availableLocations = LOCATIONS.filter(loc => loc !== projectLocation);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-xl font-semibold">Share Project</h2>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-[#1E2530] rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-700">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Share2 className="w-5 h-5 text-blue-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">Project Delen</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
           </button>
         </div>
 
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Project: <span className="font-medium text-gray-900">{projectNumber}</span>
-          </p>
-          <p className="text-sm text-gray-600">
-            Primary Location: <span className="font-medium text-gray-900">{projectLocation}</span>
-          </p>
+        {/* Content */}
+        <div className="p-6">
+          <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <p className="text-sm text-gray-400">
+              Project: <span className="font-medium text-white">{projectNumber}</span>
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+              Hoofdlocatie: <span className="font-medium text-white">{projectLocation}</span>
+            </p>
+          </div>
+
+          <div className="mb-4">
+            <p className="text-sm text-gray-300 mb-3 font-medium">
+              Deel dit project met andere locaties:
+            </p>
+
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {availableLocations.map((location) => {
+                  const isShared = sharedLocations.includes(location);
+
+                  return (
+                    <button
+                      key={location}
+                      onClick={() => toggleLocation(location)}
+                      disabled={saving}
+                      className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all ${
+                        isShared
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                      } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      <span className={`font-medium ${isShared ? 'text-blue-400' : 'text-gray-300'}`}>
+                        {location}
+                      </span>
+                      {isShared && (
+                        <div className="flex items-center gap-2 text-blue-400">
+                          <Check className="w-5 h-5" />
+                          <span className="text-sm">Gedeeld</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+            <p className="text-sm text-blue-300">
+              <strong className="text-blue-400">Let op:</strong> Gebruikers van gedeelde locaties kunnen dit project bekijken en bewerken.
+            </p>
+          </div>
         </div>
 
-        <div className="mb-4">
-          <p className="text-sm text-gray-700 mb-3">
-            Share this project with other locations:
-          </p>
-
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {availableLocations.map((location) => {
-                const isShared = sharedLocations.includes(location);
-
-                return (
-                  <button
-                    key={location}
-                    onClick={() => toggleLocation(location)}
-                    disabled={saving}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                      isShared
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
-                    } ${saving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                  >
-                    <span className={`font-medium ${isShared ? 'text-blue-700' : 'text-gray-700'}`}>
-                      {location}
-                    </span>
-                    {isShared && (
-                      <div className="flex items-center gap-2 text-blue-600">
-                        <Check className="w-5 h-5" />
-                        <span className="text-sm">Shared</span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Users from shared locations will be able to view and edit this project.
-          </p>
-        </div>
-
-        <div className="mt-6 flex justify-end">
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-700 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors"
           >
-            Close
+            Sluiten
           </button>
         </div>
       </div>

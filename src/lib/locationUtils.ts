@@ -54,11 +54,37 @@ export const hasLocationAccess = (
   // Check if project is shared with any of the user's locations
   if (projectSharedLocations && projectSharedLocations.length > 0) {
     const sharedLocationNames = projectSharedLocations.map(sl => sl.location);
-    const hasSharedAccess = userAssignedLocations.some(userLoc =>
-      sharedLocationNames.includes(userLoc)
-    );
+    console.log('🔍 SHARING: Checking shared locations:', sharedLocationNames, 'against user locations:', userAssignedLocations);
+
+    const hasSharedAccess = userAssignedLocations.some(userLoc => {
+      // Direct match
+      if (sharedLocationNames.includes(userLoc)) {
+        console.log('✅ SHARING: Direct match found for', userLoc);
+        return true;
+      }
+
+      // Backward compatibility for shared locations
+      // If project is shared with "Naaldwijk", users with "Naaldwijk (PD)" or "Naaldwijk (PW)" can access
+      if ((userLoc === 'Naaldwijk (PD)' || userLoc === 'Naaldwijk (PW)') &&
+          sharedLocationNames.includes('Naaldwijk')) {
+        console.log('✅ SHARING: Naaldwijk variant match found for', userLoc);
+        return true;
+      }
+
+      // If project is shared with "Leerdam", users with "Leerdam (PM)" can access
+      if (userLoc === 'Leerdam (PM)' && sharedLocationNames.includes('Leerdam')) {
+        console.log('✅ SHARING: Leerdam variant match found for', userLoc);
+        return true;
+      }
+
+      return false;
+    });
+
     if (hasSharedAccess) {
+      console.log('✅ SHARING: Access granted via shared location');
       return true;
+    } else {
+      console.log('❌ SHARING: No shared location match found');
     }
   }
 
