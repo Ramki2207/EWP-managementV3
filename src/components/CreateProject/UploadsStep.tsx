@@ -34,6 +34,9 @@ const projectLevelFolders = [
   'Offerte',
   'Opdracht',
   'Ondersteuning',
+  'Verzend foto\'s',
+  'Software bestand',
+  'Facturen',
 ];
 
 interface Document {

@@ -34,6 +34,7 @@ const projectLevelFolders = [
   'Ondersteuning',
   'Verzend foto\'s',
   'Software bestand',
+  'Facturen',
 ];
 
 const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project }) => {

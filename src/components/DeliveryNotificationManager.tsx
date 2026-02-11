@@ -35,6 +35,7 @@ const availableProjectFolders = [
   'Opname Locatie',
   'Software bestand',
   'Verzend foto\'s',
+  'Facturen',
 ];
 
 const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = ({
