@@ -583,8 +583,8 @@ const VerdelerDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Verdeler laden...</span>
@@ -596,9 +596,9 @@ const VerdelerDetails = () => {
 
   if (!distributor) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
-          <h1 className="text-2xl mb-4">Verdeler niet gevonden</h1>
+      <div className="page-container">
+        <div className="card">
+          <h1 className="page-title mb-4">Verdeler niet gevonden</h1>
           <button
             onClick={() => navigate("/verdelers")}
             className="btn-primary"
@@ -630,9 +630,9 @@ const VerdelerDetails = () => {
   console.log('🔍 VERDELER DETAILS: Should show testing button:', distributor.status === 'Testen');
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <button
@@ -642,11 +642,11 @@ const VerdelerDetails = () => {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-semibold">Verdeler details</h1>
+              <h1 className="page-title font-semibold">Verdeler details</h1>
               <p className="text-gray-400">{distributor.distributor_id} - {distributor.kast_naam || 'Naamloos'}</p>
             </div>
           </div>
-          <div className="flex space-x-2">
+          <div className="button-group">
             {distributor.status === 'Testen' && (
               <button
                 onClick={openChecklistInNewWindow}
@@ -689,7 +689,7 @@ const VerdelerDetails = () => {
                     <span>Bewerken</span>
                   </button>
                 ) : (
-                  <div className="flex space-x-2">
+                  <div className="button-group">
                     <button
                       onClick={handleCancelEdit}
                       className="btn-secondary flex items-center space-x-2"
@@ -716,8 +716,8 @@ const VerdelerDetails = () => {
       {showAccessCodeForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="card p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-semibold">Toegangscode genereren</h2>
+            <div className="card-header mb-4 md:mb-6">
+              <h2 className="card-title font-semibold">Toegangscode genereren</h2>
               <button
                 onClick={() => setShowAccessCodeForm(false)}
                 className="text-gray-400 hover:text-white"
@@ -737,7 +737,7 @@ const VerdelerDetails = () => {
                 <label className="block text-sm text-gray-400 mb-1">
                   Toegangscode <span className="text-red-400">*</span>
                 </label>
-                <div className="flex space-x-2">
+                <div className="button-group">
                   <input
                     type="text"
                     className="input-field flex-1"
@@ -839,7 +839,7 @@ const VerdelerDetails = () => {
 
       {/* Navigation Tabs */}
       <div className="card p-4 mb-8">
-        <div className="flex space-x-4">
+        <div className="button-group w-full md:w-auto">
           <button
             onClick={() => setActiveTab('details')}
             className={`px-4 py-2 rounded-lg transition ${
@@ -896,14 +896,14 @@ const VerdelerDetails = () => {
       </div>
 
       {/* Content */}
-      <div className="card p-6">
+      <div className="card">
         {activeTab === 'details' && (
           <div>
             <div className="space-y-8">
               {/* Basis Informatie */}
               <div>
-                <h3 className="text-lg font-semibold text-blue-400 mb-4">Basis Informatie</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="card-title font-semibold text-blue-400 mb-4">Basis Informatie</h3>
+                <div className="responsive-grid-2">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Verdeler ID</label>
                     <div className="input-field bg-[#2A303C]/50 cursor-not-allowed">
@@ -962,7 +962,7 @@ const VerdelerDetails = () => {
 
               {/* Technische Specificaties */}
               <div>
-                <h3 className="text-lg font-semibold text-green-400 mb-4">Technische Specificaties</h3>
+                <h3 className="card-title font-semibold text-green-400 mb-4">Technische Specificaties</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Stelsel</label>
@@ -1129,8 +1129,8 @@ const VerdelerDetails = () => {
 
               {/* Planning en Toewijzing */}
               <div>
-                <h3 className="text-lg font-semibold text-orange-400 mb-4">Planning en Toewijzing</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <h3 className="card-title font-semibold text-orange-400 mb-4">Planning en Toewijzing</h3>
+                <div className="responsive-grid-2">
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">Keuring datum</label>
                     {isEditing ? (
@@ -1238,7 +1238,7 @@ const VerdelerDetails = () => {
 
         {activeTab === 'documents' && (
           <div>
-            <h2 className="text-lg text-gradient mb-6">Documenten</h2>
+            <h2 className="card-title text-gradient mb-6">Documenten</h2>
             {/* Document Management for this specific verdeler */}
             <VerdelerDocumentManager distributor={distributor} />
           </div>
@@ -1246,7 +1246,7 @@ const VerdelerDetails = () => {
 
         {activeTab === 'tests' && (
           <div>
-            <h2 className="text-lg text-gradient mb-6">Testrapporten</h2>
+            <h2 className="card-title text-gradient mb-6">Testrapporten</h2>
 
             {/* DEBUG INFO */}
             <div className="bg-yellow-500/20 border border-yellow-500 p-4 rounded-lg mb-4">
@@ -1261,7 +1261,7 @@ const VerdelerDetails = () => {
 
             {distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent && (
               <div className="bg-[#2A303C] p-6 rounded-lg mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Start keuring</h3>
+                <h3 className="card-title font-semibold text-white mb-4">Start keuring</h3>
                 <p className="text-gray-400 mb-4">Kies het type keuring dat je wilt uitvoeren:</p>
                 <div className="flex flex-wrap gap-3">
                   <button
@@ -1384,12 +1384,12 @@ const VerdelerDetails = () => {
 
         {activeTab === 'levering' && (
           <div>
-            <h2 className="text-lg text-gradient mb-6">Levering</h2>
+            <h2 className="card-title text-gradient mb-6">Levering</h2>
             {distributor?.status === 'Levering' ? (
               <div className="space-y-6">
                 {!testingHoursLogged ? (
                   <div className="bg-[#2A303C] p-6 rounded-lg border-l-4 border-yellow-500">
-                    <h3 className="text-lg font-semibold text-yellow-500 mb-2">Test uren registreren</h3>
+                    <h3 className="card-title font-semibold text-yellow-500 mb-2">Test uren registreren</h3>
                     <p className="text-gray-400 mb-4">
                       Log eerst je test uren voordat je de levering checklist invult.
                     </p>
@@ -1405,7 +1405,7 @@ const VerdelerDetails = () => {
                   <div className="bg-[#2A303C] p-6 rounded-lg border-l-4 border-green-500">
                     <div className="flex items-center text-green-500 mb-2">
                       <CheckSquare className="w-5 h-5 mr-2" />
-                      <h3 className="text-lg font-semibold">Test uren geregistreerd</h3>
+                      <h3 className="card-title font-semibold">Test uren geregistreerd</h3>
                     </div>
                     <p className="text-gray-400">
                       Je test uren zijn succesvol geregistreerd. Klik op de "Levering Checklist" knop bovenaan de pagina om de checklist in te vullen.
@@ -1416,7 +1416,7 @@ const VerdelerDetails = () => {
                 {showLeveringChecklist && (
                   <div className="bg-[#2A303C] p-6 rounded-lg">
                     <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-semibold text-white">Levering Checklist</h3>
+                      <h3 className="card-title font-semibold text-white">Levering Checklist</h3>
                       <button
                         onClick={() => setShowLeveringChecklist(false)}
                         className="btn-secondary p-2"

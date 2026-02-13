@@ -116,7 +116,7 @@ const ClientDetails = () => {
   if (!client) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] text-white p-8">
-        <h1 className="text-2xl mb-4">Klant niet gevonden</h1>
+        <h1 className="page-title mb-4">Klant niet gevonden</h1>
         <button
           onClick={() => navigate("/clients")}
           className="bg-[#4169e1] hover:bg-blue-600 transition text-white px-4 py-2 rounded-xl"
@@ -130,8 +130,8 @@ const ClientDetails = () => {
   return (
     <div className="min-h-screen bg-[#1a1a1a] text-white p-8">
       {/* Terug knop */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl">Klantdetails</h1>
+      <div className="card-header mb-6 md:mb-8">
+        <h1 className="page-title">Klantdetails</h1>
         <button
           onClick={() => navigate("/clients")}
           className="bg-[#4169e1] hover:bg-blue-600 transition text-white px-4 py-2 rounded-xl"
@@ -142,7 +142,7 @@ const ClientDetails = () => {
 
       {/* Klant info */}
       <div className="bg-[#1E2530] rounded-xl p-6 shadow-lg space-y-6 mb-8">
-        <h2 className="text-lg text-[#4169e1] mb-4">Klantgegevens</h2>
+        <h2 className="card-title text-[#4169e1] mb-4">Klantgegevens</h2>
 
         {/* Logo Section */}
         <div className="flex items-start mb-6 pb-6 border-b border-gray-700">
@@ -236,7 +236,7 @@ const ClientDetails = () => {
 
       {/* Contactpersonen */}
       <div className="bg-[#1E2530] rounded-xl p-6 shadow-lg space-y-6 mb-8">
-        <h2 className="text-lg text-[#4169e1] mb-4">Contactpersonen</h2>
+        <h2 className="card-title text-[#4169e1] mb-4">Contactpersonen</h2>
         {client.contacts.map((contact: any, index: number) => (
           <div key={index} className="grid grid-cols-6 gap-2 items-center mb-2">
             {["first_name", "last_name", "email", "phone", "department"].map((field) => (

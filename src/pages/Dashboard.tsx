@@ -852,49 +852,49 @@ const Dashboard = () => {
   console.log('🎯 DASHBOARD RENDER: Filter mode =', filterMode);
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       <Toaster position="top-right" />
 
       {/* Enhanced Hero Section */}
       <div className="relative overflow-hidden">
         {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-10 hidden md:block">
           <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
           <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
           <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
         </div>
-        
-        <div className="card p-8 mb-8 relative">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0">
+
+        <div className="card mb-6 md:mb-8 relative">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
             {/* Welcome Section */}
-            <div className="flex items-center space-x-6">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              <div className="relative flex-shrink-0">
                 {profilePicture ? (
                   <img
                     src={profilePicture}
                     alt={username}
-                    className="w-20 h-20 rounded-full object-cover ring-4 ring-blue-500/30 shadow-lg"
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-4 ring-blue-500/30 shadow-lg"
                   />
                 ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30 shadow-lg">
-                    <span className="text-2xl font-bold text-white">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30 shadow-lg">
+                    <span className="text-xl md:text-2xl font-bold text-white">
                       {username.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-[#1E2530]"></div>
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-[#1E2530]"></div>
               </div>
-              <div>
-                <p className="text-gray-400 text-lg mb-1">{(() => {
+              <div className="flex-1">
+                <p className="text-gray-400 text-sm md:text-base mb-1">{(() => {
                   const hour = new Date().getHours();
                   if (hour >= 0 && hour <= 12) return 'Goedemorgen';
                   if (hour >= 12 && hour <= 17) return 'Goedemiddag';
                   return 'Goedeavond';
                 })()}, {username}</p>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-2">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-1 md:mb-2">
                   Welkom terug! 👋
                 </h1>
-                <p className="text-gray-400">
+                <p className="text-gray-400 text-xs md:text-sm">
                   {new Date().toLocaleDateString('nl-NL', {
                     weekday: 'long',
                     year: 'numeric',
@@ -954,18 +954,18 @@ const Dashboard = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3 w-full lg:w-auto">
               <button
                 onClick={() => navigate('/create-project')}
-                className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
+                className="btn-primary bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl"
               >
                 <Plus size={20} />
                 <span className="font-semibold">Nieuw Project</span>
               </button>
-              
+
               <button
                 onClick={handleLogout}
-                className="bg-[#2A303C] hover:bg-[#374151] text-white px-4 py-3 rounded-xl shadow-lg transition-all duration-300 flex items-center space-x-2 transform hover:scale-105"
+                className="btn-secondary rounded-xl shadow-lg"
               >
                 <LogOut size={20} />
                 <span>Uitloggen</span>
@@ -977,16 +977,18 @@ const Dashboard = () => {
 
       {/* Special Section for Sven */}
       {currentUser?.username === 'Sven' && (
-        <div className="card p-6 mb-8 border-2 border-blue-500/30">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
+        <div className="card mb-6 md:mb-8 border-2 border-blue-500/30">
+          <div className="flex flex-col md:flex-row md:items-center gap-3 mb-4 md:mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg w-fit">
               <FolderOpen size={20} className="text-blue-400" />
             </div>
-            <h2 className="text-xl font-semibold">Mijn Toegewezen Verdelers</h2>
-            <span className="text-sm text-gray-400">Projecten met verdelers toegewezen aan jou</span>
+            <div className="flex-1">
+              <h2 className="section-title">Mijn Toegewezen Verdelers</h2>
+              <span className="text-xs md:text-sm text-gray-400">Projecten met verdelers toegewezen aan jou</span>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="table-container">
             {(() => {
               const completedStatuses = ['Testen', 'Levering', 'Opgeleverd'];
 
@@ -1019,14 +1021,14 @@ const Dashboard = () => {
               }
 
               return (
-                <table className="w-full">
+                <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b border-gray-700">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Project</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Klant</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Locatie</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Mijn Verdelers</th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Status</th>
+                      <th className="table-header text-left">Project</th>
+                      <th className="table-header text-left">Klant</th>
+                      <th className="table-header text-left hidden md:table-cell">Locatie</th>
+                      <th className="table-header text-left">Mijn Verdelers</th>
+                      <th className="table-header text-left">Status</th>
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-400">Actie</th>
                     </tr>
                   </thead>
@@ -1101,10 +1103,10 @@ const Dashboard = () => {
             <span className="text-sm text-gray-400">Veelgebruikte functies</span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <button
               onClick={() => navigate('/create-project')}
-              className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+              className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-4 md:p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg min-h-[44px]"
             >
               <div className="flex flex-col items-center space-y-3">
                 <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
@@ -1423,9 +1425,9 @@ const Dashboard = () => {
             </div>
 
             {/* Advanced Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="responsive-grid-3">
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Status</label>
+                <label className="block text-xs md:text-sm text-gray-400 mb-2">Status</label>
                 <select
                   className="input-field"
                   value={statusFilter}
@@ -1674,7 +1676,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Opgeleverd'].map((status) => {
               const statusProjects = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase());
               const count = statusProjects.length;
@@ -1715,11 +1717,11 @@ const Dashboard = () => {
       {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
         <>
           {/* Three Column Layout for Key Metrics */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="responsive-grid-3 mb-6 md:mb-8">
             {/* Today's Deliveries - Compact Card */}
-            <div className="card p-6 bg-gradient-to-br from-green-500/5 to-green-600/5 border-green-500/20">
+            <div className="card bg-gradient-to-br from-green-500/5 to-green-600/5 border-green-500/20">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   <div className="p-2 bg-green-500/20 rounded-lg">
                     <Calendar size={18} className="text-green-400" />
                   </div>
@@ -2442,12 +2444,12 @@ const Dashboard = () => {
 
       {/* Enhanced KPI Dashboard - Hidden for Admin and Projectleider */}
       {effectiveRole !== 'admin' && effectiveRole !== 'projectleider' && (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="responsive-grid mb-6 md:mb-8">
         {/* Total Projects KPI */}
         <div className="group relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-2xl"></div>
-          <div className="card p-6 relative backdrop-blur-sm border border-blue-500/20 hover:border-blue-400/40 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
-            <div className="flex items-center justify-between mb-4">
+          <div className="card relative backdrop-blur-sm border border-blue-500/20 hover:border-blue-400/40 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
                 <FolderOpen size={24} className="text-white" />
               </div>
@@ -2599,11 +2601,11 @@ const Dashboard = () => {
           <span className="text-sm text-gray-400">Project voortgang en distributie</span>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="responsive-grid-3">
           {/* Project Completion Progress */}
-          <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-blue-400">Project Voltooiing</h3>
+          <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl p-4 md:p-6">
+            <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h3 className="font-semibold text-sm md:text-base text-blue-400">Project Voltooiing</h3>
               <div className="text-2xl font-bold text-blue-400">
                 {projects.length > 0 ? Math.round((projects.filter(p => p.status?.toLowerCase() === 'opgeleverd').length / projects.length) * 100) : 0}%
               </div>

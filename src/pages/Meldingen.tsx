@@ -605,20 +605,20 @@ const Meldingen = () => {
   };
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
-      <div className="card p-6 mb-8">
-        <div className="flex justify-between items-center">
+      <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
+        <div className="card-header">
           <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Meldingen</h1>
+            <h1 className="page-title">Meldingen</h1>
             <p className="text-gray-400">Beheer alle onderhouds- en servicemeldingen</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="action-buttons">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="btn-secondary flex items-center space-x-2"
+              className="btn-secondary flex items-center space-x-2 min-h-[44px]"
             >
               <Filter size={20} />
               <span>Filters</span>
@@ -629,8 +629,8 @@ const Meldingen = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="card p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="responsive-grid-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input
@@ -684,8 +684,8 @@ const Meldingen = () => {
       )}
 
       {/* Notifications Table */}
-      <div className="card p-6">
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
+      <div className="card p-4 sm:p-6">
+        <div className="table-container max-h-[70vh] overflow-y-auto pr-4">
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-700">

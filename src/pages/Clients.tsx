@@ -296,17 +296,17 @@ const Clients = () => {
     .sort((a, b) => a.name.localeCompare(b.name, 'nl', { sensitivity: 'base' }));
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       <Toaster position="top-right" />
       
       {/* Header */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Klantenoverzicht</h1>
+            <h1 className="page-title font-semibold text-white mb-2">Klantenoverzicht</h1>
             <p className="text-gray-400">Beheer al je klanten op één plek</p>
           </div>
-          <div className="flex space-x-4">
+          <div className="button-group w-full md:w-auto">
             <div>
               <input
                 type="file"
@@ -345,10 +345,10 @@ const Clients = () => {
 
       {/* Client Form */}
       {showClientForm && (
-        <div className="card p-6 mb-8">
-          <h2 className="text-lg text-gradient mb-6">Nieuwe klant toevoegen</h2>
+        <div className="card mb-6 md:mb-8">
+          <h2 className="card-title text-gradient mb-6">Nieuwe klant toevoegen</h2>
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="responsive-grid-2">
               {[
                 { label: "Organisatienaam", name: "name" },
                 {
@@ -531,7 +531,7 @@ const Clients = () => {
       )}
 
       {/* Search */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
@@ -545,9 +545,9 @@ const Clients = () => {
       </div>
 
       {/* Table */}
-      <div className="card p-6">
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
-          <table className="w-full">
+      <div className="card">
+        <div className="table-container max-h-[70vh] overflow-y-auto pr-2 md:pr-4">
+          <table className="table-wrapper">
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="table-header text-left">Logo</th>
@@ -565,7 +565,7 @@ const Clients = () => {
                   className="table-row cursor-pointer"
                   onClick={() => navigate(`/client/${client.id}`)}
                 >
-                  <td className="py-4">
+                  <td className="table-cell">
                     {client.logo_url ? (
                       <img
                         src={client.logo_url}
@@ -578,13 +578,13 @@ const Clients = () => {
                       </div>
                     )}
                   </td>
-                  <td className="py-4">
+                  <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
                       <span className="font-medium text-purple-400">{client.name}</span>
                     </div>
                   </td>
-                  <td className="py-4">
+                  <td className="table-cell">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                       client.status === 'Actief' 
                         ? 'bg-green-500/20 text-green-400'
@@ -593,9 +593,9 @@ const Clients = () => {
                       {client.status}
                     </span>
                   </td>
-                  <td className="py-4 text-gray-300">{new Date(client.created_at).toLocaleString('nl-NL')}</td>
-                  <td className="py-4 text-gray-300">{client.contacts?.[0]?.first_name || "-"}</td>
-                  <td className="py-4 text-right">
+                  <td className="table-cell text-gray-300">{new Date(client.created_at).toLocaleString('nl-NL')}</td>
+                  <td className="table-cell text-gray-300">{client.contacts?.[0]?.first_name || "-"}</td>
+                  <td className="table-cell text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={(e) => {

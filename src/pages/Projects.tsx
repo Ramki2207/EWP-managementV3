@@ -738,8 +738,8 @@ const Projects = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Projecten laden...</span>
@@ -750,17 +750,17 @@ const Projects = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
-      <div className="card p-6 mb-8">
-        <div className="flex justify-between items-center">
+      <div className="card mb-6 md:mb-8">
+        <div className="card-header">
           <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Projectenoverzicht</h1>
-            <p className="text-gray-400">Beheer al je projecten op één plek</p>
+            <h1 className="page-title text-white mb-2">Projectenoverzicht</h1>
+            <p className="text-gray-400 text-sm md:text-base">Beheer al je projecten op één plek</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="button-group w-full md:w-auto">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`btn-secondary flex items-center space-x-2 ${
@@ -788,10 +788,10 @@ const Projects = () => {
 
       {/* Enhanced Filters */}
       {showFilters && (
-        <div className="card p-6 mb-8">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-blue-400">Project Filters</h3>
+        <div className="card mb-6 md:mb-8">
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 className="card-title text-blue-400">Project Filters</h3>
               {getActiveFilterCount() > 0 && (
                 <button
                   onClick={clearAllFilters}
@@ -835,7 +835,7 @@ const Projects = () => {
             </div>
 
             {/* Advanced Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="responsive-grid">
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Status filter</label>
                 <select
@@ -975,10 +975,10 @@ const Projects = () => {
 
       {/* Special Section for Annemieke - Gereed voor facturatie */}
       {currentUser?.username === 'Annemieke' && (
-        <div className="card p-6 mb-8 border-2 border-green-500/30">
-          <div className="flex items-center justify-between mb-6">
+        <div className="card mb-6 md:mb-8 border-2 border-green-500/30">
+          <div className="card-header mb-4 md:mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-green-400 flex items-center space-x-2">
+              <h2 className="section-title text-green-400 flex items-center space-x-2">
                 <span>💰</span>
                 <span>Gereed voor Facturatie</span>
               </h2>
@@ -991,13 +991,13 @@ const Projects = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto max-h-[40vh] overflow-y-auto">
+          <div className="table-container max-h-[40vh] overflow-y-auto">
             {projects.filter(p => p.status?.toLowerCase() === 'gereed voor facturatie').length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 Geen projecten gereed voor facturatie
               </div>
             ) : (
-              <table className="w-full">
+              <table className="table-wrapper">
                 <thead>
                   <tr className="border-b border-gray-700">
                     <th className="table-header text-left">Projectnummer</th>
@@ -1059,9 +1059,9 @@ const Projects = () => {
       )}
 
       {/* Projects Table */}
-      <div className="card p-6">
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
-          <table className="w-full">
+      <div className="card">
+        <div className="table-container max-h-[70vh] overflow-y-auto pr-2 md:pr-4">
+          <table className="table-wrapper">
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="table-header text-left">Projectnummer</th>
@@ -1095,25 +1095,25 @@ const Projects = () => {
                     }
                   }}
                 >
-                  <td className="py-4">
+                  <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                       <span className="font-medium text-blue-400">{project.project_number}</span>
                     </div>
                   </td>
-                  <td className="py-4 text-gray-300">
+                  <td className="table-cell text-gray-300">
                     {new Date(project.date).toLocaleDateString('nl-NL')}
                   </td>
-                  <td className="py-4 text-gray-300">
+                  <td className="table-cell text-gray-300">
                     {project.client || '-'}
                   </td>
-                  <td className="py-4 text-gray-300">
+                  <td className="table-cell text-gray-300">
                     {project.created_by ? (usersMap[project.created_by] || '-') : '-'}
                   </td>
-                  <td className="py-4 text-gray-300">
+                  <td className="table-cell text-gray-300">
                     {project.location || '-'}
                   </td>
-                  <td className="py-4">
+                  <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(project.status)}`}>
                         {project.status || 'Onbekend'}
@@ -1121,7 +1121,7 @@ const Projects = () => {
                       <ProjectApprovalStatus project={project} />
                     </div>
                   </td>
-                  <td className="py-4">
+                  <td className="table-cell">
                     <ProjectLockStatus
                       projectId={project.id}
                       projectLocks={projectLocks}
@@ -1130,7 +1130,7 @@ const Projects = () => {
                       onForceUnlock={() => handleForceUnlock(project.id)}
                     />
                   </td>
-                  <td className="py-4">
+                  <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center">
                         <span className="text-xs font-medium text-green-400">
@@ -1140,16 +1140,16 @@ const Projects = () => {
                       <span className="text-sm text-gray-400">verdelers</span>
                     </div>
                   </td>
-                  <td className="py-4" onClick={(e) => e.stopPropagation()}>
+                  <td className="table-cell" onClick={(e) => e.stopPropagation()}>
                     <HoursTrafficLight projectId={project.id} />
                   </td>
-                  <td className="py-4 max-w-xs">
+                  <td className="table-cell max-w-xs">
                     <p className="text-sm text-gray-300 truncate" title={project.description}>
                       {project.description || '-'}
                     </p>
                   </td>
-                  <td className="py-4 text-right">
-                    <div className="flex items-center justify-end space-x-2">
+                  <td className="table-cell text-right">
+                    <div className="flex items-center justify-end space-x-2 min-h-[44px]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

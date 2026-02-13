@@ -919,18 +919,18 @@ const Insights = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Hidden logo for PDF generation */}
       <img src={ewpLogo} alt="EWP Logo" className="hidden" crossOrigin="anonymous" />
 
       {/* Header */}
-      <div className="card p-6 mb-8">
-        <div className="flex items-center justify-between">
+      <div className="card mb-6 md:mb-8">
+        <div className="card-header">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">📊 EWP Inzichten</h1>
-            <p className="text-gray-400">Krijg inzicht in je bedrijfsprestaties en trends</p>
+            <h1 className="page-title mb-2">📊 EWP Inzichten</h1>
+            <p className="text-gray-400 text-sm md:text-base">Krijg inzicht in je bedrijfsprestaties en trends</p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="button-group">
             <button
               type="button"
               onClick={(e) => {

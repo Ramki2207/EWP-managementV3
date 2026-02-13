@@ -198,8 +198,8 @@ const Verdelers = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Verdelers laden...</span>
@@ -210,17 +210,17 @@ const Verdelers = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-semibold text-white mb-2">Verdelers overzicht</h1>
+          <h1 className="page-title font-semibold text-white mb-2">Verdelers overzicht</h1>
           <p className="text-gray-400">Beheer al je verdelers op één plek</p>
         </div>
       </div>
 
       {/* Search */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
           <input
@@ -234,9 +234,9 @@ const Verdelers = () => {
       </div>
 
       {/* Table */}
-      <div className="card p-6">
-        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto pr-4">
-          <table className="w-full">
+      <div className="card">
+        <div className="table-container max-h-[70vh] overflow-y-auto pr-2 md:pr-4">
+          <table className="table-wrapper">
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="table-header text-left">Verdeler ID</th>
@@ -257,7 +257,7 @@ const Verdelers = () => {
                   }`}
                   onClick={() => navigate(`/verdelers/${distributor.id}`)}
                 >
-                  <td className="py-4">
+                  <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <div className={`w-2 h-2 rounded-full ${
                         distributor.status?.toLowerCase() === 'vervallen' ? 'bg-red-400' :
@@ -279,10 +279,10 @@ const Verdelers = () => {
                       )}
                     </div>
                   </td>
-                  <td className="py-4 text-gray-300">{distributor.kast_naam || "-"}</td>
-                  <td className="py-4 text-gray-300">{distributor.projects?.project_number || "-"}</td>
-                  <td className="py-4 text-gray-300">{distributor.projects?.client || "-"}</td>
-                  <td className="py-4 text-right">
+                  <td className="table-cell text-gray-300">{distributor.kast_naam || "-"}</td>
+                  <td className="table-cell text-gray-300">{distributor.projects?.project_number || "-"}</td>
+                  <td className="table-cell text-gray-300">{distributor.projects?.client || "-"}</td>
+                  <td className="table-cell text-right">
                     <div className="flex items-center justify-end space-x-2">
                       <button
                         onClick={(e) => {

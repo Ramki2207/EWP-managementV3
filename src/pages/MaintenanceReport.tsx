@@ -156,7 +156,7 @@ const MaintenanceReport = () => {
   // Check required info from URL
   if (!verdeler_id || !project_number) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="page-container">
         <div className="card p-6">
           <p className="text-center text-gray-400">Ongeldige verdeler informatie</p>
         </div>

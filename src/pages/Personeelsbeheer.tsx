@@ -631,9 +631,9 @@ export default function Personeelsbeheer() {
   };
 
   return (
-    <div className="p-6 max-w-[1800px] mx-auto">
+    <div className="page-container max-w-[1800px] mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white mb-2">Personeelsbeheer</h1>
+        <h1 className="page-title">Personeelsbeheer</h1>
         <p className="text-gray-400">Overzicht van uren, verlof en vakantiedagen van alle medewerkers</p>
       </div>
 
@@ -641,7 +641,7 @@ export default function Personeelsbeheer() {
       <div className="flex space-x-2 mb-6 border-b border-gray-700">
         <button
           onClick={() => setActiveTab('agenda')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center space-x-2 ${
+          className={`px-4 sm:px-6 py-3 font-medium transition-colors flex items-center space-x-2 min-h-[44px] ${
             activeTab === 'agenda'
               ? 'text-purple-400 border-b-2 border-purple-400'
               : 'text-gray-400 hover:text-white'
@@ -652,7 +652,7 @@ export default function Personeelsbeheer() {
         </button>
         <button
           onClick={() => setActiveTab('weekstaten')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center space-x-2 relative ${
+          className={`px-4 sm:px-6 py-3 font-medium transition-colors flex items-center space-x-2 relative min-h-[44px] ${
             activeTab === 'weekstaten'
               ? 'text-purple-400 border-b-2 border-purple-400'
               : 'text-gray-400 hover:text-white'
@@ -668,7 +668,7 @@ export default function Personeelsbeheer() {
         </button>
         <button
           onClick={() => setActiveTab('verlof')}
-          className={`px-6 py-3 font-medium transition-colors flex items-center space-x-2 relative ${
+          className={`px-4 sm:px-6 py-3 font-medium transition-colors flex items-center space-x-2 relative min-h-[44px] ${
             activeTab === 'verlof'
               ? 'text-purple-400 border-b-2 border-purple-400'
               : 'text-gray-400 hover:text-white'

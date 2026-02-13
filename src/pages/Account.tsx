@@ -255,14 +255,14 @@ const Account = () => {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="page-container">
         <div className="card p-6 text-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center">
               <UserCircle size={32} className="text-gray-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-300 mb-2">Gebruiker niet gevonden</h3>
+              <h3 className="card-title font-semibold text-gray-300 mb-2">Gebruiker niet gevonden</h3>
               <p className="text-gray-400 mb-4">
                 Er is een probleem opgetreden bij het laden van je accountgegevens.
               </p>
@@ -284,9 +284,9 @@ const Account = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -422,7 +422,7 @@ const Account = () => {
       </div>
 
       {/* Account Information Card */}
-      <div className="card p-6 mb-8">
+      <div className="card mb-6 md:mb-8">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-blue-500/20 rounded-lg">
             <User size={20} className="text-blue-400" />
@@ -463,7 +463,7 @@ const Account = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="responsive-grid-2">
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">Gebruikersnaam</label>
@@ -532,7 +532,7 @@ const Account = () => {
 
       {/* Password Change Section */}
       {isEditing && (
-        <div className="card p-6 mb-8">
+        <div className="card mb-6 md:mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-orange-500/20 rounded-lg">
               <Key size={20} className="text-orange-400" />
@@ -606,7 +606,7 @@ const Account = () => {
       )}
 
       {/* Account Security & Activity */}
-      <div className="card p-6">
+      <div className="card">
         <div className="flex items-center space-x-3 mb-6">
           <div className="p-2 bg-green-500/20 rounded-lg">
             <Shield size={20} className="text-green-400" />
@@ -614,10 +614,10 @@ const Account = () => {
           <h2 className="text-xl font-semibold">Account Beveiliging & Activiteit</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="responsive-grid-2">
           {/* Security Status */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-300 mb-4">Beveiligingsstatus</h3>
+            <h3 className="card-title font-medium text-gray-300 mb-4">Beveiligingsstatus</h3>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between p-4 bg-[#2A303C] rounded-lg">
@@ -648,7 +648,7 @@ const Account = () => {
 
           {/* Account Activity */}
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-300 mb-4">Account Details</h3>
+            <h3 className="card-title font-medium text-gray-300 mb-4">Account Details</h3>
             
             <div className="space-y-3">
               <div className="p-4 bg-[#2A303C] rounded-lg">
@@ -684,7 +684,7 @@ const Account = () => {
 
       {/* Permissions Section (for non-admin users) */}
       {currentUser.role !== 'admin' && currentUser.permissions && (
-        <div className="card p-6">
+        <div className="card">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-purple-500/20 rounded-lg">
               <Shield size={20} className="text-purple-400" />
@@ -692,12 +692,12 @@ const Account = () => {
             <h2 className="text-xl font-semibold">Toegangsrechten</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="responsive-grid-2">
             {Object.entries(currentUser.permissions).map(([module, modulePerms]) => (
               <div key={module} className="p-4 bg-[#2A303C] rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-gray-300 capitalize">{module}</span>
-                  <div className="flex space-x-2">
+                  <div className="button-group">
                     <span className={`px-2 py-1 rounded-full text-xs ${
                       modulePerms.read ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
                     }`}>
@@ -718,7 +718,7 @@ const Account = () => {
 
       {/* System Tools Section (for admin users only) */}
       {currentUser.role === 'admin' && (
-        <div className="card p-6">
+        <div className="card">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-orange-500/20 rounded-lg">
               <Database size={20} className="text-orange-400" />

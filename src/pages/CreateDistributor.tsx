@@ -48,10 +48,10 @@ const CreateDistributor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] text-white p-6">
-      <h1 className="text-2xl mb-6">Nieuwe Verdeler Toevoegen</h1>
+    <div className="page-container">
+      <h1 className="page-title mb-4 md:mb-6">Nieuwe Verdeler Toevoegen</h1>
 
-      <div className="bg-[#1E2530] p-6 rounded-xl space-y-6">
+      <div className="card space-y-4 md:space-y-6">
         {/* Profiel foto upload */}
         <div>
           <label className="block mb-1 text-sm">Profiel foto:</label>
@@ -66,12 +66,12 @@ const CreateDistributor = () => {
                 });
               }
             }}
-            className="w-full bg-[#2A303C] text-white p-2 rounded"
+            className="input-field"
           />
         </div>
 
         {/* Verdeler velden */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="responsive-grid-2">
           {[
             { label: "ID Verdeler", name: "distributorId" },
             { label: "Verdeler naam", name: "distributorName" },
@@ -104,23 +104,23 @@ const CreateDistributor = () => {
                     [field.name]: e.target.value,
                   })
                 }
-                className="w-full bg-[#2A303C] text-white p-2 rounded"
+                className="input-field"
               />
             </div>
           ))}
         </div>
 
         {/* Acties */}
-        <div className="flex justify-end space-x-4 mt-6">
+        <div className="action-buttons">
           <button
             onClick={() => navigate("/verdelers")}
-            className="px-6 py-2 bg-red-500 hover:bg-red-600 transition rounded"
+            className="btn-secondary"
           >
             Annuleren
           </button>
           <button
             onClick={handleSaveDistributor}
-            className="px-6 py-2 bg-green-600 hover:bg-green-700 transition rounded"
+            className="btn-primary bg-green-600 hover:bg-green-700"
           >
             Opslaan
           </button>

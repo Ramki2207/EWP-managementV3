@@ -723,9 +723,9 @@ export default function UrenstaatVerlof() {
   }
 
   return (
-    <div className="p-6 max-w-[1600px] mx-auto">
+    <div className="page-container max-w-[1600px] mx-auto">
       <div className="mb-6 print:hidden">
-        <h1 className="text-3xl font-bold text-white mb-2">Urenstaat & Verlof</h1>
+        <h1 className="page-title">Urenstaat & Verlof</h1>
         <p className="text-gray-400">Beheer uw urenregistratie, verlof en vakantiedagen</p>
       </div>
 
@@ -771,10 +771,10 @@ export default function UrenstaatVerlof() {
         <div className="space-y-6">
           {/* Weekstaat List */}
           {!selectedWeekstaat && (
-            <div className="card p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-white">Mijn Weekstaten</h2>
-                <button onClick={createNewWeekstaat} className="btn-primary flex items-center space-x-2">
+            <div className="card p-4 sm:p-6">
+              <div className="card-header mb-6">
+                <h2 className="section-title">Mijn Weekstaten</h2>
+                <button onClick={createNewWeekstaat} className="btn-primary flex items-center space-x-2 min-h-[44px]">
                   <Plus className="w-5 h-5" />
                   <span>Nieuwe Weekstaat</span>
                 </button>
@@ -1001,10 +1001,10 @@ export default function UrenstaatVerlof() {
                 </div>
               </div>
 
-              <div className="card p-6 print:hidden">
-                <div className="flex items-center justify-between mb-6">
+              <div className="card p-4 sm:p-6 print:hidden">
+                <div className="card-header mb-6">
                   <div>
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="section-title">
                       Week {selectedWeekstaat.week_number} - {selectedWeekstaat.year}
                     </h2>
                     <span className={`inline-block px-3 py-1 rounded-full text-sm mt-2 ${getStatusColor(selectedWeekstaat.status)}`}>
@@ -1067,7 +1067,7 @@ export default function UrenstaatVerlof() {
                   </div>
                 )}
 
-                <div className="overflow-x-auto">
+                <div className="table-container">
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-gray-700">
@@ -1184,10 +1184,10 @@ export default function UrenstaatVerlof() {
 
       {activeTab === 'verlof' && (
         <div className="space-y-6">
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Verlofaanvragen</h2>
-              <button onClick={() => setShowLeaveForm(true)} className="btn-primary flex items-center space-x-2">
+          <div className="card p-4 sm:p-6">
+            <div className="card-header mb-6">
+              <h2 className="section-title">Verlofaanvragen</h2>
+              <button onClick={() => setShowLeaveForm(true)} className="btn-primary flex items-center space-x-2 min-h-[44px]">
                 <Plus className="w-5 h-5" />
                 <span>Nieuwe Aanvraag</span>
               </button>
@@ -1396,9 +1396,9 @@ export default function UrenstaatVerlof() {
           )}
 
           {/* Vacation Requests */}
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-white">Vakantieaanvragen</h2>
+          <div className="card p-4 sm:p-6">
+            <div className="card-header mb-6">
+              <h2 className="section-title">Vakantieaanvragen</h2>
               <button
                 onClick={() => setShowVacationForm(true)}
                 className="btn-primary flex items-center space-x-2"

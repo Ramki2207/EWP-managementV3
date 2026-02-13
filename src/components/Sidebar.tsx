@@ -155,16 +155,16 @@ const Sidebar = () => {
 
   const NavContent = () => (
     <>
-      <div className="p-6">
-        <div className="flex items-center justify-center mb-8">
-          <img 
+      <div className="p-4 md:p-6">
+        <div className="flex items-center justify-center mb-6 md:mb-8">
+          <img
             src={ewpLogo}
-            alt="EWP Paneelbouw" 
-            className="h-20 max-w-[250px] object-contain mx-auto"
+            alt="EWP Paneelbouw"
+            className="h-16 md:h-20 max-w-[200px] md:max-w-[250px] object-contain mx-auto"
           />
         </div>
-        
-        <nav className="space-y-2">
+
+        <nav className="space-y-1 md:space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -175,7 +175,7 @@ const Sidebar = () => {
               <div key={item.path} className="group relative flex items-center">
                 <Link
                   to={item.path}
-                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all min-h-[44px] ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
                       : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
@@ -183,7 +183,7 @@ const Sidebar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Icon size={20} />
-                  <span>{item.label}</span>
+                  <span className="text-base">{item.label}</span>
                 </Link>
                 <button
                   onClick={(e) => {
@@ -195,7 +195,7 @@ const Sidebar = () => {
                     });
                     setIsMobileMenuOpen(false);
                   }}
-                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  className="absolute right-2 opacity-0 md:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
                   title="Open in nieuw tabblad"
                 >
                   <Plus size={14} />
@@ -206,8 +206,8 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="mt-auto p-6 border-t border-white/10">
-        <nav className="space-y-2">
+      <div className="mt-auto p-4 md:p-6 border-t border-white/10">
+        <nav className="space-y-1 md:space-y-2">
           {bottomNavItems.map((item: any) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -219,7 +219,7 @@ const Sidebar = () => {
               <div key={item.path} className="group relative flex items-center">
                 <Link
                   to={item.path}
-                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all ${
+                  className={`flex-1 flex items-center space-x-3 p-3 rounded-lg transition-all min-h-[44px] ${
                     isActive
                       ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
                       : 'text-gray-400 hover:bg-[#2A303C]/80 hover:text-white'
@@ -227,7 +227,7 @@ const Sidebar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Icon size={20} />
-                  <span>{item.label}</span>
+                  <span className="text-base">{item.label}</span>
                 </Link>
                 <button
                   onClick={(e) => {
@@ -239,7 +239,7 @@ const Sidebar = () => {
                     });
                     setIsMobileMenuOpen(false);
                   }}
-                  className="absolute right-2 opacity-0 group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  className="absolute right-2 opacity-0 md:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
                   title="Open in nieuw tabblad"
                 >
                   <Plus size={14} />
@@ -249,15 +249,15 @@ const Sidebar = () => {
           })}
         </nav>
 
-        <div className="mt-8 pt-4 border-t border-white/10">
+        <div className="mt-6 md:mt-8 pt-4 border-t border-white/10">
           <div className="flex items-center justify-center">
-            <img 
+            <img
               src={processLogo}
-              alt="Process Improvement" 
-              className="h-8 object-contain"
+              alt="Process Improvement"
+              className="h-6 md:h-8 object-contain"
             />
           </div>
-          <p className="text-center text-sm text-gray-400 mt-2">
+          <p className="text-center text-xs md:text-sm text-gray-400 mt-2">
             Powered by Process Improvement B.V.
           </p>
         </div>
@@ -269,8 +269,9 @@ const Sidebar = () => {
     <>
       {/* Mobile menu button */}
       <button
-        className="fixed top-4 right-4 z-50 p-2 bg-[#2A303C] rounded-lg md:hidden"
+        className="fixed top-4 right-4 z-50 p-3 bg-[#2A303C] rounded-lg md:hidden shadow-lg border border-white/10 min-h-[48px] min-w-[48px] flex items-center justify-center"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -278,7 +279,7 @@ const Sidebar = () => {
       {/* Mobile navigation */}
       {isMobileMenuOpen && (
         <div className="mobile-nav">
-          <div className="mobile-nav-content">
+          <div className="mobile-nav-content safe-area-padding">
             <NavContent />
           </div>
         </div>

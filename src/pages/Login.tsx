@@ -264,7 +264,7 @@ const Login: React.FC = () => {
 
             <button
               type="submit"
-              className="btn-primary w-full flex items-center justify-center space-x-2"
+              className="btn-primary w-full flex items-center justify-center space-x-2 min-h-[44px]"
               disabled={isMigrating}
             >
               {isMigrating ? (

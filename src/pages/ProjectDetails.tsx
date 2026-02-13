@@ -694,8 +694,8 @@ const ProjectDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Project laden...</span>
@@ -707,9 +707,9 @@ const ProjectDetails = () => {
 
   if (!project) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
-          <h1 className="text-2xl mb-4">Project niet gevonden</h1>
+      <div className="page-container">
+        <div className="card">
+          <h1 className="section-title mb-4">Project niet gevonden</h1>
           <button
             onClick={() => navigate("/projects")}
             className="btn-primary"
@@ -722,11 +722,11 @@ const ProjectDetails = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="card p-6 mb-8">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-4">
+      <div className="card mb-6 md:mb-8">
+        <div className="card-header">
+          <div className="flex items-center space-x-3 md:space-x-4">
             <button
               onClick={() => navigate(-1)}
               className="btn-secondary p-2"
@@ -734,8 +734,8 @@ const ProjectDetails = () => {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-semibold">Project details</h1>
-              <p className="text-gray-400">{project.project_number}</p>
+              <h1 className="section-title">Project details</h1>
+              <p className="text-gray-400 text-sm md:text-base">{project.project_number}</p>
               {lockId && (
                 <div className="flex items-center space-x-2 mt-1">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
@@ -745,7 +745,7 @@ const ProjectDetails = () => {
             </div>
           </div>
           {activeTab === 'details' && (
-            <div className="flex space-x-2">
+            <div className="button-group w-full md:w-auto">
               <button
                 onClick={() => setShowStickerGenerator(true)}
                 className="btn-secondary flex items-center space-x-2"
@@ -789,7 +789,7 @@ const ProjectDetails = () => {
                 </button>
                 )
               ) : (
-                <div className="flex space-x-2">
+                <div className="button-group">
                   <button
                     onClick={handleCancelEdit}
                     className="btn-secondary flex items-center space-x-2"
@@ -865,8 +865,8 @@ const ProjectDetails = () => {
         </div>
       )}
       {/* Navigation Tabs */}
-      <div className="card p-4 mb-8">
-        <div className="flex space-x-4">
+      <div className="card mb-6 md:mb-8">
+        <div className="flex flex-wrap gap-2 md:gap-4">
           <button
             onClick={() => setActiveTab('details')}
             className={`px-4 py-2 rounded-lg transition ${
@@ -921,10 +921,10 @@ const ProjectDetails = () => {
       </div>
 
       {/* Content */}
-      <div className="card p-6">
+      <div className="card">
         {activeTab === 'details' && (
           <div>
-            <h2 className="text-lg text-gradient mb-6">Project gegevens</h2>
+            <h2 className="card-title text-gradient mb-4 md:mb-6">Project gegevens</h2>
 
             {/* Multi-Verdeler Notification */}
             {project?.distributors && project.distributors.length > 1 && (
@@ -950,12 +950,12 @@ const ProjectDetails = () => {
 
             {/* Verdeler Status Overview */}
             {project?.distributors && project.distributors.length > 1 && (
-              <div className="mb-6 bg-[#1e2530] border border-gray-700 rounded-lg p-4">
+              <div className="mb-4 md:mb-6 bg-[#1e2530] border border-gray-700 rounded-lg p-3 md:p-4">
                 <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center space-x-2">
                   <Server size={16} className="text-blue-400" />
                   <span>Verdeler Status Overzicht</span>
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="responsive-grid-3">
                   {project.distributors.map((verdeler: any) => (
                     <div
                       key={verdeler.id}

@@ -381,8 +381,8 @@ const CreateProject = () => {
   };
 
   return (
-    <div className="min-h-screen p-8">
-      <div className="card p-6">
+    <div className="page-container">
+      <div className="card">
         <StepNavigation steps={steps} activeStep={currentStep} />
         {renderStep()}
       </div>

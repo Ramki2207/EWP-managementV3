@@ -279,7 +279,7 @@ const ClientPortalManagement = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="page-container">
         <div className="card p-6">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -291,7 +291,7 @@ const ClientPortalManagement = () => {
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
       <div className="card p-6 mb-8">
         <div className="flex justify-between items-center">

@@ -495,7 +495,7 @@ const ClientPortal = () => {
 
   // Main portal interface
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-[#1a1a1a] to-[#111] p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-[#1a1a1a] to-[#111] p-2 sm:p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6 mb-8">
@@ -587,9 +587,9 @@ const ClientPortal = () => {
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="responsive-grid gap-4 sm:gap-6">
             {/* Project Information */}
-            <div className="lg:col-span-2 bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6">
+            <div className="lg:col-span-2 bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-4 sm:p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <Building size={24} className="text-blue-400" />
                 <h2 className="text-xl font-semibold text-white">Project Informatie</h2>
@@ -616,7 +616,7 @@ const ClientPortal = () => {
             </div>
 
             {/* Contact Information */}
-            <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6">
+            <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-4 sm:p-6">
               <div className="flex items-center space-x-3 mb-6">
                 <User size={24} className="text-purple-400" />
                 <h2 className="text-xl font-semibent text-white">Contactgegevens</h2>
@@ -681,13 +681,13 @@ const ClientPortal = () => {
         )}
 
         {activeTab === 'distributors' && (
-          <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-6">
+          <div className="bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-4 sm:p-6">
             <div className="flex items-center space-x-3 mb-6">
               <Server size={24} className="text-green-400" />
               <h2 className="text-xl font-semibold text-white">Verdeler Specificaties</h2>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className="responsive-grid-2 gap-4 sm:gap-6">
               {verdelers.map((distributor: any) => (
                 <div key={distributor.id} className="bg-[#2A303C]/50 rounded-xl p-6 border border-gray-700">
                   <div className="mb-6">

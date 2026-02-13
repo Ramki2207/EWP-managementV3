@@ -80,9 +80,9 @@ const Help = () => {
   ];
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
-      <div className="card p-8 mb-8 relative overflow-hidden">
+      <div className="card p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
@@ -95,7 +95,7 @@ const Help = () => {
               <HelpCircle size={32} className="text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-2">
+              <h1 className="page-title bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-2">
                 Hulp & Ondersteuning
               </h1>
               <p className="text-gray-400 text-lg">
@@ -119,8 +119,8 @@ const Help = () => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="card p-4 mb-8">
-        <div className="flex flex-wrap gap-2">
+      <div className="card p-4 mb-6 sm:mb-8">
+        <div className="button-group">
           {[
             { id: 'contact', label: 'Contact', icon: Phone },
             { id: 'faq', label: 'Veelgestelde vragen', icon: MessageSquare },
@@ -132,7 +132,7 @@ const Help = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveSection(tab.id as any)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all min-h-[44px] ${
                   activeSection === tab.id
                     ? 'bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg'
                     : 'text-gray-400 hover:bg-[#2A303C] hover:text-white'
@@ -148,11 +148,11 @@ const Help = () => {
 
       {/* Content Sections */}
       {activeSection === 'contact' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="responsive-grid-2 gap-4 sm:gap-6 lg:gap-8">
           {/* Contact Information */}
           <div className="space-y-6">
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold mb-6 text-blue-400">Contactgegevens</h2>
+            <div className="card p-4 sm:p-6">
+              <h2 className="section-title mb-6 text-blue-400">Contactgegevens</h2>
               
               <div className="space-y-6">
                 <div className="flex items-start space-x-4 p-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl">

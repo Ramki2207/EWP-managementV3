@@ -169,8 +169,8 @@ const Uploads = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="flex flex-col items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
             <span className="ml-2">Projecten laden...</span>
@@ -185,8 +185,8 @@ const Uploads = () => {
 
   if (documentError) {
     return (
-      <div className="min-h-screen p-8">
-        <div className="card p-6">
+      <div className="page-container">
+        <div className="card">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <X size={32} className="text-red-400" />

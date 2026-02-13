@@ -27,73 +27,125 @@
 }
 
 @layer components {
+  /* Page container */
+  .page-container {
+    @apply min-h-screen px-4 py-6 md:p-8;
+  }
+
+  /* Card components */
   .card {
     @apply bg-[#1E2530]/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/10 p-4 md:p-6;
   }
 
-  .input-field {
-    @apply w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 md:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  .card-header {
+    @apply flex flex-col md:flex-row md:justify-between md:items-center gap-4;
   }
 
+  /* Input fields */
+  .input-field {
+    @apply w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-3 md:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-base;
+  }
+
+  /* Buttons */
   .btn-primary {
-    @apply bg-gradient-to-r from-blue-600 to-blue-400 text-white py-2 px-3 md:px-4 rounded-lg hover:from-blue-700 hover:to-blue-500 transition shadow-lg flex items-center justify-center space-x-2 w-full md:w-auto;
+    @apply bg-gradient-to-r from-blue-600 to-blue-400 text-white py-3 px-4 md:px-4 rounded-lg hover:from-blue-700 hover:to-blue-500 transition shadow-lg flex items-center justify-center space-x-2 w-full md:w-auto min-h-[44px];
   }
 
   .btn-secondary {
-    @apply bg-[#2A303C] text-white py-2 px-3 md:px-4 rounded-lg hover:bg-gray-700 transition border border-gray-700 flex items-center justify-center space-x-2 w-full md:w-auto;
+    @apply bg-[#2A303C] text-white py-3 px-4 md:px-4 rounded-lg hover:bg-gray-700 transition border border-gray-700 flex items-center justify-center space-x-2 w-full md:w-auto min-h-[44px];
   }
 
+  /* Tables */
   .table-container {
-    @apply overflow-x-auto;
+    @apply overflow-x-auto -mx-4 md:mx-0;
   }
 
   .table-wrapper {
-    @apply min-w-full md:w-auto;
+    @apply min-w-full;
   }
 
   .table-header {
-    @apply text-blue-400 pb-4 font-medium whitespace-nowrap;
+    @apply text-blue-400 pb-3 md:pb-4 font-medium whitespace-nowrap text-sm md:text-base;
   }
 
   .table-row {
     @apply border-b border-gray-700/50 transition-colors hover:bg-[#2A303C]/50;
   }
 
+  .table-cell {
+    @apply py-3 md:py-4 px-2 md:px-4 text-sm md:text-base;
+  }
+
+  /* Text utilities */
   .text-gradient {
     @apply bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent;
   }
 
+  /* Responsive headings */
+  .page-title {
+    @apply text-2xl md:text-3xl font-bold;
+  }
+
+  .section-title {
+    @apply text-xl md:text-2xl font-semibold;
+  }
+
+  .card-title {
+    @apply text-lg md:text-xl font-semibold;
+  }
+
   /* Mobile navigation */
   .mobile-nav {
-    @apply fixed inset-0 bg-[#1E2530]/95 backdrop-blur-lg z-50 md:hidden;
+    @apply fixed inset-0 bg-[#1E2530]/95 backdrop-blur-lg z-50 md:hidden overflow-y-auto;
   }
 
   .mobile-nav-content {
-    @apply flex flex-col h-full p-6;
+    @apply flex flex-col h-full p-4 md:p-6;
   }
 
   /* Grid layouts */
   .responsive-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4;
+  }
+
+  .responsive-grid-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4;
+  }
+
+  .responsive-grid-3 {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4;
   }
 
   /* Form layouts */
   .form-group {
-    @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4;
+    @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-4;
   }
 
   .form-label {
-    @apply w-full md:w-48 text-left md:text-right;
+    @apply w-full md:w-48 text-left md:text-right font-medium text-sm md:text-base;
+  }
+
+  .form-input-wrapper {
+    @apply flex-1;
   }
 
   /* Button groups */
   .button-group {
-    @apply flex flex-col md:flex-row gap-2 md:gap-4;
+    @apply flex flex-col sm:flex-row gap-2 md:gap-3;
   }
 
   /* Action buttons */
   .action-buttons {
-    @apply flex flex-col md:flex-row gap-2 justify-end;
+    @apply flex flex-col sm:flex-row gap-2 md:gap-3 justify-end mt-4;
+  }
+
+  /* Responsive spacing */
+  .section-spacing {
+    @apply mb-4 md:mb-6;
+  }
+
+  .element-spacing {
+    @apply mb-3 md:mb-4;
   }
 }
 

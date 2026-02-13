@@ -440,7 +440,7 @@ const AccessCodes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="page-container">
         <div className="card p-6">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
@@ -453,7 +453,7 @@ const AccessCodes = () => {
 
   if (connectionError) {
     return (
-      <div className="min-h-screen p-8">
+      <div className="page-container">
         <div className="card p-6">
           <div className="text-center">
             <AlertTriangle size={48} className="mx-auto text-red-400 mb-4" />
@@ -491,7 +491,7 @@ CREATE INDEX IF NOT EXISTS idx_access_codes_project_number ON access_codes(proje
   }
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="page-container">
       {/* Header */}
       <div className="card p-6 mb-8">
         <div className="flex justify-between items-center">
