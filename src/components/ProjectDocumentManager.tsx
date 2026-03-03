@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 
 interface ProjectDocumentManagerProps {
   project: any;
+  onDocumentChange?: () => void;
 }
 
 const defaultFolders = [
@@ -37,7 +38,7 @@ const projectLevelFolders = [
   'Facturen',
 ];
 
-const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project }) => {
+const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project, onDocumentChange }) => {
   const [viewMode, setViewMode] = useState<'project' | 'verdelers'>('project');
   const [selectedDistributor, setSelectedDistributor] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
@@ -250,6 +251,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                   projectId={project.id}
                   distributorId={null}
                   folder={selectedFolder}
+                  onDocumentChange={onDocumentChange}
                 />
               </div>
             ) : (
@@ -396,6 +398,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                   projectId={project.id}
                   distributorId={selectedDistributor}
                   folder={selectedFolder}
+                  onDocumentChange={onDocumentChange}
                 />
               </div>
             ) : selectedDistributor ? (

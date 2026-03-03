@@ -57,6 +57,7 @@ const ProjectDetails = () => {
     reviewedBy?: string;
     reviewedAt?: string;
   }>({ hasApproval: false, status: null });
+  const [totalDocumentCount, setTotalDocumentCount] = useState<number>(0);
 
   useEffect(() => {
     // Get current user info
@@ -72,6 +73,7 @@ const ProjectDetails = () => {
     if (projectId && currentUser) {
       loadProject();
       loadUsers();
+      loadDocumentCount();
       attemptProjectLock();
       checkApprovalStatus();
     }
@@ -246,6 +248,17 @@ const ProjectDetails = () => {
       setUsers(users);
     } catch (error) {
       console.error('Error loading users:', error);
+    }
+  };
+
+  const loadDocumentCount = async () => {
+    if (!projectId) return;
+
+    try {
+      const documents = await dataService.getDocuments(projectId);
+      setTotalDocumentCount(documents.length);
+    } catch (error) {
+      console.error('Error loading document count:', error);
     }
   };
 
@@ -889,13 +902,22 @@ const ProjectDetails = () => {
           </button>
           <button
             onClick={() => setActiveTab('documents')}
-            className={`px-4 py-2 rounded-lg transition ${
+            className={`px-4 py-2 rounded-lg transition flex items-center gap-2 ${
               activeTab === 'documents'
                 ? 'bg-[#4169e1] text-white'
                 : 'text-gray-400 hover:bg-[#2A303C] hover:text-white'
             }`}
           >
-            Documenten
+            <span>Documenten</span>
+            {totalDocumentCount > 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                activeTab === 'documents'
+                  ? 'bg-white text-[#4169e1]'
+                  : 'bg-gray-700 text-gray-300'
+              }`}>
+                {totalDocumentCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('intake')}
@@ -1201,7 +1223,10 @@ const ProjectDetails = () => {
           <div>
             <h2 className="text-lg text-gradient mb-6">Project documenten</h2>
             {/* Embedded Document Management */}
-            <ProjectDocumentManager project={project} />
+            <ProjectDocumentManager
+              project={project}
+              onDocumentChange={loadDocumentCount}
+            />
           </div>
         )}
 

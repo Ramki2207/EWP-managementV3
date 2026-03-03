@@ -20,6 +20,7 @@ interface DocumentViewerProps {
   projectId: string;
   distributorId: string | null;
   folder: string;
+  onDocumentChange?: () => void;
 }
 
 // Folders that support revision management
@@ -92,7 +93,7 @@ const findMatchingBaseDocument = (documents: Document[], newFilename: string): D
   return matchingDoc;
 };
 
-const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorId, folder }) => {
+const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorId, folder, onDocumentChange }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
@@ -572,6 +573,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       await loadDocuments();
       toast.success(`${newDocs.length} document${newDocs.length > 1 ? 'en' : ''} succesvol geüpload!`);
 
+      // Notify parent component of document change
+      if (onDocumentChange) {
+        onDocumentChange();
+      }
+
       // Check if we need to show drawing hours popup
       if (distributorId && DRAWING_HOURS_FOLDERS.includes(folder)) {
         console.log('📊 Showing drawing hours popup for folder:', folder);
@@ -585,7 +591,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
       setIsUploading(false);
       setUploadProgress({});
     }
-  }, [projectId, distributorId, folder, loadDocuments, handleRevisionManagement]);
+  }, [projectId, distributorId, folder, loadDocuments, handleRevisionManagement, onDocumentChange]);
 
   const renderFolderStructure = () => {
     // Group documents by subfolder for revision-managed folders
@@ -840,6 +846,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         await dataService.deleteDocument(docId);
         await loadDocuments();
         toast.success('Document verwijderd!');
+
+        // Notify parent component of document change
+        if (onDocumentChange) {
+          onDocumentChange();
+        }
       } catch (error) {
         console.error('Error deleting document:', error);
         toast.error('Er is een fout opgetreden bij het verwijderen van het document');
