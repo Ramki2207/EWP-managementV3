@@ -3,6 +3,7 @@ import { Folder, ChevronRight, ChevronDown, Server, Building, FileText, MessageS
 import DocumentViewer from './DocumentViewer';
 import FolderNotesModal from './FolderNotesModal';
 import { supabase } from '../lib/supabase';
+import { dataService } from '../lib/supabase';
 
 interface ProjectDocumentManagerProps {
   project: any;
@@ -47,11 +48,13 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
   const [notesModalFolder, setNotesModalFolder] = useState<string | null>(null);
   const [notesModalDistributor, setNotesModalDistributor] = useState<string | null>(null);
   const [folderNoteCounts, setFolderNoteCounts] = useState<Record<string, number>>({});
+  const [folderDocumentCounts, setFolderDocumentCounts] = useState<Record<string, number>>({});
 
-  // Load note counts for all folders
+  // Load note counts and document counts for all folders
   useEffect(() => {
     if (project?.id) {
       loadFolderNoteCounts();
+      loadFolderDocumentCounts();
     }
   }, [project?.id]);
 
@@ -78,6 +81,37 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
     }
   };
 
+  const loadFolderDocumentCounts = async () => {
+    try {
+      const counts: Record<string, number> = {};
+
+      // Load counts for project-level folders
+      for (const folder of projectLevelFolders) {
+        const docs = await dataService.getDocuments(project.id, null, folder);
+        if (docs && docs.length > 0) {
+          counts[folder] = docs.length;
+        }
+      }
+
+      // Load counts for distributor folders
+      if (project.distributors) {
+        for (const distributor of project.distributors) {
+          for (const folder of defaultFolders) {
+            const docs = await dataService.getDocuments(project.id, distributor.id, folder);
+            if (docs && docs.length > 0) {
+              const key = `${distributor.id}-${folder}`;
+              counts[key] = docs.length;
+            }
+          }
+        }
+      }
+
+      setFolderDocumentCounts(counts);
+    } catch (error) {
+      console.error('Error loading document counts:', error);
+    }
+  };
+
   const openNotesModal = (folderName: string, distributorId: string | null, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
@@ -99,6 +133,20 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
       ? `${distributorId}-${folderName}`
       : folderName;
     return folderNoteCounts[key] || 0;
+  };
+
+  const getFolderDocumentCount = (folderName: string, distributorId: string | null): number => {
+    const key = distributorId
+      ? `${distributorId}-${folderName}`
+      : folderName;
+    return folderDocumentCounts[key] || 0;
+  };
+
+  const handleDocumentChange = () => {
+    loadFolderDocumentCounts();
+    if (onDocumentChange) {
+      onDocumentChange();
+    }
   };
 
   // Debug: Log project data when component receives it
@@ -199,6 +247,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
             <div className="space-y-1">
               {projectLevelFolders.map((folder) => {
                 const noteCount = getFolderNoteCount(folder, null);
+                const docCount = getFolderDocumentCount(folder, null);
                 return (
                   <div
                     key={folder}
@@ -214,6 +263,15 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                     >
                       <Folder size={16} className="mr-3 flex-shrink-0 text-blue-400" />
                       <span className="text-sm font-medium truncate">{folder}</span>
+                      {docCount > 0 && (
+                        <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          selectedFolder === folder
+                            ? 'bg-white text-blue-600'
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {docCount}
+                        </span>
+                      )}
                     </div>
                     <button
                       onClick={(e) => openNotesModal(folder, null, e)}
@@ -251,7 +309,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                   projectId={project.id}
                   distributorId={null}
                   folder={selectedFolder}
-                  onDocumentChange={onDocumentChange}
+                  onDocumentChange={handleDocumentChange}
                 />
               </div>
             ) : (
@@ -326,6 +384,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                     <div className="ml-6 space-y-1">
                       {defaultFolders.map((folder) => {
                         const noteCount = getFolderNoteCount(folder, distributor.id);
+                        const docCount = getFolderDocumentCount(folder, distributor.id);
                         return (
                           <div
                             key={folder}
@@ -341,6 +400,15 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                             >
                               <Folder size={12} className="mr-2 flex-shrink-0 text-purple-400" />
                               <span className="text-xs truncate">{folder}</span>
+                              {docCount > 0 && (
+                                <span className={`ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                                  selectedDistributor === distributor.id && selectedFolder === folder
+                                    ? 'bg-white text-purple-600'
+                                    : 'bg-purple-500/20 text-purple-400'
+                                }`}>
+                                  {docCount}
+                                </span>
+                              )}
                             </div>
                             <button
                               onClick={(e) => openNotesModal(folder, distributor.id, e)}
@@ -398,7 +466,7 @@ const ProjectDocumentManager: React.FC<ProjectDocumentManagerProps> = ({ project
                   projectId={project.id}
                   distributorId={selectedDistributor}
                   folder={selectedFolder}
-                  onDocumentChange={onDocumentChange}
+                  onDocumentChange={handleDocumentChange}
                 />
               </div>
             ) : selectedDistributor ? (
