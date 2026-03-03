@@ -283,6 +283,14 @@ const Dashboard = () => {
     return `${year}-${month}-${day}`;
   };
 
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  };
+
   const getProjectsForDay = (date: Date): any[] => {
     const dateStr = formatDateLocal(date);
     return agendaProjects.filter(project => project.expected_delivery_date === dateStr);
@@ -1261,7 +1269,10 @@ const Dashboard = () => {
 
           {/* Calendar Grid */}
           <div className="card p-6">
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-8 gap-2 mb-2">
+              <div className="text-center font-semibold text-gray-400 text-sm py-2">
+                Week
+              </div>
               {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
                 <div key={day} className="text-center font-semibold text-gray-400 text-sm py-2">
                   {day}
@@ -1269,44 +1280,61 @@ const Dashboard = () => {
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-2">
-              {generateCalendarDays().map((day, index) => {
-                const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
-                const isToday = day.toDateString() === new Date().toDateString();
-                const dayProjects = getProjectsForDay(day);
+            <div className="space-y-2">
+              {Array.from({ length: 6 }, (_, weekIndex) => {
+                const weekDays = generateCalendarDays().slice(weekIndex * 7, (weekIndex + 1) * 7);
+                const weekNumber = getWeekNumber(weekDays[0]);
 
                 return (
-                  <div
-                    key={index}
-                    className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
-                      isCurrentMonth
-                        ? isToday
-                          ? 'bg-blue-500/10 border-blue-500'
-                          : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
-                        : 'bg-[#1a1f2a] border-gray-800 opacity-50'
-                    }`}
-                  >
-                    <div className="text-sm font-medium text-gray-400 mb-1">
-                      {day.getDate()}
+                  <div key={weekIndex} className="grid grid-cols-8 gap-2">
+                    {/* Week Number Column */}
+                    <div className="flex items-center justify-center bg-[#2A303C] border border-gray-700 rounded-lg">
+                      <span className="text-sm font-semibold text-blue-400">
+                        {weekNumber}
+                      </span>
                     </div>
-                    <div className="space-y-1">
-                      {dayProjects.map((project, idx) => (
+
+                    {/* Days of the Week */}
+                    {weekDays.map((day, dayIndex) => {
+                      const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
+                      const isToday = day.toDateString() === new Date().toDateString();
+                      const dayProjects = getProjectsForDay(day);
+
+                      return (
                         <div
-                          key={idx}
-                          onClick={() => navigate(`/project/${project.id}`)}
-                          className="text-xs p-1 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 cursor-pointer transition-all"
+                          key={dayIndex}
+                          className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
+                            isCurrentMonth
+                              ? isToday
+                                ? 'bg-blue-500/10 border-blue-500'
+                                : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
+                              : 'bg-[#1a1f2a] border-gray-800 opacity-50'
+                          }`}
                         >
-                          <div className="truncate font-medium">
-                            {project.project_number}
+                          <div className="text-sm font-medium text-gray-400 mb-1">
+                            {day.getDate()}
                           </div>
-                          {project.client && (
-                            <div className="truncate text-gray-400 text-[10px]">
-                              {project.client}
-                            </div>
-                          )}
+                          <div className="space-y-1">
+                            {dayProjects.map((project, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => navigate(`/project/${project.id}`)}
+                                className="text-xs p-1 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 cursor-pointer transition-all"
+                              >
+                                <div className="truncate font-medium">
+                                  {project.project_number}
+                                </div>
+                                {project.client && (
+                                  <div className="truncate text-gray-400 text-[10px]">
+                                    {project.client}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
                 );
               })}
