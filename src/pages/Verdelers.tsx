@@ -7,6 +7,7 @@ import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
+import { isUsernameMatch } from '../lib/userAliases';
 
 const Verdelers = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const Verdelers = () => {
       if (currentUser?.role === 'montage') {
         const beforeMontageFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
-          const isAssignedToUser = distributor.toegewezen_monteur === currentUser.username;
+          const isAssignedToUser = isUsernameMatch(distributor.toegewezen_monteur, currentUser.username);
 
           if (!isAssignedToUser) {
             console.log(`🔧 MONTAGE FILTER: Hiding distributor ${distributor.distributor_id} (assigned to: ${distributor.toegewezen_monteur}) from monteur ${currentUser.username} - NOT ASSIGNED`);

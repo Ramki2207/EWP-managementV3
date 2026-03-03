@@ -12,6 +12,7 @@ import PreTestingApproval from '../components/PreTestingApproval';
 import HoursTrafficLight from '../components/HoursTrafficLight';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
+import { isUsernameMatch } from '../lib/userAliases';
 
 // Component to show approval status in project table
 const ProjectApprovalStatus: React.FC<{ project: any }> = ({ project }) => {
@@ -518,9 +519,9 @@ const Projects = () => {
           console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS`);
           // Skip the montage filtering - they can see all projects
         } else {
-          // Check if this project has any verdelers assigned to this monteur
+          // Check if this project has any verdelers assigned to this monteur (including aliases)
           const hasAssignedVerdelers = project.distributors?.some(
-            (dist: any) => dist.toegewezen_monteur === currentUser.username
+            (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
           );
 
           if (!hasAssignedVerdelers) {
@@ -620,10 +621,10 @@ const Projects = () => {
       // Client filter
       const matchesClient = clientFilter === 'all' || project.client === clientFilter;
 
-      // Monteur filter
+      // Monteur filter (considering aliases)
       const matchesMonteur = monteurFilter === 'all' ||
         project.distributors?.some(
-          (dist: any) => dist.toegewezen_monteur === monteurFilter
+          (dist: any) => isUsernameMatch(dist.toegewezen_monteur, monteurFilter)
         );
 
       // Creator filter

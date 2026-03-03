@@ -14,6 +14,7 @@ import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
+import { isUsernameMatch } from '../lib/userAliases';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -99,7 +100,7 @@ const Dashboard = () => {
         const beforeMontageFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const hasAssignedVerdelers = project.distributors?.some(
-            (dist: any) => dist.toegewezen_monteur === currentUser.username
+            (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
           );
 
           if (!hasAssignedVerdelers) {
@@ -464,7 +465,7 @@ const Dashboard = () => {
         filteredProjects = filteredProjects.filter((project: any) => {
           // Check if this project has any verdelers assigned to this monteur
           const hasAssignedVerdelers = project.distributors?.some(
-            (dist: any) => dist.toegewezen_monteur === currentUser.username
+            (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
           );
 
           if (!hasAssignedVerdelers) {
@@ -793,7 +794,7 @@ const Dashboard = () => {
       // Role-based filtering for Montage users (except Sven who sees all projects)
       if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const hasAssignedVerdelers = project.distributors?.some(
-          (dist: any) => dist.toegewezen_monteur === currentUser.username
+          (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
         );
         if (!hasAssignedVerdelers) {
           return false;
