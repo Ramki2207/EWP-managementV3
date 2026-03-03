@@ -434,12 +434,19 @@ export const dataService = {
   async updateDistributor(id: string, updates: any) {
     try {
       let profilePhotoUrl = '';
-      
+
       // Handle file upload if profilePhoto is a File object
       if (updates.profilePhoto instanceof File) {
         profilePhotoUrl = await uploadFileToStorage(updates.profilePhoto);
       } else if (typeof updates.profilePhoto === 'string') {
         profilePhotoUrl = updates.profilePhoto;
+      }
+
+      let assignedMonteur = updates.toegewezenMonteur;
+
+      // Auto-sync: If assigned to Marco Kokshoorn, also assign to Marco
+      if (assignedMonteur === 'Marco Kokshoorn') {
+        assignedMonteur = 'Marco';
       }
 
       const { data, error } = await supabase
@@ -466,7 +473,7 @@ export const dataService = {
           profile_photo: profilePhotoUrl,
           status: updates.status,
           // Add new columns conditionally to handle migration
-          ...(updates.toegewezenMonteur !== undefined && { toegewezen_monteur: updates.toegewezenMonteur }),
+          ...(assignedMonteur !== undefined && { toegewezen_monteur: assignedMonteur }),
           ...(updates.gewensteLeverDatum !== undefined && { gewenste_lever_datum: updates.gewensteLeverDatum }),
           ...(updates.expectedHours !== undefined && { expected_hours: updates.expectedHours })
         })

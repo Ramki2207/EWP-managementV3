@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3 } from 'lucide-react';
+import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
@@ -75,6 +75,8 @@ const Dashboard = () => {
     const saved = localStorage.getItem('showTestReviewWidget');
     return saved !== null ? saved === 'true' : true;
   });
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [agendaProjects, setAgendaProjects] = useState<any[]>([]);
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
@@ -240,6 +242,60 @@ const Dashboard = () => {
     }
   };
 
+  const loadAgendaProjects = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .in('location', ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam (PR)'])
+        .order('expected_delivery_date', { ascending: true });
+
+      if (error) throw error;
+      setAgendaProjects(data || []);
+    } catch (error) {
+      console.error('Error loading agenda projects:', error);
+    }
+  };
+
+  const generateCalendarDays = () => {
+    const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1);
+
+    const days = [];
+    let currentDate = new Date(startDate);
+
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return days;
+  };
+
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getProjectsForDay = (date: Date): any[] => {
+    const dateStr = formatDateLocal(date);
+    return agendaProjects.filter(project => project.expected_delivery_date === dateStr);
+  };
+
+  const previousMonth = () => {
+    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setSelectedMonth(new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() + 1, 1));
+  };
+
   const checkPendingApprovals = async (projectList: any[]) => {
     const approvals = [];
 
@@ -367,6 +423,13 @@ const Dashboard = () => {
       lockUnsubscribe();
     };
   }, [currentUser]);
+
+  // Load agenda data for specific users
+  useEffect(() => {
+    if (currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username)) {
+      loadAgendaProjects();
+    }
+  }, [currentUser, selectedMonth]);
 
   // Separate effect to reload projects when filterMode changes
   useEffect(() => {
@@ -1168,6 +1231,94 @@ const Dashboard = () => {
                 </span>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Agenda Section for Radjesh, Ronald, and Michel de Ruiter */}
+      {currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username) && (
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Calendar size={20} className="text-blue-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Agenda</h2>
+            <span className="text-sm text-gray-400">Projectoverzicht voor Naaldwijk & Rotterdam</span>
+          </div>
+
+          {/* Month Navigation */}
+          <div className="card p-4 flex items-center justify-between mb-4">
+            <button onClick={previousMonth} className="btn-secondary p-2">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-semibold text-white">
+              {selectedMonth.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+            </h2>
+            <button onClick={nextMonth} className="btn-secondary p-2">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="card p-6">
+            <div className="grid grid-cols-7 gap-2 mb-2">
+              {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+                <div key={day} className="text-center font-semibold text-gray-400 text-sm py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {generateCalendarDays().map((day, index) => {
+                const isCurrentMonth = day.getMonth() === selectedMonth.getMonth();
+                const isToday = day.toDateString() === new Date().toDateString();
+                const dayProjects = getProjectsForDay(day);
+
+                return (
+                  <div
+                    key={index}
+                    className={`min-h-[120px] p-2 rounded-lg border transition-colors ${
+                      isCurrentMonth
+                        ? isToday
+                          ? 'bg-blue-500/10 border-blue-500'
+                          : 'bg-[#2A303C] border-gray-700 hover:border-gray-600'
+                        : 'bg-[#1a1f2a] border-gray-800 opacity-50'
+                    }`}
+                  >
+                    <div className="text-sm font-medium text-gray-400 mb-1">
+                      {day.getDate()}
+                    </div>
+                    <div className="space-y-1">
+                      {dayProjects.map((project, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => navigate(`/project/${project.id}`)}
+                          className="text-xs p-1 rounded bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 cursor-pointer transition-all"
+                        >
+                          <div className="truncate font-medium">
+                            {project.project_number}
+                          </div>
+                          {project.client && (
+                            <div className="truncate text-gray-400 text-[10px]">
+                              {project.client}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="mt-6 flex items-center space-x-6 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 rounded bg-blue-500/20"></div>
+                <span className="text-gray-400">Project Leverdatum</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
