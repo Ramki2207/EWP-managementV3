@@ -1951,13 +1951,13 @@ export default function Personeelsbeheer() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2">
                   Medewerker
                 </label>
                 <select
                   value={syntessFilters.employee}
                   onChange={(e) => setSyntessFilters({ ...syntessFilters, employee: e.target.value })}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   <option value="">Alle medewerkers</option>
                   {users.map(user => (
@@ -1966,13 +1966,13 @@ export default function Personeelsbeheer() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2">
                   Jaar
                 </label>
                 <select
                   value={syntessFilters.year}
                   onChange={(e) => setSyntessFilters({ ...syntessFilters, year: e.target.value })}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   {[...Array(5)].map((_, i) => {
                     const year = new Date().getFullYear() - i;
@@ -1981,7 +1981,7 @@ export default function Personeelsbeheer() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2">
                   Week
                 </label>
                 <input
@@ -1991,17 +1991,17 @@ export default function Personeelsbeheer() {
                   value={syntessFilters.week}
                   onChange={(e) => setSyntessFilters({ ...syntessFilters, week: e.target.value })}
                   placeholder="Alle weken"
-                  className="input w-full"
+                  className="input-field w-full"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">
+                <label className="block text-sm text-gray-400 mb-2">
                   Status
                 </label>
                 <select
                   value={syntessFilters.status}
                   onChange={(e) => setSyntessFilters({ ...syntessFilters, status: e.target.value })}
-                  className="input w-full"
+                  className="input-field w-full"
                 >
                   <option value="">Alle statussen</option>
                   <option value="draft">Concept</option>
