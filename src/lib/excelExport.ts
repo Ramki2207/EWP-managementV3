@@ -127,3 +127,188 @@ export const exportMultipleVerdelersToExcel = (
 ) => {
   generateMPrintExcel(verdelers, projectNumber);
 };
+
+interface WeekstaatEntry {
+  activity_code: string;
+  activity_description: string;
+  workorder_number: string;
+  monday: number;
+  tuesday: number;
+  wednesday: number;
+  thursday: number;
+  friday: number;
+  saturday: number;
+  sunday: number;
+}
+
+interface WeekstaatWithEntries {
+  id: string;
+  week_number: number;
+  year: number;
+  username: string;
+  entries: WeekstaatEntry[];
+}
+
+export const exportWeekstaatToSyntess = (weekstaat: WeekstaatWithEntries) => {
+  const rows: any[] = [];
+
+  const getDateOfWeek = (week: number, year: number, dayOffset: number) => {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const ISOweekStart = simple;
+    if (dow <= 4) {
+      ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    } else {
+      ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    }
+    ISOweekStart.setDate(ISOweekStart.getDate() + dayOffset);
+    return ISOweekStart;
+  };
+
+  weekstaat.entries.forEach(entry => {
+    const days = [
+      { name: 'monday', hours: entry.monday, offset: 0 },
+      { name: 'tuesday', hours: entry.tuesday, offset: 1 },
+      { name: 'wednesday', hours: entry.wednesday, offset: 2 },
+      { name: 'thursday', hours: entry.thursday, offset: 3 },
+      { name: 'friday', hours: entry.friday, offset: 4 },
+      { name: 'saturday', hours: entry.saturday, offset: 5 },
+      { name: 'sunday', hours: entry.sunday, offset: 6 }
+    ];
+
+    days.forEach(day => {
+      if (day.hours && day.hours > 0) {
+        const date = getDateOfWeek(weekstaat.week_number, weekstaat.year, day.offset);
+        const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+
+        rows.push({
+          'Aantal': day.hours,
+          'Bedrag': '',
+          'Bestekparagraaf': '',
+          'Datum': formattedDate,
+          'Kostenplaats': '',
+          'Kostensoort': '',
+          'Medewerker': weekstaat.username,
+          'Omschrijving': entry.activity_description || '',
+          'Project': entry.workorder_number || '',
+          'Taak': entry.activity_code || '',
+          'Tarief': '',
+          'Tariefsoort': '',
+          'Werkbon': '',
+          'Werkbonparagraaf': '',
+          'Referentie': ''
+        });
+      }
+    });
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  const colWidths = [
+    { wch: 10 },  // Aantal
+    { wch: 10 },  // Bedrag
+    { wch: 18 },  // Bestekparagraaf
+    { wch: 12 },  // Datum
+    { wch: 15 },  // Kostenplaats
+    { wch: 15 },  // Kostensoort
+    { wch: 20 },  // Medewerker
+    { wch: 40 },  // Omschrijving
+    { wch: 15 },  // Project
+    { wch: 10 },  // Taak
+    { wch: 10 },  // Tarief
+    { wch: 15 },  // Tariefsoort
+    { wch: 15 },  // Werkbon
+    { wch: 18 },  // Werkbonparagraaf
+    { wch: 15 }   // Referentie
+  ];
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Weekstaat');
+
+  const filename = `Weekstaat_${weekstaat.username}_Week${weekstaat.week_number}_${weekstaat.year}_Syntess.xlsx`;
+  XLSX.writeFile(wb, filename);
+};
+
+export const exportMultipleWeekstatenToSyntess = (weekstaten: WeekstaatWithEntries[]) => {
+  const rows: any[] = [];
+
+  const getDateOfWeek = (week: number, year: number, dayOffset: number) => {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const ISOweekStart = simple;
+    if (dow <= 4) {
+      ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+    } else {
+      ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+    }
+    ISOweekStart.setDate(ISOweekStart.getDate() + dayOffset);
+    return ISOweekStart;
+  };
+
+  weekstaten.forEach(weekstaat => {
+    weekstaat.entries.forEach(entry => {
+      const days = [
+        { name: 'monday', hours: entry.monday, offset: 0 },
+        { name: 'tuesday', hours: entry.tuesday, offset: 1 },
+        { name: 'wednesday', hours: entry.wednesday, offset: 2 },
+        { name: 'thursday', hours: entry.thursday, offset: 3 },
+        { name: 'friday', hours: entry.friday, offset: 4 },
+        { name: 'saturday', hours: entry.saturday, offset: 5 },
+        { name: 'sunday', hours: entry.sunday, offset: 6 }
+      ];
+
+      days.forEach(day => {
+        if (day.hours && day.hours > 0) {
+          const date = getDateOfWeek(weekstaat.week_number, weekstaat.year, day.offset);
+          const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
+
+          rows.push({
+            'Aantal': day.hours,
+            'Bedrag': '',
+            'Bestekparagraaf': '',
+            'Datum': formattedDate,
+            'Kostenplaats': '',
+            'Kostensoort': '',
+            'Medewerker': weekstaat.username,
+            'Omschrijving': entry.activity_description || '',
+            'Project': entry.workorder_number || '',
+            'Taak': entry.activity_code || '',
+            'Tarief': '',
+            'Tariefsoort': '',
+            'Werkbon': '',
+            'Werkbonparagraaf': '',
+            'Referentie': ''
+          });
+        }
+      });
+    });
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  const colWidths = [
+    { wch: 10 },  // Aantal
+    { wch: 10 },  // Bedrag
+    { wch: 18 },  // Bestekparagraaf
+    { wch: 12 },  // Datum
+    { wch: 15 },  // Kostenplaats
+    { wch: 15 },  // Kostensoort
+    { wch: 20 },  // Medewerker
+    { wch: 40 },  // Omschrijving
+    { wch: 15 },  // Project
+    { wch: 10 },  // Taak
+    { wch: 10 },  // Tarief
+    { wch: 15 },  // Tariefsoort
+    { wch: 15 },  // Werkbon
+    { wch: 18 },  // Werkbonparagraaf
+    { wch: 15 }   // Referentie
+  ];
+  ws['!cols'] = colWidths;
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Weekstaten');
+
+  const filename = `Weekstaten_Syntess_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, filename);
+};

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle, Download, Filter } from 'lucide-react';
+import { exportWeekstaatToSyntess, exportMultipleWeekstatenToSyntess } from '../lib/excelExport';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 
-type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie';
+type TabType = 'agenda' | 'weekstaten' | 'verlof' | 'vakantie' | 'syntess';
 
 interface DayEvent {
   type: 'weekstaat' | 'verlof' | 'vakantie' | 'project';
@@ -48,6 +49,14 @@ export default function Personeelsbeheer() {
     year: ''
   });
   const [locationFilter, setLocationFilter] = useState<'all' | 'utrecht' | 'denhaag'>('all');
+  const [syntessFilters, setSyntessFilters] = useState({
+    employee: '',
+    week: '',
+    year: new Date().getFullYear().toString(),
+    status: ''
+  });
+  const [syntessWeekstaten, setSyntessWeekstaten] = useState<any[]>([]);
+  const [selectedSyntessWeekstaten, setSelectedSyntessWeekstaten] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadUsers();
@@ -59,6 +68,8 @@ export default function Personeelsbeheer() {
       loadVacationRequests();
     } else if (activeTab === 'agenda') {
       loadAllData();
+    } else if (activeTab === 'syntess') {
+      loadSyntessWeekstaten();
     }
   }, [activeTab, selectedMonth]);
 
@@ -195,6 +206,59 @@ export default function Personeelsbeheer() {
 
     console.log('Loaded vacation requests:', data);
     setVacationRequests(data || []);
+  };
+
+  const loadSyntessWeekstaten = async () => {
+    try {
+      setLoading(true);
+      const { data: weekstaatData, error } = await supabase
+        .from('weekstaten')
+        .select(`
+          *,
+          user:users!weekstaten_user_id_fkey(id, username, assigned_locations)
+        `)
+        .order('year', { ascending: false })
+        .order('week_number', { ascending: false });
+
+      if (error) {
+        console.error('Error loading weekstaten:', error);
+        toast.error('Fout bij laden weekstaten');
+        return;
+      }
+
+      const weekstaatIds = weekstaatData?.map(w => w.id) || [];
+      const { data: entriesData } = await supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .in('weekstaat_id', weekstaatIds);
+
+      const enrichedWeekstaten = (weekstaatData || []).map(weekstaat => ({
+        ...weekstaat,
+        entries: (entriesData || []).filter(e => e.weekstaat_id === weekstaat.id)
+      }));
+
+      let filteredWeekstaten = enrichedWeekstaten;
+
+      if (currentUser?.username === 'Lysander Koenraadt' ||
+          currentUser?.username === 'Patrick Herman' ||
+          currentUser?.username === 'Stefano de Weger') {
+        const lysanderFilteredLocations = getFilteredLocations();
+        filteredWeekstaten = filteredWeekstaten.filter((weekstaat: any) => {
+          const userLocations = weekstaat.user?.assigned_locations || [];
+          const hasMatchingLocation = userLocations.some((loc: string) =>
+            lysanderFilteredLocations.includes(loc)
+          );
+          return hasMatchingLocation || userLocations.length === 0;
+        });
+      }
+
+      setSyntessWeekstaten(filteredWeekstaten);
+    } catch (error) {
+      console.error('Error in loadSyntessWeekstaten:', error);
+      toast.error('Fout bij laden weekstaten');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadAllData = async () => {
@@ -630,6 +694,14 @@ export default function Personeelsbeheer() {
     vakantie: vacationRequests.filter(r => r.status === 'pending').length
   };
 
+  const filteredSyntessWeekstaten = syntessWeekstaten.filter(weekstaat => {
+    if (syntessFilters.employee && weekstaat.user_id !== syntessFilters.employee) return false;
+    if (syntessFilters.status && weekstaat.status !== syntessFilters.status) return false;
+    if (syntessFilters.week && weekstaat.week_number !== parseInt(syntessFilters.week)) return false;
+    if (syntessFilters.year && weekstaat.year !== parseInt(syntessFilters.year)) return false;
+    return true;
+  });
+
   return (
     <div className="page-container max-w-[1800px] mx-auto">
       <div className="mb-6">
@@ -697,6 +769,17 @@ export default function Personeelsbeheer() {
               {pendingCount.vakantie}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setActiveTab('syntess')}
+          className={`px-6 py-3 font-medium transition-colors flex items-center space-x-2 ${
+            activeTab === 'syntess'
+              ? 'text-purple-400 border-b-2 border-purple-400'
+              : 'text-gray-400 hover:text-white'
+          }`}
+        >
+          <Download className="w-5 h-5" />
+          <span>Syntess Export</span>
         </button>
       </div>
 
@@ -1852,6 +1935,230 @@ export default function Personeelsbeheer() {
               >
                 Afkeuren
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SYNTESS EXPORT TAB */}
+      {activeTab === 'syntess' && (
+        <div className="space-y-6">
+          {/* Filters */}
+          <div className="card p-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <Filter className="w-5 h-5 text-purple-400" />
+              <h2 className="text-xl font-semibold text-white">Filters</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Medewerker
+                </label>
+                <select
+                  value={syntessFilters.employee}
+                  onChange={(e) => setSyntessFilters({ ...syntessFilters, employee: e.target.value })}
+                  className="input w-full"
+                >
+                  <option value="">Alle medewerkers</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>{user.username}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Jaar
+                </label>
+                <select
+                  value={syntessFilters.year}
+                  onChange={(e) => setSyntessFilters({ ...syntessFilters, year: e.target.value })}
+                  className="input w-full"
+                >
+                  {[...Array(5)].map((_, i) => {
+                    const year = new Date().getFullYear() - i;
+                    return <option key={year} value={year}>{year}</option>;
+                  })}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Week
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="53"
+                  value={syntessFilters.week}
+                  onChange={(e) => setSyntessFilters({ ...syntessFilters, week: e.target.value })}
+                  placeholder="Alle weken"
+                  className="input w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Status
+                </label>
+                <select
+                  value={syntessFilters.status}
+                  onChange={(e) => setSyntessFilters({ ...syntessFilters, status: e.target.value })}
+                  className="input w-full"
+                >
+                  <option value="">Alle statussen</option>
+                  <option value="draft">Concept</option>
+                  <option value="submitted">Ingediend</option>
+                  <option value="approved">Goedgekeurd</option>
+                  <option value="declined">Afgekeurd</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Export Actions */}
+          <div className="card p-6">
+            <div className="flex justify-between items-center">
+              <div className="text-gray-300">
+                <p className="font-medium">{filteredSyntessWeekstaten.length} weekstaten gevonden</p>
+                <p className="text-sm text-gray-400">{selectedSyntessWeekstaten.size} geselecteerd</p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    if (selectedSyntessWeekstaten.size === 0) {
+                      toast.error('Selecteer minimaal één weekstaat');
+                      return;
+                    }
+                    const selectedWeekstaatData = filteredSyntessWeekstaten
+                      .filter(w => selectedSyntessWeekstaten.has(w.id))
+                      .map(w => ({
+                        id: w.id,
+                        week_number: w.week_number,
+                        year: w.year,
+                        username: w.user.username,
+                        entries: w.entries
+                      }));
+                    exportMultipleWeekstatenToSyntess(selectedWeekstaatData);
+                    toast.success('Weekstaten geëxporteerd naar Excel');
+                  }}
+                  className="btn-primary flex items-center space-x-2"
+                  disabled={selectedSyntessWeekstaten.size === 0}
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Exporteer Geselecteerde</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const allWeekstaatData = filteredSyntessWeekstaten.map(w => ({
+                      id: w.id,
+                      week_number: w.week_number,
+                      year: w.year,
+                      username: w.user.username,
+                      entries: w.entries
+                    }));
+                    exportMultipleWeekstatenToSyntess(allWeekstaatData);
+                    toast.success('Alle weekstaten geëxporteerd naar Excel');
+                  }}
+                  className="btn-secondary flex items-center space-x-2"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Exporteer Alles</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Weekstaten List */}
+          <div className="card p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedSyntessWeekstaten.size === filteredSyntessWeekstaten.length && filteredSyntessWeekstaten.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedSyntessWeekstaten(new Set(filteredSyntessWeekstaten.map(w => w.id)));
+                          } else {
+                            setSelectedSyntessWeekstaten(new Set());
+                          }
+                        }}
+                        className="w-4 h-4"
+                      />
+                    </th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Medewerker</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Week</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Jaar</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Status</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Regels</th>
+                    <th className="text-left py-3 px-4 text-gray-400 font-medium">Actie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-400">
+                        Laden...
+                      </td>
+                    </tr>
+                  ) : filteredSyntessWeekstaten.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-8 text-gray-400">
+                        Geen weekstaten gevonden
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredSyntessWeekstaten.map(weekstaat => (
+                      <tr key={weekstaat.id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                        <td className="py-3 px-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedSyntessWeekstaten.has(weekstaat.id)}
+                            onChange={(e) => {
+                              const newSelected = new Set(selectedSyntessWeekstaten);
+                              if (e.target.checked) {
+                                newSelected.add(weekstaat.id);
+                              } else {
+                                newSelected.delete(weekstaat.id);
+                              }
+                              setSelectedSyntessWeekstaten(newSelected);
+                            }}
+                            className="w-4 h-4"
+                          />
+                        </td>
+                        <td className="py-3 px-4 text-white">{weekstaat.user.username}</td>
+                        <td className="py-3 px-4 text-white">Week {weekstaat.week_number}</td>
+                        <td className="py-3 px-4 text-white">{weekstaat.year}</td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded text-xs ${getStatusColor(weekstaat.status)}`}>
+                            {getStatusLabel(weekstaat.status)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-white">{weekstaat.entries.length}</td>
+                        <td className="py-3 px-4">
+                          <button
+                            onClick={() => {
+                              const weekstaatData = {
+                                id: weekstaat.id,
+                                week_number: weekstaat.week_number,
+                                year: weekstaat.year,
+                                username: weekstaat.user.username,
+                                entries: weekstaat.entries
+                              };
+                              exportWeekstaatToSyntess(weekstaatData);
+                              toast.success('Weekstaat geëxporteerd naar Excel');
+                            }}
+                            className="btn-secondary text-sm py-1 px-3 flex items-center space-x-1"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Exporteer</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
