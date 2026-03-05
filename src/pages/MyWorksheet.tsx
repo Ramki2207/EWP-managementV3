@@ -9,6 +9,7 @@ const ACTIVITY_CODES = [
   { code: '103', description: 'Montage buiten' },
   { code: '104', description: 'Regieklus' },
   { code: '105', description: 'Montage Halyester' },
+  { code: '108', description: 'Testen' },
   { code: '181', description: 'Werkvoorbereiding/magazijn' },
   { code: '200', description: 'Teken uren' },
   { code: '301', description: 'Offerte uren' },

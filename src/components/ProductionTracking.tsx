@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, User, Package, Plus, FileEdit as Edit, Trash2, Save, X, Calendar, DollarSign, Camera, FileText, AlertTriangle, CheckCircle, TrendingUp, Users, Activity } from 'lucide-react';
+import { Clock, User, Package, Plus, FileEdit as Edit, Trash2, Save, X, Calendar, DollarSign, Camera, FileText, AlertTriangle, CheckCircle, TrendingUp, Users, Activity, Play, Square } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService, supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
@@ -40,6 +40,18 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDistributorDetails, setShowDistributorDetails] = useState(false);
   const [selectedDistributorData, setSelectedDistributorData] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [timerState, setTimerState] = useState<{
+    isRunning: boolean;
+    distributorId: string | null;
+    startTime: Date | null;
+    elapsedSeconds: number;
+  }>({
+    isRunning: false,
+    distributorId: null,
+    startTime: null,
+    elapsedSeconds: 0
+  });
   const [formData, setFormData] = useState({
     distributor_id: '',
     worker_id: '',
@@ -55,7 +67,35 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
   useEffect(() => {
     loadData();
+    loadCurrentUser();
   }, [project.id]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timerState.isRunning && timerState.startTime) {
+      interval = setInterval(() => {
+        const now = new Date();
+        const elapsed = Math.floor((now.getTime() - timerState.startTime!.getTime()) / 1000);
+        setTimerState(prev => ({ ...prev, elapsedSeconds: elapsed }));
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerState.isRunning, timerState.startTime]);
+
+  const loadCurrentUser = async () => {
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUserId) return;
+
+    const { data: userData } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', currentUserId)
+      .maybeSingle();
+
+    setCurrentUser(userData);
+  };
 
   // Auto-calculate hours when start_time or end_time changes
   useEffect(() => {
@@ -614,6 +654,145 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     }
   };
 
+  const handleStartTimer = (distributorId: string) => {
+    setTimerState({
+      isRunning: true,
+      distributorId: distributorId,
+      startTime: new Date(),
+      elapsedSeconds: 0
+    });
+    toast.success('Timer gestart!');
+  };
+
+  const handleStopTimer = async () => {
+    if (!timerState.distributorId || !timerState.startTime || !currentUser) {
+      toast.error('Geen actieve timer gevonden');
+      return;
+    }
+
+    const endTime = new Date();
+    const elapsedMs = endTime.getTime() - timerState.startTime.getTime();
+    const hours = Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100;
+
+    if (hours <= 0) {
+      toast.error('Timer moet minimaal enkele seconden lopen');
+      return;
+    }
+
+    try {
+      const selectedDistributor = project.distributors?.find((d: any) => d.id === timerState.distributorId);
+      if (!selectedDistributor) {
+        toast.error('Verdeler niet gevonden');
+        return;
+      }
+
+      const workDate = new Date();
+      const weekNumber = getWeekNumber(workDate);
+      const year = workDate.getFullYear();
+      const dayOfWeek = workDate.getDay();
+
+      const dayMapping: { [key: number]: string } = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayColumn = dayMapping[dayOfWeek];
+
+      const { data: existingWeekstaat, error: weekstaatError } = await supabase
+        .from('weekstaten')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('week_number', weekNumber)
+        .eq('year', year)
+        .maybeSingle();
+
+      let weekstaatId = existingWeekstaat?.id;
+
+      if (!weekstaatId) {
+        const { data: newWeekstaat, error: createError } = await supabase
+          .from('weekstaten')
+          .insert({
+            user_id: currentUser.id,
+            week_number: weekNumber,
+            year: year,
+            status: 'draft'
+          })
+          .select('id')
+          .single();
+
+        if (createError) throw createError;
+        weekstaatId = newWeekstaat.id;
+      }
+
+      const activityCode = '108';
+      const activityDescription = '108 - Testen';
+      const workorderNumber = `${project.project_number}`;
+
+      const { data: existingEntry, error: entryFetchError } = await supabase
+        .from('weekstaat_entries')
+        .select('*')
+        .eq('weekstaat_id', weekstaatId)
+        .eq('activity_code', activityCode)
+        .eq('workorder_number', workorderNumber)
+        .maybeSingle();
+
+      if (existingEntry) {
+        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const updateData = {
+          [dayColumn]: currentHours + hours,
+          activity_description: activityDescription,
+          workorder_number: workorderNumber
+        };
+
+        const { error: updateError } = await supabase
+          .from('weekstaat_entries')
+          .update(updateData)
+          .eq('id', existingEntry.id);
+
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('weekstaat_entries')
+          .insert({
+            weekstaat_id: weekstaatId,
+            activity_code: activityCode,
+            activity_description: activityDescription,
+            workorder_number: workorderNumber,
+            overtime_start_time: '',
+            [dayColumn]: hours
+          });
+
+        if (insertError) throw insertError;
+      }
+
+      setTimerState({
+        isRunning: false,
+        distributorId: null,
+        startTime: null,
+        elapsedSeconds: 0
+      });
+
+      toast.success(`${hours.toFixed(2)} uur geregistreerd in weekstaat voor ${project.project_number}!`);
+    } catch (error) {
+      console.error('Error saving timer to weekstaat:', error);
+      toast.error('Fout bij opslaan naar weekstaat');
+    }
+  };
+
+  const formatElapsedTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const isPerry = currentUser?.username === 'Perry';
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -1082,6 +1261,64 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                 <X size={24} />
               </button>
             </div>
+
+            {/* Perry's Timer Section */}
+            {isPerry && (
+              <div className="mb-6 bg-gradient-to-br from-green-500/10 to-blue-500/10 border border-green-500/30 rounded-xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-green-400 mb-2">Test Timer</h3>
+                    {timerState.isRunning && timerState.distributorId === selectedDistributorData.id ? (
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <Clock size={20} className="text-green-400 animate-pulse" />
+                          <span className="text-2xl font-mono font-bold text-white">
+                            {formatElapsedTime(timerState.elapsedSeconds)}
+                          </span>
+                        </div>
+                        <span className="text-sm text-gray-400">
+                          ({(timerState.elapsedSeconds / 3600).toFixed(2)} uur)
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400">
+                        Start de timer om je test tijd automatisch te registreren
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    {timerState.isRunning && timerState.distributorId === selectedDistributorData.id ? (
+                      <button
+                        onClick={handleStopTimer}
+                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-lg"
+                      >
+                        <Square size={20} />
+                        <span>Stop Timer</span>
+                      </button>
+                    ) : timerState.isRunning ? (
+                      <div className="text-sm text-yellow-400">
+                        Timer loopt voor andere verdeler
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleStartTimer(selectedDistributorData.id)}
+                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg font-semibold transition-all shadow-lg"
+                      >
+                        <Play size={20} />
+                        <span>Start Timer</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {timerState.isRunning && timerState.distributorId === selectedDistributorData.id && (
+                  <div className="mt-4 pt-4 border-t border-green-500/30">
+                    <p className="text-xs text-gray-400">
+                      <span className="font-semibold text-green-400">Let op:</span> Bij stoppen wordt de tijd automatisch geregistreerd in je weekstaat onder activiteit "108 - Testen" voor project {project.project_number}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Work Entries Table */}
             {selectedDistributorData.entries && selectedDistributorData.entries.length > 0 ? (
