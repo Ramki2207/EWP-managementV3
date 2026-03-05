@@ -733,21 +733,31 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       const activityDescription = '108 - Testen';
       const workorderNumber = `${project.project_number}`;
 
+      console.log('🔍 Timer - Looking for existing entry with:', {
+        weekstaatId,
+        activityCode,
+        workorderNumber
+      });
+
       const { data: existingEntry, error: entryFetchError } = await supabase
         .from('weekstaat_entries')
         .select('*')
         .eq('weekstaat_id', weekstaatId)
         .eq('activity_code', activityCode)
-        .eq('workorder_number', workorderNumber)
         .maybeSingle();
+
+      console.log('🔍 Timer - Found existing entry:', existingEntry);
 
       if (existingEntry) {
         const currentHours = parseFloat(existingEntry[dayColumn] || 0);
         const updateData = {
           [dayColumn]: currentHours + hours,
+          activity_code: activityCode,
           activity_description: activityDescription,
           workorder_number: workorderNumber
         };
+
+        console.log('🔄 Timer - Updating existing entry with:', updateData);
 
         const { error: updateError } = await supabase
           .from('weekstaat_entries')
@@ -756,16 +766,20 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
         if (updateError) throw updateError;
       } else {
+        const insertData = {
+          weekstaat_id: weekstaatId,
+          activity_code: activityCode,
+          activity_description: activityDescription,
+          workorder_number: workorderNumber,
+          overtime_start_time: '',
+          [dayColumn]: hours
+        };
+
+        console.log('➕ Timer - Inserting new entry with:', insertData);
+
         const { error: insertError } = await supabase
           .from('weekstaat_entries')
-          .insert({
-            weekstaat_id: weekstaatId,
-            activity_code: activityCode,
-            activity_description: activityDescription,
-            workorder_number: workorderNumber,
-            overtime_start_time: '',
-            [dayColumn]: hours
-          });
+          .insert(insertData);
 
         if (insertError) throw insertError;
       }
