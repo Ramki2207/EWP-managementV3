@@ -11,6 +11,7 @@ const ACTIVITY_CODES = [
   { code: '105', description: 'Montage Halyester' },
   { code: '106', description: 'Algemeen' },
   { code: '107', description: 'Transport' },
+  { code: '108', description: 'Testen' },
   { code: '181', description: 'Werkvoorbereiding/magazijn' },
   { code: '200', description: 'Teken uren' },
   { code: '301', description: 'Offerte uren' },
