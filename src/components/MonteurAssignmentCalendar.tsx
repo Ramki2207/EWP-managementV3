@@ -102,11 +102,8 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             created_by
           )
         `)
-        .in('projects.location', ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'])
-        .not('gewenste_lever_datum', 'is', null)
-        .gte('gewenste_lever_datum', firstDay.toISOString())
-        .lte('gewenste_lever_datum', lastDay.toISOString())
-        .order('gewenste_lever_datum', { ascending: true });
+        .in('projects.location', ['Naaldwijk', 'Naaldwijk (PW)', 'Rotterdam'])
+        .order('gewenste_lever_datum', { ascending: true, nullsFirst: false });
 
       if (error) throw error;
 
@@ -233,8 +230,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       'Projectleider': v.project_leader_name || '',
       'Projectnummer': v.project_number,
       'Naam project': v.project_naam || v.client,
-      'Verdeler': v.distributor_id,
-      'Kast Naam': v.kast_naam,
+      'Kastnaam': v.kast_naam,
       'Aantal uren': v.expected_hours || 0,
       'Wanneer leveren': v.gewenste_lever_datum ? new Date(v.gewenste_lever_datum).toLocaleDateString('nl-NL') : '',
       'Levering week': v.delivery_week || '',
@@ -253,8 +249,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       { wch: 15 }, // Projectleider
       { wch: 15 }, // Projectnummer
       { wch: 30 }, // Naam project
-      { wch: 15 }, // Verdeler
-      { wch: 20 }, // Kast Naam
+      { wch: 20 }, // Kastnaam
       { wch: 12 }, // Aantal uren
       { wch: 15 }, // Wanneer leveren
       { wch: 12 }, // Levering week
@@ -297,6 +292,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
   const getVerdelersForDate = (date: Date) => {
     const dateStr = formatDateLocal(date);
     return filteredVerdelers.filter(v => {
+      if (!v.gewenste_lever_datum) return false;
       const leverDateStr = v.gewenste_lever_datum.split('T')[0];
       return leverDateStr === dateStr;
     });
@@ -408,7 +404,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectleid</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Projectnumm</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Naam project</th>
-            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Verdeler</th>
+            <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Kastnaam</th>
             <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">Aantal ure</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Wanneer leveren</th>
             <th className="px-3 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Welke monteur</th>
@@ -441,7 +437,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                   {verdeler.project_naam || verdeler.client}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-gray-300">
-                  {verdeler.distributor_id}
+                  {verdeler.kast_naam}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-right text-gray-300">
                   {verdeler.expected_hours || 0}
