@@ -39,7 +39,7 @@ type ViewMode = 'calendar' | 'table';
 
 export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnly = false }: MonteurAssignmentCalendarProps) {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<ViewMode>(tableOnly ? 'table' : 'calendar');
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [verdelers, setVerdelers] = useState<VerdelerAssignment[]>([]);
   const [filteredVerdelers, setFilteredVerdelers] = useState<VerdelerAssignment[]>([]);
