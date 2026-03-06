@@ -655,6 +655,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   };
 
   const handleStartTimer = (distributorId: string) => {
+    console.log('🟢 Starting timer for distributor:', distributorId);
     setTimerState({
       isRunning: true,
       distributorId: distributorId,
@@ -665,7 +666,18 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   };
 
   const handleStopTimer = async () => {
+    console.log('🔴 Stop Timer clicked!', {
+      timerDistributorId: timerState.distributorId,
+      timerStartTime: timerState.startTime,
+      currentUser: currentUser?.username
+    });
+
     if (!timerState.distributorId || !timerState.startTime || !currentUser) {
+      console.log('❌ Timer validation failed:', {
+        hasDistributorId: !!timerState.distributorId,
+        hasStartTime: !!timerState.startTime,
+        hasCurrentUser: !!currentUser
+      });
       toast.error('Geen actieve timer gevonden');
       return;
     }
@@ -805,7 +817,16 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const isPerry = currentUser?.username === 'Perry';
+  const isPerry = currentUser?.username?.toLowerCase() === 'perry';
+
+  console.log('🔍 Timer Debug:', {
+    isPerry,
+    currentUsername: currentUser?.username,
+    timerRunning: timerState.isRunning,
+    timerDistributorId: timerState.distributorId,
+    selectedDistributorId: selectedDistributorData?.id,
+    idsMatch: timerState.distributorId === selectedDistributorData?.id
+  });
 
   if (loading) {
     return (
@@ -1304,7 +1325,8 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                     {timerState.isRunning && timerState.distributorId === selectedDistributorData.id ? (
                       <button
                         onClick={handleStopTimer}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-lg"
+                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-lg cursor-pointer relative z-10"
+                        style={{ pointerEvents: 'auto' }}
                       >
                         <Square size={20} />
                         <span>Stop Timer</span>
