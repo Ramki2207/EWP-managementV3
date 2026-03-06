@@ -684,12 +684,24 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
     const endTime = new Date();
     const elapsedMs = endTime.getTime() - timerState.startTime.getTime();
-    const hours = Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100;
+    // Ensure minimum of 0.01 hours (36 seconds) to avoid rounding to 0
+    let hours = elapsedMs / (1000 * 60 * 60);
+    hours = Math.max(0.01, Math.round(hours * 100) / 100);
 
-    if (hours <= 0) {
-      toast.error('Timer moet minimaal enkele seconden lopen');
+    console.log('⏱️ Timer calculation:', {
+      elapsedMs,
+      elapsedSeconds: elapsedMs / 1000,
+      hours,
+      hoursRaw: elapsedMs / (1000 * 60 * 60)
+    });
+
+    if (elapsedMs < 1000) {
+      console.log('❌ Timer too short (less than 1 second)');
+      toast.error('Timer moet minimaal 1 seconde lopen');
       return;
     }
+
+    console.log('✅ Timer validation passed, proceeding to save...');
 
     try {
       const selectedDistributor = project.distributors?.find((d: any) => d.id === timerState.distributorId);
@@ -803,10 +815,15 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         elapsedSeconds: 0
       });
 
+      console.log('✅ Timer successfully saved to weekstaat!');
       toast.success(`${hours.toFixed(2)} uur geregistreerd in weekstaat voor ${project.project_number}!`);
     } catch (error) {
-      console.error('Error saving timer to weekstaat:', error);
-      toast.error('Fout bij opslaan naar weekstaat');
+      console.error('❌ Error saving timer to weekstaat:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        error
+      });
+      toast.error('Fout bij opslaan naar weekstaat: ' + (error instanceof Error ? error.message : 'Onbekende fout'));
     }
   };
 
