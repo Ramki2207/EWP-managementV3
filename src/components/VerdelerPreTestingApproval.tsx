@@ -60,6 +60,20 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewMode, setViewMode] = useState<'form' | 'review'>('form');
 
+  const handleClose = () => {
+    // For mandatory approval, only allow closing if approved
+    if (isMandatory) {
+      if (approvalData.status === 'reviewed' && approvalData.overallApproval === true) {
+        onClose();
+      } else {
+        toast.error('Pre-Testing Goedkeuring moet worden goedgekeurd voordat je kunt sluiten');
+        return;
+      }
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     loadExistingApproval();
   }, [distributor.id]);
@@ -150,9 +164,14 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
       setApprovalData(submissionData.approvalData);
 
       if (currentUser?.role === 'montage') {
-        setTimeout(() => {
-          onClose();
-        }, 2000);
+        // For mandatory approval, don't close - montage must wait for tester approval
+        if (!isMandatory) {
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+        } else {
+          toast.info('Wacht op goedkeuring van tester voordat je verder kunt gaan');
+        }
       } else if (currentUser?.role === 'tester' || currentUser?.role === 'admin') {
         setViewMode('review');
       }
@@ -250,8 +269,19 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        // Prevent closing when clicking background for mandatory approval
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+    >
+      <div
+        className="bg-[#1E2530] rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-orange-500/20 rounded-lg">
@@ -268,7 +298,7 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
           </div>
           {!isMandatory || (approvalData.status === 'reviewed' && approvalData.overallApproval === true) ? (
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-400 hover:text-white transition-colors"
               title="Sluiten"
             >
@@ -382,7 +412,7 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
             <div className="flex justify-end space-x-3">
               {!isMandatory && (
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                 >
                   Annuleren
@@ -571,7 +601,7 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
               {/* Only show close button if not mandatory, or if already reviewed and approved */}
               {(!isMandatory || (approvalData.status === 'reviewed' && approvalData.overallApproval === true)) && (
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                 >
                   Sluiten
