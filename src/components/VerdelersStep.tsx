@@ -2620,8 +2620,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           distributor={verdelerForTesting}
           currentUser={currentUser}
           isMandatory={
-            projectData?.location === 'Leerdam(PU)' ||
-            projectData?.location === 'Leerdam(PM)'
+            (projectData?.location === 'Leerdam(PU)' || projectData?.location === 'Leerdam(PM)') &&
+            (verdelers.length > 1 || (projectData.distributors && projectData.distributors.length > 1))
           }
           onClose={async () => {
             console.log('🚪 Pre-test modal closing...');

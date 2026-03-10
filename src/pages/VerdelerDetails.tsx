@@ -48,6 +48,7 @@ const VerdelerDetails = () => {
   const [showTestingComponent, setShowTestingComponent] = useState(false);
   const [activeTestType, setActiveTestType] = useState<'standard' | 'vanaf630' | 'simpel'>('standard');
   const [preTestingApprovalComplete, setPreTestingApprovalComplete] = useState(false);
+  const [projectVerdelerCount, setProjectVerdelerCount] = useState<number>(0);
 
   useEffect(() => {
     loadCurrentUser();
@@ -232,6 +233,13 @@ const VerdelerDetails = () => {
 
       setDistributor(foundDistributor || null);
       setEditedDistributor(foundDistributor || null);
+
+      // Load project's verdeler count if distributor has a project
+      if (foundDistributor?.project_id) {
+        const projectVerdelers = await dataService.getDistributorsByProject(foundDistributor.project_id);
+        setProjectVerdelerCount(projectVerdelers.length);
+        console.log('🔍 VerdelerDetails: Project has', projectVerdelers.length, 'verdelers');
+      }
     } catch (error) {
       console.error('Error loading distributor:', error);
       toast.error('Er is een fout opgetreden bij het laden van de verdeler');
@@ -1601,8 +1609,8 @@ const VerdelerDetails = () => {
           distributor={distributor}
           currentUser={currentUser}
           isMandatory={
-            distributor.projects?.location === 'Leerdam(PU)' ||
-            distributor.projects?.location === 'Leerdam(PM)'
+            (distributor.projects?.location === 'Leerdam(PU)' || distributor.projects?.location === 'Leerdam(PM)') &&
+            projectVerdelerCount > 1
           }
           onClose={async () => {
             const isLeerdamLocation =
