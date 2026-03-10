@@ -709,7 +709,8 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setShowTestingHoursModal(false);
       setTestingHours('');
       setVerdelerForTestingHours(null);
-      setEditingVerdeler(null); // Close the edit modal
+      setEditingVerdeler(null);
+      setShowVerdelerForm(false); // Close the verdeler edit form
 
       // Force a re-render by updating the verdelers array
       setVerdelers([...verdelers]);
