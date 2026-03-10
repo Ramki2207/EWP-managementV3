@@ -788,13 +788,21 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           // Check if this is a Leerdam location and status is being changed to Testen
           const isLeerdamLocation = projectData?.location === 'Leerdam(PU)' || projectData?.location === 'Leerdam(PM)';
           const isChangingToTesten = editingVerdeler?.status === 'Productie' && verdelerData.status === 'Testen';
+          const verdelersCount = projectData.distributors?.length || verdelers.length;
+          const isMultiVerdeler = verdelersCount > 1;
 
           // Determine the status to save
           let statusToSave = verdelerData.status;
-          if (isLeerdamLocation && isChangingToTesten) {
-            // Keep as Productie until approval is completed
+          if (isLeerdamLocation && isChangingToTesten && isMultiVerdeler) {
+            // Keep as Productie until approval is completed (only for multi-verdeler projects)
             statusToSave = 'Productie';
-            console.log('⚠️ SAVE: Leerdam location - keeping status as Productie until pre-test approval');
+            console.log('🔒 SAVE: Leerdam multi-verdeler - keeping status as Productie until pre-test approval');
+            console.log('🔒 SAVE: Requested status:', verdelerData.status, '→ Saving as:', statusToSave);
+          } else if (isLeerdamLocation && isChangingToTesten && !isMultiVerdeler) {
+            console.log('ℹ️ SAVE: Leerdam single-verdeler - use project-level testing instead');
+            statusToSave = verdelerData.status; // Allow the change for single verdeler
+          } else {
+            console.log('✅ SAVE: Normal status change - saving as:', statusToSave);
           }
 
           const updateData = {
@@ -2617,6 +2625,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           }
           onClose={async () => {
             console.log('🚪 Pre-test modal closing...');
+            const verdelerIdToCheck = verdelerForTesting?.id;
             setShowPreTestingApproval(false);
             setVerdelerForTesting(null);
             // Reset the form state
@@ -2648,7 +2657,19 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               expectedHours: '',
               deliveryDate: null
             });
+            // Reload verdelers to ensure UI is in sync with database
             await loadVerdelersFromDatabase();
+            // Verify the status is still Productie (not Testen)
+            if (verdelerIdToCheck) {
+              const reloadedVerdelers = await dataService.getDistributorsByProject(projectData.id);
+              const reloadedVerdeler = reloadedVerdelers.find((v: any) => v.id === verdelerIdToCheck);
+              if (reloadedVerdeler) {
+                console.log('🔍 After modal close - Verdeler status:', reloadedVerdeler.status);
+                if (reloadedVerdeler.status === 'Testen') {
+                  console.warn('⚠️ WARNING: Status is Testen but should be Productie (approval not completed)');
+                }
+              }
+            }
           }}
           onApprove={async () => {
             // Update status to Testen after approval

@@ -103,6 +103,22 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
     }
   }, [currentUser, approvalData]);
 
+  // Block ESC key if mandatory and not approved
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMandatory) {
+        if (!(approvalData.status === 'reviewed' && approvalData.overallApproval === true)) {
+          e.preventDefault();
+          e.stopPropagation();
+          toast.error('Pre-Testing Goedkeuring moet worden goedgekeurd voordat je kunt sluiten');
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey, true);
+    return () => document.removeEventListener('keydown', handleEscKey, true);
+  }, [isMandatory, approvalData.status, approvalData.overallApproval]);
+
   const loadExistingApproval = async () => {
     try {
       const testData = await dataService.getTestData(distributor.id);
@@ -276,11 +292,15 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   return (
     <div
       className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 ${
-        isMandatory ? 'bg-black/70' : 'bg-black/50'
+        isMandatory ? 'bg-black/80' : 'bg-black/50'
       }`}
       onClick={(e) => {
         // Prevent closing when clicking background for mandatory approval
         if (e.target === e.currentTarget) {
+          if (isMandatory && !(approvalData.status === 'reviewed' && approvalData.overallApproval === true)) {
+            toast.error('Pre-Testing Goedkeuring moet worden goedgekeurd voordat je kunt sluiten');
+            return;
+          }
           handleClose();
         }
       }}
