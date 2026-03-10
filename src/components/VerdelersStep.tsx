@@ -967,22 +967,32 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         editingVerdelerStatus: editingVerdeler?.status,
         isLeerdamLocation,
         isChangingToTesten,
-        verdelersCount: verdelersToUse.length
+        verdelersCount: verdelersToUse.length,
+        hasEditingVerdeler: !!editingVerdeler,
+        editingVerdelerId: editingVerdeler?.id
       });
+
+      // Track if we're opening a modal (don't close form if we are)
+      let openingModal = false;
 
       // If status was changed to "Testen", open the pre-test checklist
       // BUT only for multi-verdeler projects (verdelers.length > 1)
       if (verdelerData.status === 'Testen' && editingVerdeler && verdelersToUse.length > 1) {
+        console.log('✅ CONDITION MET: Opening pre-test checklist for multi-verdeler project');
         console.log('🔔 Multi-verdeler project: Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
         const updatedVerdeler = verdelersToUse.find(v => v.id === editingVerdeler.id);
+        console.log('🔍 Looking for verdeler with id:', editingVerdeler.id);
+        console.log('🔍 Available verdeler ids:', verdelersToUse.map(v => v.id));
+
         if (updatedVerdeler) {
           console.log('🔔 Found updated verdeler, opening modal with status:', updatedVerdeler.status);
+          openingModal = true;
 
           // Close the edit form
-          setEditingVerdeler(null);
-          setShowForm(false);
+          setShowVerdelerForm(false);
 
           setTimeout(() => {
+            console.log('⏰ Opening pre-test modal now...');
             setVerdelerForTesting(updatedVerdeler);
             setShowPreTestingApproval(true);
           }, 100);
@@ -993,17 +1003,28 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           }
         } else {
           console.error('❌ Could not find verdeler with id:', editingVerdeler.id, 'in verdelers list');
+          console.error('❌ Available verdelers:', verdelersToUse);
         }
       } else if (verdelerData.status === 'Testen' && editingVerdeler && verdelersToUse.length === 1) {
+        console.log('✅ CONDITION MET: Single-verdeler project');
         console.log('ℹ️ Single-verdeler project: Use project-level testing instead');
         toast.info('Voor projecten met 1 verdeler, verander de project status naar "Testen"');
+      } else {
+        console.log('❌ CONDITION NOT MET for opening pre-test modal');
+        console.log('❌ Reasons:', {
+          verdelerStatusIsTesten: verdelerData.status === 'Testen',
+          hasEditingVerdeler: !!editingVerdeler,
+          verdelersLength: verdelersToUse.length,
+          isMultiVerdeler: verdelersToUse.length > 1
+        });
       }
 
       // If status was changed from "Testen" to "Levering", open testing hours modal first
       if (verdelerData.status === 'Levering' && editingVerdeler && previousVerdelerStatus === 'Testen') {
         console.log('🚚 Status changed from Testen to Levering: Opening testing hours modal for verdeler:', editingVerdeler.distributor_id || editingVerdeler.distributorId);
-        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        const updatedVerdeler = verdelersToUse.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
+          openingModal = true;
           setTimeout(() => {
             setVerdelerForTestingHours(updatedVerdeler);
             setShowTestingHoursModal(true);
@@ -1011,8 +1032,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         }
       } else if (verdelerData.status === 'Levering' && editingVerdeler) {
         console.log('🚚 Status changed to Levering: Opening delivery checklist for verdeler:', editingVerdeler.distributor_id || editingVerdeler.distributorId);
-        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        const updatedVerdeler = verdelersToUse.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
+          openingModal = true;
           setTimeout(() => {
             setVerdelerForLevering(updatedVerdeler);
             setShowLeveringChecklist(true);
@@ -1020,7 +1042,13 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         }
       }
 
-      handleCancelForm();
+      // Only close the form if we're not opening a modal
+      if (!openingModal) {
+        console.log('🚪 Closing form (no modal opening)');
+        handleCancelForm();
+      } else {
+        console.log('🚪 NOT closing form - modal will open');
+      }
     } catch (error) {
       console.error('Error saving verdeler:', error);
       toast.error('Er is een fout opgetreden bij het opslaan van de verdeler');
@@ -2588,8 +2616,38 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             projectData?.location === 'Leerdam(PM)'
           }
           onClose={async () => {
+            console.log('🚪 Pre-test modal closing...');
             setShowPreTestingApproval(false);
             setVerdelerForTesting(null);
+            // Reset the form state
+            setEditingVerdeler(null);
+            setPreviousVerdelerStatus('');
+            setVerdelerData({
+              distributorId: '',
+              kastNaam: '',
+              toegewezenMonteur: 'Vrij',
+              systeem: '',
+              systeemCustom: '',
+              voeding: '',
+              voedingCustom: '',
+              stuurspanning: '',
+              stuurspanningCustom: '',
+              kaWaarde: '',
+              voorbeveiliging: false,
+              ipWaarde: '44',
+              bouwjaar: '',
+              status: 'Ontwerp',
+              fabrikant: '',
+              unInV: '',
+              inInA: '',
+              ikThInKA1s: '',
+              ikDynInKA: '',
+              freqInHz: '',
+              typeNrHs: '',
+              profilePhoto: null,
+              expectedHours: '',
+              deliveryDate: null
+            });
             await loadVerdelersFromDatabase();
           }}
           onApprove={async () => {
