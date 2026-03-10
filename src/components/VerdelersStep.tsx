@@ -944,6 +944,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         }
       }
 
+      // Store the verdeler list to use after reload
+      let verdelersToUse = verdelers;
+
       // Reload verdelers from database to get fresh data
       if (projectData.id) {
         const freshVerdelers = await loadVerdelersFromDatabase();
@@ -951,6 +954,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         // Notify parent component of the change so other tabs can see the updated verdelers
         if (freshVerdelers && freshVerdelers.length > 0) {
           onVerdelersChange(freshVerdelers);
+          verdelersToUse = freshVerdelers; // Use fresh data for modal opening logic
         }
       }
 
@@ -958,12 +962,22 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       const isLeerdamLocation = projectData?.location === 'Leerdam(PU)' || projectData?.location === 'Leerdam(PM)';
       const isChangingToTesten = editingVerdeler?.status === 'Productie' && verdelerData.status === 'Testen';
 
+      console.log('🔍 POST-SAVE CHECK:', {
+        verdelerDataStatus: verdelerData.status,
+        editingVerdelerStatus: editingVerdeler?.status,
+        isLeerdamLocation,
+        isChangingToTesten,
+        verdelersCount: verdelersToUse.length
+      });
+
       // If status was changed to "Testen", open the pre-test checklist
       // BUT only for multi-verdeler projects (verdelers.length > 1)
-      if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length > 1) {
+      if (verdelerData.status === 'Testen' && editingVerdeler && verdelersToUse.length > 1) {
         console.log('🔔 Multi-verdeler project: Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
-        const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
+        const updatedVerdeler = verdelersToUse.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
+          console.log('🔔 Found updated verdeler, opening modal with status:', updatedVerdeler.status);
+
           // Close the edit form
           setEditingVerdeler(null);
           setShowForm(false);
@@ -977,8 +991,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           if (isLeerdamLocation && isChangingToTesten) {
             toast.info('Pre-Testing Goedkeuring moet eerst worden goedgekeurd voordat status naar Testen kan worden gewijzigd.');
           }
+        } else {
+          console.error('❌ Could not find verdeler with id:', editingVerdeler.id, 'in verdelers list');
         }
-      } else if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length === 1) {
+      } else if (verdelerData.status === 'Testen' && editingVerdeler && verdelersToUse.length === 1) {
         console.log('ℹ️ Single-verdeler project: Use project-level testing instead');
         toast.info('Voor projecten met 1 verdeler, verander de project status naar "Testen"');
       }
