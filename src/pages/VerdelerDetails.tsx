@@ -497,7 +497,8 @@ const VerdelerDetails = () => {
       setTestingHoursLogged(true);
       setShowTestingHoursModal(false);
       setTestingHours('');
-      toast.success('Test uren succesvol geregistreerd! Je kunt nu de levering checklist invullen.');
+      setIsEditing(false); // Close edit mode if open
+      toast.success('Test uren succesvol geregistreerd!');
     } catch (error) {
       console.error('Error logging testing hours:', error);
       toast.error('Er is een fout opgetreden bij het registreren van test uren');

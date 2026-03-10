@@ -709,11 +709,12 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
       setShowTestingHoursModal(false);
       setTestingHours('');
       setVerdelerForTestingHours(null);
+      setEditingVerdeler(null); // Close the edit modal
 
       // Force a re-render by updating the verdelers array
       setVerdelers([...verdelers]);
 
-      toast.success('Test uren succesvol geregistreerd! Klik op de "Levering Checklist" knop om door te gaan.');
+      toast.success('Test uren succesvol geregistreerd!');
     } catch (error) {
       console.error('Error logging testing hours:', error);
       toast.error('Er is een fout opgetreden bij het registreren van test uren');
