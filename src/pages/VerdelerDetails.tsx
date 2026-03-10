@@ -523,7 +523,8 @@ const VerdelerDetails = () => {
 
       // Check if status is being changed to "Testen" for Leerdam locations
       if (isLeerdamLocation && distributor?.status === 'Productie' && editedDistributor.status === 'Testen') {
-        // First save the status change, then show the pre-testing approval
+        // DO NOT save status yet - show approval modal first
+        // Only save other fields if they changed, keep status as "Productie"
         const updateData = {
           distributorId: editedDistributor.distributor_id,
           projectId: editedDistributor.project_id,
@@ -541,7 +542,7 @@ const VerdelerDetails = () => {
           typeNrHs: editedDistributor.type_nr_hs,
           fabrikant: editedDistributor.fabrikant,
           profilePhoto: editedDistributor.profile_photo,
-          status: editedDistributor.status,
+          status: 'Productie', // Keep as Productie until approval is completed
           ...(editedDistributor.toegewezen_monteur !== undefined && {
             toegewezenMonteur: editedDistributor.toegewezen_monteur
           }),
@@ -550,10 +551,16 @@ const VerdelerDetails = () => {
           })
         };
 
+        // Save other fields but keep status as Productie
         await dataService.updateDistributor(editedDistributor.id, updateData);
-        setDistributor(editedDistributor);
+
+        // Update local state but keep status as Productie
+        const updatedDistributor = { ...editedDistributor, status: 'Productie' };
+        setDistributor(updatedDistributor);
+        setEditedDistributor(updatedDistributor);
+
         setIsEditing(false);
-        toast.success('Status bijgewerkt naar Testen. Pre-Testing Goedkeuring is nu verplicht.');
+        toast.info('Pre-Testing Goedkeuring moet eerst worden goedgekeurd voordat status naar Testen kan worden gewijzigd.');
         setShowPreTestingApproval(true);
         return;
       }
@@ -1628,15 +1635,31 @@ const VerdelerDetails = () => {
             }
           }}
           onApprove={async () => {
+            // Approval completed - now we can change status to "Testen"
+            console.log('Pre-testing approval completed - changing status to Testen');
+            await dataService.updateDistributor(distributor.id, { status: 'Testen' });
+
+            // Reload everything to ensure UI is in sync
             await loadDistributor();
             await loadTestData();
+
+            // Update local states
+            const updatedDist = { ...distributor, status: 'Testen' };
+            setDistributor(updatedDist);
+            setEditedDistributor(updatedDist);
+            setPreTestingApprovalComplete(true);
+
             setShowPreTestingApproval(false);
+            toast.success('Pre-Testing Goedkeuring goedgekeurd! Status gewijzigd naar Testen.');
           }}
           onDecline={async () => {
+            // Declined - keep status as Productie
+            console.log('Pre-testing approval declined - keeping status as Productie');
             await dataService.updateDistributor(distributor.id, { status: 'Productie' });
             await loadDistributor();
             await loadTestData();
             setShowPreTestingApproval(false);
+            toast.error('Pre-Testing Goedkeuring afgekeurd. Status blijft Productie.');
           }}
         />
       )}

@@ -275,7 +275,9 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className={`fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 ${
+        isMandatory ? 'bg-black/70' : 'bg-black/50'
+      }`}
       onClick={(e) => {
         // Prevent closing when clicking background for mandatory approval
         if (e.target === e.currentTarget) {
@@ -321,6 +323,23 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
             </div>
           )}
         </div>
+
+        {isMandatory && !(approvalData.status === 'reviewed' && approvalData.overallApproval === true) && (
+          <div className="mb-6 bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={24} className="text-yellow-300 flex-shrink-0" />
+              <div>
+                <p className="text-yellow-200 font-semibold">
+                  Let op: Deze goedkeuring is VERPLICHT voor Leerdam locaties
+                </p>
+                <p className="text-yellow-300/80 text-sm mt-1">
+                  Het formulier moet volledig worden ingevuld en goedgekeurd door een tester voordat de verdeler naar de testfase kan gaan.
+                  Deze pop-up kan niet worden gesloten zonder goedkeuring.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {viewMode === 'form' ? (
           <div className="space-y-6">
