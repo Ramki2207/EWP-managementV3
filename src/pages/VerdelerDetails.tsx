@@ -149,11 +149,13 @@ const VerdelerDetails = () => {
       return { primary: [], other: [] };
     }
 
-    // Helper function to check if locations match (handles "Naaldwijk" vs "Naaldwijk (PD)"/"Naaldwijk (PW)")
+    // Helper function to check if locations match (handles "Naaldwijk" vs "Naaldwijk (PD)"/"Naaldwijk (PW)" and "Leerdam" vs "Leerdam(PU)"/"Leerdam(PM)")
     const locationsMatch = (userLoc: string, targetLoc: string): boolean => {
       if (userLoc === targetLoc) return true;
       if (userLoc === 'Naaldwijk' && targetLoc.startsWith('Naaldwijk')) return true;
       if (targetLoc === 'Naaldwijk' && userLoc.startsWith('Naaldwijk')) return true;
+      if (userLoc === 'Leerdam' && targetLoc.startsWith('Leerdam')) return true;
+      if (targetLoc === 'Leerdam' && userLoc.startsWith('Leerdam')) return true;
       return false;
     };
 

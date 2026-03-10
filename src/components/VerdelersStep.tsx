@@ -1378,7 +1378,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const canEditTechnicalSpecs = !isProjectOfferte;
 
   const getMontageUsers = () => {
-    let montageUsers = users.filter(user => user.role === 'montage');
+    // Helper function to check if locations match (handles "Naaldwijk" vs "Naaldwijk (PD)"/"Naaldwijk (PW)" and "Leerdam" vs "Leerdam(PU)"/"Leerdam(PM)")
+    const locationsMatch = (userLoc: string, targetLoc: string): boolean => {
+      if (userLoc === targetLoc) return true;
+      if (userLoc === 'Naaldwijk' && targetLoc.startsWith('Naaldwijk')) return true;
+      if (targetLoc === 'Naaldwijk' && userLoc.startsWith('Naaldwijk')) return true;
+      if (userLoc === 'Leerdam' && targetLoc.startsWith('Leerdam')) return true;
+      if (targetLoc === 'Leerdam' && userLoc.startsWith('Leerdam')) return true;
+      return false;
+    };
+
+    // Filter users with roles that can be assigned to verdelers (montage, tester, logistiek)
+    let montageUsers = users.filter(user => user.role === 'montage' || user.role === 'tester' || user.role === 'logistiek');
 
     // Filter by location if current user has assigned locations
     if (currentUser?.assigned_locations && currentUser.assigned_locations.length > 0) {
@@ -1387,9 +1398,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         if (!user.assigned_locations || user.assigned_locations.length === 0) {
           return false;
         }
-        // Check if there's at least one matching location
-        return user.assigned_locations.some((loc: string) =>
-          currentUser.assigned_locations.includes(loc)
+        // Check if there's at least one matching location with current user
+        return user.assigned_locations.some((userLoc: string) =>
+          currentUser.assigned_locations.some((currentLoc: string) => locationsMatch(userLoc, currentLoc))
         );
       });
     }
