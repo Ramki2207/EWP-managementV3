@@ -785,6 +785,18 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
           // Update in database if project exists
           console.log('🔄 SAVE: Updating existing verdeler in database...');
 
+          // Check if this is a Leerdam location and status is being changed to Testen
+          const isLeerdamLocation = projectData?.location === 'Leerdam(PU)' || projectData?.location === 'Leerdam(PM)';
+          const isChangingToTesten = editingVerdeler?.status === 'Productie' && verdelerData.status === 'Testen';
+
+          // Determine the status to save
+          let statusToSave = verdelerData.status;
+          if (isLeerdamLocation && isChangingToTesten) {
+            // Keep as Productie until approval is completed
+            statusToSave = 'Productie';
+            console.log('⚠️ SAVE: Leerdam location - keeping status as Productie until pre-test approval');
+          }
+
           const updateData = {
             distributorId: verdelerData.distributorId,
             projectId: projectData.id,
@@ -796,7 +808,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
             voorbeveiliging: verdelerData.voorbeveiliging,
             ipWaarde: verdelerData.ipWaarde || '44',
             bouwjaar: verdelerData.bouwjaar,
-            status: verdelerData.status,
+            status: statusToSave,
             fabrikant: verdelerData.fabrikant,
             unInV: verdelerData.unInV,
             inInA: verdelerData.inInA,
@@ -942,16 +954,29 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         }
       }
 
+      // Check if this is a Leerdam location and user wanted to change to Testen
+      const isLeerdamLocation = projectData?.location === 'Leerdam(PU)' || projectData?.location === 'Leerdam(PM)';
+      const isChangingToTesten = editingVerdeler?.status === 'Productie' && verdelerData.status === 'Testen';
+
       // If status was changed to "Testen", open the pre-test checklist
       // BUT only for multi-verdeler projects (verdelers.length > 1)
       if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length > 1) {
         console.log('🔔 Multi-verdeler project: Opening pre-test checklist for verdeler:', editingVerdeler.distributor_id);
         const updatedVerdeler = verdelers.find(v => v.id === editingVerdeler.id);
         if (updatedVerdeler) {
+          // Close the edit form
+          setEditingVerdeler(null);
+          setShowForm(false);
+
           setTimeout(() => {
             setVerdelerForTesting(updatedVerdeler);
             setShowPreTestingApproval(true);
           }, 100);
+
+          // Show appropriate message based on location
+          if (isLeerdamLocation && isChangingToTesten) {
+            toast.info('Pre-Testing Goedkeuring moet eerst worden goedgekeurd voordat status naar Testen kan worden gewijzigd.');
+          }
         }
       } else if (verdelerData.status === 'Testen' && editingVerdeler && verdelers.length === 1) {
         console.log('ℹ️ Single-verdeler project: Use project-level testing instead');
@@ -2542,12 +2567,20 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
         <VerdelerPreTestingApproval
           distributor={verdelerForTesting}
           currentUser={currentUser}
+          isMandatory={
+            projectData?.location === 'Leerdam(PU)' ||
+            projectData?.location === 'Leerdam(PM)'
+          }
           onClose={async () => {
             setShowPreTestingApproval(false);
             setVerdelerForTesting(null);
             await loadVerdelersFromDatabase();
           }}
           onApprove={async () => {
+            // Update status to Testen after approval
+            if (verdelerForTesting) {
+              await dataService.updateDistributor(verdelerForTesting.id, { status: 'Testen' });
+            }
             await loadVerdelersFromDatabase();
             await loadPendingNotifications(verdelers);
           }}
