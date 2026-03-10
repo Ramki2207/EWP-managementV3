@@ -508,6 +508,78 @@ const VerdelerDetails = () => {
     try {
       console.log('Saving distributor with data:', editedDistributor);
 
+      const projectLocation = distributor?.projects?.location;
+      const isLeerdamLocation = projectLocation === 'Leerdam(PU)' || projectLocation === 'Leerdam(PM)';
+
+      // Check if status is being changed to "Testen" for Leerdam locations
+      if (isLeerdamLocation && distributor?.status === 'Productie' && editedDistributor.status === 'Testen') {
+        // First save the status change, then show the pre-testing approval
+        const updateData = {
+          distributorId: editedDistributor.distributor_id,
+          projectId: editedDistributor.project_id,
+          kastNaam: editedDistributor.kast_naam,
+          systeem: editedDistributor.systeem,
+          voeding: editedDistributor.voeding,
+          bouwjaar: editedDistributor.bouwjaar,
+          keuringDatum: editedDistributor.keuring_datum,
+          getestDoor: editedDistributor.getest_door,
+          unInV: editedDistributor.un_in_v,
+          inInA: editedDistributor.in_in_a,
+          ikThInKA1s: editedDistributor.ik_th_in_ka1s,
+          ikDynInKA: editedDistributor.ik_dyn_in_ka,
+          freqInHz: editedDistributor.freq_in_hz,
+          typeNrHs: editedDistributor.type_nr_hs,
+          fabrikant: editedDistributor.fabrikant,
+          profilePhoto: editedDistributor.profile_photo,
+          status: editedDistributor.status,
+          ...(editedDistributor.toegewezen_monteur !== undefined && {
+            toegewezenMonteur: editedDistributor.toegewezen_monteur
+          }),
+          ...(editedDistributor.gewenste_lever_datum !== undefined && {
+            gewensteLeverDatum: editedDistributor.gewenste_lever_datum
+          })
+        };
+
+        await dataService.updateDistributor(editedDistributor.id, updateData);
+        setDistributor(editedDistributor);
+        setIsEditing(false);
+        toast.success('Status bijgewerkt naar Testen. Pre-Testing Goedkeuring is nu verplicht.');
+        setShowPreTestingApproval(true);
+        return;
+      }
+
+      // Check if status is being changed to "Levering" - require completed test
+      if (distributor?.status === 'Testen' && editedDistributor.status === 'Levering') {
+        // Check if there's any completed test data
+        const testData = await dataService.getTestData(distributor.id);
+        const hasCompletedTest = testData && testData.length > 0 && testData.some((data: any) =>
+          (data.test_type === 'standard_test' ||
+           data.test_type === 'vanaf_630_test' ||
+           data.test_type === 'simpel_test') &&
+          data.data &&
+          Object.keys(data.data).length > 0
+        );
+
+        if (!hasCompletedTest) {
+          toast.error('Je moet eerst een keuring voltooien voordat je de status naar Levering kunt wijzigen!');
+          return;
+        }
+
+        // For Leerdam locations, also check if Pre-Testing Approval was completed
+        if (isLeerdamLocation) {
+          const hasPreTestingApproval = testData && testData.some((data: any) =>
+            data.test_type === 'verdeler_pre_testing_approval' &&
+            data.data?.approvalData?.status === 'reviewed' &&
+            data.data?.approvalData?.overallApproval === true
+          );
+
+          if (!hasPreTestingApproval) {
+            toast.error('Pre-Testing Goedkeuring moet eerst worden goedgekeurd voordat je naar Levering kunt gaan!');
+            return;
+          }
+        }
+      }
+
       // Check if status is being changed from "Testen" to "Levering"
       const statusChangedFromTestenToLevering = distributor?.status === 'Testen' && editedDistributor.status === 'Levering';
 
@@ -561,6 +633,24 @@ const VerdelerDetails = () => {
 
   const handleInputChange = (field: string, value: string) => {
     console.log('Input change:', field, value);
+
+    // Special validation for status changes for Leerdam locations
+    if (field === 'status') {
+      const projectLocation = distributor?.projects?.location;
+      const isLeerdamLocation = projectLocation === 'Leerdam(PU)' || projectLocation === 'Leerdam(PM)';
+
+      // Prevent changing FROM Productie TO Testen without proper flow for Leerdam
+      if (isLeerdamLocation && distributor?.status === 'Productie' && value === 'Testen') {
+        toast.error('Voor Leerdam locaties wordt Pre-Testing Goedkeuring automatisch geopend bij statuswijziging naar Testen');
+      }
+
+      // Prevent changing FROM Testen TO Levering without completed test
+      if (distributor?.status === 'Testen' && value === 'Levering') {
+        // This will be validated in handleSave, just give a heads up
+        toast.info('Let op: Een voltooide keuring is verplicht voor status Levering');
+      }
+    }
+
     setEditedDistributor({
       ...editedDistributor,
       [field]: value
@@ -1455,19 +1545,32 @@ const VerdelerDetails = () => {
         <VerdelerPreTestingApproval
           distributor={distributor}
           currentUser={currentUser}
+          isMandatory={
+            distributor.projects?.location === 'Leerdam(PU)' ||
+            distributor.projects?.location === 'Leerdam(PM)'
+          }
           onClose={() => {
-            setShowPreTestingApproval(false);
-            loadDistributor();
-            loadTestData();
+            const isLeerdamLocation =
+              distributor.projects?.location === 'Leerdam(PU)' ||
+              distributor.projects?.location === 'Leerdam(PM)';
+
+            // Only allow closing if not mandatory or if already approved
+            if (!isLeerdamLocation) {
+              setShowPreTestingApproval(false);
+              loadDistributor();
+              loadTestData();
+            }
           }}
           onApprove={async () => {
             await loadDistributor();
             await loadTestData();
+            setShowPreTestingApproval(false);
           }}
           onDecline={async () => {
             await dataService.updateDistributor(distributor.id, { status: 'Productie' });
             await loadDistributor();
             await loadTestData();
+            setShowPreTestingApproval(false);
           }}
         />
       )}

@@ -9,6 +9,7 @@ interface VerdelerPreTestingApprovalProps {
   currentUser: any;
   onApprove?: () => void;
   onDecline?: () => void;
+  isMandatory?: boolean; // For Leerdam locations - cannot cancel until approved
 }
 
 interface ChecklistItem {
@@ -25,7 +26,8 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   onClose,
   currentUser,
   onApprove,
-  onDecline
+  onDecline,
+  isMandatory = false
 }) => {
   const [checklist, setChecklist] = useState<ChecklistItem[]>([
     { id: '1', question: 'Zijn de Kamrailen correct gemonteerd?', checked: false, comments: '', approved: null, testerComments: '' },
@@ -264,12 +266,19 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
-          >
-            <X size={24} />
-          </button>
+          {!isMandatory || (approvalData.status === 'reviewed' && approvalData.overallApproval === true) ? (
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition-colors"
+              title="Sluiten"
+            >
+              <X size={24} />
+            </button>
+          ) : (
+            <div className="text-yellow-400" title="Goedkeuring is verplicht - kan niet sluiten">
+              <AlertTriangle size={24} />
+            </div>
+          )}
         </div>
 
         {viewMode === 'form' ? (
@@ -371,12 +380,22 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
             </div>
 
             <div className="flex justify-end space-x-3">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-              >
-                Annuleren
-              </button>
+              {!isMandatory && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                >
+                  Annuleren
+                </button>
+              )}
+              {isMandatory && (
+                <div className="flex-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mr-3">
+                  <p className="text-yellow-300 text-sm flex items-center">
+                    <AlertTriangle size={16} className="mr-2" />
+                    Pre-Testing Goedkeuring is verplicht voor Leerdam locaties
+                  </p>
+                </div>
+              )}
               <button
                 onClick={handleSubmitForReview}
                 disabled={isSubmitting || !isFormComplete()}
@@ -549,12 +568,23 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
             )}
 
             <div className="flex justify-end space-x-3">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
-              >
-                Sluiten
-              </button>
+              {/* Only show close button if not mandatory, or if already reviewed and approved */}
+              {(!isMandatory || (approvalData.status === 'reviewed' && approvalData.overallApproval === true)) && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                >
+                  Sluiten
+                </button>
+              )}
+              {isMandatory && !(approvalData.status === 'reviewed' && approvalData.overallApproval === true) && (
+                <div className="flex-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mr-3">
+                  <p className="text-yellow-300 text-sm flex items-center">
+                    <AlertTriangle size={16} className="mr-2" />
+                    Wacht op goedkeuring van tester
+                  </p>
+                </div>
+              )}
               {(currentUser?.role === 'tester' || currentUser?.role === 'admin') && !approvalData.reviewedAt && (
                 <button
                   onClick={handleTesterApproval}
