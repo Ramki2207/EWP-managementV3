@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from 'react-dom/client';
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare, FileText, PlayCircle } from 'lucide-react';
+import { ArrowLeft, FileEdit as Edit, Save, X, Key, Copy, Clock, Upload, CheckSquare, FileText, PlayCircle, AlertTriangle } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
 import TestReportViewer from '../components/TestReportViewer';
 import VerdelerDocumentManager from '../components/VerdelerDocumentManager';
@@ -47,6 +47,7 @@ const VerdelerDetails = () => {
   const [showLeveringChecklist, setShowLeveringChecklist] = useState(false);
   const [showTestingComponent, setShowTestingComponent] = useState(false);
   const [activeTestType, setActiveTestType] = useState<'standard' | 'vanaf630' | 'simpel'>('standard');
+  const [preTestingApprovalComplete, setPreTestingApprovalComplete] = useState(false);
 
   useEffect(() => {
     loadCurrentUser();
@@ -253,6 +254,14 @@ const VerdelerDetails = () => {
         dbTestData.forEach((record: any) => {
           if (record.test_type && record.data) {
             combinedTestData[record.test_type] = record.data;
+
+            // Check if pre-testing approval is complete
+            if (record.test_type === 'verdeler_pre_testing_approval') {
+              const approvalData = record.data?.approvalData;
+              const isComplete = approvalData?.status === 'reviewed' && approvalData?.overallApproval === true;
+              console.log('Pre-testing approval check:', { status: approvalData?.status, overallApproval: approvalData?.overallApproval, isComplete });
+              setPreTestingApprovalComplete(isComplete);
+            }
           }
         });
 
@@ -261,6 +270,7 @@ const VerdelerDetails = () => {
       } else {
         console.log('ℹ️ VERDELER DETAILS: No test data found in database');
         setTestData(null);
+        setPreTestingApprovalComplete(false);
       }
     } catch (error) {
       console.error('Error loading test data:', error);
@@ -1349,11 +1359,45 @@ const VerdelerDetails = () => {
               </ul>
             </div>
 
-            {distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent && (
-              <div className="bg-[#2A303C] p-6 rounded-lg mb-6">
-                <h3 className="card-title font-semibold text-white mb-4">Start keuring</h3>
-                <p className="text-gray-400 mb-4">Kies het type keuring dat je wilt uitvoeren:</p>
-                <div className="flex flex-wrap gap-3">
+            {(() => {
+              const isLeerdamLocation = distributor?.projects?.location === 'Leerdam(PU)' || distributor?.projects?.location === 'Leerdam(PM)';
+              const canStartTest = isLeerdamLocation ? preTestingApprovalComplete : true;
+
+              console.log('Test buttons visibility check:', {
+                status: distributor?.status,
+                hasPermission: hasPermission('testing', 'create'),
+                showTestingComponent,
+                isLeerdamLocation,
+                preTestingApprovalComplete,
+                canStartTest
+              });
+
+              if (distributor?.status === 'Testen' && hasPermission('testing', 'create') && !showTestingComponent) {
+                if (!canStartTest) {
+                  return (
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-6 rounded-lg mb-6">
+                      <h3 className="font-semibold text-yellow-300 mb-2 flex items-center gap-2">
+                        <AlertTriangle size={20} />
+                        Pre-Testing Goedkeuring Vereist
+                      </h3>
+                      <p className="text-yellow-200/80 mb-4">
+                        Voor Leerdam locaties moet de Pre-Testing Goedkeuring zijn goedgekeurd voordat je kunt starten met testen.
+                      </p>
+                      <button
+                        onClick={() => setShowPreTestingApproval(true)}
+                        className="btn-primary bg-yellow-600 hover:bg-yellow-700"
+                      >
+                        Open Pre-Testing Goedkeuring
+                      </button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="bg-[#2A303C] p-6 rounded-lg mb-6">
+                    <h3 className="card-title font-semibold text-white mb-4">Start keuring</h3>
+                    <p className="text-gray-400 mb-4">Kies het type keuring dat je wilt uitvoeren:</p>
+                    <div className="flex flex-wrap gap-3">
                   <button
                     onClick={() => {
                       setActiveTestType('standard');
@@ -1382,11 +1426,15 @@ const VerdelerDetails = () => {
                     className="btn-primary flex items-center space-x-2 bg-orange-600 hover:bg-orange-700"
                   >
                     <PlayCircle size={20} />
-                    <span>Simpele Keuring</span>
-                  </button>
+                        <span>Simpele Keuring</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            }
+
+            return null;
+          })()}
 
             {showTestingComponent && (
               <div className="mb-6">
@@ -1549,13 +1597,31 @@ const VerdelerDetails = () => {
             distributor.projects?.location === 'Leerdam(PU)' ||
             distributor.projects?.location === 'Leerdam(PM)'
           }
-          onClose={() => {
+          onClose={async () => {
             const isLeerdamLocation =
               distributor.projects?.location === 'Leerdam(PU)' ||
               distributor.projects?.location === 'Leerdam(PM)';
 
-            // Only allow closing if not mandatory or if already approved
-            if (!isLeerdamLocation) {
+            console.log('VerdelerDetails onClose - isLeerdam:', isLeerdamLocation, 'location:', distributor.projects?.location);
+
+            // For Leerdam locations, verify approval before closing
+            if (isLeerdamLocation) {
+              // Check if there's an approved pre-testing record
+              const testData = await dataService.getTestData(distributor.id);
+              const approvalRecord = testData?.find((data: any) => data.test_type === 'verdeler_pre_testing_approval');
+
+              if (approvalRecord?.data?.approvalData?.status === 'reviewed' &&
+                  approvalRecord?.data?.approvalData?.overallApproval === true) {
+                console.log('Leerdam location - approval verified, closing');
+                setShowPreTestingApproval(false);
+                loadDistributor();
+                loadTestData();
+              } else {
+                console.log('Leerdam location - approval not complete, staying open');
+                toast.error('Goedkeuring is nog niet compleet');
+              }
+            } else {
+              console.log('Non-Leerdam location, closing');
               setShowPreTestingApproval(false);
               loadDistributor();
               loadTestData();

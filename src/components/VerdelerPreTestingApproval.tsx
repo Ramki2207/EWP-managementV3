@@ -61,15 +61,20 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
   const [viewMode, setViewMode] = useState<'form' | 'review'>('form');
 
   const handleClose = () => {
+    console.log('handleClose called - isMandatory:', isMandatory, 'status:', approvalData.status, 'overallApproval:', approvalData.overallApproval);
+
     // For mandatory approval, only allow closing if approved
     if (isMandatory) {
       if (approvalData.status === 'reviewed' && approvalData.overallApproval === true) {
+        console.log('Closing - approval complete');
         onClose();
       } else {
+        console.log('Blocking close - approval not complete');
         toast.error('Pre-Testing Goedkeuring moet worden goedgekeurd voordat je kunt sluiten');
         return;
       }
     } else {
+      console.log('Closing - not mandatory');
       onClose();
     }
   };
@@ -288,11 +293,17 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
               <CheckSquare size={20} className="text-orange-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-orange-400">
+              <h2 className="text-xl font-semibold text-orange-400 flex items-center gap-2">
                 {viewMode === 'review' ? 'Tester Beoordeling' : 'Pre-Testing Goedkeuring'}
+                {isMandatory && (
+                  <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-0.5 rounded border border-yellow-500/30">
+                    VERPLICHT
+                  </span>
+                )}
               </h2>
               <p className="text-gray-400">
                 {distributor.distributor_id} - {distributor.kast_naam || 'KLK'}
+                {isMandatory && ' - Leerdam Locatie'}
               </p>
             </div>
           </div>
