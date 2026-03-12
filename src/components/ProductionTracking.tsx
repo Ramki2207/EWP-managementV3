@@ -3,6 +3,7 @@ import { Clock, User, Package, Plus, FileEdit as Edit, Trash2, Save, X, Calendar
 import toast from 'react-hot-toast';
 import { dataService, supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { useTimer } from '../contexts/TimerContext';
 
 interface Material {
   id: string;
@@ -41,17 +42,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   const [showDistributorDetails, setShowDistributorDetails] = useState(false);
   const [selectedDistributorData, setSelectedDistributorData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [timerState, setTimerState] = useState<{
-    isRunning: boolean;
-    distributorId: string | null;
-    startTime: Date | null;
-    elapsedSeconds: number;
-  }>({
-    isRunning: false,
-    distributorId: null,
-    startTime: null,
-    elapsedSeconds: 0
-  });
+  const { timerState, startTimer, stopTimer, clearTimer } = useTimer();
   const [formData, setFormData] = useState({
     distributor_id: '',
     worker_id: '',
@@ -69,20 +60,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     loadData();
     loadCurrentUser();
   }, [project.id]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerState.isRunning && timerState.startTime) {
-      interval = setInterval(() => {
-        const now = new Date();
-        const elapsed = Math.floor((now.getTime() - timerState.startTime!.getTime()) / 1000);
-        setTimerState(prev => ({ ...prev, elapsedSeconds: elapsed }));
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [timerState.isRunning, timerState.startTime]);
 
   const loadCurrentUser = async () => {
     const currentUserId = localStorage.getItem('currentUserId');
@@ -656,175 +633,20 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
   const handleStartTimer = (distributorId: string) => {
     console.log('🟢 Starting timer for distributor:', distributorId);
-    setTimerState({
-      isRunning: true,
-      distributorId: distributorId,
-      startTime: new Date(),
-      elapsedSeconds: 0
-    });
+    const distributor = project.distributors?.find((d: any) => d.id === distributorId);
+    if (!distributor) {
+      toast.error('Verdeler niet gevonden');
+      return;
+    }
+
+    const distributorName = `${distributor.distributor_id} - ${distributor.kast_naam || 'Naamloos'}`;
+    startTimer(distributorId, distributorName, project.project_number, project.id);
     toast.success('Timer gestart!');
   };
 
   const handleStopTimer = async () => {
-    console.log('🔴 Stop Timer clicked!', {
-      timerDistributorId: timerState.distributorId,
-      timerStartTime: timerState.startTime,
-      currentUser: currentUser?.username
-    });
-
-    if (!timerState.distributorId || !timerState.startTime || !currentUser) {
-      console.log('❌ Timer validation failed:', {
-        hasDistributorId: !!timerState.distributorId,
-        hasStartTime: !!timerState.startTime,
-        hasCurrentUser: !!currentUser
-      });
-      toast.error('Geen actieve timer gevonden');
-      return;
-    }
-
-    const endTime = new Date();
-    const elapsedMs = endTime.getTime() - timerState.startTime.getTime();
-    // Ensure minimum of 0.01 hours (36 seconds) to avoid rounding to 0
-    let hours = elapsedMs / (1000 * 60 * 60);
-    hours = Math.max(0.01, Math.round(hours * 100) / 100);
-
-    console.log('⏱️ Timer calculation:', {
-      elapsedMs,
-      elapsedSeconds: elapsedMs / 1000,
-      hours,
-      hoursRaw: elapsedMs / (1000 * 60 * 60)
-    });
-
-    if (elapsedMs < 1000) {
-      console.log('❌ Timer too short (less than 1 second)');
-      toast.error('Timer moet minimaal 1 seconde lopen');
-      return;
-    }
-
-    console.log('✅ Timer validation passed, proceeding to save...');
-
-    try {
-      const selectedDistributor = project.distributors?.find((d: any) => d.id === timerState.distributorId);
-      if (!selectedDistributor) {
-        toast.error('Verdeler niet gevonden');
-        return;
-      }
-
-      const workDate = new Date();
-      const weekNumber = getWeekNumber(workDate);
-      const year = workDate.getFullYear();
-      const dayOfWeek = workDate.getDay();
-
-      const dayMapping: { [key: number]: string } = {
-        0: 'sunday',
-        1: 'monday',
-        2: 'tuesday',
-        3: 'wednesday',
-        4: 'thursday',
-        5: 'friday',
-        6: 'saturday'
-      };
-
-      const dayColumn = dayMapping[dayOfWeek];
-
-      const { data: existingWeekstaat, error: weekstaatError } = await supabase
-        .from('weekstaten')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .eq('week_number', weekNumber)
-        .eq('year', year)
-        .maybeSingle();
-
-      let weekstaatId = existingWeekstaat?.id;
-
-      if (!weekstaatId) {
-        const { data: newWeekstaat, error: createError } = await supabase
-          .from('weekstaten')
-          .insert({
-            user_id: currentUser.id,
-            week_number: weekNumber,
-            year: year,
-            status: 'draft'
-          })
-          .select('id')
-          .single();
-
-        if (createError) throw createError;
-        weekstaatId = newWeekstaat.id;
-      }
-
-      const activityCode = '108';
-      const activityDescription = '108 - Testen';
-      const workorderNumber = `${project.project_number}`;
-
-      console.log('🔍 Timer - Looking for existing entry with:', {
-        weekstaatId,
-        activityCode,
-        workorderNumber
-      });
-
-      const { data: existingEntry, error: entryFetchError } = await supabase
-        .from('weekstaat_entries')
-        .select('*')
-        .eq('weekstaat_id', weekstaatId)
-        .eq('activity_code', activityCode)
-        .maybeSingle();
-
-      console.log('🔍 Timer - Found existing entry:', existingEntry);
-
-      if (existingEntry) {
-        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
-        const updateData = {
-          [dayColumn]: currentHours + hours,
-          activity_code: activityCode,
-          activity_description: activityDescription,
-          workorder_number: workorderNumber
-        };
-
-        console.log('🔄 Timer - Updating existing entry with:', updateData);
-
-        const { error: updateError } = await supabase
-          .from('weekstaat_entries')
-          .update(updateData)
-          .eq('id', existingEntry.id);
-
-        if (updateError) throw updateError;
-      } else {
-        const insertData = {
-          weekstaat_id: weekstaatId,
-          activity_code: activityCode,
-          activity_description: activityDescription,
-          workorder_number: workorderNumber,
-          overtime_start_time: '',
-          [dayColumn]: hours
-        };
-
-        console.log('➕ Timer - Inserting new entry with:', insertData);
-
-        const { error: insertError } = await supabase
-          .from('weekstaat_entries')
-          .insert(insertData);
-
-        if (insertError) throw insertError;
-      }
-
-      setTimerState({
-        isRunning: false,
-        distributorId: null,
-        startTime: null,
-        elapsedSeconds: 0
-      });
-
-      console.log('✅ Timer successfully saved to weekstaat!');
-      toast.success(`${hours.toFixed(2)} uur geregistreerd in weekstaat voor ${project.project_number}!`);
-    } catch (error) {
-      console.error('❌ Error saving timer to weekstaat:', error);
-      console.error('Error details:', {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        error
-      });
-      toast.error('Fout bij opslaan naar weekstaat: ' + (error instanceof Error ? error.message : 'Onbekende fout'));
-    }
+    console.log('🔴 Stop Timer clicked - This should now be handled by the FloatingTimer component');
+    toast.info('Gebruik de zwevende timer widget om de timer te stoppen');
   };
 
   const formatElapsedTime = (seconds: number): string => {

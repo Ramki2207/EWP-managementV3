@@ -34,6 +34,8 @@ import { TabProvider } from "./contexts/TabContext";
 import { TabBar } from "./components/TabBar";
 import { preloadLogoImage } from "./lib/pdfUtils";
 import { LocationFilterProvider } from "./contexts/LocationFilterContext";
+import { TimerProvider } from "./contexts/TimerContext";
+import FloatingTimer from "./components/FloatingTimer";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -73,6 +75,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           {children}
         </div>
       </div>
+      <FloatingTimer />
     </div>
   );
 };
@@ -85,10 +88,11 @@ const App = () => {
   return (
     <Router>
       <LocationFilterProvider>
-        <TabProvider>
-          <Layout>
-            <React.Suspense fallback={<Loader />}>
-              <Routes>
+        <TimerProvider>
+          <TabProvider>
+            <Layout>
+              <React.Suspense fallback={<Loader />}>
+                <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/404" element={<NotFound />} />
             <Route path="/" element={<PermissionRoute requiredPermission={{ module: 'dashboard', permission: 'read' }}><Dashboard /></PermissionRoute>} />
@@ -117,10 +121,11 @@ const App = () => {
             <Route path="/maintenance-report" element={<MaintenanceReport />} />
             <Route path="/client-portal/:accessCode" element={<ClientPortal />} />
             <Route path="*" element={<Navigate to="/404" replace />} />
-              </Routes>
-            </React.Suspense>
-          </Layout>
-        </TabProvider>
+                </Routes>
+              </React.Suspense>
+            </Layout>
+          </TabProvider>
+        </TimerProvider>
       </LocationFilterProvider>
     </Router>
   );
