@@ -1,77 +1,67 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-interface TimerState {
-  isRunning: boolean;
-  distributorId: string | null;
-  distributorName: string | null;
-  projectNumber: string | null;
-  projectId: string | null;
-  startTime: string | null;
+interface Timer {
+  id: string;
+  distributorId: string;
+  distributorName: string;
+  projectNumber: string;
+  projectId: string;
+  startTime: string;
   elapsedSeconds: number;
 }
 
 interface TimerContextType {
-  timerState: TimerState;
+  timers: Timer[];
   startTimer: (distributorId: string, distributorName: string, projectNumber: string, projectId: string) => void;
-  stopTimer: () => Promise<number>;
-  clearTimer: () => void;
+  stopTimer: (timerId: string) => Promise<{ hours: number; projectNumber: string }>;
+  isTimerRunning: (distributorId: string) => boolean;
+  getTimerByDistributor: (distributorId: string) => Timer | undefined;
 }
 
 const TimerContext = createContext<TimerContextType | undefined>(undefined);
 
-const TIMER_STORAGE_KEY = 'production_timer_state';
+const TIMER_STORAGE_KEY = 'production_timers';
 
 export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [timerState, setTimerState] = useState<TimerState>(() => {
+  const [timers, setTimers] = useState<Timer[]>(() => {
     const saved = localStorage.getItem(TIMER_STORAGE_KEY);
     if (saved) {
       try {
         return JSON.parse(saved);
       } catch (e) {
-        return {
-          isRunning: false,
-          distributorId: null,
-          distributorName: null,
-          projectNumber: null,
-          projectId: null,
-          startTime: null,
-          elapsedSeconds: 0
-        };
+        return [];
       }
     }
-    return {
-      isRunning: false,
-      distributorId: null,
-      distributorName: null,
-      projectNumber: null,
-      projectId: null,
-      startTime: null,
-      elapsedSeconds: 0
-    };
+    return [];
   });
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (timerState.isRunning && timerState.startTime) {
-      interval = setInterval(() => {
-        const now = new Date();
-        const start = new Date(timerState.startTime!);
-        const elapsed = Math.floor((now.getTime() - start.getTime()) / 1000);
-        setTimerState(prev => ({ ...prev, elapsedSeconds: elapsed }));
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [timerState.isRunning, timerState.startTime]);
+    const interval = setInterval(() => {
+      setTimers(prevTimers =>
+        prevTimers.map(timer => {
+          const now = new Date();
+          const start = new Date(timer.startTime);
+          const elapsed = Math.floor((now.getTime() - start.getTime()) / 1000);
+          return { ...timer, elapsedSeconds: elapsed };
+        })
+      );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timerState));
-  }, [timerState]);
+    localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timers));
+  }, [timers]);
 
   const startTimer = (distributorId: string, distributorName: string, projectNumber: string, projectId: string) => {
-    const newState: TimerState = {
-      isRunning: true,
+    const existingTimer = timers.find(t => t.distributorId === distributorId);
+    if (existingTimer) {
+      return;
+    }
+
+    const newTimer: Timer = {
+      id: `${distributorId}-${Date.now()}`,
       distributorId,
       distributorName,
       projectNumber,
@@ -79,36 +69,35 @@ export const TimerProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       startTime: new Date().toISOString(),
       elapsedSeconds: 0
     };
-    setTimerState(newState);
+
+    setTimers(prev => [...prev, newTimer]);
   };
 
-  const stopTimer = async (): Promise<number> => {
-    if (!timerState.startTime) return 0;
+  const stopTimer = async (timerId: string): Promise<{ hours: number; projectNumber: string }> => {
+    const timer = timers.find(t => t.id === timerId);
+    if (!timer) return { hours: 0, projectNumber: '' };
 
     const endTime = new Date();
-    const startTime = new Date(timerState.startTime);
+    const startTime = new Date(timer.startTime);
     const elapsedMs = endTime.getTime() - startTime.getTime();
     let hours = elapsedMs / (1000 * 60 * 60);
     hours = Math.max(0.01, Math.round(hours * 100) / 100);
 
-    return hours;
+    setTimers(prev => prev.filter(t => t.id !== timerId));
+
+    return { hours, projectNumber: timer.projectNumber };
   };
 
-  const clearTimer = () => {
-    setTimerState({
-      isRunning: false,
-      distributorId: null,
-      distributorName: null,
-      projectNumber: null,
-      projectId: null,
-      startTime: null,
-      elapsedSeconds: 0
-    });
-    localStorage.removeItem(TIMER_STORAGE_KEY);
+  const isTimerRunning = (distributorId: string): boolean => {
+    return timers.some(t => t.distributorId === distributorId);
+  };
+
+  const getTimerByDistributor = (distributorId: string): Timer | undefined => {
+    return timers.find(t => t.distributorId === distributorId);
   };
 
   return (
-    <TimerContext.Provider value={{ timerState, startTimer, stopTimer, clearTimer }}>
+    <TimerContext.Provider value={{ timers, startTimer, stopTimer, isTimerRunning, getTimerByDistributor }}>
       {children}
     </TimerContext.Provider>
   );

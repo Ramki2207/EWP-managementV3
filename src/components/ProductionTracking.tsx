@@ -42,7 +42,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   const [showDistributorDetails, setShowDistributorDetails] = useState(false);
   const [selectedDistributorData, setSelectedDistributorData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const { timerState, startTimer, stopTimer, clearTimer } = useTimer();
+  const { startTimer, isTimerRunning, getTimerByDistributor } = useTimer();
   const [formData, setFormData] = useState({
     distributor_id: '',
     worker_id: '',
@@ -658,15 +658,6 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
 
   const isPerry = currentUser?.username?.toLowerCase() === 'perry';
 
-  console.log('🔍 Timer Debug:', {
-    isPerry,
-    currentUsername: currentUser?.username,
-    timerRunning: timerState.isRunning,
-    timerDistributorId: timerState.distributorId,
-    selectedDistributorId: selectedDistributorData?.id,
-    idsMatch: timerState.distributorId === selectedDistributorData?.id
-  });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -1142,37 +1133,34 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-lg font-semibold text-green-400 mb-2">Test Timer</h3>
-                    {timerState.isRunning && timerState.distributorId === selectedDistributorData.id ? (
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <Clock size={20} className="text-green-400 animate-pulse" />
-                          <span className="text-2xl font-mono font-bold text-white">
-                            {formatElapsedTime(timerState.elapsedSeconds)}
-                          </span>
-                        </div>
-                        <span className="text-sm text-gray-400">
-                          ({(timerState.elapsedSeconds / 3600).toFixed(2)} uur)
-                        </span>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-400">
-                        Start de timer om je test tijd automatisch te registreren
-                      </p>
-                    )}
+                    {(() => {
+                      const timer = getTimerByDistributor(selectedDistributorData.id);
+                      if (timer) {
+                        return (
+                          <div className="flex items-center space-x-4">
+                            <div className="flex items-center space-x-2">
+                              <Clock size={20} className="text-green-400 animate-pulse" />
+                              <span className="text-2xl font-mono font-bold text-white">
+                                {formatElapsedTime(timer.elapsedSeconds)}
+                              </span>
+                            </div>
+                            <span className="text-sm text-gray-400">
+                              ({(timer.elapsedSeconds / 3600).toFixed(2)} uur)
+                            </span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <p className="text-sm text-gray-400">
+                          Start de timer om je test tijd automatisch te registreren
+                        </p>
+                      );
+                    })()}
                   </div>
                   <div>
-                    {timerState.isRunning && timerState.distributorId === selectedDistributorData.id ? (
-                      <button
-                        onClick={handleStopTimer}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-semibold transition-all shadow-lg cursor-pointer relative z-10"
-                        style={{ pointerEvents: 'auto' }}
-                      >
-                        <Square size={20} />
-                        <span>Stop Timer</span>
-                      </button>
-                    ) : timerState.isRunning ? (
-                      <div className="text-sm text-yellow-400">
-                        Timer loopt voor andere verdeler
+                    {isTimerRunning(selectedDistributorData.id) ? (
+                      <div className="text-sm text-blue-400 bg-blue-500/10 px-4 py-2 rounded-lg">
+                        Timer loopt - gebruik zwevende timer widget om te stoppen
                       </div>
                     ) : (
                       <button
@@ -1185,10 +1173,10 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                     )}
                   </div>
                 </div>
-                {timerState.isRunning && timerState.distributorId === selectedDistributorData.id && (
+                {isTimerRunning(selectedDistributorData.id) && (
                   <div className="mt-4 pt-4 border-t border-green-500/30">
                     <p className="text-xs text-gray-400">
-                      <span className="font-semibold text-green-400">Let op:</span> Bij stoppen wordt de tijd automatisch geregistreerd in je weekstaat onder activiteit "108 - Testen" voor project {project.project_number}
+                      <span className="font-semibold text-green-400">Let op:</span> De zwevende timer widget verschijnt rechts onderaan je scherm. Je kunt nu door het systeem navigeren terwijl de timer loopt. Bij stoppen wordt de tijd automatisch geregistreerd in je weekstaat onder activiteit "108 - Testen" voor project {project.project_number}
                     </p>
                   </div>
                 )}
