@@ -51,7 +51,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProjectLeader, setFilterProjectLeader] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
 
@@ -99,10 +99,12 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
             project_naam,
             installateur_type,
             project_leader,
-            created_by
+            created_by,
+            status
           )
         `)
         .in('projects.location', ['Naaldwijk', 'Naaldwijk (PW)', 'Rotterdam'])
+        .neq('projects.status', 'Offerte')
         .order('gewenste_lever_datum', { ascending: true, nullsFirst: false });
 
       if (error) throw error;
@@ -190,9 +192,9 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
       filtered = filtered.filter(v => v.project_leader_name === filterProjectLeader);
     }
 
-    // Status filter - filter by verdeler/project status
-    if (filterStatus !== 'all') {
-      filtered = filtered.filter(v => v.status === filterStatus);
+    // Status filter - filter by verdeler/project status (multiple selection)
+    if (filterStatus.length > 0) {
+      filtered = filtered.filter(v => filterStatus.includes(v.status));
     }
 
     setFilteredVerdelers(filtered);
@@ -603,30 +605,32 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
 
               {/* Status Filter */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Status</label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="input-field w-full"
-                >
-                  <option value="all">Alle statussen</option>
-                  <option value="Intake">Intake</option>
-                  <option value="Offerte">Offerte</option>
-                  <option value="Order">Order</option>
-                  <option value="Werkvoorbereiding">Werkvoorbereiding</option>
-                  <option value="Productie">Productie</option>
-                  <option value="Testen">Testen</option>
-                  <option value="Levering">Levering</option>
-                  <option value="Gereed voor facturatie">Gereed voor facturatie</option>
-                  <option value="Opgeleverd">Opgeleverd</option>
-                  <option value="Verloren">Verloren</option>
-                </select>
+                <label className="block text-sm text-gray-400 mb-2">Status (meerdere selecties mogelijk)</label>
+                <div className="bg-[#2A303C] rounded-lg p-3 max-h-60 overflow-y-auto space-y-2">
+                  {['Intake', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Gereed voor facturatie', 'Opgeleverd'].map(status => (
+                    <label key={status} className="flex items-center space-x-2 cursor-pointer hover:bg-[#1a1f2a] p-2 rounded transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={filterStatus.includes(status)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFilterStatus([...filterStatus, status]);
+                          } else {
+                            setFilterStatus(filterStatus.filter(s => s !== status));
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 focus:ring-offset-0"
+                      />
+                      <span className="text-sm text-gray-300">{status}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
             {/* Active Filters Display */}
-            {(searchTerm || filterProjectLeader !== 'all' || filterStatus !== 'all') && (
-              <div className="mt-4 flex items-center space-x-2 text-sm">
+            {(searchTerm || filterProjectLeader !== 'all' || filterStatus.length > 0) && (
+              <div className="mt-4 flex items-center flex-wrap gap-2 text-sm">
                 <span className="text-gray-400">Actieve filters:</span>
                 {searchTerm && (
                   <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
@@ -638,16 +642,16 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                     Projectleider: {filterProjectLeader}
                   </span>
                 )}
-                {filterStatus !== 'all' && (
+                {filterStatus.length > 0 && (
                   <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded">
-                    Status: {filterStatus}
+                    Status: {filterStatus.join(', ')}
                   </span>
                 )}
                 <button
                   onClick={() => {
                     setSearchTerm('');
                     setFilterProjectLeader('all');
-                    setFilterStatus('all');
+                    setFilterStatus([]);
                   }}
                   className="text-blue-400 hover:text-blue-300"
                 >
