@@ -1281,6 +1281,30 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     }
 
     if (cachedTests && cachedTests.length > 0) {
+      // Check for verdeler_vanaf_630 test (old test_data table)
+      const vanaf630TestOld = cachedTests.find((t: any) => t.test_type === 'verdeler_vanaf_630');
+      if (vanaf630TestOld?.data?.verdelerVanaf630Test?.completed) {
+        status = 'Vanaf 630A Test Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+
+      // Check for verdeler_test_simpel (old test_data table)
+      const simpelTestOld = cachedTests.find((t: any) => t.test_type === 'verdeler_test_simpel');
+      if (simpelTestOld?.data?.verdelerTestSimpel?.completed) {
+        status = 'Test Simpel Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+
+      // Check for verdeler_testing_tot_630 (old test_data table)
+      const tot630TestOld = cachedTests.find((t: any) => t.test_type === 'verdeler_testing_tot_630');
+      if (tot630TestOld?.data?.workshopChecklist?.completed) {
+        status = 'Tot 630A Test Voltooid';
+        color = 'bg-green-500/20 text-green-400';
+        return { status, color };
+      }
+
       // Check for workshop_checklist test
       const workshopTest = cachedTests.find((t: any) => t.test_type === 'workshop_checklist');
       if (workshopTest?.data) {
