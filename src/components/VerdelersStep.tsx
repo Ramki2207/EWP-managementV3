@@ -174,7 +174,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                   testType
                 );
 
-                if (notification && notification.status === 'approved') {
+                if (notification) {
                   notifications.push(notification);
                 }
               } catch (error) {
