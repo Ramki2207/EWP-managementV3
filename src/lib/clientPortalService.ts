@@ -207,19 +207,40 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (portalError) throw portalError;
 
-      // Get client email
-      const { data: clients, error: clientError } = await supabase
-        .from('clients')
-        .select('email, name')
-        .eq('name', project.client)
-        .single();
+      // Get client email - use client_id from portal if available, otherwise find by name
+      let clientEmail = null;
 
-      if (clientError) {
-        console.error('Error fetching client email:', clientError);
-        throw new Error('Kan klant email niet vinden. Controleer of de klant een geldig email adres heeft.');
+      if (portal.client_id) {
+        const { data: client, error: clientError } = await supabase
+          .from('clients')
+          .select('email, name')
+          .eq('id', portal.client_id)
+          .maybeSingle();
+
+        if (clientError) {
+          console.error('Error fetching client email by ID:', clientError);
+        } else if (client?.email) {
+          clientEmail = client.email;
+        }
       }
 
-      if (!clients?.email) {
+      // If no email found via client_id, try finding by name
+      if (!clientEmail) {
+        const { data: clients, error: clientError } = await supabase
+          .from('clients')
+          .select('email, name')
+          .eq('name', project.client)
+          .limit(1)
+          .maybeSingle();
+
+        if (clientError) {
+          console.error('Error fetching client email by name:', clientError);
+        } else if (clients?.email) {
+          clientEmail = clients.email;
+        }
+      }
+
+      if (!clientEmail) {
         throw new Error('Klant heeft geen email adres ingesteld. Voeg eerst een email adres toe aan de klant.');
       }
 
@@ -242,7 +263,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
-          to: clients.email,
+          to: clientEmail,
           subject: emailSubject,
           html: `
             <!DOCTYPE html>
@@ -307,7 +328,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (updateError) throw updateError;
 
-      console.log('Delivery notification sent successfully to:', clients.email);
+      console.log('Delivery notification sent successfully to:', clientEmail);
 
     } catch (error) {
       console.error('Error sending delivery notification:', error);
