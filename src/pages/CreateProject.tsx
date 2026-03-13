@@ -15,20 +15,39 @@ const DRAFT_TIMESTAMP_KEY = 'projectDraftTimestamp';
 
 const CreateProject = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [tempDocuments, setTempDocuments] = useState<{ [key: string]: any[] }>({});
   const [showHoursPopup, setShowHoursPopup] = useState(false);
   const [savedProjectData, setSavedProjectData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [hasDraft, setHasDraft] = useState(false);
+  const [tempVerdelerData, setTempVerdelerData] = useState<any>(null);
+  const [showVerdelerFormOnLoad, setShowVerdelerFormOnLoad] = useState(false);
+
+  const [currentStep, setCurrentStep] = useState(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        return parsedDraft.currentStep || 0;
+      } catch (error) {
+        return 0;
+      }
+    }
+    return 0;
+  });
+
   const [projectData, setProjectData] = useState(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (savedDraft) {
       try {
         const parsedDraft = JSON.parse(savedDraft);
         setHasDraft(true);
-        return parsedDraft;
+        if (parsedDraft.tempVerdelerData) {
+          setTempVerdelerData(parsedDraft.tempVerdelerData);
+          setShowVerdelerFormOnLoad(true);
+        }
+        return parsedDraft.projectData || parsedDraft;
       } catch (error) {
         console.error('Error parsing saved draft:', error);
       }
@@ -63,17 +82,29 @@ const CreateProject = () => {
   }, []);
 
   useEffect(() => {
+    if (showVerdelerFormOnLoad) {
+      setShowVerdelerFormOnLoad(false);
+    }
+  }, [showVerdelerFormOnLoad]);
+
+  useEffect(() => {
     const hasContent = projectData.projectNumber ||
                       projectData.client ||
                       projectData.description ||
-                      projectData.verdelers.length > 0;
+                      projectData.verdelers.length > 0 ||
+                      tempVerdelerData;
 
     if (hasContent) {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(projectData));
+      const draftData = {
+        projectData,
+        currentStep,
+        tempVerdelerData
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
       localStorage.setItem(DRAFT_TIMESTAMP_KEY, new Date().toISOString());
       setHasDraft(true);
     }
-  }, [projectData]);
+  }, [projectData, currentStep, tempVerdelerData]);
 
   const shouldShowHoursPopup = () => {
     if (!currentUser) return false;
@@ -96,6 +127,8 @@ const CreateProject = () => {
       intakeForm: null
     });
     setTempDocuments({});
+    setTempVerdelerData(null);
+    setShowVerdelerFormOnLoad(false);
     setCurrentStep(0);
     toast.success('Concept gewist');
   };
@@ -412,6 +445,9 @@ const CreateProject = () => {
             }
             onNext={handleNext}
             onBack={handleBack}
+            tempVerdelerData={tempVerdelerData}
+            onTempVerdelerChange={setTempVerdelerData}
+            showVerdelerFormOnLoad={showVerdelerFormOnLoad}
           />
         );
       case 2:

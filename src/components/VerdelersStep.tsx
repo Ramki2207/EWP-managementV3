@@ -30,6 +30,9 @@ interface VerdelersStepProps {
   hideNavigation?: boolean;
   autoOpenVerdelerId?: string;
   onVerdelerDetailsClose?: () => void;
+  tempVerdelerData?: any;
+  onTempVerdelerChange?: (data: any) => void;
+  showVerdelerFormOnLoad?: boolean;
 }
 
 const VerdelersStep: React.FC<VerdelersStepProps> = ({
@@ -39,7 +42,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   onBack,
   hideNavigation = false,
   autoOpenVerdelerId,
-  onVerdelerDetailsClose
+  onVerdelerDetailsClose,
+  tempVerdelerData: initialTempVerdelerData,
+  onTempVerdelerChange,
+  showVerdelerFormOnLoad = false
 }) => {
   const { hasPermission } = useEnhancedPermissions();
   const [verdelers, setVerdelers] = useState<any[]>(projectData.distributors || []);
@@ -74,31 +80,36 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     maxUses: '',
     isActive: true
   });
-  const [verdelerData, setVerdelerData] = useState({
-    distributorId: '',
-    kastNaam: '',
-    toegewezenMonteur: 'Vrij',
-    systeem: '',
-    systeemCustom: '',
-    voeding: '',
-    voedingCustom: '',
-    stuurspanning: '',
-    stuurspanningCustom: '',
-    kaWaarde: '',
-    voorbeveiliging: false,
-    ipWaarde: '44',
-    bouwjaar: new Date().getFullYear().toString(),
-    status: 'Offerte',
-    fabrikant: '',
-    unInV: '',
-    inInA: '',
-    ikThInKA1s: '',
-    ikDynInKA: '',
-    freqInHz: '50 Hz',
-    typeNrHs: '',
-    profilePhoto: null as File | null,
-    expectedHours: '',
-    deliveryDate: '',
+  const [verdelerData, setVerdelerData] = useState(() => {
+    if (initialTempVerdelerData) {
+      return initialTempVerdelerData;
+    }
+    return {
+      distributorId: '',
+      kastNaam: '',
+      toegewezenMonteur: 'Vrij',
+      systeem: '',
+      systeemCustom: '',
+      voeding: '',
+      voedingCustom: '',
+      stuurspanning: '',
+      stuurspanningCustom: '',
+      kaWaarde: '',
+      voorbeveiliging: false,
+      ipWaarde: '44',
+      bouwjaar: new Date().getFullYear().toString(),
+      status: 'Offerte',
+      fabrikant: '',
+      unInV: '',
+      inInA: '',
+      ikThInKA1s: '',
+      ikDynInKA: '',
+      freqInHz: '50 Hz',
+      typeNrHs: '',
+      profilePhoto: null as File | null,
+      expectedHours: '',
+      deliveryDate: '',
+    };
   });
 
   // Load current user
@@ -108,6 +119,23 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     const user = users.find((u: any) => u.id === userId);
     console.log('👤 Current user loaded:', { userId, role: user?.role, name: user?.name });
     setCurrentUser(user);
+  }, []);
+
+  useEffect(() => {
+    if (showVerdelerForm && onTempVerdelerChange) {
+      const hasData = verdelerData.distributorId || verdelerData.kastNaam || verdelerData.systeem;
+      if (hasData) {
+        onTempVerdelerChange(verdelerData);
+      }
+    } else if (!showVerdelerForm && onTempVerdelerChange) {
+      onTempVerdelerChange(null);
+    }
+  }, [verdelerData, showVerdelerForm, onTempVerdelerChange]);
+
+  useEffect(() => {
+    if (showVerdelerFormOnLoad && initialTempVerdelerData) {
+      setShowVerdelerForm(true);
+    }
   }, []);
 
   // Load verdelers from database when component mounts or project ID actually changes
