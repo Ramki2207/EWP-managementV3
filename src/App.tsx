@@ -36,6 +36,7 @@ import { preloadLogoImage } from "./lib/pdfUtils";
 import { LocationFilterProvider } from "./contexts/LocationFilterContext";
 import { TimerProvider } from "./contexts/TimerContext";
 import FloatingTimer from "./components/FloatingTimer";
+import { DraftProjectBanner } from "./components/DraftProjectBanner";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -71,6 +72,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {showSidebar && <Sidebar />}
       <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-0 md:ml-64' : ''}`}>
         {showSidebar && <TabBar />}
+        {showSidebar && <DraftProjectBanner />}
         <div className="flex-1">
           {children}
         </div>

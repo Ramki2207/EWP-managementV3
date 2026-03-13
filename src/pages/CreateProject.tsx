@@ -115,6 +115,7 @@ const CreateProject = () => {
   const clearDraft = () => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
     localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+    sessionStorage.removeItem('draftBannerDismissed');
     setHasDraft(false);
     setProjectData({
       projectNumber: '',
@@ -288,6 +289,7 @@ const CreateProject = () => {
 
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+      sessionStorage.removeItem('draftBannerDismissed');
       setHasDraft(false);
 
       if (shouldShowHoursPopup()) {
