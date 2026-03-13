@@ -7,8 +7,11 @@ import StepNavigation from '../components/StepNavigation';
 import ProjectHoursPopup from '../components/ProjectHoursPopup';
 import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import { Save, Trash2 } from 'lucide-react';
 
 const today = new Date();
+const DRAFT_STORAGE_KEY = 'projectDraft';
+const DRAFT_TIMESTAMP_KEY = 'projectDraftTimestamp';
 
 const CreateProject = () => {
   const navigate = useNavigate();
@@ -18,7 +21,18 @@ const CreateProject = () => {
   const [showHoursPopup, setShowHoursPopup] = useState(false);
   const [savedProjectData, setSavedProjectData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [hasDraft, setHasDraft] = useState(false);
   const [projectData, setProjectData] = useState(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        const parsedDraft = JSON.parse(savedDraft);
+        setHasDraft(true);
+        return parsedDraft;
+      } catch (error) {
+        console.error('Error parsing saved draft:', error);
+      }
+    }
     return {
       projectNumber: '',
       date: today.toISOString().split('T')[0],
@@ -48,10 +62,42 @@ const CreateProject = () => {
     loadCurrentUser();
   }, []);
 
+  useEffect(() => {
+    const hasContent = projectData.projectNumber ||
+                      projectData.client ||
+                      projectData.description ||
+                      projectData.verdelers.length > 0;
+
+    if (hasContent) {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(projectData));
+      localStorage.setItem(DRAFT_TIMESTAMP_KEY, new Date().toISOString());
+      setHasDraft(true);
+    }
+  }, [projectData]);
+
   const shouldShowHoursPopup = () => {
     if (!currentUser) return false;
     const allowedUsers = ['Raja', 'Radjesh', 'Ronald', 'Michel de Ruiter'];
     return allowedUsers.includes(currentUser.username);
+  };
+
+  const clearDraft = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+    setHasDraft(false);
+    setProjectData({
+      projectNumber: '',
+      date: today.toISOString().split('T')[0],
+      location: '',
+      client: '',
+      status: '',
+      description: '',
+      verdelers: [],
+      intakeForm: null
+    });
+    setTempDocuments({});
+    setCurrentStep(0);
+    toast.success('Concept gewist');
   };
 
   const handleProjectChange = (data: any) => {
@@ -206,6 +252,10 @@ const CreateProject = () => {
       }
 
       toast.success('Project succesvol aangemaakt!');
+
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+      setHasDraft(false);
 
       if (shouldShowHoursPopup()) {
         setSavedProjectData(savedProject);
@@ -382,6 +432,26 @@ const CreateProject = () => {
 
   return (
     <div className="page-container">
+      {hasDraft && (
+        <div className="mb-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Save className="w-5 h-5 text-blue-400" />
+            <div>
+              <p className="text-sm font-medium text-blue-400">Concept opgeslagen</p>
+              <p className="text-xs text-gray-400">
+                Je voortgang wordt automatisch bewaard. Je kunt veilig het systeem doorbladeren en later terugkomen.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={clearDraft}
+            className="btn-secondary text-sm py-2 px-3 flex items-center space-x-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>Concept wissen</span>
+          </button>
+        </div>
+      )}
       <div className="card">
         <StepNavigation steps={steps} activeStep={currentStep} />
         {renderStep()}
