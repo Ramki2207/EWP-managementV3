@@ -207,8 +207,81 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (portalError) throw portalError;
 
+      // Get client email
+      const { data: clients, error: clientError } = await supabase
+        .from('clients')
+        .select('email, name')
+        .eq('name', project.client)
+        .single();
+
+      if (clientError) {
+        console.error('Error fetching client email:', clientError);
+        throw new Error('Kan klant email niet vinden. Controleer of de klant een geldig email adres heeft.');
+      }
+
+      if (!clients?.email) {
+        throw new Error('Klant heeft geen email adres ingesteld. Voeg eerst een email adres toe aan de klant.');
+      }
+
       const emailTemplate = this.generateEmailTemplate(project, portal, verdelers, customDeliveryDate);
       const emailSubject = `✅ Verdelers gereed voor levering - Project ${project.project_number}`;
+
+      // Convert plain text email template to HTML
+      const emailHtml = emailTemplate
+        .replace(/\n/g, '<br>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // Send email via Edge Function
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          to: clients.email,
+          subject: emailSubject,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+                .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1 style="margin: 0;">EWP Paneelbouw</h1>
+                </div>
+                <div class="content">
+                  ${emailHtml}
+                </div>
+                <div class="footer">
+                  <p>Dit is een automatisch gegenereerd bericht van EWP Paneelbouw.</p>
+                  <p>Heeft u vragen? Neem contact met ons op.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+          `,
+          text: emailTemplate,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.error || 'Email kon niet worden verzonden');
+      }
 
       // Save notification record
       const { error: notificationError } = await supabase
@@ -234,11 +307,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (updateError) throw updateError;
 
-      console.log('Delivery notification prepared:', {
-        subject: emailSubject,
-        portalUrl: portal.portal_url,
-        accessCode: portal.access_code
-      });
+      console.log('Delivery notification sent successfully to:', clients.email);
 
     } catch (error) {
       console.error('Error sending delivery notification:', error);

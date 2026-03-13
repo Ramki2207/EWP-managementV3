@@ -282,10 +282,13 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     if (!portal) return;
 
     try {
+      setIsGenerating(true);
+      const loadingToast = toast.loading('Email wordt verzonden...');
+
       // Get only selected verdelers for the email
       const selectedVerdelers = allVerdelers.filter((v: any) => selectedVerdelerIds.includes(v.id));
 
-      // Send the notification (this will be enhanced with actual email sending later)
+      // Send the notification via email
       await clientPortalService.sendDeliveryNotification(portal.id, project, selectedVerdelers, deliveryDate);
 
       // Update project status to "Opgeleverd" when notification is sent
@@ -294,7 +297,8 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         status: 'Opgeleverd' // Automatically set to delivered when notification is sent
       });
 
-      toast.success('Levering notificatie verzonden naar klant!');
+      toast.dismiss(loadingToast);
+      toast.success('Email succesvol verzonden naar klant!');
       setShowPreview(false);
 
       if (onStatusChange) {
@@ -302,7 +306,9 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
       }
     } catch (error) {
       console.error('Error sending notification:', error);
-      toast.error('Er is een fout opgetreden bij het verzenden van de notificatie');
+      toast.error(error.message || 'Er is een fout opgetreden bij het verzenden van de email');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -821,10 +827,22 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
                 </button>
                 <button
                   onClick={handleSendNotification}
-                  className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2"
+                  disabled={isGenerating}
+                  className={`bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all flex items-center space-x-2 ${
+                    isGenerating ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 >
-                  <Send size={20} />
-                  <span>Verstuur Notificatie</span>
+                  {isGenerating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
+                      <span>Verzenden...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      <span>Verstuur Email</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
