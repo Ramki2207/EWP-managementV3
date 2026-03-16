@@ -241,22 +241,23 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
         // Draw red border box
         doc.setDrawColor(220, 38, 38);
-        doc.setFillColor(220, 38, 38, 0.1);
+        doc.setFillColor(51, 51, 51); // Dark gray background
         doc.setLineWidth(2);
 
         // Calculate header text wrapping first
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
+        doc.setFontSize(16);
         const headerText = '⚠ KRITISCHE MELDING VOOR MONTEUR';
-        const headerLines = doc.splitTextToSize(headerText, pageWidth - 2 * margin - 10);
+        const maxTextWidth = pageWidth - 2 * margin - 20; // More padding for safety
+        const headerLines = doc.splitTextToSize(headerText, maxTextWidth);
 
         // Calculate message text wrapping
-        const messageLines = doc.splitTextToSize(project.critical_message, pageWidth - 2 * margin - 10);
+        const messageLines = doc.splitTextToSize(project.critical_message, maxTextWidth);
 
         // Calculate total height needed: header + message + padding
-        const headerHeight = headerLines.length * 7;
-        const messageHeight = messageLines.length * 7;
-        const totalHeight = headerHeight + messageHeight + 20; // 20 for padding
+        const headerHeight = headerLines.length * 6;
+        const messageHeight = messageLines.length * 6;
+        const totalHeight = headerHeight + messageHeight + 25; // More padding
 
         // Draw filled rectangle
         doc.rect(margin, yPosition, pageWidth - 2 * margin, totalHeight, 'FD');
@@ -266,18 +267,18 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         // Add "KRITISCHE MELDING" header
         doc.setTextColor(220, 38, 38);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(headerLines, margin + 5, yPosition);
+        doc.setFontSize(16);
+        doc.text(headerLines, margin + 10, yPosition);
 
         yPosition += headerHeight + 5;
 
-        // Add the message text
-        doc.setTextColor(0, 0, 0);
+        // Add the message text in white
+        doc.setTextColor(255, 255, 255); // White color
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text(messageLines, margin + 5, yPosition);
+        doc.setFontSize(16);
+        doc.text(messageLines, margin + 10, yPosition);
 
-        yPosition += messageHeight + 5;
+        yPosition += messageHeight + 10;
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
