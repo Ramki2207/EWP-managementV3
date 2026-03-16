@@ -41,10 +41,11 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
     try {
       const margin = 15;
 
-      console.log('📄 addDocumentToPDF called for:', document.name, 'storage_path:', document.storage_path);
+      console.log('📄 addDocumentToPDF called for:', document.name, 'storage_path:', document.storage_path, 'has content:', !!document.content);
 
-      if (!document.storage_path) {
-        console.log('❌ Document has no storage path:', document.name);
+      // Check if document has either storage_path or content (legacy)
+      if (!document.storage_path && !document.content) {
+        console.log('❌ Document has no storage path or content:', document.name);
         return;
       }
 
@@ -52,74 +53,108 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       console.log('📄 File extension:', fileExtension);
 
       if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExtension || '')) {
-        console.log('📄 Loading image URL for:', document.storage_path);
-        const imageUrl = dataService.getStorageUrl(document.storage_path);
-        console.log('📄 Image URL:', imageUrl ? 'Retrieved' : 'Failed');
-        if (imageUrl) {
-          doc.addPage();
+        console.log('📄 Loading image...');
 
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : document.name;
-          doc.text(title, margin, margin);
+        let imgData: string;
 
-          console.log('📄 Converting image to data URL...');
-          const imgData = await loadImageAsDataUrl(imageUrl);
-          console.log('📄 Image data URL created, length:', imgData.length);
-          const img = new Image();
-          img.src = imgData;
-
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              console.log('📄 Image loaded successfully, dimensions:', img.width, 'x', img.height);
-              const imgWidth = img.width;
-              const imgHeight = img.height;
-              const maxWidth = pageWidth - 2 * margin;
-              const maxHeight = pageHeight - 2 * margin - 10;
-
-              let width = imgWidth;
-              let height = imgHeight;
-
-              if (width > maxWidth) {
-                height = (maxWidth / width) * height;
-                width = maxWidth;
-              }
-
-              if (height > maxHeight) {
-                width = (maxHeight / height) * width;
-                height = maxHeight;
-              }
-
-              console.log('📄 Adding image to PDF at dimensions:', width, 'x', height);
-              doc.addImage(imgData, 'PNG', margin, margin + 10, width, height);
-              console.log('✅ Image added to PDF successfully');
-              resolve();
-            };
-            img.onerror = (e) => {
-              console.error('❌ Image failed to load:', e);
-              reject(e);
-            };
-          });
+        // Check if using new storage system or legacy content field
+        if (document.storage_path) {
+          console.log('📄 Loading image from storage bucket:', document.storage_path);
+          const imageUrl = dataService.getStorageUrl(document.storage_path);
+          if (imageUrl) {
+            console.log('📄 Converting image to data URL...');
+            imgData = await loadImageAsDataUrl(imageUrl);
+          } else {
+            console.log('❌ No image URL retrieved from storage');
+            return;
+          }
+        } else if (document.content) {
+          console.log('📄 Using legacy content field for image');
+          imgData = document.content;
         } else {
-          console.log('❌ No image URL retrieved');
+          console.log('❌ No image source available');
+          return;
         }
+
+        console.log('📄 Image data ready, length:', imgData.length);
+
+        doc.addPage();
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        const title = document.verdelerName ? `${document.verdelerName} - ${document.name}` : document.name;
+        doc.text(title, margin, margin);
+
+        const img = new Image();
+        img.src = imgData;
+
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            console.log('📄 Image loaded successfully, dimensions:', img.width, 'x', img.height);
+            const imgWidth = img.width;
+            const imgHeight = img.height;
+            const maxWidth = pageWidth - 2 * margin;
+            const maxHeight = pageHeight - 2 * margin - 10;
+
+            let width = imgWidth;
+            let height = imgHeight;
+
+            if (width > maxWidth) {
+              height = (maxWidth / width) * height;
+              width = maxWidth;
+            }
+
+            if (height > maxHeight) {
+              width = (maxHeight / height) * width;
+              height = maxHeight;
+            }
+
+            console.log('📄 Adding image to PDF at dimensions:', width, 'x', height);
+            doc.addImage(imgData, 'PNG', margin, margin + 10, width, height);
+            console.log('✅ Image added to PDF successfully');
+            resolve();
+          };
+          img.onerror = (e) => {
+            console.error('❌ Image failed to load:', e);
+            reject(e);
+          };
+        });
       } else if (fileExtension === 'pdf') {
         console.log('📄 PDF document detected, loading for embedding...');
 
         try {
-          const pdfUrl = dataService.getStorageUrl(document.storage_path);
-          if (pdfUrl) {
-            console.log('📄 Fetching PDF from:', pdfUrl);
-            const response = await fetch(pdfUrl);
-            const pdfBytes = await response.arrayBuffer();
-            console.log('📄 PDF loaded, size:', pdfBytes.byteLength, 'bytes');
+          let pdfBytes: ArrayBuffer;
 
-            // Store the PDF bytes for merging later
-            pdfPages.push(new Uint8Array(pdfBytes));
-            console.log('✅ PDF added to merge queue');
+          // Check if using new storage system or legacy content field
+          if (document.storage_path) {
+            console.log('📄 Loading PDF from storage bucket...');
+            const pdfUrl = dataService.getStorageUrl(document.storage_path);
+            if (pdfUrl) {
+              console.log('📄 Fetching PDF from:', pdfUrl);
+              const response = await fetch(pdfUrl);
+              pdfBytes = await response.arrayBuffer();
+              console.log('📄 PDF loaded from storage, size:', pdfBytes.byteLength, 'bytes');
+            } else {
+              throw new Error('Failed to get PDF URL from storage');
+            }
+          } else if (document.content) {
+            console.log('📄 Loading PDF from legacy content field...');
+            // Legacy document with base64 content
+            const base64Data = document.content.split(',')[1] || document.content;
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            pdfBytes = bytes.buffer;
+            console.log('📄 PDF loaded from legacy content, size:', pdfBytes.byteLength, 'bytes');
           } else {
-            console.log('❌ Failed to get PDF URL');
+            throw new Error('No PDF source available');
           }
+
+          // Store the PDF bytes for merging later
+          pdfPages.push(new Uint8Array(pdfBytes));
+          console.log('✅ PDF added to merge queue');
         } catch (error) {
           console.error('❌ Error loading PDF:', error);
 

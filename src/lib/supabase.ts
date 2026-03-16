@@ -547,10 +547,10 @@ export const dataService = {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-      // Select metadata fields including storage_path for new storage-based documents
+      // Select metadata fields including storage_path for new storage-based documents and content for legacy documents
       let query = supabase
         .from('documents')
-        .select('id, project_id, distributor_id, folder, name, type, size, uploaded_at, storage_path')
+        .select('id, project_id, distributor_id, folder, name, type, size, uploaded_at, storage_path, content')
         .order('uploaded_at', { ascending: false })
         .abortSignal(controller.signal);
 
