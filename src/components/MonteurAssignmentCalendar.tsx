@@ -51,7 +51,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [filterProjectLeader, setFilterProjectLeader] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string[]>(['Productie', 'Testen', 'Levering', 'Opgeleverd']);
   const [showFilters, setShowFilters] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
 
@@ -651,7 +651,7 @@ export default function MonteurAssignmentCalendar({ onAssignmentNeeded, tableOnl
                   onClick={() => {
                     setSearchTerm('');
                     setFilterProjectLeader('all');
-                    setFilterStatus([]);
+                    setFilterStatus(['Productie', 'Testen', 'Levering', 'Opgeleverd']);
                   }}
                   className="text-blue-400 hover:text-blue-300"
                 >
