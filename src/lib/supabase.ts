@@ -180,6 +180,9 @@ export const dataService = {
           contactpersoon_achternaam: project.contactpersoonAchternaam,
           contactpersoon_telefoon: project.contactpersoonTelefoon,
           contactpersoon_email: project.contactpersoonEmail,
+          critical_message: project.critical_message || project.criticalMessage || null,
+          critical_message_updated_at: project.critical_message || project.criticalMessage ? new Date().toISOString() : null,
+          critical_message_updated_by: project.critical_message || project.criticalMessage ? currentUserId : null,
           created_by: currentUserId
         }])
         .select()
