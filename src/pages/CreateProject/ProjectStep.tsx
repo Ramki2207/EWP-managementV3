@@ -634,6 +634,22 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           </div>
         </div>
 
+        <div className="md:col-span-2">
+          <label className="block text-sm text-gray-400 mb-2">Kritische melding voor monteur</label>
+          <div className="relative">
+            <FileText className="absolute left-3 top-3 text-gray-400" size={20} />
+            <textarea
+              className="input-field pl-10 h-24"
+              value={projectData.critical_message || ''}
+              onChange={(e) => handleInputChange('critical_message', e.target.value)}
+              placeholder="Voer een kritische melding in die monteurs moeten zien..."
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Deze melding verschijnt prominent in rood voor monteurs bij dit project
+          </p>
+        </div>
+
         <div>
           <label className="block text-sm text-gray-400 mb-2">Referentie EWP Paneelbouw</label>
           <input
