@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Edit, Save, X } from 'lucide-react';
+import { AlertTriangle, FileEdit as Edit, Save, X } from 'lucide-react';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
