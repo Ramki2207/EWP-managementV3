@@ -255,13 +255,15 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
 
         yPosition += 8;
 
-        // Add "KRITISCHE MELDING" header
+        // Add "KRITISCHE MELDING" header with proper text wrapping
         doc.setTextColor(220, 38, 38);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(20);
-        doc.text('⚠ KRITISCHE MELDING VOOR MONTEUR', margin + 5, yPosition);
+        doc.setFontSize(18);
+        const headerText = '⚠ KRITISCHE MELDING VOOR MONTEUR';
+        const headerLines = doc.splitTextToSize(headerText, pageWidth - 2 * margin - 10);
+        doc.text(headerLines, margin + 5, yPosition);
 
-        yPosition += 12;
+        yPosition += headerLines.length * 7 + 5;
 
         // Add the message text
         doc.setTextColor(0, 0, 0);
