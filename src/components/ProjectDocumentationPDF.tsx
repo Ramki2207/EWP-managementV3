@@ -235,6 +235,43 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         yPosition += 18;
       }
 
+      // Add critical message if present
+      if (project.critical_message) {
+        yPosition += 10;
+
+        // Draw red border box
+        doc.setDrawColor(220, 38, 38);
+        doc.setFillColor(220, 38, 38, 0.1);
+        doc.setLineWidth(2);
+
+        // Calculate required height for the message
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        const messageLines = doc.splitTextToSize(project.critical_message, pageWidth - 2 * margin - 10);
+        const messageHeight = messageLines.length * 8 + 30;
+
+        // Draw filled rectangle
+        doc.rect(margin, yPosition, pageWidth - 2 * margin, messageHeight, 'FD');
+
+        yPosition += 8;
+
+        // Add "KRITISCHE MELDING" header
+        doc.setTextColor(220, 38, 38);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(20);
+        doc.text('⚠ KRITISCHE MELDING VOOR MONTEUR', margin + 5, yPosition);
+
+        yPosition += 12;
+
+        // Add the message text
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.text(messageLines, margin + 5, yPosition);
+
+        yPosition += messageHeight - 15;
+      }
+
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
 
       for (const folderName of distributorFolders) {

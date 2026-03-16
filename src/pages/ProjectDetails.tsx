@@ -21,6 +21,7 @@ import PakbonGenerator from '../components/PakbonGenerator';
 import ProjectDocumentationPDF from '../components/ProjectDocumentationPDF';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
 import ProjectSharingModal from '../components/ProjectSharingModal';
+import CriticalMessageBanner from '../components/CriticalMessageBanner';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -823,6 +824,16 @@ const ProjectDetails = () => {
           )}
         </div>
       </div>
+
+      {/* Critical Message Banner */}
+      <CriticalMessageBanner
+        project={project}
+        currentUser={currentUser}
+        onUpdate={(updatedProject) => {
+          setProject(updatedProject);
+          setEditedProject(updatedProject);
+        }}
+      />
 
       {/* Approval Status Alert */}
       {project?.status?.toLowerCase() === 'productie' && approvalStatus.hasApproval && (
