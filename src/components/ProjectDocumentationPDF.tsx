@@ -282,6 +282,8 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
+      let totalDocumentsAdded = 0;
+      const folderSummary: { [key: string]: number } = {};
 
       for (const folderName of distributorFolders) {
         toast.loading(`Laden van ${folderName}...`);
@@ -308,15 +310,21 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
             console.log(`📄 No Actueel subfolder for ${folderName}`);
           }
 
+          folderSummary[folderName] = allDocs.length;
+
           if (allDocs.length > 0) {
             console.log(`📄 Adding ${allDocs.length} documents to PDF for ${folderName}`);
             for (const document of allDocs) {
               console.log(`📄 Processing document:`, document);
               await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
+              totalDocumentsAdded++;
             }
+          } else {
+            console.warn(`⚠️ No documents found in ${folderName}`);
           }
         } catch (error) {
           console.error(`Error loading ${folderName} for distributor:`, error);
+          toast.error(`Fout bij laden van ${folderName}: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
         }
 
         toast.dismiss();
@@ -332,18 +340,33 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
           const documents = await dataService.getDocuments(project.id, null, folderName);
           console.log(`📄 Found ${documents?.length || 0} documents in ${folderName}`);
 
+          folderSummary[folderName] = documents?.length || 0;
+
           if (documents && documents.length > 0) {
             console.log(`📄 Adding ${documents.length} documents to PDF for ${folderName}`);
             for (const document of documents) {
               console.log(`📄 Processing document:`, document);
               await addDocumentToPDF(doc, document, pageWidth, pageHeight, pdfPages);
+              totalDocumentsAdded++;
             }
+          } else {
+            console.warn(`⚠️ No documents found in ${folderName}`);
           }
         } catch (error) {
           console.error(`Error loading documents from ${folderName}:`, error);
+          toast.error(`Fout bij laden van ${folderName}: ${error instanceof Error ? error.message : 'Onbekende fout'}`);
         }
 
         toast.dismiss();
+      }
+
+      // Log summary
+      console.log('📊 Document Summary:');
+      console.log('Total documents added:', totalDocumentsAdded);
+      console.log('Per folder:', folderSummary);
+
+      if (totalDocumentsAdded === 0) {
+        toast.error('Geen documenten gevonden in de verwachte mappen. Alleen voorblad wordt gegenereerd.');
       }
 
       const verdelerName = (selectedVerdeler.kast_naam || selectedVerdeler.distributor_id || 'verdeler').replace(/[^a-zA-Z0-9]/g, '_');
