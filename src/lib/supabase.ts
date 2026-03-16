@@ -220,7 +220,10 @@ export const dataService = {
           contactpersoon_achternaam: updates.contactpersoon_achternaam,
           contactpersoon_telefoon: updates.contactpersoon_telefoon,
           contactpersoon_email: updates.contactpersoon_email,
-          created_by: updates.created_by
+          created_by: updates.created_by,
+          critical_message: updates.critical_message,
+          critical_message_updated_at: updates.critical_message_updated_at,
+          critical_message_updated_by: updates.critical_message_updated_by
         })
         .eq('id', id)
         .select()
