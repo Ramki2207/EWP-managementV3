@@ -244,26 +244,32 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         doc.setFillColor(220, 38, 38, 0.1);
         doc.setLineWidth(2);
 
-        // Calculate required height for the message
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        const messageLines = doc.splitTextToSize(project.critical_message, pageWidth - 2 * margin - 10);
-        const messageHeight = messageLines.length * 8 + 30;
-
-        // Draw filled rectangle
-        doc.rect(margin, yPosition, pageWidth - 2 * margin, messageHeight, 'FD');
-
-        yPosition += 8;
-
-        // Add "KRITISCHE MELDING" header with proper text wrapping
-        doc.setTextColor(220, 38, 38);
+        // Calculate header text wrapping first
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(18);
         const headerText = '⚠ KRITISCHE MELDING VOOR MONTEUR';
         const headerLines = doc.splitTextToSize(headerText, pageWidth - 2 * margin - 10);
+
+        // Calculate message text wrapping
+        const messageLines = doc.splitTextToSize(project.critical_message, pageWidth - 2 * margin - 10);
+
+        // Calculate total height needed: header + message + padding
+        const headerHeight = headerLines.length * 7;
+        const messageHeight = messageLines.length * 7;
+        const totalHeight = headerHeight + messageHeight + 20; // 20 for padding
+
+        // Draw filled rectangle
+        doc.rect(margin, yPosition, pageWidth - 2 * margin, totalHeight, 'FD');
+
+        yPosition += 10;
+
+        // Add "KRITISCHE MELDING" header
+        doc.setTextColor(220, 38, 38);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
         doc.text(headerLines, margin + 5, yPosition);
 
-        yPosition += headerLines.length * 7 + 5;
+        yPosition += headerHeight + 5;
 
         // Add the message text
         doc.setTextColor(0, 0, 0);
@@ -271,7 +277,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         doc.setFontSize(18);
         doc.text(messageLines, margin + 5, yPosition);
 
-        yPosition += messageHeight - 15;
+        yPosition += messageHeight + 5;
       }
 
       const distributorFolders = ['Verdeler aanzicht', 'Installatie schema'];
