@@ -836,7 +836,27 @@ const Dashboard = () => {
     });
   };
 
-  const filteredProjects = applyFilters(projects);
+  let filteredProjects = applyFilters(projects);
+
+  // For montage users: prioritize projects with verdelers assigned to them
+  if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
+    filteredProjects = [...filteredProjects].sort((a, b) => {
+      // Check if projects have verdelers assigned to current user
+      const aHasAssigned = a.distributors?.some(
+        (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
+      );
+      const bHasAssigned = b.distributors?.some(
+        (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
+      );
+
+      // Projects with assigned verdelers come first
+      if (aHasAssigned && !bHasAssigned) return -1;
+      if (!aHasAssigned && bHasAssigned) return 1;
+
+      // Otherwise maintain original order (sorted by project_number descending)
+      return b.project_number.localeCompare(a.project_number);
+    });
+  }
 
   const getUniqueClients = () => {
     const clients = [...new Set(projects.map(p => p.client).filter(Boolean))];
