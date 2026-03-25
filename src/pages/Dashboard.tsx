@@ -225,6 +225,12 @@ const Dashboard = () => {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeLocationFilter = filteredData.length;
           filteredData = filteredData.filter((project: any) => {
+            // SPECIAL CASE: Mohammed Al Hegazi must always see PM25-173
+            if (currentUser.username === 'Mohammed Al Hegazi' && project.project_number === 'PM25-173') {
+              console.log(`🌍 DASHBOARD FILTER (loadData): ⭐ FORCING project ${project.project_number} to show for ${currentUser.username} - SPECIAL OVERRIDE`);
+              return true;
+            }
+
             const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations);
             console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (location: ${project.location}) - Access: ${locationAccess}`);
             return locationAccess;
@@ -582,6 +588,12 @@ const Dashboard = () => {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeFilter = filteredProjects.length;
           filteredProjects = filteredProjects.filter((project: any) => {
+            // SPECIAL CASE: Mohammed Al Hegazi must always see PM25-173
+            if (currentUser.username === 'Mohammed Al Hegazi' && project.project_number === 'PM25-173') {
+              console.log(`🌍 DASHBOARD FILTER (loadProjects): ⭐ FORCING project ${project.project_number} to show for ${currentUser.username} - SPECIAL OVERRIDE`);
+              return true;
+            }
+
             // If project has a location, user must have access to that specific location
             // If project has no location, allow access (legacy projects)
             const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations);
