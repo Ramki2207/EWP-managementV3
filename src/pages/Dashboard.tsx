@@ -868,6 +868,20 @@ const Dashboard = () => {
 
   let filteredProjects = applyFilters(projects);
 
+  // SPECIAL CASE: For Mohammed Al Hegazi, always put PM25-173 at the top
+  if (currentUser?.username === 'Mohammed Al Hegazi') {
+    const pm25173Index = filteredProjects.findIndex(p => p.project_number === 'PM25-173');
+    if (pm25173Index > 0) {
+      const pm25173Project = filteredProjects[pm25173Index];
+      filteredProjects = [pm25173Project, ...filteredProjects.filter((_, i) => i !== pm25173Index)];
+      console.log('⭐ DASHBOARD SORT: Moved PM25-173 to top of list for Mohammed Al Hegazi');
+    } else if (pm25173Index === 0) {
+      console.log('⭐ DASHBOARD SORT: PM25-173 is already at the top for Mohammed Al Hegazi');
+    } else {
+      console.log('⚠️ DASHBOARD SORT: PM25-173 not found in filtered projects for Mohammed Al Hegazi');
+    }
+  }
+
   const getUniqueClients = () => {
     const clients = [...new Set(projects.map(p => p.client).filter(Boolean))];
     return clients.sort();
