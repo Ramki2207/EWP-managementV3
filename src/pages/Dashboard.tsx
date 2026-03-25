@@ -791,20 +791,26 @@ const Dashboard = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
+      // DEBUG: Check PM25-173 specifically
+      const isPM25173 = project.project_number === 'PM25-173';
+
       // Role-based filtering for Montage users (except Sven who sees all projects)
       if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const hasAssignedVerdelers = project.distributors?.some(
           (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
         );
         if (!hasAssignedVerdelers) {
+          if (isPM25173) console.log('🚫 PM25-173 filtered out: NO ASSIGNED VERDELERS');
           return false;
         }
+        if (isPM25173) console.log('✅ PM25-173 passed: HAS ASSIGNED VERDELERS');
       }
 
       // Status-based filtering for Dave Moret
       if (currentUser?.username === 'Dave Moret') {
         const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
         if (!allowedStatuses.includes(project.status)) {
+          if (isPM25173) console.log('🚫 PM25-173 filtered out: Dave Moret status check');
           return false;
         }
       }
@@ -832,11 +838,52 @@ const Dashboard = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesClient && matchesDate;
+      const passed = matchesSearch && matchesStatus && matchesClient && matchesDate;
+
+      if (isPM25173) {
+        console.log('🔍 PM25-173 UI Filters:', {
+          matchesSearch,
+          searchTerm,
+          matchesStatus,
+          statusFilter,
+          matchesClient,
+          clientFilter,
+          matchesDate,
+          dateFilter,
+          FINAL_RESULT: passed
+        });
+      }
+
+      return passed;
     });
   };
 
+  // DEBUG: Check projects state before filtering
+  const pm25173InProjects = projects.find(p => p.project_number === 'PM25-173');
+  if (pm25173InProjects) {
+    console.log('📊 PM25-173 in projects state BEFORE applyFilters:', {
+      project_number: pm25173InProjects.project_number,
+      status: pm25173InProjects.status,
+      location: pm25173InProjects.location,
+      distributors: pm25173InProjects.distributors?.map((d: any) => ({
+        kast_naam: d.kast_naam,
+        toegewezen_monteur: d.toegewezen_monteur
+      }))
+    });
+  } else {
+    console.log('❌ PM25-173 NOT in projects state (total projects:', projects.length, ')');
+  }
+
   let filteredProjects = applyFilters(projects);
+
+  // DEBUG: Check if PM25-173 survived filtering
+  const pm25173Filtered = filteredProjects.find(p => p.project_number === 'PM25-173');
+  if (pm25173Filtered) {
+    const index = filteredProjects.findIndex(p => p.project_number === 'PM25-173');
+    console.log(`✅ PM25-173 PASSED applyFilters at index ${index} (visible in table: ${index < 10 ? 'YES' : 'NO - outside first 10'})`);
+  } else {
+    console.log('❌ PM25-173 FILTERED OUT by applyFilters');
+  }
 
   // For montage users: prioritize projects with verdelers assigned to them
   if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
@@ -856,6 +903,13 @@ const Dashboard = () => {
       // Otherwise maintain original order (sorted by project_number descending)
       return b.project_number.localeCompare(a.project_number);
     });
+
+    // DEBUG: Check position after sorting
+    const pm25173AfterSort = filteredProjects.findIndex(p => p.project_number === 'PM25-173');
+    if (pm25173AfterSort !== -1) {
+      console.log(`📌 PM25-173 after sorting: index ${pm25173AfterSort} (visible: ${pm25173AfterSort < 10 ? 'YES' : 'NO'})`);
+      console.log('📋 First 10 projects:', filteredProjects.slice(0, 10).map(p => p.project_number));
+    }
   }
 
   const getUniqueClients = () => {
