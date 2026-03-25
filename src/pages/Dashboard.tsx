@@ -485,6 +485,12 @@ const Dashboard = () => {
         } else {
           const beforeMontageFilter = filteredProjects.length;
           filteredProjects = filteredProjects.filter((project: any) => {
+            // SPECIAL CASE: Mohammed Al Hegazi must always see PM25-173
+            if (currentUser.username === 'Mohammed Al Hegazi' && project.project_number === 'PM25-173') {
+              console.log(`🔧 DASHBOARD MONTAGE FILTER (loadProjects): ⭐ FORCING project ${project.project_number} to show for ${currentUser.username} - SPECIAL OVERRIDE`);
+              return true;
+            }
+
             // Check if this project has any verdelers assigned to this monteur (including aliases)
             const hasAssignedVerdelers = project.distributors?.some(
               (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
@@ -801,6 +807,12 @@ const Dashboard = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
+      // SPECIAL CASE: Mohammed Al Hegazi must always see PM25-173
+      if (currentUser?.username === 'Mohammed Al Hegazi' && project.project_number === 'PM25-173') {
+        console.log(`🔧 DASHBOARD APPLY FILTERS: ⭐ FORCING project ${project.project_number} to show for ${currentUser.username} - SPECIAL OVERRIDE`);
+        return true;
+      }
+
       // Status-based filtering for Dave Moret
       if (currentUser?.username === 'Dave Moret') {
         const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
