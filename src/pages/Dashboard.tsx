@@ -99,6 +99,12 @@ const Dashboard = () => {
       if (effectiveRole === 'montage' && currentUser.username !== 'Sven') {
         const beforeMontageFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
+          // SPECIAL CASE: Mohammed Al Hegazi must always see PM25-173
+          if (currentUser.username === 'Mohammed Al Hegazi' && project.project_number === 'PM25-173') {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER (loadData): ⭐ FORCING project ${project.project_number} to show for ${currentUser.username} - SPECIAL OVERRIDE`);
+            return true;
+          }
+
           const hasAssignedVerdelers = project.distributors?.some(
             (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
           );
