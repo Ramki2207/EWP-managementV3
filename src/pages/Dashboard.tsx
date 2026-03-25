@@ -769,6 +769,27 @@ const Dashboard = () => {
 
   const applyFilters = (projectList: Project[]) => {
     return projectList.filter(project => {
+      // Role-based filtering for Montage users
+      if (effectiveRole === 'montage') {
+        // Exception for Zouhair Taha, Ibrahim Abdalla, and Sven - can see all projects
+        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Sven') {
+          console.log(`🔧 DASHBOARD MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS`);
+          // Skip the montage filtering - they can see all projects
+        } else {
+          // Check if this project has any verdelers assigned to this monteur (including aliases)
+          const hasAssignedVerdelers = project.distributors?.some(
+            (dist: any) => isUsernameMatch(dist.toegewezen_monteur, currentUser.username)
+          );
+
+          if (!hasAssignedVerdelers) {
+            console.log(`🔧 DASHBOARD MONTAGE FILTER: Hiding project ${project.project_number} from monteur ${currentUser.username} - NO ASSIGNED VERDELERS`);
+            return false;
+          }
+
+          console.log(`🔧 DASHBOARD MONTAGE FILTER: Showing project ${project.project_number} to monteur ${currentUser.username} - HAS ASSIGNED VERDELERS`);
+        }
+      }
+
       // Status-based filtering for Dave Moret
       if (currentUser?.username === 'Dave Moret') {
         const allowedStatuses = ['Productie', 'Levering', 'Gereed voor facturatie'];
