@@ -323,8 +323,7 @@ const Dashboard = () => {
     // Determine if current user can see all approvals
     const isAdmin = currentUser?.role === 'admin';
     const isTester = effectiveRole === 'tester';
-    const isIbrahimOrZouhair = currentUser?.username === 'Ibrahim Abdalla' || currentUser?.username === 'Zouhair Taha';
-    const canSeeAll = isAdmin || isTester || isIbrahimOrZouhair;
+    const canSeeAll = isAdmin || isTester;
 
     console.log('👁️ Pre-Testing Approvals Filter:', {
       username: currentUser?.username,
@@ -332,8 +331,7 @@ const Dashboard = () => {
       effectiveRole,
       canSeeAll,
       isAdmin,
-      isTester,
-      isIbrahimOrZouhair
+      isTester
     });
 
     for (const project of projectList) {
@@ -490,8 +488,8 @@ const Dashboard = () => {
 
       // Role-based filtering for Montage users (must happen BEFORE location filtering)
       if (effectiveRole === 'montage') {
-        // Exception for Zouhair Taha, Ibrahim Abdalla, and Sven - can see all projects
-        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Sven') {
+        // Exception for Sven - can see all projects
+        if (currentUser.username === 'Sven') {
           console.log(`🔧 DASHBOARD MONTAGE FILTER (loadProjects): ${currentUser.username} has SPECIAL ACCESS - showing all projects`);
           // Skip the montage filtering - they can see all projects
         } else {
@@ -576,12 +574,13 @@ const Dashboard = () => {
         console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (filterMode: ${filterMode})`);
       }
 
-      // Skip assignedLocations filter for users who use the location dropdown filter OR for montage users
+      // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
                                    currentUser?.username === 'Stefano de Weger';
 
-      const skipLocationFilter = usesDropdownFilter2 || effectiveRole === 'montage';
+      // Only skip location filter for Sven (montage user with special access)
+      const skipLocationFilter = usesDropdownFilter2 || (effectiveRole === 'montage' && currentUser?.username === 'Sven');
 
       if (!skipLocationFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations

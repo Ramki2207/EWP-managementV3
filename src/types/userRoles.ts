@@ -51,6 +51,7 @@ export interface EnhancedUser {
 
 export const AVAILABLE_LOCATIONS = [
   'Leerdam',
+  'Leerdam (PM)',
   'Naaldwijk (PD)',
   'Naaldwijk (PW)',
   'Rotterdam'

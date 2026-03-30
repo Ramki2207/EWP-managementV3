@@ -514,8 +514,8 @@ const Projects = () => {
 
       // Role-based filtering for Montage users (skip for Annemieke and Sven)
       if (!isAnnemieke && currentUser?.role === 'montage') {
-        // Exception for Zouhair Taha, Ibrahim Abdalla, and Sven - can see all projects
-        if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Sven') {
+        // Exception for Sven - can see all projects
+        if (currentUser.username === 'Sven') {
           console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS`);
           // Skip the montage filtering - they can see all projects
         } else {
