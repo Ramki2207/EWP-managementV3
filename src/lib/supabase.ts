@@ -564,9 +564,8 @@ export const dataService = {
         query = query.eq('distributor_id', distributorId);
       }
       if (folder) {
-        // Match folder and all its subfolders (e.g., "Verdeler aanzicht" includes "Verdeler aanzicht/Actueel")
-        // This uses the PostgreSQL OR condition to match both exact folder and subfolders
-        query = query.or(`folder.eq.${folder},folder.like.${folder}/%`);
+        // Match exact folder only (subfolders are loaded separately in DocumentViewer)
+        query = query.eq('folder', folder);
       }
 
       const { data, error } = await query.limit(100); // Increased limit now that we have indexes
