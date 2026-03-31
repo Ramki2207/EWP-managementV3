@@ -232,40 +232,13 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
         throw new Error('Missing required parameters for document loading');
       }
       
-      // Load documents from main folder AND subfolders for revision-managed folders
-      let allDocuments: Document[] = [];
-      
-      // Always load main folder documents
-      const mainFolderDocs = await dataService.getDocuments(projectId, distributorId, folder);
-      console.log('📁 LOAD: Main folder documents:', mainFolderDocs?.length || 0);
-      allDocuments.push(...(mainFolderDocs || []));
-      
-      // For revision-managed folders, also load subfolder documents
-      if (REVISION_MANAGED_FOLDERS.includes(folder)) {
-        console.log('📁 LOAD: Loading subfolder documents for revision-managed folder...');
-        
-        try {
-          const actueleDocuments = await dataService.getDocuments(projectId, distributorId, `${folder}/Actueel`);
-          console.log('📁 LOAD: Actueel subfolder documents:', actueleDocuments?.length || 0);
-          allDocuments.push(...(actueleDocuments || []));
-        } catch (error) {
-          console.log('📁 LOAD: No Actueel subfolder or error loading:', error.message);
-        }
-        
-        try {
-          const historieDocuments = await dataService.getDocuments(projectId, distributorId, `${folder}/Historie`);
-          console.log('📁 LOAD: Historie subfolder documents:', historieDocuments?.length || 0);
-          allDocuments.push(...(historieDocuments || []));
-        } catch (error) {
-          console.log('📁 LOAD: No Historie subfolder or error loading:', error.message);
-        }
-      }
-      
-      console.log('📁 LOAD: Total documents loaded:', allDocuments.length);
-      console.log('📁 LOAD: Document folders:', allDocuments.map(d => d.folder));
+      // Load documents from folder (includes subfolders automatically via query)
+      const allDocuments = await dataService.getDocuments(projectId, distributorId, folder);
+      console.log('📁 LOAD: Documents loaded:', allDocuments?.length || 0);
+      console.log('📁 LOAD: Document folders:', allDocuments?.map(d => d.folder) || []);
 
       // Preload public URLs for storage-based documents
-      const documentsWithUrls = allDocuments.map(doc => {
+      const documentsWithUrls = (allDocuments || []).map(doc => {
         if (doc.storage_path && !doc.content) {
           // Generate public URL immediately for fast preview
           return {
