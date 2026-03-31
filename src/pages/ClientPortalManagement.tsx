@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Globe, Eye, Copy, Calendar, Package, Users, Mail,
-  ExternalLink, Trash2, RefreshCw, AlertTriangle, CheckCircle, X as CloseIcon,
-  Clock, Truck, MapPin, Search, Filter, FolderOpen, Edit
-} from 'lucide-react';
+import { Globe, Eye, Copy, Calendar, Package, Users, Mail, ExternalLink, Trash2, RefreshCw, AlertTriangle, CheckCircle, X as CloseIcon, Clock, Truck, MapPin, Search, Filter, FolderOpen, FileEdit as Edit } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clientPortalService } from '../lib/clientPortalService';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
@@ -223,6 +219,23 @@ const ClientPortalManagement = () => {
       toast.error('Er is een fout opgetreden bij het bijwerken van de mappen');
     }
   };
+
+  const handleStatusChange = async (portalId: string, newStatus: string) => {
+    if (!hasPermission('client_portals', 'update')) {
+      toast.error('Je hebt geen toestemming om de portal status te wijzigen');
+      return;
+    }
+
+    try {
+      await clientPortalService.updateDeliveryStatus(portalId, newStatus);
+      await loadPortals();
+      toast.success('Portal status bijgewerkt!');
+    } catch (error) {
+      console.error('Error updating portal status:', error);
+      toast.error('Er is een fout opgetreden bij het bijwerken van de status');
+    }
+  };
+
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'preparing':
@@ -394,9 +407,18 @@ const ClientPortalManagement = () => {
                     <td className="py-4">
                       <div className="flex items-center space-x-2">
                         <StatusIcon size={16} className={statusInfo.color} />
-                        <span className={`px-3 py-1 rounded-full text-sm ${statusInfo.bg} ${statusInfo.color}`}>
-                          {statusInfo.label}
-                        </span>
+                        <select
+                          value={portal.delivery_status}
+                          onChange={(e) => handleStatusChange(portal.id, e.target.value)}
+                          className={`px-3 py-1 rounded-full text-sm ${statusInfo.bg} ${statusInfo.color} bg-[#1E2530] border border-gray-600 hover:border-gray-500 cursor-pointer transition-colors`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <option value="preparing">Wordt voorbereid</option>
+                          <option value="ready">Gereed</option>
+                          <option value="in_transit">Onderweg</option>
+                          <option value="delivered">Geleverd</option>
+                          <option value="completed">Voltooid</option>
+                        </select>
                       </div>
                     </td>
                     <td className="py-4 text-gray-300">

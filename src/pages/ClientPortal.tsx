@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import {
   Lock, Eye, Download, Calendar, Package,
   AlertTriangle, FileText, Server, Building, User, Mail, Phone,
-  Folder, ChevronRight, ChevronDown, X, ExternalLink
+  Folder, ChevronRight, ChevronDown, X, ExternalLink, CheckCircle,
+  Truck, MapPin, Clock
 } from 'lucide-react';
 import { clientPortalService } from '../lib/clientPortalService';
 import { dataService, supabase } from '../lib/supabase';
@@ -407,20 +408,20 @@ const ClientPortal = () => {
     }
   };
 
-  const getDeliveryStatusLabel = (status: string) => {
+  const getDeliveryStatusInfo = (status: string) => {
     switch (status) {
       case 'preparing':
-        return 'Wordt voorbereid';
+        return { label: 'Wordt voorbereid', color: 'text-blue-400', icon: Package };
       case 'ready':
-        return 'Gereed voor facturatie';
+        return { label: 'Gereed', color: 'text-green-400', icon: CheckCircle };
       case 'in_transit':
-        return 'Onderweg';
+        return { label: 'Onderweg', color: 'text-yellow-400', icon: Truck };
       case 'delivered':
-        return 'Geleverd';
+        return { label: 'Geleverd', color: 'text-purple-400', icon: MapPin };
       case 'completed':
-        return 'Voltooid';
+        return { label: 'Voltooid', color: 'text-gray-400', icon: CheckCircle };
       default:
-        return 'Onbekend';
+        return { label: 'Onbekend', color: 'text-gray-400', icon: Clock };
     }
   };
 
@@ -509,10 +510,18 @@ const ClientPortal = () => {
             </div>
             <div className="text-right">
               <div className="flex items-center space-x-2 mb-1">
-                <Package size={16} className="text-green-400" />
-                <span className="font-medium text-green-400">
-                  {getDeliveryStatusLabel(portalData?.delivery_status || 'ready')}
-                </span>
+                {(() => {
+                  const statusInfo = getDeliveryStatusInfo(portalData?.delivery_status || 'ready');
+                  const StatusIcon = statusInfo.icon;
+                  return (
+                    <>
+                      <StatusIcon size={16} className={statusInfo.color} />
+                      <span className={`font-medium ${statusInfo.color}`}>
+                        {statusInfo.label}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
               <p className="text-sm text-gray-400">
                 Toegang: <span className="text-blue-400 font-medium">Onbeperkt</span>
