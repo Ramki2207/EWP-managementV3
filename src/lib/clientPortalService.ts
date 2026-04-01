@@ -210,10 +210,41 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
       // Get email - prioritize project contact person email, fallback to client email
       let recipientEmail = null;
 
-      // First, try to get the contact person email from the project
+      // First, try to get the contact person email directly from the project
       if (project.contactpersoon_email) {
         recipientEmail = project.contactpersoon_email;
         console.log('Using project contact person email:', recipientEmail);
+      }
+
+      // If no direct email, try to find it in the client's contacts by matching the contact person name
+      if (!recipientEmail && portal.client_id && project.contactpersoon) {
+        const { data: client, error: clientError } = await supabase
+          .from('clients')
+          .select('contacts')
+          .eq('id', portal.client_id)
+          .maybeSingle();
+
+        if (clientError) {
+          console.error('Error fetching client contacts:', clientError);
+        } else if (client?.contacts && Array.isArray(client.contacts)) {
+          // Look for a contact that matches the contact person name (case-insensitive)
+          const contactPerson = client.contacts.find((contact: any) => {
+            const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim().toLowerCase();
+            const firstName = (contact.first_name || '').toLowerCase();
+            const lastName = (contact.last_name || '').toLowerCase();
+            const searchName = (project.contactpersoon || '').toLowerCase();
+
+            // Match full name, first name, or last name
+            return fullName === searchName ||
+                   firstName === searchName ||
+                   lastName === searchName;
+          });
+
+          if (contactPerson?.email) {
+            recipientEmail = contactPerson.email;
+            console.log('Found contact person email from client contacts:', recipientEmail);
+          }
+        }
       }
 
       // If no contact person email, try to get client email
