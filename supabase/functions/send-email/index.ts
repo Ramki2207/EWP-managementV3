@@ -116,9 +116,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Fallback: Use SMTP2GO API (another simple email API)
-    const SMTP2GO_API_KEY = Deno.env.get("SMTP2GO_API_KEY");
-
+    // Fallback: Use SMTP2GO API
     if (SMTP2GO_API_KEY) {
       const response = await fetch("https://api.smtp2go.com/v3/email/send", {
         method: "POST",
