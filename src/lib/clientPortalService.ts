@@ -40,8 +40,8 @@ class ClientPortalService {
   // Generate portal URL
   generatePortalUrl(accessCode: string): string {
     // Use production URL for portal links
-    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer') 
-      ? 'https://ewp-management.nl' 
+    const baseUrl = window.location.hostname === 'localhost' || window.location.hostname.includes('webcontainer')
+      ? 'https://ewpgroep.nl'
       : window.location.origin;
     return `${baseUrl}/client-portal/${accessCode}`;
   }
