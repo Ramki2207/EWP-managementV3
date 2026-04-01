@@ -218,31 +218,38 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       // If no direct email, try to find it in the client's contacts by matching the contact person name
       if (!recipientEmail && portal.client_id && project.contactpersoon) {
-        const { data: client, error: clientError } = await supabase
-          .from('clients')
-          .select('contacts')
-          .eq('id', portal.client_id)
-          .maybeSingle();
+        const { data: contacts, error: contactsError } = await supabase
+          .from('contacts')
+          .select('first_name, last_name, email')
+          .eq('client_id', portal.client_id);
 
-        if (clientError) {
-          console.error('Error fetching client contacts:', clientError);
-        } else if (client?.contacts && Array.isArray(client.contacts)) {
-          // Look for a contact that matches the contact person name (case-insensitive)
-          const contactPerson = client.contacts.find((contact: any) => {
-            const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim().toLowerCase();
-            const firstName = (contact.first_name || '').toLowerCase();
-            const lastName = (contact.last_name || '').toLowerCase();
-            const searchName = (project.contactpersoon || '').toLowerCase();
+        if (contactsError) {
+          console.error('Error fetching client contacts:', contactsError);
+        } else if (contacts && Array.isArray(contacts)) {
+          // Look for a contact that matches the contact person name (case-insensitive and punctuation-insensitive)
+          const normalizeString = (str: string) => str.toLowerCase().replace(/[.\s]/g, '');
+
+          const contactPerson = contacts.find((contact: any) => {
+            const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+            const firstName = contact.first_name || '';
+            const lastName = contact.last_name || '';
+            const searchName = project.contactpersoon || '';
+
+            // Normalize all strings for comparison (remove spaces and periods)
+            const normalizedFullName = normalizeString(fullName);
+            const normalizedFirstName = normalizeString(firstName);
+            const normalizedLastName = normalizeString(lastName);
+            const normalizedSearch = normalizeString(searchName);
 
             // Match full name, first name, or last name
-            return fullName === searchName ||
-                   firstName === searchName ||
-                   lastName === searchName;
+            return normalizedFullName === normalizedSearch ||
+                   normalizedFirstName === normalizedSearch ||
+                   normalizedLastName === normalizedSearch;
           });
 
           if (contactPerson?.email) {
             recipientEmail = contactPerson.email;
-            console.log('Found contact person email from client contacts:', recipientEmail);
+            console.log('Found contact person email from contacts table:', recipientEmail);
           }
         }
       }
