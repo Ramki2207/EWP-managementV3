@@ -1641,6 +1641,10 @@ const VerdelerDetails = () => {
                         setShowLeveringChecklist(false);
                         loadDistributor();
                         toast.success('Levering checklist opgeslagen!');
+                        // Close the verdeler details page after saving the checklist
+                        setTimeout(() => {
+                          handleBackNavigation();
+                        }, 500);
                       }}
                     />
                   </div>
