@@ -207,17 +207,24 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (portalError) throw portalError;
 
+      // Helper function to validate email format
+      const isValidEmail = (email: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email?.trim());
+      };
+
       // Get email - prioritize project contact person email, fallback to client email
       let recipientEmail = null;
 
-      // First, try to get the contact person email directly from the project
-      if (project.contactpersoon_email) {
+      // First, try to get the contact person email directly from the project (with validation)
+      if (project.contactpersoon_email && isValidEmail(project.contactpersoon_email)) {
         recipientEmail = project.contactpersoon_email;
         console.log('Using project contact person email:', recipientEmail);
       }
 
       // If no direct email, try to find it in the client's contacts by matching the contact person name
-      if (!recipientEmail && portal.client_id && project.contactpersoon) {
+      const contactPersonName = project.contactpersoon || project.contact_person;
+      if (!recipientEmail && portal.client_id && contactPersonName) {
         const { data: contacts, error: contactsError } = await supabase
           .from('contacts')
           .select('first_name, last_name, email')
@@ -233,13 +240,12 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
             const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
             const firstName = contact.first_name || '';
             const lastName = contact.last_name || '';
-            const searchName = project.contactpersoon || '';
 
             // Normalize all strings for comparison (remove spaces and periods)
             const normalizedFullName = normalizeString(fullName);
             const normalizedFirstName = normalizeString(firstName);
             const normalizedLastName = normalizeString(lastName);
-            const normalizedSearch = normalizeString(searchName);
+            const normalizedSearch = normalizeString(contactPersonName);
 
             // Match full name, first name, or last name
             return normalizedFullName === normalizedSearch ||
