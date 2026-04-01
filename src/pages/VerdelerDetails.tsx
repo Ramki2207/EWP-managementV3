@@ -542,6 +542,9 @@ const VerdelerDetails = () => {
           kastNaam: editedDistributor.kast_naam,
           systeem: editedDistributor.systeem,
           voeding: editedDistributor.voeding,
+          stuurspanning: editedDistributor.stuurspanning,
+          kaWaarde: editedDistributor.ka_waarde,
+          ipWaarde: editedDistributor.ip_waarde || '65',
           bouwjaar: editedDistributor.bouwjaar,
           keuringDatum: editedDistributor.keuring_datum,
           getestDoor: editedDistributor.getest_door,
@@ -618,6 +621,9 @@ const VerdelerDetails = () => {
         kastNaam: editedDistributor.kast_naam,
         systeem: editedDistributor.systeem,
         voeding: editedDistributor.voeding,
+        stuurspanning: editedDistributor.stuurspanning,
+        kaWaarde: editedDistributor.ka_waarde,
+        ipWaarde: editedDistributor.ip_waarde || '65',
         bouwjaar: editedDistributor.bouwjaar,
         keuringDatum: editedDistributor.keuring_datum,
         getestDoor: editedDistributor.getest_door,
@@ -1127,6 +1133,54 @@ const VerdelerDetails = () => {
                     ) : (
                       <div className="input-field">
                         {distributor.bouwjaar || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">kA Waarde</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.ka_waarde || ''}
+                        onChange={(e) => handleInputChange('ka_waarde', e.target.value)}
+                        placeholder="Bijv. 25"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.ka_waarde || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">IP-Waarde</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.ip_waarde || ''}
+                        onChange={(e) => handleInputChange('ip_waarde', e.target.value)}
+                        placeholder="Bijv. 65"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.ip_waarde || "-"}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Stuurspanning</label>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editedDistributor?.stuurspanning || ''}
+                        onChange={(e) => handleInputChange('stuurspanning', e.target.value)}
+                        placeholder="Bijv. 230V AC"
+                      />
+                    ) : (
+                      <div className="input-field">
+                        {distributor.stuurspanning || "-"}
                       </div>
                     )}
                   </div>
