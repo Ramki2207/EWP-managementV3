@@ -207,10 +207,17 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (portalError) throw portalError;
 
-      // Get client email - use client_id from portal if available, otherwise find by name
-      let clientEmail = null;
+      // Get email - prioritize project contact person email, fallback to client email
+      let recipientEmail = null;
 
-      if (portal.client_id) {
+      // First, try to get the contact person email from the project
+      if (project.contactpersoon_email) {
+        recipientEmail = project.contactpersoon_email;
+        console.log('Using project contact person email:', recipientEmail);
+      }
+
+      // If no contact person email, try to get client email
+      if (!recipientEmail && portal.client_id) {
         const { data: client, error: clientError } = await supabase
           .from('clients')
           .select('email, name')
@@ -220,12 +227,13 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
         if (clientError) {
           console.error('Error fetching client email by ID:', clientError);
         } else if (client?.email) {
-          clientEmail = client.email;
+          recipientEmail = client.email;
+          console.log('Using client email from client_id:', recipientEmail);
         }
       }
 
-      // If no email found via client_id, try finding by name
-      if (!clientEmail) {
+      // If still no email, try finding client by name
+      if (!recipientEmail) {
         const { data: clients, error: clientError } = await supabase
           .from('clients')
           .select('email, name')
@@ -236,12 +244,13 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
         if (clientError) {
           console.error('Error fetching client email by name:', clientError);
         } else if (clients?.email) {
-          clientEmail = clients.email;
+          recipientEmail = clients.email;
+          console.log('Using client email from client name:', recipientEmail);
         }
       }
 
-      if (!clientEmail) {
-        throw new Error('Klant heeft geen email adres ingesteld. Voeg eerst een email adres toe aan de klant.');
+      if (!recipientEmail) {
+        throw new Error('Geen email adres gevonden. Voeg een email adres toe aan de contactpersoon van het project of aan de klant.');
       }
 
       const emailTemplate = this.generateEmailTemplate(project, portal, verdelers, customDeliveryDate);
@@ -263,7 +272,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
           'Authorization': `Bearer ${supabaseAnonKey}`,
         },
         body: JSON.stringify({
-          to: clientEmail,
+          to: recipientEmail,
           subject: emailSubject,
           html: `
             <!DOCTYPE html>
@@ -328,7 +337,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
 
       if (updateError) throw updateError;
 
-      console.log('Delivery notification sent successfully to:', clientEmail);
+      console.log('Delivery notification sent successfully to:', recipientEmail);
 
     } catch (error) {
       console.error('Error sending delivery notification:', error);
