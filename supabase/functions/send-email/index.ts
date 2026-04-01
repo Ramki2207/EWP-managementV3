@@ -40,6 +40,26 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    // Validate and clean email address
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanedEmail = emailData.to.trim();
+
+    // Check if email is valid
+    if (!cleanedEmail || !emailRegex.test(cleanedEmail)) {
+      return new Response(
+        JSON.stringify({
+          error: `Invalid email address format: "${emailData.to}". Expected format: email@example.com`
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     // Get email service configuration from environment
     const FROM_EMAIL = Deno.env.get("FROM_EMAIL");
     const FROM_NAME = Deno.env.get("FROM_NAME") || "EWP Paneelbouw";
@@ -87,7 +107,7 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           from: `${FROM_NAME} <${FROM_EMAIL}>`,
-          to: [emailData.to],
+          to: [cleanedEmail],
           subject: emailData.subject,
           html: emailData.html,
         }),
@@ -125,7 +145,7 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({
           api_key: SMTP2GO_API_KEY,
-          to: [emailData.to],
+          to: [cleanedEmail],
           sender: FROM_EMAIL,
           subject: emailData.subject,
           html_body: emailData.html,
