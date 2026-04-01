@@ -290,8 +290,12 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
       // Get only selected verdelers for the email
       const selectedVerdelers = allVerdelers.filter((v: any) => selectedVerdelerIds.includes(v.id));
 
+      console.log('Sending notification with verdelers:', selectedVerdelers.length);
+
       // Send the notification via email
       await clientPortalService.sendDeliveryNotification(portal.id, project, selectedVerdelers, deliveryDate);
+
+      console.log('Email sent successfully, updating project status...');
 
       // Update project status to "Opgeleverd" when notification is sent
       await dataService.updateProject(project.id, {
@@ -299,17 +303,29 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
         status: 'Opgeleverd' // Automatically set to delivered when notification is sent
       });
 
+      console.log('Project status updated, preparing success modal...');
+
       toast.dismiss(loadingToast);
-      toast.success('Email succesvol verzonden naar klant!');
 
       // Store info for success modal
-      setSentEmailInfo({
+      const emailInfo = {
         recipient: project.contactpersoon || project.contact_person || project.client,
         verdelerCount: selectedVerdelers.length
-      });
+      };
 
+      console.log('Setting email info:', emailInfo);
+      setSentEmailInfo(emailInfo);
+
+      console.log('Closing preview and showing success modal...');
       setShowPreview(false);
-      setShowSuccessModal(true);
+
+      // Use setTimeout to ensure state updates properly
+      setTimeout(() => {
+        setShowSuccessModal(true);
+        console.log('Success modal should now be visible');
+      }, 100);
+
+      toast.success('Email succesvol verzonden naar klant!');
 
       if (onStatusChange) {
         onStatusChange();
@@ -882,7 +898,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
                     <Mail size={18} className="text-green-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-400">Verzonden naar</p>
-                      <p className="text-white font-medium">{sentEmailInfo.recipient}</p>
+                      <p className="text-white font-medium">{sentEmailInfo.recipient || 'Klant'}</p>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">
