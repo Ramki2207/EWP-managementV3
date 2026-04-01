@@ -45,6 +45,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
   const [showFolderSelection, setShowFolderSelection] = useState(false);
   const [showVerdelerSelection, setShowVerdelerSelection] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [portal, setPortal] = useState<any>(null);
   const [emailTemplate, setEmailTemplate] = useState('');
@@ -57,6 +58,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
     'Installatie schema'
   ]);
   const [selectedProjectFolders, setSelectedProjectFolders] = useState<string[]>([]);
+  const [sentEmailInfo, setSentEmailInfo] = useState<{ recipient: string; verdelerCount: number } | null>(null);
 
   const handleGenerateDeliveryNotification = async () => {
     try {
@@ -299,7 +301,15 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
 
       toast.dismiss(loadingToast);
       toast.success('Email succesvol verzonden naar klant!');
+
+      // Store info for success modal
+      setSentEmailInfo({
+        recipient: project.contactpersoon || project.contact_person || project.client,
+        verdelerCount: selectedVerdelers.length
+      });
+
       setShowPreview(false);
+      setShowSuccessModal(true);
 
       if (onStatusChange) {
         onStatusChange();
@@ -845,6 +855,64 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && sentEmailInfo && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-2xl p-8 max-w-md w-full">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle size={32} className="text-white" />
+              </div>
+
+              {/* Success Title */}
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Email Verzonden!
+              </h2>
+
+              {/* Success Details */}
+              <div className="bg-[#2A303C]/50 rounded-xl p-4 mb-6 text-left">
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-3">
+                    <Mail size={18} className="text-green-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-400">Verzonden naar</p>
+                      <p className="text-white font-medium">{sentEmailInfo.recipient}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <Package size={18} className="text-green-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-400">Aantal verdelers</p>
+                      <p className="text-white font-medium">{sentEmailInfo.verdelerCount}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle size={18} className="text-green-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-400">Project status</p>
+                      <p className="text-white font-medium">Opgeleverd</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-gray-400 text-sm mb-6">
+                De klant heeft toegang tot het portal met de documenten en verdeler informatie.
+              </p>
+
+              {/* Close Button */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white px-6 py-3 rounded-xl shadow-lg transition-all"
+              >
+                Sluiten
+              </button>
             </div>
           </div>
         </div>
