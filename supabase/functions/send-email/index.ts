@@ -40,18 +40,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Get SMTP credentials from environment
-    const SMTP_HOST = Deno.env.get("SMTP_HOST");
-    const SMTP_PORT = Deno.env.get("SMTP_PORT") || "587";
-    const SMTP_USER = Deno.env.get("SMTP_USER");
-    const SMTP_PASS = Deno.env.get("SMTP_PASS");
+    // Get email service configuration from environment
     const FROM_EMAIL = Deno.env.get("FROM_EMAIL");
     const FROM_NAME = Deno.env.get("FROM_NAME") || "EWP Paneelbouw";
+    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    const SMTP2GO_API_KEY = Deno.env.get("SMTP2GO_API_KEY");
 
-    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !FROM_EMAIL) {
+    // Check if at least one email service is configured
+    if (!RESEND_API_KEY && !SMTP2GO_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: "Email configuration missing. Please contact administrator."
+          error: "Email service not configured. Please set up RESEND_API_KEY or SMTP2GO_API_KEY"
         }),
         {
           status: 500,
@@ -63,32 +62,20 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Use Deno's built-in fetch for SMTP via API (we'll use a simple SMTP service)
-    // For production, you'd use a proper email service like SendGrid, Mailgun, or Resend
-
-    // Since Deno doesn't have native SMTP support, we'll use a REST API approach
-    // We can use services like Resend which has a simple REST API
-
-    // For now, I'll implement a simple SMTP-over-HTTP solution
-    // In production, you should use a dedicated email service
-
-    const emailPayload = {
-      from: `${FROM_NAME} <${FROM_EMAIL}>`,
-      to: emailData.to,
-      subject: emailData.subject,
-      html: emailData.html,
-      text: emailData.text || emailData.html.replace(/<[^>]*>/g, ''),
-    };
-
-    // Using SMTP credentials directly with a basic auth fetch
-    // This is a simplified version - in production use proper email service
-    const authString = btoa(`${SMTP_USER}:${SMTP_PASS}`);
-
-    // For Gmail, Outlook, etc., we need to use their SMTP servers
-    // Since we can't use nodemailer directly in Deno, we'll create a workaround
-
-    // Alternative: Use Resend API if available
-    const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+    if (!FROM_EMAIL) {
+      return new Response(
+        JSON.stringify({
+          error: "FROM_EMAIL not configured. Please contact administrator."
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
 
     if (RESEND_API_KEY) {
       // Use Resend API
