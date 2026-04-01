@@ -1484,6 +1484,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
   const handleLeveringChecklistComplete = async () => {
     setShowLeveringChecklist(false);
     setVerdelerForLevering(null);
+    // Close the verdeler details window
+    setShowVerdelerDetails(false);
+    setSelectedVerdeler(null);
     // Reload verdelers to get updated status
     await loadVerdelersFromDatabase();
 
