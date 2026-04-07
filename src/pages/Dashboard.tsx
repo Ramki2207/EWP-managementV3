@@ -403,10 +403,10 @@ const Dashboard = () => {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical': return 'border-red-500 bg-red-900/20';
-      case 'high': return 'border-orange-500 bg-orange-900/20';
-      case 'medium': return 'border-yellow-500 bg-yellow-900/20';
-      default: return 'border-blue-500 bg-blue-900/20';
+      case 'critical': return 'border-red-500/30 bg-red-950/20';
+      case 'high': return 'border-orange-500/30 bg-orange-950/20';
+      case 'medium': return 'border-yellow-500/30 bg-yellow-950/20';
+      default: return 'border-sky-500/30 bg-sky-950/20';
     }
   };
 
@@ -415,17 +415,17 @@ const Dashboard = () => {
       case 'critical': return 'bg-red-500';
       case 'high': return 'bg-orange-500';
       case 'medium': return 'bg-yellow-500';
-      default: return 'bg-blue-500';
+      default: return 'bg-sky-500';
     }
   };
 
   const getUrgencyColor = (urgency: DeadlineItem['urgency']) => {
     switch (urgency) {
-      case 'overdue': return 'border-red-500 bg-red-900/30';
-      case 'today': return 'border-orange-500 bg-orange-900/30';
-      case 'this_week': return 'border-yellow-500 bg-yellow-900/30';
-      case 'this_month': return 'border-blue-500 bg-blue-900/30';
-      default: return 'border-gray-500 bg-gray-900/30';
+      case 'overdue': return 'border-red-500/30 bg-red-950/20';
+      case 'today': return 'border-orange-500/30 bg-orange-950/20';
+      case 'this_week': return 'border-yellow-500/30 bg-yellow-950/20';
+      case 'this_month': return 'border-sky-500/30 bg-sky-950/20';
+      default: return 'border-slate-600/30 bg-slate-800/30';
     }
   };
 
@@ -434,8 +434,8 @@ const Dashboard = () => {
       case 'overdue': return 'bg-red-500';
       case 'today': return 'bg-orange-500';
       case 'this_week': return 'bg-yellow-500';
-      case 'this_month': return 'bg-blue-500';
-      default: return 'bg-gray-500';
+      case 'this_month': return 'bg-sky-500';
+      default: return 'bg-slate-500';
     }
   };
 
@@ -460,16 +460,16 @@ const Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'Offerte': 'bg-gray-500',
-      'Engineering': 'bg-blue-500',
+      'Offerte': 'bg-slate-500',
+      'Engineering': 'bg-sky-500',
       'Productie': 'bg-yellow-500',
       'Testen': 'bg-orange-500',
       'Afgeleverd': 'bg-green-500',
-      'Voltooid': 'bg-gray-400',
+      'Voltooid': 'bg-slate-400',
       'On Hold': 'bg-red-500',
       'Wacht op onderdelen': 'bg-red-400'
     };
-    return colors[status] || 'bg-gray-500';
+    return colors[status] || 'bg-slate-500';
   };
 
   const handleProjectClick = (projectNumber: string) => {
@@ -500,7 +500,7 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-gray-900">
+      <div className="flex h-screen bg-[#0f1c2e]">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-white">Laden...</div>
@@ -510,32 +510,32 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-900">
+    <div className="flex h-screen bg-[#0f1c2e]">
       <Sidebar />
 
       <div className="flex-1 overflow-y-auto">
-        {/* Enhanced Hero Top Banner */}
-        <div className="sticky top-0 z-10 bg-gradient-to-br from-cyan-600 via-blue-700 to-blue-900 shadow-2xl">
-          <div className="px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
+        {/* Navy Blue Professional Header */}
+        <div className="sticky top-0 z-10 bg-[#1e3a5f] border-b border-slate-700/50">
+          <div className="px-8 py-5">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex-1">
-                <h1 className="text-4xl font-black text-white mb-2 tracking-tight">
+                <h1 className="text-3xl font-bold text-white mb-1">
                   Dashboard Overzicht
                 </h1>
-                <p className="text-cyan-100 text-lg font-medium">
-                  Welkom terug, <span className="text-white font-bold">{currentUser?.username}</span>
-                  <span className="mx-2">•</span>
-                  <span className="text-cyan-200">{new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <p className="text-slate-300 text-sm">
+                  Welkom terug, <span className="text-white font-semibold">{currentUser?.username}</span>
+                  <span className="mx-2 text-slate-400">•</span>
+                  <span className="text-slate-400">{new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
                 {testNotifications.length > 0 && (
                   <div className="relative">
-                    <button className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl transition-all hover:scale-105">
-                      <Bell size={24} />
+                    <button className="p-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg transition-colors">
+                      <Bell size={20} />
                     </button>
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                       {testNotifications.length}
                     </span>
                   </div>
@@ -543,80 +543,80 @@ const Dashboard = () => {
 
                 <button
                   onClick={() => navigate('/create-project')}
-                  className="flex items-center gap-3 px-8 py-3 bg-white text-blue-700 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg font-semibold transition-colors"
                 >
-                  <Plus size={24} strokeWidth={3} />
+                  <Plus size={18} />
                   Nieuw Project
                 </button>
 
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold shadow-xl hover:scale-105 transition-all"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg font-medium transition-colors"
                 >
-                  <LogOut size={20} />
+                  <LogOut size={18} />
                   Uitloggen
                 </button>
               </div>
             </div>
 
-            {/* Mini Stats in Header */}
-            <div className="grid grid-cols-5 gap-3">
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Target className="text-cyan-200" size={18} />
-                  <span className="text-xs text-cyan-200 font-medium">Actief</span>
+            {/* KPI Cards Row */}
+            <div className="grid grid-cols-5 gap-4 mb-5">
+              <div className="bg-[#2a4a6f] rounded-lg p-4 border border-slate-600/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="text-sky-400" size={18} />
+                  <span className="text-xs text-slate-300 font-medium">Actieve Projecten</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{kpiData.totalActiveProjects}</div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle2 className="text-green-300" size={18} />
-                  <span className="text-xs text-green-200 font-medium">On Track</span>
+              <div className="bg-[#2a4a6f] rounded-lg p-4 border border-slate-600/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="text-green-400" size={18} />
+                  <span className="text-xs text-slate-300 font-medium">On Track</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{kpiData.projectsOnTrack}%</div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="text-orange-300" size={18} />
-                  <span className="text-xs text-orange-200 font-medium">At Risk</span>
+              <div className="bg-[#2a4a6f] rounded-lg p-4 border border-slate-600/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="text-orange-400" size={18} />
+                  <span className="text-xs text-slate-300 font-medium">At Risk</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{kpiData.projectsAtRisk}</div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="text-red-300" size={18} />
-                  <span className="text-xs text-red-200 font-medium">Te Laat</span>
+              <div className="bg-[#2a4a6f] rounded-lg p-4 border border-slate-600/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="text-red-400" size={18} />
+                  <span className="text-xs text-slate-300 font-medium">Te Laat</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{kpiData.overdueTasks}</div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                <div className="flex items-center gap-2 mb-1">
-                  <Wrench className="text-yellow-300" size={18} />
-                  <span className="text-xs text-yellow-200 font-medium">Monteurs</span>
+              <div className="bg-[#2a4a6f] rounded-lg p-4 border border-slate-600/30">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wrench className="text-yellow-400" size={18} />
+                  <span className="text-xs text-slate-300 font-medium">Actieve Monteurs</span>
                 </div>
                 <div className="text-2xl font-bold text-white">{monteurWorkloads.length}</div>
               </div>
             </div>
 
-            {/* Quick Filters Row */}
-            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/20">
+            {/* Quick Filters */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all border border-white/20"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-lg transition-colors text-sm"
               >
-                <Filter size={18} />
+                <Filter size={16} />
                 Filters
-                {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
 
               <select
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value)}
-                className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="px-4 py-2 bg-slate-700/50 text-white rounded-lg border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
               >
                 <option value="all">Alle Locaties</option>
                 {AVAILABLE_LOCATIONS.map(loc => (
@@ -629,7 +629,7 @@ const Dashboard = () => {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="px-4 py-2 bg-slate-700/50 text-white rounded-lg border border-slate-600/30 focus:outline-none focus:ring-2 focus:ring-sky-500/50 text-sm"
                   >
                     <option value="all">Alle Statussen</option>
                     <option value="Offerte">Offerte</option>
@@ -640,17 +640,6 @@ const Dashboard = () => {
                     <option value="On Hold">On Hold</option>
                     <option value="Wacht op onderdelen">Wacht op onderdelen</option>
                   </select>
-
-                  <select
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                    className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  >
-                    <option value="all">Alle Locaties</option>
-                    {AVAILABLE_LOCATIONS.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
                 </>
               )}
             </div>
@@ -658,25 +647,25 @@ const Dashboard = () => {
         </div>
 
         <div className="p-8 max-w-[1800px] mx-auto">
-          {/* Test Review Compact Widget */}
+          {/* Test Review Widget */}
           {testNotifications.length > 0 && (
             <div className="mb-8">
-              <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-700/50 rounded-xl p-4 shadow-lg">
+              <div className="bg-[#2a4a6f] border border-slate-600/30 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-purple-500 p-2 rounded-lg">
+                    <div className="bg-sky-500 p-2 rounded-lg">
                       <Bell className="text-white" size={20} />
                     </div>
                     <div>
                       <h3 className="text-white font-semibold">Test Ter Controle</h3>
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm text-slate-400">
                         {testNotifications.length} test{testNotifications.length !== 1 ? 's' : ''} wachten op goedkeuring
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowTestWidget(!showTestWidget)}
-                    className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors"
                   >
                     {showTestWidget ? (
                       <>
@@ -693,24 +682,24 @@ const Dashboard = () => {
                 </div>
 
                 {showTestWidget && (
-                  <div className="mt-4 pt-4 border-t border-purple-700/50">
+                  <div className="mt-4 pt-4 border-t border-slate-600/30">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-80 overflow-y-auto">
                       {testNotifications.map((notif) => (
                         <div
                           key={notif.id}
                           onClick={() => handleTestNotificationClick(notif)}
-                          className="bg-gray-900/50 p-3 rounded-lg border border-purple-700/30 hover:border-purple-500 transition-colors cursor-pointer"
+                          className="bg-[#1e3a5f] p-3 rounded-lg border border-slate-600/30 hover:border-sky-500/50 transition-colors cursor-pointer"
                         >
                           <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                            <div className="w-2 h-2 bg-sky-400 rounded-full" />
                             <span className="text-white font-medium text-sm">{notif.project_number}</span>
                           </div>
                           {notif.kast_naam && (
-                            <div className="text-xs text-gray-400 mb-1">{notif.kast_naam}</div>
+                            <div className="text-xs text-slate-400 mb-1">{notif.kast_naam}</div>
                           )}
                           <div className="flex items-center justify-between">
-                            <span className="text-xs text-purple-400">{notif.worker_name}</span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-sky-400">{notif.worker_name}</span>
+                            <span className="text-xs text-slate-500">
                               {new Date(notif.created_at).toLocaleDateString('nl-NL')}
                             </span>
                           </div>
@@ -723,18 +712,18 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* NEW: Deadline Calendar & Monteur Overview Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Deadline Calendar & Monteur Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* Deadline Calendar */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 px-6 py-4 border-b border-blue-700/50">
+            <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-600/30">
                 <div className="flex items-center gap-3">
-                  <CalendarDays className="text-blue-400" size={24} />
+                  <CalendarDays className="text-sky-400" size={22} />
                   <div>
-                    <h2 className="text-xl font-bold text-white">Agenda & Deadlines</h2>
-                    <p className="text-sm text-gray-400">Aankomende deadlines en mijlpalen</p>
+                    <h2 className="text-lg font-bold text-white">Agenda & Deadlines</h2>
+                    <p className="text-xs text-slate-400">Aankomende deadlines en mijlpalen</p>
                   </div>
-                  <span className="ml-auto bg-blue-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                  <span className="ml-auto bg-slate-700 text-white text-xs px-2.5 py-1 rounded-full font-semibold">
                     {upcomingDeadlines.length}
                   </span>
                 </div>
@@ -743,7 +732,7 @@ const Dashboard = () => {
               <div className="p-4">
                 <div className="space-y-2 max-h-[500px] overflow-y-auto">
                   {upcomingDeadlines.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-slate-500">
                       <CalendarDays size={48} className="mx-auto mb-3 opacity-50" />
                       <p>Geen deadlines gevonden</p>
                     </div>
@@ -752,7 +741,7 @@ const Dashboard = () => {
                       <div
                         key={index}
                         onClick={() => handleProjectClick(item.project_number)}
-                        className={`flex items-start gap-3 p-3 rounded-lg border ${getUrgencyColor(item.urgency)} cursor-pointer hover:scale-[1.02] transition-transform`}
+                        className={`flex items-start gap-3 p-3 rounded-lg border ${getUrgencyColor(item.urgency)} cursor-pointer hover:border-sky-500/50 transition-all`}
                       >
                         <div className={`${getUrgencyBadge(item.urgency)} p-2 rounded-lg flex-shrink-0`}>
                           <Timer className="text-white" size={16} />
@@ -764,13 +753,13 @@ const Dashboard = () => {
                               {item.status}
                             </span>
                           </div>
-                          <div className="text-xs text-gray-400 mb-1 truncate">{item.description}</div>
+                          <div className="text-xs text-slate-400 mb-1 truncate">{item.description}</div>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-gray-500">
+                            <span className="text-slate-500">
                               {new Date(item.deadline).toLocaleDateString('nl-NL')}
                             </span>
-                            <span className="text-gray-600">•</span>
-                            <span className={item.urgency === 'overdue' ? 'text-red-400 font-semibold' : 'text-gray-400'}>
+                            <span className="text-slate-600">•</span>
+                            <span className={item.urgency === 'overdue' ? 'text-red-400 font-semibold' : 'text-slate-400'}>
                               {getUrgencyLabel(item)}
                             </span>
                           </div>
@@ -783,15 +772,15 @@ const Dashboard = () => {
             </div>
 
             {/* Monteur Workload Overview */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-900/40 to-yellow-900/40 px-6 py-4 border-b border-orange-700/50">
+            <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-600/30">
                 <div className="flex items-center gap-3">
-                  <Wrench className="text-orange-400" size={24} />
+                  <Wrench className="text-sky-400" size={22} />
                   <div>
-                    <h2 className="text-xl font-bold text-white">Monteur Capaciteit</h2>
-                    <p className="text-sm text-gray-400">Werkbelasting per monteur</p>
+                    <h2 className="text-lg font-bold text-white">Monteur Capaciteit</h2>
+                    <p className="text-xs text-slate-400">Werkbelasting per monteur</p>
                   </div>
-                  <span className="ml-auto bg-orange-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                  <span className="ml-auto bg-slate-700 text-white text-xs px-2.5 py-1 rounded-full font-semibold">
                     {monteurWorkloads.length}
                   </span>
                 </div>
@@ -800,7 +789,7 @@ const Dashboard = () => {
               <div className="p-4">
                 <div className="space-y-3 max-h-[500px] overflow-y-auto">
                   {monteurWorkloads.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-slate-500">
                       <Users size={48} className="mx-auto mb-3 opacity-50" />
                       <p>Geen monteurs met actieve taken</p>
                     </div>
@@ -808,29 +797,28 @@ const Dashboard = () => {
                     monteurWorkloads.map((workload, index) => (
                       <div
                         key={index}
-                        className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 hover:border-orange-500 transition-all"
+                        className="bg-[#1e3a5f] p-4 rounded-lg border border-slate-600/30 hover:border-sky-500/50 transition-all"
                       >
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
-                            <div className="bg-orange-600/20 p-2 rounded-lg">
-                              <User className="text-orange-400" size={18} />
+                            <div className="bg-sky-600/20 p-2 rounded-lg">
+                              <User className="text-sky-400" size={18} />
                             </div>
                             <div>
                               <h3 className="text-white font-semibold">{workload.name}</h3>
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-slate-500">
                                 {workload.activeProjects} project{workload.activeProjects !== 1 ? 'en' : ''}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-white">{workload.verdelers.length}</div>
-                            <div className="text-xs text-gray-500">verdelers</div>
+                            <div className="text-xs text-slate-500">verdelers</div>
                           </div>
                         </div>
 
-                        {/* Workload Bar */}
                         <div className="mb-2">
-                          <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div className="w-full bg-slate-700 rounded-full h-2">
                             <div
                               className={`h-2 rounded-full transition-all ${
                                 workload.verdelers.length > 10
@@ -844,25 +832,24 @@ const Dashboard = () => {
                           </div>
                         </div>
 
-                        {/* Top 3 Verdelers */}
                         <div className="space-y-1">
                           {workload.verdelers.slice(0, 3).map((v, idx) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between text-xs cursor-pointer hover:text-orange-400 transition-colors"
+                              className="flex items-center justify-between text-xs cursor-pointer hover:text-sky-400 transition-colors"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleProjectClick(v.project_number);
                               }}
                             >
-                              <span className="text-gray-400">{v.project_number} - {v.kast_naam}</span>
+                              <span className="text-slate-400">{v.project_number} - {v.kast_naam}</span>
                               <span className={`px-2 py-0.5 rounded ${getStatusColor(v.status)} text-white`}>
                                 {v.status}
                               </span>
                             </div>
                           ))}
                           {workload.verdelers.length > 3 && (
-                            <div className="text-xs text-gray-500 italic">
+                            <div className="text-xs text-slate-500 italic">
                               +{workload.verdelers.length - 3} meer...
                             </div>
                           )}
@@ -875,24 +862,24 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Urgent Actions Section */}
+          {/* Urgent Actions */}
           {urgentActions.length > 0 && (
             <div className="mb-8">
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-                <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 px-6 py-4 border-b border-red-700/50">
+              <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-600/30">
                   <div className="flex items-center gap-3">
-                    <AlertTriangle className="text-red-400" size={24} />
+                    <AlertTriangle className="text-orange-400" size={22} />
                     <div>
-                      <h2 className="text-xl font-bold text-white">Aandacht Vereist</h2>
-                      <p className="text-sm text-gray-400">Urgente acties en belangrijke updates</p>
+                      <h2 className="text-lg font-bold text-white">Aandacht Vereist</h2>
+                      <p className="text-xs text-slate-400">Urgente acties en belangrijke updates</p>
                     </div>
-                    <span className="ml-auto bg-red-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                    <span className="ml-auto bg-red-500 text-white text-xs px-2.5 py-1 rounded-full font-semibold">
                       {urgentActions.length}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
                     {urgentActions.map((item, index) => {
                       const Icon = item.icon;
@@ -900,7 +887,7 @@ const Dashboard = () => {
                         <div
                           key={index}
                           onClick={() => handleProjectClick(item.project_number)}
-                          className={`flex items-start gap-3 p-4 rounded-lg border ${getSeverityColor(item.severity)} cursor-pointer hover:scale-[1.02] transition-transform`}
+                          className={`flex items-start gap-3 p-4 rounded-lg border ${getSeverityColor(item.severity)} cursor-pointer hover:border-sky-500/50 transition-all`}
                         >
                           <div className={`${getSeverityBadge(item.severity)} p-2 rounded-lg flex-shrink-0`}>
                             <Icon className="text-white" size={18} />
@@ -908,11 +895,11 @@ const Dashboard = () => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <span className="text-white font-semibold">{item.project_number}</span>
-                              <span className="text-xs text-gray-500 truncate">{item.description}</span>
+                              <span className="text-xs text-slate-500 truncate">{item.description}</span>
                             </div>
-                            <div className="text-sm text-gray-300">{item.message}</div>
+                            <div className="text-sm text-slate-300">{item.message}</div>
                           </div>
-                          <ArrowRight className="text-gray-500 flex-shrink-0" size={18} />
+                          <ArrowRight className="text-slate-500 flex-shrink-0" size={18} />
                         </div>
                       );
                     })}
@@ -922,25 +909,25 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Two Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* LEFT: My Activity */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 px-6 py-4 border-b border-cyan-700/50">
+          {/* Activity & Recent Projects */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* My Activity */}
+            <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-600/30">
                 <div className="flex items-center gap-3">
-                  <User className="text-cyan-400" size={20} />
+                  <User className="text-sky-400" size={20} />
                   <div>
                     <h2 className="text-lg font-bold text-white">Mijn Activiteit</h2>
-                    <p className="text-xs text-gray-400">Projecten waar ik bij betrokken ben</p>
+                    <p className="text-xs text-slate-400">Projecten waar ik bij betrokken ben</p>
                   </div>
-                  <span className="ml-auto text-sm text-gray-400">{myActivity.length} items</span>
+                  <span className="ml-auto text-sm text-slate-400">{myActivity.length}</span>
                 </div>
               </div>
 
               <div className="p-4">
                 <div className="space-y-2 max-h-[600px] overflow-y-auto">
                   {myActivity.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-slate-500">
                       <Users size={48} className="mx-auto mb-3 opacity-50" />
                       <p>Geen activiteit gevonden</p>
                     </div>
@@ -951,11 +938,11 @@ const Dashboard = () => {
                         <div
                           key={index}
                           onClick={() => handleProjectClick(item.project_number)}
-                          className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 hover:border-cyan-500 transition-all cursor-pointer group"
+                          className="bg-[#1e3a5f] p-4 rounded-lg border border-slate-600/30 hover:border-sky-500/50 transition-all cursor-pointer"
                         >
                           <div className="flex items-start gap-3">
-                            <div className="bg-cyan-600/20 p-2 rounded-lg group-hover:bg-cyan-600/40 transition-colors">
-                              <Icon className="text-cyan-400" size={16} />
+                            <div className="bg-sky-600/20 p-2 rounded-lg">
+                              <Icon className="text-sky-400" size={16} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
@@ -964,10 +951,10 @@ const Dashboard = () => {
                                   {item.status}
                                 </span>
                               </div>
-                              <div className="text-sm text-gray-400 truncate mb-1">{item.description}</div>
-                              <div className="text-xs text-gray-500">{item.details}</div>
+                              <div className="text-sm text-slate-400 truncate mb-1">{item.description}</div>
+                              <div className="text-xs text-slate-500">{item.details}</div>
                               {item.deadline && (
-                                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
                                   <Calendar size={10} />
                                   {new Date(item.deadline).toLocaleDateString('nl-NL')}
                                 </div>
@@ -982,16 +969,16 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* RIGHT: Recent Projects */}
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 px-6 py-4 border-b border-blue-700/50">
+            {/* Recent Projects */}
+            <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-600/30">
                 <div className="flex items-center gap-3">
-                  <BarChart3 className="text-blue-400" size={20} />
+                  <BarChart3 className="text-sky-400" size={20} />
                   <div>
                     <h2 className="text-lg font-bold text-white">Recente Projecten</h2>
-                    <p className="text-xs text-gray-400">Laatst aangemaakte projecten</p>
+                    <p className="text-xs text-slate-400">Laatst aangemaakte projecten</p>
                   </div>
-                  <span className="ml-auto text-sm text-gray-400">{recentProjects.length} actief</span>
+                  <span className="ml-auto text-sm text-slate-400">{recentProjects.length}</span>
                 </div>
               </div>
 
@@ -1007,7 +994,7 @@ const Dashboard = () => {
                       <div
                         key={project.id}
                         onClick={() => handleProjectClick(project.project_number)}
-                        className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 hover:border-blue-500 transition-all cursor-pointer group"
+                        className="bg-[#1e3a5f] p-4 rounded-lg border border-slate-600/30 hover:border-sky-500/50 transition-all cursor-pointer"
                       >
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-white font-medium">{project.project_number}</span>
@@ -1015,25 +1002,25 @@ const Dashboard = () => {
                             {project.status}
                           </span>
                         </div>
-                        <div className="text-sm text-gray-400 mb-3 truncate">{project.description}</div>
+                        <div className="text-sm text-slate-400 mb-3 truncate">{project.description}</div>
 
                         <div className="mb-3">
-                          <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <div className="flex justify-between text-xs text-slate-500 mb-1">
                             <span>Voortgang</span>
                             <span>{progress}%</span>
                           </div>
-                          <div className="w-full bg-gray-700 rounded-full h-1.5">
+                          <div className="w-full bg-slate-700 rounded-full h-1.5">
                             <div
-                              className="bg-gradient-to-r from-cyan-500 to-blue-500 h-1.5 rounded-full transition-all"
+                              className="bg-sky-500 h-1.5 rounded-full transition-all"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">{openTasks} open taken</span>
+                          <span className="text-slate-500">{openTasks} open taken</span>
                           {project.deadline && (
-                            <span className="flex items-center gap-1 text-gray-500">
+                            <span className="flex items-center gap-1 text-slate-500">
                               <Calendar size={10} />
                               {new Date(project.deadline).toLocaleDateString('nl-NL')}
                             </span>
@@ -1047,10 +1034,10 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Organization Status Summary */}
-          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg p-6">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Activity className="text-cyan-400" size={24} />
+          {/* Organization Overview */}
+          <div className="bg-[#2a4a6f] rounded-xl border border-slate-600/30 p-6">
+            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+              <Activity className="text-sky-400" size={22} />
               Organisatie Overzicht
             </h2>
 
@@ -1061,12 +1048,12 @@ const Dashboard = () => {
                   return acc;
                 }, {})
               ).map(([status, count]) => (
-                <div key={status} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+                <div key={status} className="bg-[#1e3a5f] p-4 rounded-lg border border-slate-600/30 hover:border-slate-500/50 transition-colors">
                   <div className={`text-xs px-2 py-1 rounded ${getStatusColor(status)} text-white inline-block mb-3`}>
                     {status}
                   </div>
                   <div className="text-3xl font-bold text-white mb-1">{count as number}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-slate-500">
                     {Math.round(((count as number) / projects.length) * 100)}% van totaal
                   </div>
                 </div>
