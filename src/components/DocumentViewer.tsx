@@ -746,9 +746,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           <button
             onClick={(e) => {
               e.stopPropagation();
+              e.preventDefault();
               handleDownload(doc);
             }}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
             title="Download"
           >
             <Download size={20} className="text-gray-400 hover:text-white" />
@@ -832,63 +833,40 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
   };
 
-  const isMobileDevice = () => {
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  };
-
   const handleDownload = async (doc: Document) => {
     try {
       const content = await loadDocumentContent(doc);
 
-      if (!content) {
-        toast.error('Document inhoud niet beschikbaar');
-        return;
-      }
-
-      toast.loading('Bestand wordt gedownload...', { id: 'download' });
-
-      if (isMobileDevice()) {
-        if (content.startsWith('data:')) {
-          const byteString = atob(content.split(',')[1]);
-          const mimeString = content.split(',')[0].split(':')[1].split(';')[0];
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let i = 0; i < byteString.length; i++) {
-            ia[i] = byteString.charCodeAt(i);
-          }
-          const blob = new Blob([ab], { type: mimeString });
-          const blobUrl = URL.createObjectURL(blob);
-          window.open(blobUrl, '_blank');
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-        } else {
-          window.open(content, '_blank');
-        }
+      // Check if it's a base64 data URL or a regular URL
+      if (content.startsWith('data:')) {
+        // For base64 data URLs, we can download directly
+        const link = document.createElement('a');
+        link.href = content;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       } else {
-        if (content.startsWith('data:')) {
-          const link = document.createElement('a');
-          link.href = content;
-          link.download = doc.name;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          const response = await fetch(content);
-          if (!response.ok) {
-            throw new Error('Failed to fetch file');
-          }
+        // For storage URLs, fetch as blob to avoid CORS issues
+        toast.loading('Bestand wordt gedownload...', { id: 'download' });
 
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-
-          const link = document.createElement('a');
-          link.href = blobUrl;
-          link.download = doc.name;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+        const response = await fetch(content);
+        if (!response.ok) {
+          throw new Error('Failed to fetch file');
         }
+
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       }
 
       toast.success('Document gedownload!', { id: 'download' });

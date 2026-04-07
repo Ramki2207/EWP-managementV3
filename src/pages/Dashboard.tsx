@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Plus, LogOut, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, ChevronLeft, ChevronRight, Package } from 'lucide-react';
+import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
@@ -15,12 +15,10 @@ import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
-import NeedsAttentionBanner from '../components/dashboard/NeedsAttentionBanner';
-import MyTasksWidget from '../components/dashboard/MyTasksWidget';
-import ProjectOverviewWidget from '../components/dashboard/ProjectOverviewWidget';
-import KpiStrip from '../components/dashboard/KpiStrip';
-import PipelineBar from '../components/dashboard/PipelineBar';
-import RecentActivity from '../components/dashboard/RecentActivity';
+import {
+  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 
 interface Project {
   id: string;
@@ -66,6 +64,7 @@ const Dashboard = () => {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
     return localStorage.getItem('viewAsRole') || 'admin';
   });
@@ -79,7 +78,6 @@ const Dashboard = () => {
   });
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [agendaProjects, setAgendaProjects] = useState<any[]>([]);
-  const [phaseTab, setPhaseTab] = useState<string>('all');
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
@@ -863,9 +861,7 @@ const Dashboard = () => {
         }
       }
 
-      const matchesPhase = phaseTab === 'all' || project.status?.toLowerCase() === phaseTab.toLowerCase();
-
-      return matchesSearch && matchesStatus && matchesClient && matchesDate && matchesPhase;
+      return matchesSearch && matchesStatus && matchesClient && matchesDate;
     });
   };
 
@@ -974,144 +970,125 @@ const Dashboard = () => {
     <div className="page-container">
       <Toaster position="top-right" />
 
-      {/* Slim Header Bar */}
-      <div className="bg-[#1E2530] border border-gray-800/60 rounded-xl px-4 py-3 mb-5">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center space-x-3 min-w-0">
-            {profilePicture ? (
-              <img src={profilePicture} alt={username} className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/30 flex-shrink-0" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-blue-500/30 flex-shrink-0">
-                <span className="text-sm font-bold text-white">{username.charAt(0).toUpperCase()}</span>
+      {/* Enhanced Hero Section */}
+      <div className="relative overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-10 hidden md:block">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
+          <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        </div>
+
+        <div className="card mb-6 md:mb-8 relative">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
+            {/* Welcome Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
+              <div className="relative flex-shrink-0">
+                {profilePicture ? (
+                  <img
+                    src={profilePicture}
+                    alt={username}
+                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-4 ring-blue-500/30 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30 shadow-lg">
+                    <span className="text-xl md:text-2xl font-bold text-white">
+                      {username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-[#1E2530]"></div>
               </div>
-            )}
-            <div className="min-w-0">
-              <div className="flex items-center space-x-2">
-                <h1 className="text-sm font-semibold text-white truncate">{username}</h1>
-                <span className="text-xs text-gray-500 hidden sm:inline">
-                  {new Date().toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
-                </span>
+              <div className="flex-1">
+                <p className="text-gray-400 text-sm md:text-base mb-1">{(() => {
+                  const hour = new Date().getHours();
+                  if (hour >= 0 && hour <= 12) return 'Goedemorgen';
+                  if (hour >= 12 && hour <= 17) return 'Goedemiddag';
+                  return 'Goedeavond';
+                })()}, {username}</p>
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-1 md:mb-2">
+                  Welkom terug! 👋
+                </h1>
+                <p className="text-gray-400 text-xs md:text-sm">
+                  {new Date().toLocaleDateString('nl-NL', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+
+                {/* Admin Role Selector and Location Filter */}
+                <div className="mt-4 flex flex-wrap items-center gap-4">
+                  {currentUser?.role === 'admin' && (
+                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                      <span className="text-sm text-gray-300">
+                        Weergave als:
+                      </span>
+                      <select
+                        value={viewAsRole}
+                        onChange={(e) => handleRoleChange(e.target.value)}
+                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="projectleider">Projectleider</option>
+                        <option value="montage">Montage</option>
+                        <option value="tester">Tester</option>
+                        <option value="logistiek">Logistiek</option>
+                        <option value="inkoop">Inkoop</option>
+                        <option value="engineering">Engineering</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
+                  {(currentUser?.username === 'Lysander Koenraadt' ||
+                    currentUser?.username === 'Patrick Herman' ||
+                    currentUser?.username === 'Stefano de Weger') && (
+                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
+                      <span className="text-sm text-gray-300">
+                        Locatie filter:
+                      </span>
+                      <select
+                        value={filterMode}
+                        onChange={(e) => {
+                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
+                          console.log('Setting filter to:', newMode);
+                          setFilterMode(newMode);
+                        }}
+                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="all">Alles</option>
+                        <option value="naaldwijk">Den Haag</option>
+                        <option value="leerdam">Utrecht</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {currentUser?.role === 'admin' && (
-              <select
-                value={viewAsRole}
-                onChange={(e) => handleRoleChange(e.target.value)}
-                className="bg-[#2A303C] text-xs text-white border border-gray-700 rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3 w-full lg:w-auto">
+              <button
+                onClick={() => navigate('/create-project')}
+                className="btn-primary bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl"
               >
-                <option value="admin">Admin</option>
-                <option value="projectleider">Projectleider</option>
-                <option value="montage">Montage</option>
-                <option value="tester">Tester</option>
-                <option value="logistiek">Logistiek</option>
-                <option value="inkoop">Inkoop</option>
-                <option value="engineering">Engineering</option>
-              </select>
-            )}
+                <Plus size={20} />
+                <span className="font-semibold">Nieuw Project</span>
+              </button>
 
-            {(currentUser?.username === 'Lysander Koenraadt' ||
-              currentUser?.username === 'Patrick Herman' ||
-              currentUser?.username === 'Stefano de Weger') && (
-              <select
-                value={filterMode}
-                onChange={(e) => {
-                  const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
-                  setFilterMode(newMode);
-                }}
-                className="bg-[#2A303C] text-xs text-white border border-gray-700 rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+              <button
+                onClick={handleLogout}
+                className="btn-secondary rounded-xl shadow-lg"
               >
-                <option value="all">Alle locaties</option>
-                <option value="naaldwijk">Den Haag</option>
-                <option value="leerdam">Utrecht</option>
-              </select>
-            )}
-          </div>
-
-          <div className="flex items-center space-x-2 flex-shrink-0">
-            <button
-              onClick={() => navigate('/create-project')}
-              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
-              title="Nieuw Project"
-            >
-              <Plus size={14} />
-              <span className="hidden sm:inline">Nieuw Project</span>
-            </button>
-            <button
-              onClick={() => navigate('/verdelers')}
-              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-teal-400 rounded-lg transition-colors"
-              title="Verdelers"
-            >
-              <Package size={15} />
-            </button>
-            <button
-              onClick={() => navigate('/uploads')}
-              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-blue-400 rounded-lg transition-colors"
-              title="Documenten"
-            >
-              <FolderOpen size={15} />
-            </button>
-            <button
-              onClick={() => navigate('/meldingen')}
-              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-orange-400 rounded-lg transition-colors relative"
-              title="Meldingen"
-            >
-              <Bell size={15} />
-              {notifications.some(n => !n.read) && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-red-400 rounded-lg transition-colors"
-              title="Uitloggen"
-            >
-              <LogOut size={15} />
-            </button>
+                <LogOut size={20} />
+                <span>Uitloggen</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Admin and Projectleider: Dashboard Widgets at Top */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
-        <>
-          <KpiStrip projects={projects} />
-          <PipelineBar projects={projects} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
-            <div className="lg:col-span-3">
-              <MyTasksWidget
-                projects={projects}
-                currentUserId={userId || ''}
-                pendingApprovals={pendingApprovals}
-                isAdmin={currentUser?.role === 'admin'}
-                onProjectClick={handleProjectClick}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <ProjectOverviewWidget
-                projects={projects}
-                onProjectClick={handleProjectClick}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-            <div className="lg:col-span-2">
-              <NeedsAttentionBanner
-                projects={projects}
-                pendingApprovals={pendingApprovals}
-                onProjectClick={handleProjectClick}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <RecentActivity onProjectClick={handleProjectClick} />
-            </div>
-          </div>
-        </>
-      )}
 
       {/* Special Section for Sven */}
       {currentUser?.username === 'Sven' && (
@@ -1230,7 +1207,85 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Snelle Acties are now integrated into the header bar */}
+      {/* Admin and Projectleider: Quick Actions at Top */}
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg">
+              <Plus size={20} className="text-blue-400" />
+            </div>
+            <h2 className="text-xl font-semibold">Snelle Acties</h2>
+            <span className="text-sm text-gray-400">Veelgebruikte functies</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <button
+              onClick={() => navigate('/create-project')}
+              className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-4 md:p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg min-h-[44px]"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
+                  <Plus size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">Nieuw Project</h3>
+                  <p className="text-xs text-gray-400 mt-1">Start een nieuw project</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/verdelers')}
+              className="group bg-gradient-to-br from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 border border-green-500/20 hover:border-green-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
+                  <Upload size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">Verdelers</h3>
+                  <p className="text-xs text-gray-400 mt-1">Beheer verdelers</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/uploads')}
+              className="group bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 hover:border-purple-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
+                  <FolderOpen size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-purple-400 transition-colors">Documenten</h3>
+                  <p className="text-xs text-gray-400 mt-1">Bekijk uploads</p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => navigate('/meldingen')}
+              className="group bg-gradient-to-br from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 hover:border-orange-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg relative"
+            >
+              <div className="flex flex-col items-center space-y-3">
+                <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
+                  <Bell size={24} className="text-white" />
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Meldingen</h3>
+                  <p className="text-xs text-gray-400 mt-1">Service desk</p>
+                </div>
+              </div>
+              {notifications.some(n => !n.read) && (
+                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Agenda Section for Radjesh, Ronald, and Michel de Ruiter */}
       {currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username) && (
@@ -1362,9 +1417,42 @@ const Dashboard = () => {
         currentUserId={currentUser?.id || ''}
       />
 
+      {/* Admin toggle for Pre-Testing widget - Always visible for admins */}
+      {currentUser?.role === 'admin' && pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && (
+        <div className="card p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CheckCircle2 size={16} className="text-orange-400" />
+              <span className="text-sm text-gray-400">Pre-Testing Goedkeuringen Widget:</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  const newValue = !showPreTestingWidget;
+                  setShowPreTestingWidget(newValue);
+                  localStorage.setItem('showPreTestingWidget', String(newValue));
+                  toast.success(newValue ? 'Pre-Testing widget ingeschakeld' : 'Pre-Testing widget uitgeschakeld');
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  showPreTestingWidget ? 'bg-green-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    showPreTestingWidget ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-xs font-medium ${showPreTestingWidget ? 'text-green-400' : 'text-gray-500'}`}>
+                {showPreTestingWidget ? 'Aan' : 'Uit'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Approval Status Alerts - Hidden for Admin (embedded in Mijn Taken) and Logistiek users */}
-      {pendingApprovals.length > 0 && currentUser?.role !== 'admin' && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
+      {/* Approval Status Alerts - Hidden for Logistiek users */}
+      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-orange-500/20 rounded-lg">
@@ -1432,10 +1520,43 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Admin toggle for Test Review widget */}
+      {currentUser?.role === 'admin' && (
+        <div className="card p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <AlertCircle size={16} className="text-yellow-400" />
+              <span className="text-sm text-gray-400">Tests Ter Controle Widget:</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  const newValue = !showTestReviewWidget;
+                  setShowTestReviewWidget(newValue);
+                  localStorage.setItem('showTestReviewWidget', String(newValue));
+                  toast.success(newValue ? 'Tests Ter Controle widget ingeschakeld' : 'Tests Ter Controle widget uitgeschakeld');
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  showTestReviewWidget ? 'bg-green-500' : 'bg-gray-600'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    showTestReviewWidget ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span className={`text-xs font-medium ${showTestReviewWidget ? 'text-green-400' : 'text-gray-500'}`}>
+                {showTestReviewWidget ? 'Aan' : 'Uit'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Test Review Notifications - Admin sees embedded version in Mijn Taken */}
-      {currentUser?.role !== 'admin' &&
-        (effectiveRole === 'projectleider' ||
+      {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
+      {(effectiveRole === 'admin' ||
+        effectiveRole === 'projectleider' ||
         currentUser?.username === 'Zouhair Taha' ||
         currentUser?.username === 'Ibrahim Abdalla') && showTestReviewWidget && (
         <div className="mb-8">
@@ -1444,70 +1565,42 @@ const Dashboard = () => {
       )}
 
       <div id="projecten-overzicht" className="card p-6 mb-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <FolderOpen size={20} className="text-blue-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">Projecten Overzicht</h2>
-              <p className="text-xs text-gray-500">{filteredProjects.length} van {projects.length} projecten</p>
+              <h2 className="text-xl font-semibold">Projecten Overzicht</h2>
+              <p className="text-sm text-gray-400">Alle actieve en recente projecten</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`btn-secondary flex items-center space-x-2 text-sm ${
+              className={`btn-secondary flex items-center space-x-2 ${
                 getActiveFilterCount() > 0 ? 'bg-blue-500/20 text-blue-400' : ''
               }`}
             >
-              <Filter size={14} />
+              <Filter size={16} />
               <span>Filters</span>
               {getActiveFilterCount() > 0 && (
-                <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
                   {getActiveFilterCount()}
                 </span>
               )}
             </button>
+            <div className="text-sm text-gray-400">
+              {filteredProjects.length} van {projects.length} projecten
+            </div>
             <button
               onClick={() => navigate('/projects')}
-              className="btn-primary flex items-center space-x-1.5 text-sm"
+              className="btn-primary flex items-center space-x-2"
             >
-              <FolderOpen size={14} />
+              <FolderOpen size={16} />
               <span>Alle projecten</span>
             </button>
           </div>
-        </div>
-
-        {/* Phase Quick-Filter Tabs */}
-        <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-gray-800">
-          {[
-            { key: 'all', label: 'Alles' },
-            { key: 'Werkvoorbereiding', label: 'Werkvoorber.' },
-            { key: 'Productie', label: 'Productie' },
-            { key: 'Testen', label: 'Testen' },
-            { key: 'Levering', label: 'Levering' },
-            { key: 'Gereed voor facturatie', label: 'Facturatie' },
-          ].map(tab => {
-            const isActive = phaseTab === tab.key;
-            const count = tab.key === 'all'
-              ? projects.length
-              : projects.filter(p => p.status?.toLowerCase() === tab.key.toLowerCase()).length;
-
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setPhaseTab(tab.key)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-500/20 text-blue-400'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                {tab.label} <span className="text-gray-500 ml-0.5">({count})</span>
-              </button>
-            );
-          })}
         </div>
         
         {/* Enhanced Filters */}
@@ -1793,6 +1886,784 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Admin and Projectleider: Project Status Overview with Drill-through - Moved to Top */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+        <div className="card p-6 mb-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <CheckCircle2 size={20} className="text-purple-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Projecten per Status</h2>
+              <p className="text-sm text-gray-400">Klik op een status om projecten te bekijken</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering', 'Opgeleverd'].map((status) => {
+              const statusProjects = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase());
+              const count = statusProjects.length;
+
+              return (
+                <div
+                  key={status}
+                  onClick={() => {
+                    setStatusFilter(status);
+                    setShowFilters(true);
+                    const element = document.getElementById('projecten-overzicht');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="p-4 bg-gradient-to-br from-[#2A303C] to-[#1E2530] rounded-lg border border-gray-700 hover:border-blue-500/40 cursor-pointer transition-all transform hover:scale-105"
+                >
+                  <div className="text-center">
+                    <div className={`text-3xl font-bold mb-2 ${getStatusColor(status).split(' ')[1]}`}>
+                      {count}
+                    </div>
+                    <div className="text-sm text-gray-300 font-medium mb-1">{status}</div>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                      <div
+                        className={`h-1.5 rounded-full ${getStatusColor(status).replace('text-', 'bg-').replace('/20', '/60')}`}
+                        style={{ width: `${projects.length > 0 ? (count / projects.length) * 100 : 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Admin and Projectleider: Compact Dashboard Sections */}
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
+        <>
+          {/* Three Column Layout for Key Metrics */}
+          <div className="responsive-grid-3 mb-6 md:mb-8">
+            {/* Today's Deliveries - Compact Card */}
+            <div className="card bg-gradient-to-br from-green-500/5 to-green-600/5 border-green-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <Calendar size={18} className="text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Vandaag</h3>
+                    <p className="text-xs text-gray-400">Leveringen</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-green-400">
+                  {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {projects
+                  .filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0])
+                  .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                  .map((project) => (
+                    <div
+                      key={project.id}
+                      onClick={() => handleProjectNavigation(project.id)}
+                      className="p-3 bg-[#2A303C] rounded-lg border border-green-500/20 hover:border-green-500/60 cursor-pointer transition-all hover:shadow-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="font-medium text-blue-400 text-sm truncate">{project.project_number}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                              {project.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-300 truncate">{project.client}</p>
+                        </div>
+                        <div className="text-xs text-green-400 ml-2 bg-green-500/10 px-2 py-1 rounded">
+                          {project.distributors?.length || 0}x
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                {projects.filter(p => p.expected_delivery_date === new Date().toISOString().split('T')[0]).length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Calendar size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Geen leveringen vandaag</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Upcoming Deliveries - Next 7 Days - Timeline Style */}
+            <div className="card p-6 bg-gradient-to-br from-orange-500/5 to-orange-600/5 border-orange-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-orange-500/20 rounded-lg">
+                    <Clock size={18} className="text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Deze Week</h3>
+                    <p className="text-xs text-gray-400">7 Dagen</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-orange-400">
+                  {projects.filter(p => {
+                    if (!p.expected_delivery_date) return false;
+                    const deliveryDate = new Date(p.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(today.getDate() + 7);
+                    return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
+                  }).length}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {projects
+                  .filter(p => {
+                    if (!p.expected_delivery_date) return false;
+                    const deliveryDate = new Date(p.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    const nextWeek = new Date(today);
+                    nextWeek.setDate(today.getDate() + 7);
+                    return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
+                  })
+                  .sort((a, b) => new Date(a.expected_delivery_date).getTime() - new Date(b.expected_delivery_date).getTime())
+                  .map((project) => {
+                    const deliveryDate = new Date(project.expected_delivery_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => handleProjectNavigation(project.id)}
+                        className="p-3 bg-[#2A303C] rounded-lg border border-orange-500/20 hover:border-orange-500/60 cursor-pointer transition-all hover:shadow-lg"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="font-medium text-blue-400 text-sm truncate">{project.project_number}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-300 truncate">{project.client}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <div className="text-xs text-orange-400 font-medium whitespace-nowrap">
+                              {deliveryDate.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })}
+                            </div>
+                            <div className="text-xs text-gray-500">{daysUntil} {daysUntil === 1 ? 'dag' : 'dagen'}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                {projects.filter(p => {
+                  if (!p.expected_delivery_date) return false;
+                  const deliveryDate = new Date(p.expected_delivery_date);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const tomorrow = new Date(today);
+                  tomorrow.setDate(today.getDate() + 1);
+                  const nextWeek = new Date(today);
+                  nextWeek.setDate(today.getDate() + 7);
+                  return deliveryDate >= tomorrow && deliveryDate <= nextWeek;
+                }).length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Clock size={28} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">Geen leveringen deze week</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Workload Overview - Compact Grid */}
+            <div className="card p-6 bg-gradient-to-br from-blue-500/5 to-blue-600/5 border-blue-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-500/20 rounded-lg">
+                    <FolderOpen size={18} className="text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Werkbelasting</h3>
+                    <p className="text-xs text-gray-400">Medewerkers</p>
+                  </div>
+                </div>
+                <div className="text-3xl font-bold text-blue-400">
+                  {(() => {
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    return users.filter((user: any) => {
+                      // Only count users with verdelers that have status "Productie"
+                      const hasWork = projects.some(p => {
+                        const hasProductieVerdelers = p.distributors?.some((d: any) =>
+                          d.toegewezen_monteur === user.username &&
+                          d.status?.toLowerCase() === 'productie'
+                        );
+                        return hasProductieVerdelers;
+                      });
+                      return hasWork;
+                    }).length;
+                  })()}
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                {(() => {
+                  const users = JSON.parse(localStorage.getItem('users') || '[]');
+                  const workload = users.map((user: any) => {
+                    // Only include projects where user has verdelers with status "Productie"
+                    const userProjects = projects.filter(p => {
+                      const hasProductieVerdelers = p.distributors?.some((d: any) =>
+                        d.toegewezen_monteur === user.username &&
+                        d.status?.toLowerCase() === 'productie'
+                      );
+                      return hasProductieVerdelers;
+                    });
+
+                    // Count only verdelers with status "Productie" assigned to this user
+                    const verdelerCount = projects.reduce((total, p) => {
+                      const userVerdelers = p.distributors?.filter((d: any) =>
+                        d.toegewezen_monteur === user.username &&
+                        d.status?.toLowerCase() === 'productie'
+                      ) || [];
+                      return total + userVerdelers.length;
+                    }, 0);
+
+                    return {
+                      user,
+                      projectCount: userProjects.length,
+                      verdelerCount,
+                      projects: userProjects
+                    };
+                  }).filter((w: any) => w.projectCount > 0 || w.verdelerCount > 0)
+                    .sort((a: any, b: any) => b.verdelerCount - a.verdelerCount);
+
+                  return workload.length > 0 ? workload.map((item: any) => (
+                    <div
+                      key={item.user.id}
+                      onClick={() => setSelectedUserWorkload(item)}
+                      className="p-3 bg-[#2A303C] rounded-lg border border-blue-500/20 hover:border-blue-500/60 cursor-pointer transition-all hover:shadow-lg"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          {item.user.profilePicture ? (
+                            <img
+                              src={item.user.profilePicture}
+                              alt={item.user.username}
+                              className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-white">
+                                {item.user.username.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-white text-sm truncate">{item.user.username}</p>
+                            <p className="text-xs text-gray-400">{item.user.role}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-center bg-blue-500/10 px-2 py-1 rounded">
+                            <div className="text-sm text-blue-400 font-medium">{item.projectCount}</div>
+                            <div className="text-xs text-gray-500">proj</div>
+                          </div>
+                          <div className="text-center bg-green-500/10 px-2 py-1 rounded">
+                            <div className="text-sm text-green-400 font-medium">{item.verdelerCount}</div>
+                            <div className="text-xs text-gray-500">verd</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <p className="text-xs">Geen toegewezen werk</p>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+          {/* Combined Deliveries & Workload Chart - Hidden for admins */}
+          {currentUser?.role !== 'admin' && (
+          <div className="card p-6 mb-8">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-2 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg">
+                <BarChart3 size={20} className="text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">Werkbelasting & Levering Overzicht</h2>
+                <p className="text-sm text-gray-400">Dagelijkse distributie van leveringen en werkbelasting</p>
+              </div>
+            </div>
+
+            <ResponsiveContainer width="100%" height={400}>
+              <ComposedChart
+                data={(() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const chartData = [];
+
+                  for (let i = 0; i < 7; i++) {
+                    const date = new Date(today);
+                    date.setDate(today.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+
+                    const dayProjects = projects.filter(p => p.expected_delivery_date === dateStr);
+                    const deliveriesCount = dayProjects.length;
+
+                    const verdelersCount = dayProjects.reduce((total, p) => total + (p.distributors?.length || 0), 0);
+
+                    const allVerdelers = dayProjects.flatMap(p =>
+                      (p.distributors || []).map((d: any) => ({
+                        kast_naam: d.kast_naam,
+                        project_number: p.project_number,
+                        toegewezen_monteur: d.toegewezen_monteur
+                      }))
+                    );
+
+                    const users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const activeUsers = users.filter((user: any) => {
+                      return dayProjects.some(p =>
+                        p.distributors?.some((d: any) => d.toegewezen_monteur === user.username)
+                      );
+                    });
+
+                    chartData.push({
+                      date: date.toLocaleDateString('nl-NL', {
+                        weekday: 'short',
+                        day: 'numeric',
+                        month: 'short'
+                      }),
+                      fullDate: dateStr,
+                      Projecten: deliveriesCount,
+                      Verdelers: verdelersCount,
+                      Medewerkers: activeUsers.length,
+                      isToday: i === 0,
+                      projectDetails: dayProjects.map(p => ({
+                        project_number: p.project_number,
+                        client: p.client,
+                        location: p.location
+                      })),
+                      verdelerDetails: allVerdelers,
+                      employeeDetails: activeUsers.map((u: any) => ({
+                        username: u.username,
+                        verdelerCount: allVerdelers.filter((v: any) => v.toegewezen_monteur === u.username).length
+                      }))
+                    });
+                  }
+
+                  return chartData;
+                })()}
+                margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
+              >
+                <defs>
+                  <linearGradient id="colorProjecten" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.3}/>
+                  </linearGradient>
+                  <linearGradient id="colorVerdelers" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
+                <XAxis
+                  dataKey="date"
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                />
+                <YAxis
+                  stroke="#9ca3af"
+                  tick={{ fill: '#9ca3af', fontSize: 12 }}
+                  label={{
+                    value: 'Aantal',
+                    angle: -90,
+                    position: 'insideLeft',
+                    style: { fill: '#9ca3af', fontSize: 12 }
+                  }}
+                />
+                <Tooltip
+                  content={({ active, payload }: any) => {
+                    if (!active || !payload || !payload.length) return null;
+
+                    const data = payload[0].payload;
+
+                    return (
+                      <div className="bg-[#1e293b] border border-gray-700 rounded-lg p-4 shadow-2xl max-w-md">
+                        <div className="font-bold text-white mb-3 pb-2 border-b border-gray-700">
+                          {data.date}
+                        </div>
+
+                        {/* Summary */}
+                        <div className="grid grid-cols-3 gap-3 mb-3">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-400">{data.Projecten}</div>
+                            <div className="text-xs text-gray-400">Projecten</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-400">{data.Verdelers}</div>
+                            <div className="text-xs text-gray-400">Verdelers</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-400">{data.Medewerkers}</div>
+                            <div className="text-xs text-gray-400">Medewerkers</div>
+                          </div>
+                        </div>
+
+                        {/* Project Details */}
+                        {data.projectDetails && data.projectDetails.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-xs font-semibold text-green-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                              Projecten:
+                            </div>
+                            <div className="space-y-1 ml-4">
+                              {data.projectDetails.map((p: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300">
+                                  <span className="font-medium text-white">{p.project_number}</span>
+                                  {p.client && <span className="text-gray-400"> - {p.client}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Verdeler Details */}
+                        {data.verdelerDetails && data.verdelerDetails.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-xs font-semibold text-orange-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-orange-400 rounded-full mr-2"></div>
+                              Verdelers:
+                            </div>
+                            <div className="space-y-1 ml-4 max-h-32 overflow-y-auto">
+                              {data.verdelerDetails.map((v: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300">
+                                  <span className="font-medium text-white">{v.kast_naam}</span>
+                                  <span className="text-gray-400"> ({v.project_number})</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Employee Details */}
+                        {data.employeeDetails && data.employeeDetails.length > 0 && (
+                          <div>
+                            <div className="text-xs font-semibold text-blue-400 mb-2 flex items-center">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                              Medewerkers:
+                            </div>
+                            <div className="space-y-1 ml-4">
+                              {data.employeeDetails.map((e: any, idx: number) => (
+                                <div key={idx} className="text-xs text-gray-300 flex justify-between items-center">
+                                  <span className="font-medium text-white">{e.username}</span>
+                                  <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded">
+                                    {e.verdelerCount} {e.verdelerCount === 1 ? 'verdeler' : 'verdelers'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                    color: '#fff'
+                  }}
+                  iconType="circle"
+                />
+                <Bar
+                  dataKey="Projecten"
+                  fill="url(#colorProjecten)"
+                  radius={[8, 8, 0, 0]}
+                  name="Projecten"
+                />
+                <Bar
+                  dataKey="Verdelers"
+                  fill="url(#colorVerdelers)"
+                  radius={[8, 8, 0, 0]}
+                  name="Verdelers"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="Medewerkers"
+                  stroke="#3b82f6"
+                  strokeWidth={3}
+                  dot={{ fill: '#3b82f6', strokeWidth: 2, r: 5 }}
+                  activeDot={{ r: 7 }}
+                  name="Medewerkers"
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+
+            {/* Chart Legend with Details */}
+            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-gray-700">
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const chartData = [];
+
+                for (let i = 0; i < 7; i++) {
+                  const date = new Date(today);
+                  date.setDate(today.getDate() + i);
+                  const dateStr = date.toISOString().split('T')[0];
+
+                  const dayProjects = projects.filter(p => p.expected_delivery_date === dateStr);
+                  chartData.push({
+                    projectCount: dayProjects.length,
+                    verdelerCount: dayProjects.reduce((total, p) => total + (p.distributors?.length || 0), 0),
+                    verdelers: dayProjects.flatMap(p => (p.distributors || []))
+                  });
+                }
+
+                const totalProjects = chartData.reduce((sum, day) => sum + day.projectCount, 0);
+                const totalVerdelers = chartData.reduce((sum, day) => sum + day.verdelerCount, 0);
+
+                const allAssignedUsers = new Set();
+                chartData.forEach(day => {
+                  day.verdelers.forEach((v: any) => {
+                    if (v.toegewezen_monteur) {
+                      allAssignedUsers.add(v.toegewezen_monteur);
+                    }
+                  });
+                });
+
+                return (
+                  <>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Projecten</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-400">
+                        {totalProjects}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Komende 7 dagen</p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Verdelers</span>
+                      </div>
+                      <p className="text-2xl font-bold text-orange-400">
+                        {totalVerdelers}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Te leveren verdelers</p>
+                    </div>
+
+                    <div className="text-center">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm font-medium text-gray-300">Medewerkers</span>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-400">
+                        {allAssignedUsers.size}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Actieve medewerkers</p>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+          )}
+
+          {/* Project & Verdeler Timeline Agenda */}
+          <div className="card p-6 mt-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
+                  <Calendar className="text-blue-400" size={24} />
+                  <span>Project Planning & Status Overzicht</span>
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">Realtime inzicht in projectstatus en verwachte leverdata</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-400">Op schema</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                    <span className="text-gray-400">Waarschuwing</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span className="text-gray-400">Urgent</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Compact Timeline View */}
+            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+              <table className="w-full">
+                <thead className="sticky top-0 bg-gray-900 z-10">
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Status</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Project</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Klant</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Leverdatum</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Verdelers</th>
+                    <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400">Voortgang</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    // Filter projects: Include if project status is Productie/Testen OR if it has verdelers with Productie/Testen status
+                    const upcomingProjects = projects
+                      .filter(p => {
+                        if (!p.expected_delivery_date) return false;
+
+                        const projectStatus = p.status?.toLowerCase();
+                        const isProjectProductieOrTesten = projectStatus === 'productie' || projectStatus === 'testen';
+
+                        // Check if any verdelers have Productie or Testen status
+                        const hasProductieOrTestenVerdelers = p.distributors?.some((d: any) => {
+                          const verdelerStatus = d.status?.toLowerCase();
+                          return verdelerStatus === 'productie' || verdelerStatus === 'testen';
+                        }) || false;
+
+                        return isProjectProductieOrTesten || hasProductieOrTestenVerdelers;
+                      })
+                      .sort((a, b) => {
+                        const dateA = new Date(a.expected_delivery_date!);
+                        const dateB = new Date(b.expected_delivery_date!);
+                        return dateA.getTime() - dateB.getTime();
+                      });
+
+                    if (upcomingProjects.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} className="text-center py-12">
+                            <Calendar className="mx-auto text-gray-600 mb-4" size={48} />
+                            <p className="text-gray-400">Geen actieve projecten met verwachte leverdatum</p>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return upcomingProjects.map((project) => {
+                      const deliveryDate = new Date(project.expected_delivery_date!);
+                      const daysUntil = Math.ceil((deliveryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                      let statusColor = 'green';
+                      let statusText = 'Op schema';
+
+                      if (daysUntil < 0) {
+                        statusColor = 'red';
+                        statusText = 'Verlopen';
+                      } else if (daysUntil <= 2) {
+                        statusColor = 'red';
+                        statusText = 'Urgent';
+                      } else if (daysUntil <= 5) {
+                        statusColor = 'yellow';
+                        statusText = 'Binnenkort';
+                      }
+
+                      // Only count verdelers with Productie or Testen status
+                      const relevantVerdelers = project.distributors?.filter((d: any) => {
+                        const verdelerStatus = d.status?.toLowerCase();
+                        return verdelerStatus === 'productie' || verdelerStatus === 'testen';
+                      }) || [];
+
+                      const verdelerCount = relevantVerdelers.length;
+                      const completedVerdelers = relevantVerdelers.filter((d: any) =>
+                        d.testing_status === 'completed'
+                      ).length;
+                      const progressPercent = verdelerCount > 0 ? (completedVerdelers / verdelerCount) * 100 : 0;
+
+                      return (
+                        <tr
+                          key={project.id}
+                          className="border-b border-gray-800 hover:bg-gray-800/30 cursor-pointer transition-colors"
+                          onClick={() => handleProjectClick(project.id)}
+                        >
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-2 h-2 rounded-full bg-${statusColor}-500 animate-pulse`}></div>
+                              <span className={`text-xs font-medium text-${statusColor}-400`}>
+                                {statusText}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm font-medium text-white">{project.project_number}</div>
+                            <div className="text-xs text-gray-500 capitalize">{project.status}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-gray-300">{project.client || '-'}</div>
+                            <div className="text-xs text-gray-500">{project.location || '-'}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-white">
+                              {deliveryDate.toLocaleDateString('nl-NL', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              })}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {daysUntil < 0 ? (
+                                <span className="text-red-400">{Math.abs(daysUntil)}d verlopen</span>
+                              ) : daysUntil === 0 ? (
+                                <span className="text-yellow-400">Vandaag</span>
+                              ) : daysUntil === 1 ? (
+                                <span className="text-yellow-400">Morgen</span>
+                              ) : (
+                                <span>Over {daysUntil}d</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="text-sm text-gray-300">{verdelerCount} verdelers</div>
+                            <div className="text-xs text-gray-500">{completedVerdelers} voltooid</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <div className="flex-1 bg-gray-700 rounded-full h-2 min-w-[80px]">
+                                <div
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    progressPercent === 100 ? 'bg-green-500' :
+                                    progressPercent > 50 ? 'bg-blue-500' : 'bg-yellow-500'
+                                  }`}
+                                  style={{ width: `${progressPercent}%` }}
+                                ></div>
+                              </div>
+                              <span className="text-xs text-gray-400 min-w-[35px]">
+                                {Math.round(progressPercent)}%
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Enhanced KPI Dashboard - Hidden for Admin and Projectleider */}
       {effectiveRole !== 'admin' && effectiveRole !== 'projectleider' && (
@@ -2103,6 +2974,151 @@ const Dashboard = () => {
           onCancel={handleCancelDelete}
           isDeleting={isDeleting}
         />
+      )}
+
+      {/* User Workload Detail Modal */}
+      {selectedUserWorkload && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1E2530] rounded-xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-gray-700">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-700 bg-gradient-to-br from-blue-500/10 to-blue-600/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  {selectedUserWorkload.user.profilePicture ? (
+                    <img
+                      src={selectedUserWorkload.user.profilePicture}
+                      alt={selectedUserWorkload.user.username}
+                      className="w-16 h-16 rounded-full object-cover ring-4 ring-blue-500/30"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30">
+                      <span className="text-2xl font-bold text-white">
+                        {selectedUserWorkload.user.username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{selectedUserWorkload.user.username}</h3>
+                    <p className="text-sm text-gray-400">{selectedUserWorkload.user.role}</p>
+                    <div className="flex items-center gap-4 mt-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                        <span className="text-sm text-blue-400">{selectedUserWorkload.projectCount} projecten</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span className="text-sm text-green-400">{selectedUserWorkload.verdelerCount} verdelers</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedUserWorkload(null)}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X size={24} className="text-gray-400 hover:text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
+              <h4 className="text-lg font-semibold text-white mb-4">Toegewezen Projecten</h4>
+              <div className="space-y-3">
+                {selectedUserWorkload.projects.length > 0 ? (
+                  selectedUserWorkload.projects.map((project: any) => {
+                    const userVerdelers = project.distributors?.filter(
+                      (d: any) => d.toegewezen_monteur === selectedUserWorkload.user.username &&
+                        d.status?.toLowerCase() === 'productie'
+                    ) || [];
+
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => {
+                          setSelectedUserWorkload(null);
+                          handleProjectNavigation(project.id);
+                        }}
+                        className="p-4 bg-[#2A303C] rounded-lg border border-gray-700 hover:border-blue-500/60 cursor-pointer transition-all hover:shadow-lg group"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-2">
+                              <span className="font-semibold text-blue-400 group-hover:text-blue-300">
+                                {project.project_number}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-xs ${getStatusColor(project.status)}`}>
+                                {project.status}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-300 mb-1">{project.client}</p>
+                            {project.location && (
+                              <p className="text-xs text-gray-400">{project.location}</p>
+                            )}
+                            {project.expected_delivery_date && (
+                              <p className="text-xs text-orange-400 mt-2">
+                                Leverdatum: {new Date(project.expected_delivery_date).toLocaleDateString('nl-NL', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="bg-green-500/20 px-3 py-1 rounded-lg">
+                              <div className="text-lg font-bold text-green-400">{userVerdelers.length}</div>
+                              <div className="text-xs text-gray-400">verdelers</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* List verdelers for this user */}
+                        {userVerdelers.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-gray-700">
+                            <p className="text-xs text-gray-400 mb-2">Toegewezen verdelers:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {userVerdelers.map((verdeler: any) => (
+                                <span
+                                  key={verdeler.id}
+                                  className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs"
+                                >
+                                  {verdeler.kast_naam}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Click indicator */}
+                        <div className="mt-3 pt-3 border-t border-gray-700 flex items-center justify-end">
+                          <span className="text-xs text-gray-500 group-hover:text-blue-400 transition-colors">
+                            Klik om project te openen →
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-12 text-gray-400">
+                    <FolderOpen size={48} className="mx-auto mb-4 opacity-50" />
+                    <p>Geen projecten toegewezen</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-700 bg-[#2A303C] flex justify-end">
+              <button
+                onClick={() => setSelectedUserWorkload(null)}
+                className="btn-secondary px-6 py-2"
+              >
+                Sluiten
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>

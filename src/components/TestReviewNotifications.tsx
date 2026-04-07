@@ -30,11 +30,7 @@ interface TestReviewNotification {
   };
 }
 
-interface TestReviewNotificationsProps {
-  embedded?: boolean;
-}
-
-const TestReviewNotifications: React.FC<TestReviewNotificationsProps> = ({ embedded = false }) => {
+const TestReviewNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<TestReviewNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -341,13 +337,6 @@ const TestReviewNotifications: React.FC<TestReviewNotificationsProps> = ({ embed
   };
 
   if (loading) {
-    if (embedded) {
-      return (
-        <div className="flex justify-center py-4">
-          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      );
-    }
     return (
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 shadow-xl">
         <div className="flex items-center space-x-2 mb-4">
@@ -362,7 +351,6 @@ const TestReviewNotifications: React.FC<TestReviewNotificationsProps> = ({ embed
   }
 
   if (notifications.length === 0) {
-    if (embedded) return null;
     return (
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 shadow-xl">
         <div className="flex items-center space-x-2 mb-4">
@@ -370,72 +358,6 @@ const TestReviewNotifications: React.FC<TestReviewNotificationsProps> = ({ embed
           <h2 className="text-xl font-semibold text-white">Tests Ter Controle</h2>
         </div>
         <p className="text-gray-400 text-center py-4">Geen tests wachten op controle</p>
-      </div>
-    );
-  }
-
-  if (embedded) {
-    return (
-      <div>
-        <div className="flex items-center space-x-2 mb-2">
-          <AlertCircle className="text-yellow-400" size={14} />
-          <span className="text-xs font-semibold uppercase tracking-wider text-yellow-400">
-            Tests Ter Controle
-          </span>
-          <span className="text-xs text-gray-600">({notifications.length})</span>
-        </div>
-        <div className="space-y-2">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className="border-l-2 border-l-yellow-500 bg-yellow-500/5 rounded-r-lg p-3"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-sm font-medium text-blue-400">
-                      {notification.projects?.project_number}
-                    </span>
-                    <span className="text-xs text-gray-600">|</span>
-                    <span className="text-xs text-gray-400 truncate">
-                      {notification.distributors?.kast_naam || notification.distributors?.distributor_id}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 mb-1.5">
-                    <span className="text-xs text-gray-500">{getTestTypeLabel(notification.test_type)}</span>
-                    <span className="text-xs text-gray-600">|</span>
-                    <span className="text-xs text-gray-500">{notification.submitted_by}</span>
-                    <span className="text-xs text-gray-600">|</span>
-                    <span className="text-xs text-gray-500">{formatDate(notification.submitted_at)}</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <button
-                      onClick={() => handleViewTest(notification)}
-                      className="flex items-center space-x-1 px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs transition-colors"
-                    >
-                      <Eye size={12} />
-                      <span>Bekijken</span>
-                    </button>
-                    <button
-                      onClick={() => handleApprove(notification)}
-                      className="flex items-center space-x-1 px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs transition-colors"
-                    >
-                      <CheckCircle size={12} />
-                      <span>Goedkeuren</span>
-                    </button>
-                    <button
-                      onClick={() => handleReject(notification)}
-                      className="flex items-center space-x-1 px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-colors"
-                    >
-                      <XCircle size={12} />
-                      <span>Afkeuren</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     );
   }
