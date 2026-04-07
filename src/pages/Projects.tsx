@@ -622,10 +622,18 @@ const Projects = () => {
       const matchesClient = clientFilter === 'all' || project.client === clientFilter;
 
       // Monteur filter (considering aliases)
-      const matchesMonteur = monteurFilter === 'all' ||
-        project.distributors?.some(
+      let matchesMonteur = true;
+      if (monteurFilter === 'unassigned') {
+        // Show projects that have at least one verdeler without an assigned monteur
+        matchesMonteur = project.distributors?.some(
+          (dist: any) => !dist.toegewezen_monteur || dist.toegewezen_monteur === 'Vrij' || dist.toegewezen_monteur.trim() === ''
+        ) || false;
+      } else if (monteurFilter !== 'all') {
+        // Show projects where at least one verdeler is assigned to the selected monteur
+        matchesMonteur = project.distributors?.some(
           (dist: any) => isUsernameMatch(dist.toegewezen_monteur, monteurFilter)
-        );
+        ) || false;
+      }
 
       // Creator filter
       const matchesCreator = creatorFilter === 'all' ||
@@ -888,6 +896,7 @@ const Projects = () => {
                   onChange={(e) => setMonteurFilter(e.target.value)}
                 >
                   <option value="all">Alle monteurs</option>
+                  <option value="unassigned">Nog niet toegewezen</option>
                   {getUniqueMonteurs().map(monteur => (
                     <option key={monteur} value={monteur}>{monteur}</option>
                   ))}
@@ -949,7 +958,7 @@ const Projects = () => {
                     )}
                     {monteurFilter !== 'all' && (
                       <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">
-                        {monteurFilter}
+                        {monteurFilter === 'unassigned' ? 'Nog niet toegewezen' : monteurFilter}
                       </span>
                     )}
                     {dateFilter !== 'all' && (
