@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Plus, LogOut, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Search, Plus, LogOut, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
@@ -18,6 +18,9 @@ import { isUsernameMatch } from '../lib/userAliases';
 import NeedsAttentionBanner from '../components/dashboard/NeedsAttentionBanner';
 import MyTasksWidget from '../components/dashboard/MyTasksWidget';
 import ProjectOverviewWidget from '../components/dashboard/ProjectOverviewWidget';
+import KpiStrip from '../components/dashboard/KpiStrip';
+import PipelineBar from '../components/dashboard/PipelineBar';
+import RecentActivity from '../components/dashboard/RecentActivity';
 
 interface Project {
   id: string;
@@ -76,6 +79,7 @@ const Dashboard = () => {
   });
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [agendaProjects, setAgendaProjects] = useState<any[]>([]);
+  const [phaseTab, setPhaseTab] = useState<string>('all');
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
 
@@ -859,7 +863,9 @@ const Dashboard = () => {
         }
       }
 
-      return matchesSearch && matchesStatus && matchesClient && matchesDate;
+      const matchesPhase = phaseTab === 'all' || project.status?.toLowerCase() === phaseTab.toLowerCase();
+
+      return matchesSearch && matchesStatus && matchesClient && matchesDate && matchesPhase;
     });
   };
 
@@ -968,122 +974,102 @@ const Dashboard = () => {
     <div className="page-container">
       <Toaster position="top-right" />
 
-      {/* Enhanced Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10 hidden md:block">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
-          <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-        </div>
-
-        <div className="card mb-6 md:mb-8 relative">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
-            {/* Welcome Section */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-              <div className="relative flex-shrink-0">
-                {profilePicture ? (
-                  <img
-                    src={profilePicture}
-                    alt={username}
-                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover ring-4 ring-blue-500/30 shadow-lg"
-                  />
-                ) : (
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-4 ring-blue-500/30 shadow-lg">
-                    <span className="text-xl md:text-2xl font-bold text-white">
-                      {username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-6 md:h-6 bg-green-500 rounded-full border-2 border-[#1E2530]"></div>
+      {/* Slim Header Bar */}
+      <div className="bg-[#1E2530] border border-gray-800/60 rounded-xl px-4 py-3 mb-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            {profilePicture ? (
+              <img src={profilePicture} alt={username} className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-500/30 flex-shrink-0" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center ring-2 ring-blue-500/30 flex-shrink-0">
+                <span className="text-sm font-bold text-white">{username.charAt(0).toUpperCase()}</span>
               </div>
-              <div className="flex-1">
-                <p className="text-gray-400 text-sm md:text-base mb-1">{(() => {
-                  const hour = new Date().getHours();
-                  if (hour >= 0 && hour <= 12) return 'Goedemorgen';
-                  if (hour >= 12 && hour <= 17) return 'Goedemiddag';
-                  return 'Goedeavond';
-                })()}, {username}</p>
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-400 via-blue-300 to-blue-500 bg-clip-text text-transparent mb-1 md:mb-2">
-                  Welkom terug! 👋
-                </h1>
-                <p className="text-gray-400 text-xs md:text-sm">
-                  {new Date().toLocaleDateString('nl-NL', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-
-                {/* Admin Role Selector and Location Filter */}
-                <div className="mt-4 flex flex-wrap items-center gap-4">
-                  {currentUser?.role === 'admin' && (
-                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
-                      <span className="text-sm text-gray-300">
-                        Weergave als:
-                      </span>
-                      <select
-                        value={viewAsRole}
-                        onChange={(e) => handleRoleChange(e.target.value)}
-                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="admin">Admin</option>
-                        <option value="projectleider">Projectleider</option>
-                        <option value="montage">Montage</option>
-                        <option value="tester">Tester</option>
-                        <option value="logistiek">Logistiek</option>
-                        <option value="inkoop">Inkoop</option>
-                        <option value="engineering">Engineering</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
-                  {(currentUser?.username === 'Lysander Koenraadt' ||
-                    currentUser?.username === 'Patrick Herman' ||
-                    currentUser?.username === 'Stefano de Weger') && (
-                    <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
-                      <span className="text-sm text-gray-300">
-                        Locatie filter:
-                      </span>
-                      <select
-                        value={filterMode}
-                        onChange={(e) => {
-                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
-                          console.log('Setting filter to:', newMode);
-                          setFilterMode(newMode);
-                        }}
-                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="all">Alles</option>
-                        <option value="naaldwijk">Den Haag</option>
-                        <option value="leerdam">Utrecht</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center space-x-2">
+                <h1 className="text-sm font-semibold text-white truncate">{username}</h1>
+                <span className="text-xs text-gray-500 hidden sm:inline">
+                  {new Date().toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
+                </span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 md:gap-3 w-full lg:w-auto">
-              <button
-                onClick={() => navigate('/create-project')}
-                className="btn-primary bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg hover:shadow-xl"
+            {currentUser?.role === 'admin' && (
+              <select
+                value={viewAsRole}
+                onChange={(e) => handleRoleChange(e.target.value)}
+                className="bg-[#2A303C] text-xs text-white border border-gray-700 rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <Plus size={20} />
-                <span className="font-semibold">Nieuw Project</span>
-              </button>
+                <option value="admin">Admin</option>
+                <option value="projectleider">Projectleider</option>
+                <option value="montage">Montage</option>
+                <option value="tester">Tester</option>
+                <option value="logistiek">Logistiek</option>
+                <option value="inkoop">Inkoop</option>
+                <option value="engineering">Engineering</option>
+              </select>
+            )}
 
-              <button
-                onClick={handleLogout}
-                className="btn-secondary rounded-xl shadow-lg"
+            {(currentUser?.username === 'Lysander Koenraadt' ||
+              currentUser?.username === 'Patrick Herman' ||
+              currentUser?.username === 'Stefano de Weger') && (
+              <select
+                value={filterMode}
+                onChange={(e) => {
+                  const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
+                  setFilterMode(newMode);
+                }}
+                className="bg-[#2A303C] text-xs text-white border border-gray-700 rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                <LogOut size={20} />
-                <span>Uitloggen</span>
-              </button>
-            </div>
+                <option value="all">Alle locaties</option>
+                <option value="naaldwijk">Den Haag</option>
+                <option value="leerdam">Utrecht</option>
+              </select>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button
+              onClick={() => navigate('/create-project')}
+              className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+              title="Nieuw Project"
+            >
+              <Plus size={14} />
+              <span className="hidden sm:inline">Nieuw Project</span>
+            </button>
+            <button
+              onClick={() => navigate('/verdelers')}
+              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-teal-400 rounded-lg transition-colors"
+              title="Verdelers"
+            >
+              <Package size={15} />
+            </button>
+            <button
+              onClick={() => navigate('/uploads')}
+              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-blue-400 rounded-lg transition-colors"
+              title="Documenten"
+            >
+              <FolderOpen size={15} />
+            </button>
+            <button
+              onClick={() => navigate('/meldingen')}
+              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-orange-400 rounded-lg transition-colors relative"
+              title="Meldingen"
+            >
+              <Bell size={15} />
+              {notifications.some(n => !n.read) && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] rounded-full flex items-center justify-center font-bold">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="p-2 bg-[#2A303C] hover:bg-gray-700 text-gray-400 hover:text-red-400 rounded-lg transition-colors"
+              title="Uitloggen"
+            >
+              <LogOut size={15} />
+            </button>
           </div>
         </div>
       </div>
@@ -1091,8 +1077,11 @@ const Dashboard = () => {
       {/* Admin and Projectleider: Dashboard Widgets at Top */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-            <div className="lg:col-span-2">
+          <KpiStrip projects={projects} />
+          <PipelineBar projects={projects} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+            <div className="lg:col-span-3">
               <MyTasksWidget
                 projects={projects}
                 currentUserId={userId || ''}
@@ -1101,7 +1090,7 @@ const Dashboard = () => {
                 onProjectClick={handleProjectClick}
               />
             </div>
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-2">
               <ProjectOverviewWidget
                 projects={projects}
                 onProjectClick={handleProjectClick}
@@ -1109,11 +1098,18 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <NeedsAttentionBanner
-            projects={projects}
-            pendingApprovals={pendingApprovals}
-            onProjectClick={handleProjectClick}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+            <div className="lg:col-span-2">
+              <NeedsAttentionBanner
+                projects={projects}
+                pendingApprovals={pendingApprovals}
+                onProjectClick={handleProjectClick}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <RecentActivity onProjectClick={handleProjectClick} />
+            </div>
+          </div>
         </>
       )}
 
@@ -1234,85 +1230,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Admin and Projectleider: Quick Actions at Top */}
-      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
-        <div className="card p-6 mb-8">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="p-2 bg-blue-500/20 rounded-lg">
-              <Plus size={20} className="text-blue-400" />
-            </div>
-            <h2 className="text-xl font-semibold">Snelle Acties</h2>
-            <span className="text-sm text-gray-400">Veelgebruikte functies</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <button
-              onClick={() => navigate('/create-project')}
-              className="group bg-gradient-to-br from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 hover:border-blue-400/40 rounded-xl p-4 md:p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg min-h-[44px]"
-            >
-              <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-all duration-300">
-                  <Plus size={24} className="text-white" />
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">Nieuw Project</h3>
-                  <p className="text-xs text-gray-400 mt-1">Start een nieuw project</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/verdelers')}
-              className="group bg-gradient-to-br from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 border border-green-500/20 hover:border-green-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-            >
-              <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-green-500/25 transition-all duration-300">
-                  <Upload size={24} className="text-white" />
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">Verdelers</h3>
-                  <p className="text-xs text-gray-400 mt-1">Beheer verdelers</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/uploads')}
-              className="group bg-gradient-to-br from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 border border-purple-500/20 hover:border-purple-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
-            >
-              <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-all duration-300">
-                  <FolderOpen size={24} className="text-white" />
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-white group-hover:text-purple-400 transition-colors">Documenten</h3>
-                  <p className="text-xs text-gray-400 mt-1">Bekijk uploads</p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => navigate('/meldingen')}
-              className="group bg-gradient-to-br from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 border border-orange-500/20 hover:border-orange-400/40 rounded-xl p-6 transition-all duration-300 transform hover:scale-105 hover:shadow-lg relative"
-            >
-              <div className="flex flex-col items-center space-y-3">
-                <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-orange-500/25 transition-all duration-300">
-                  <Bell size={24} className="text-white" />
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-white group-hover:text-orange-400 transition-colors">Meldingen</h3>
-                  <p className="text-xs text-gray-400 mt-1">Service desk</p>
-                </div>
-              </div>
-              {notifications.some(n => !n.read) && (
-                <span className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
-                  {notifications.filter(n => !n.read).length}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Snelle Acties are now integrated into the header bar */}
 
       {/* Agenda Section for Radjesh, Ronald, and Michel de Ruiter */}
       {currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username) && (
@@ -1526,42 +1444,70 @@ const Dashboard = () => {
       )}
 
       <div id="projecten-overzicht" className="card p-6 mb-8">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-500/20 rounded-lg">
               <FolderOpen size={20} className="text-blue-400" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">Projecten Overzicht</h2>
-              <p className="text-sm text-gray-400">Alle actieve en recente projecten</p>
+              <h2 className="text-lg font-semibold">Projecten Overzicht</h2>
+              <p className="text-xs text-gray-500">{filteredProjects.length} van {projects.length} projecten</p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`btn-secondary flex items-center space-x-2 ${
+              className={`btn-secondary flex items-center space-x-2 text-sm ${
                 getActiveFilterCount() > 0 ? 'bg-blue-500/20 text-blue-400' : ''
               }`}
             >
-              <Filter size={16} />
+              <Filter size={14} />
               <span>Filters</span>
               {getActiveFilterCount() > 0 && (
-                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+                <span className="bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                   {getActiveFilterCount()}
                 </span>
               )}
             </button>
-            <div className="text-sm text-gray-400">
-              {filteredProjects.length} van {projects.length} projecten
-            </div>
             <button
               onClick={() => navigate('/projects')}
-              className="btn-primary flex items-center space-x-2"
+              className="btn-primary flex items-center space-x-1.5 text-sm"
             >
-              <FolderOpen size={16} />
+              <FolderOpen size={14} />
               <span>Alle projecten</span>
             </button>
           </div>
+        </div>
+
+        {/* Phase Quick-Filter Tabs */}
+        <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-gray-800">
+          {[
+            { key: 'all', label: 'Alles' },
+            { key: 'Werkvoorbereiding', label: 'Werkvoorber.' },
+            { key: 'Productie', label: 'Productie' },
+            { key: 'Testen', label: 'Testen' },
+            { key: 'Levering', label: 'Levering' },
+            { key: 'Gereed voor facturatie', label: 'Facturatie' },
+          ].map(tab => {
+            const isActive = phaseTab === tab.key;
+            const count = tab.key === 'all'
+              ? projects.length
+              : projects.filter(p => p.status?.toLowerCase() === tab.key.toLowerCase()).length;
+
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setPhaseTab(tab.key)}
+                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${
+                  isActive
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                }`}
+              >
+                {tab.label} <span className="text-gray-500 ml-0.5">({count})</span>
+              </button>
+            );
+          })}
         </div>
         
         {/* Enhanced Filters */}
