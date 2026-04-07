@@ -1088,6 +1088,35 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Admin and Projectleider: Dashboard Widgets at Top */}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <MyTasksWidget
+                projects={projects}
+                currentUserId={userId || ''}
+                pendingApprovals={pendingApprovals}
+                isAdmin={currentUser?.role === 'admin'}
+                onProjectClick={handleProjectClick}
+              />
+            </div>
+            <div className="lg:col-span-3">
+              <ProjectOverviewWidget
+                projects={projects}
+                onProjectClick={handleProjectClick}
+              />
+            </div>
+          </div>
+
+          <NeedsAttentionBanner
+            projects={projects}
+            pendingApprovals={pendingApprovals}
+            onProjectClick={handleProjectClick}
+          />
+        </>
+      )}
+
       {/* Special Section for Sven */}
       {currentUser?.username === 'Sven' && (
         <div className="card mb-6 md:mb-8 border-2 border-blue-500/30">
@@ -1415,42 +1444,9 @@ const Dashboard = () => {
         currentUserId={currentUser?.id || ''}
       />
 
-      {/* Admin toggle for Pre-Testing widget - Always visible for admins */}
-      {currentUser?.role === 'admin' && pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && (
-        <div className="card p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <CheckCircle2 size={16} className="text-orange-400" />
-              <span className="text-sm text-gray-400">Pre-Testing Goedkeuringen Widget:</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  const newValue = !showPreTestingWidget;
-                  setShowPreTestingWidget(newValue);
-                  localStorage.setItem('showPreTestingWidget', String(newValue));
-                  toast.success(newValue ? 'Pre-Testing widget ingeschakeld' : 'Pre-Testing widget uitgeschakeld');
-                }}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  showPreTestingWidget ? 'bg-green-500' : 'bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    showPreTestingWidget ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`text-xs font-medium ${showPreTestingWidget ? 'text-green-400' : 'text-gray-500'}`}>
-                {showPreTestingWidget ? 'Aan' : 'Uit'}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Approval Status Alerts - Hidden for Logistiek users */}
-      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
+      {/* Approval Status Alerts - Hidden for Admin (embedded in Mijn Taken) and Logistiek users */}
+      {pendingApprovals.length > 0 && currentUser?.role !== 'admin' && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-orange-500/20 rounded-lg">
@@ -1518,43 +1514,10 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Admin toggle for Test Review widget */}
-      {currentUser?.role === 'admin' && (
-        <div className="card p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <AlertCircle size={16} className="text-yellow-400" />
-              <span className="text-sm text-gray-400">Tests Ter Controle Widget:</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => {
-                  const newValue = !showTestReviewWidget;
-                  setShowTestReviewWidget(newValue);
-                  localStorage.setItem('showTestReviewWidget', String(newValue));
-                  toast.success(newValue ? 'Tests Ter Controle widget ingeschakeld' : 'Tests Ter Controle widget uitgeschakeld');
-                }}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  showTestReviewWidget ? 'bg-green-500' : 'bg-gray-600'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    showTestReviewWidget ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <span className={`text-xs font-medium ${showTestReviewWidget ? 'text-green-400' : 'text-gray-500'}`}>
-                {showTestReviewWidget ? 'Aan' : 'Uit'}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Test Review Notifications - Appears after Pre-Testing Goedkeuringen */}
-      {(effectiveRole === 'admin' ||
-        effectiveRole === 'projectleider' ||
+      {/* Test Review Notifications - Admin sees embedded version in Mijn Taken */}
+      {currentUser?.role !== 'admin' &&
+        (effectiveRole === 'projectleider' ||
         currentUser?.username === 'Zouhair Taha' ||
         currentUser?.username === 'Ibrahim Abdalla') && showTestReviewWidget && (
         <div className="mb-8">
@@ -1884,32 +1847,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin and Projectleider: Two-Column Layout + Needs Attention */}
-      {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-            <div className="lg:col-span-2">
-              <MyTasksWidget
-                projects={projects}
-                currentUsername={username}
-                onProjectClick={handleProjectClick}
-              />
-            </div>
-            <div className="lg:col-span-3">
-              <ProjectOverviewWidget
-                projects={projects}
-                onProjectClick={handleProjectClick}
-              />
-            </div>
-          </div>
-
-          <NeedsAttentionBanner
-            projects={projects}
-            pendingApprovals={pendingApprovals}
-            onProjectClick={handleProjectClick}
-          />
-        </>
-      )}
 
       {/* Enhanced KPI Dashboard - Hidden for Admin and Projectleider */}
       {effectiveRole !== 'admin' && effectiveRole !== 'projectleider' && (

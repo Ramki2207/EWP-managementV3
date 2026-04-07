@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { ClipboardList, AlertTriangle, Clock, Calendar, CheckCircle2, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { ClipboardList, AlertTriangle, CheckCircle2, ArrowRight, ChevronDown, ChevronUp, FileWarning, Shield, UserX, Clock } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import TestReviewNotifications from '../TestReviewNotifications';
 
 interface Project {
   id: string;
@@ -9,203 +12,163 @@ interface Project {
   location?: string;
   distributors?: any[];
   expected_delivery_date?: string;
+  created_by?: string;
 }
 
 interface MyTasksWidgetProps {
   projects: Project[];
-  currentUsername: string;
+  currentUserId: string;
+  pendingApprovals: any[];
+  isAdmin: boolean;
   onProjectClick: (projectId: string) => void;
 }
 
-interface Task {
-  id: string;
+interface ProjectIssue {
   projectId: string;
   projectNumber: string;
   client: string;
-  verdelerName: string;
-  verdelerStatus: string;
-  deadline: Date | null;
-  daysUntil: number | null;
-  priority: 'overdue' | 'today' | 'this_week' | 'upcoming';
+  issues: string[];
+  issueCount: number;
 }
 
-const MyTasksWidget: React.FC<MyTasksWidgetProps> = ({ projects, currentUsername, onProjectClick }) => {
+const MyTasksWidget: React.FC<MyTasksWidgetProps> = ({
+  projects,
+  currentUserId,
+  pendingApprovals,
+  isAdmin,
+  onProjectClick,
+}) => {
   const [showAll, setShowAll] = useState(false);
+  const [docStatus, setDocStatus] = useState<Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }>>({});
+  const [docLoading, setDocLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
+  const myProjects = useMemo(() => {
+    return projects.filter(p => {
+      if ((p as any).created_by !== currentUserId) return false;
+      const s = p.status?.toLowerCase();
+      return s && !['opgeleverd', 'verloren'].includes(s);
+    });
+  }, [projects, currentUserId]);
 
-  const endOfWeek = useMemo(() => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + 7);
-    return d;
-  }, [today]);
+  useEffect(() => {
+    const fetchDocStatus = async () => {
+      if (myProjects.length === 0) {
+        setDocLoading(false);
+        return;
+      }
 
-  const { overdueTasks, todayTasks, weekTasks, upcomingTasks } = useMemo(() => {
-    const allTasks: Task[] = [];
+      try {
+        const projectIds = myProjects.map(p => p.id);
+        const { data } = await supabase
+          .from('documents')
+          .select('project_id, distributor_id, folder')
+          .in('project_id', projectIds);
 
-    projects.forEach(project => {
-      const projectStatus = project.status?.toLowerCase();
-      if (!projectStatus || ['opgeleverd', 'verloren'].includes(projectStatus)) return;
+        const status: Record<string, { verdelerAanzicht: boolean; installatieSchema: boolean }> = {};
 
-      project.distributors?.forEach((d: any) => {
-        const isAssigned = d.toegewezen_monteur === currentUsername;
-        if (!isAssigned) return;
+        data?.forEach((doc: any) => {
+          if (!doc.distributor_id) return;
+          if (!status[doc.distributor_id]) {
+            status[doc.distributor_id] = { verdelerAanzicht: false, installatieSchema: false };
+          }
+          if (doc.folder === 'Verdeler aanzicht' || doc.folder?.startsWith('Verdeler aanzicht/')) {
+            status[doc.distributor_id].verdelerAanzicht = true;
+          }
+          if (doc.folder === 'Installatie schema' || doc.folder?.startsWith('Installatie schema/')) {
+            status[doc.distributor_id].installatieSchema = true;
+          }
+        });
 
-        const verdelerStatus = d.status?.toLowerCase();
-        if (!verdelerStatus || ['opgeleverd', 'gereed voor facturatie'].includes(verdelerStatus)) return;
+        setDocStatus(status);
+      } catch (err) {
+        console.error('Error fetching document status:', err);
+      } finally {
+        setDocLoading(false);
+      }
+    };
 
-        const deadline = project.expected_delivery_date ? new Date(project.expected_delivery_date) : null;
-        if (deadline) deadline.setHours(0, 0, 0, 0);
-        const daysUntil = deadline ? Math.ceil((deadline.getTime() - today.getTime()) / 86400000) : null;
+    setDocLoading(true);
+    fetchDocStatus();
+  }, [myProjects.map(p => p.id).join(',')]);
 
-        let priority: Task['priority'] = 'upcoming';
-        if (daysUntil !== null) {
-          if (daysUntil < 0) priority = 'overdue';
-          else if (daysUntil === 0) priority = 'today';
-          else if (daysUntil <= 7) priority = 'this_week';
+  const projectIssues = useMemo((): ProjectIssue[] => {
+    const issues: ProjectIssue[] = [];
+
+    myProjects.forEach(project => {
+      const projectIssueList: string[] = [];
+      const s = project.status?.toLowerCase();
+
+      if (['gereed voor facturatie', 'opgeleverd', 'verloren'].includes(s || '')) return;
+
+      if (!project.expected_delivery_date) {
+        projectIssueList.push('Geen leverdatum ingesteld');
+      }
+      if (!project.client || project.client.trim() === '') {
+        projectIssueList.push('Geen klant toegewezen');
+      }
+
+      const activeVerdelers = project.distributors?.filter((d: any) => {
+        const ds = d.status?.toLowerCase();
+        return ds && !['opgeleverd', 'gereed voor facturatie'].includes(ds);
+      }) || [];
+
+      const unassigned = activeVerdelers.filter((d: any) => !d.toegewezen_monteur || d.toegewezen_monteur.trim() === '');
+      if (unassigned.length > 0) {
+        projectIssueList.push(`${unassigned.length} verdeler${unassigned.length > 1 ? 's' : ''} zonder monteur`);
+      }
+
+      const noHours = activeVerdelers.filter((d: any) => !d.expected_hours);
+      if (noHours.length > 0) {
+        projectIssueList.push(`${noHours.length} verdeler${noHours.length > 1 ? 's' : ''} zonder uren inschatting`);
+      }
+
+      if (s !== 'intake' && s !== 'offerte') {
+        const noDeliveryDate = activeVerdelers.filter((d: any) => !d.gewenste_lever_datum);
+        if (noDeliveryDate.length > 0) {
+          projectIssueList.push(`${noDeliveryDate.length} verdeler${noDeliveryDate.length > 1 ? 's' : ''} zonder gewenste leverdatum`);
+        }
+      }
+
+      if (!docLoading) {
+        const noVerdelerAanzicht = activeVerdelers.filter((d: any) => {
+          const ds = d.status?.toLowerCase();
+          if (['intake', 'offerte'].includes(ds || '')) return false;
+          return !docStatus[d.id]?.verdelerAanzicht;
+        });
+        if (noVerdelerAanzicht.length > 0) {
+          projectIssueList.push(`${noVerdelerAanzicht.length} verdeler${noVerdelerAanzicht.length > 1 ? 's' : ''} zonder Verdeler aanzicht`);
         }
 
-        allTasks.push({
-          id: `${project.id}-${d.id}`,
+        const noInstallatieSchema = activeVerdelers.filter((d: any) => {
+          const ds = d.status?.toLowerCase();
+          if (['intake', 'offerte'].includes(ds || '')) return false;
+          return !docStatus[d.id]?.installatieSchema;
+        });
+        if (noInstallatieSchema.length > 0) {
+          projectIssueList.push(`${noInstallatieSchema.length} verdeler${noInstallatieSchema.length > 1 ? 's' : ''} zonder Installatie schema`);
+        }
+      }
+
+      if (projectIssueList.length > 0) {
+        issues.push({
           projectId: project.id,
           projectNumber: project.project_number,
           client: project.client || '-',
-          verdelerName: d.kast_naam || d.distributor_id || 'Verdeler',
-          verdelerStatus: d.status || 'Onbekend',
-          deadline,
-          daysUntil,
-          priority,
+          issues: projectIssueList,
+          issueCount: projectIssueList.length,
         });
-      });
-
-      const isProjectLeader = true;
-      if (isProjectLeader) {
-        const hasDeliveryToday = project.expected_delivery_date &&
-          new Date(project.expected_delivery_date).toDateString() === today.toDateString();
-
-        if (hasDeliveryToday && projectStatus === 'levering') {
-          const alreadyHasTask = allTasks.some(t => t.projectId === project.id);
-          if (!alreadyHasTask) {
-            allTasks.push({
-              id: `delivery-${project.id}`,
-              projectId: project.id,
-              projectNumber: project.project_number,
-              client: project.client || '-',
-              verdelerName: 'Project levering',
-              verdelerStatus: 'Levering',
-              deadline: today,
-              daysUntil: 0,
-              priority: 'today',
-            });
-          }
-        }
       }
     });
 
-    const overdueTasks = allTasks.filter(t => t.priority === 'overdue')
-      .sort((a, b) => (a.daysUntil ?? 0) - (b.daysUntil ?? 0));
-    const todayTasks = allTasks.filter(t => t.priority === 'today');
-    const weekTasks = allTasks.filter(t => t.priority === 'this_week')
-      .sort((a, b) => (a.daysUntil ?? 99) - (b.daysUntil ?? 99));
-    const upcomingTasks = allTasks.filter(t => t.priority === 'upcoming');
+    return issues.sort((a, b) => b.issueCount - a.issueCount);
+  }, [myProjects, docStatus, docLoading]);
 
-    return { overdueTasks, todayTasks, weekTasks, upcomingTasks };
-  }, [projects, currentUsername, today, endOfWeek]);
+  const totalApprovals = isAdmin ? pendingApprovals.length : 0;
+  const totalIssueCount = projectIssues.reduce((sum, p) => sum + p.issueCount, 0);
+  const totalTasks = totalApprovals + projectIssues.length;
 
-  const totalTasks = overdueTasks.length + todayTasks.length + weekTasks.length + upcomingTasks.length;
-
-  const getPriorityStyles = (priority: Task['priority']) => {
-    switch (priority) {
-      case 'overdue': return 'border-l-red-500 bg-red-500/5';
-      case 'today': return 'border-l-amber-500 bg-amber-500/5';
-      case 'this_week': return 'border-l-blue-500 bg-blue-500/5';
-      default: return 'border-l-gray-600 bg-gray-800/30';
-    }
-  };
-
-  const getDeadlineText = (task: Task) => {
-    if (task.daysUntil === null) return 'Geen deadline';
-    if (task.daysUntil < 0) return `${Math.abs(task.daysUntil)}d te laat`;
-    if (task.daysUntil === 0) return 'Vandaag';
-    if (task.daysUntil === 1) return 'Morgen';
-    return `Over ${task.daysUntil} dagen`;
-  };
-
-  const getDeadlineColor = (task: Task) => {
-    if (task.daysUntil === null) return 'text-gray-500';
-    if (task.daysUntil < 0) return 'text-red-400';
-    if (task.daysUntil === 0) return 'text-amber-400';
-    if (task.daysUntil <= 3) return 'text-amber-400';
-    return 'text-gray-400';
-  };
-
-  const renderTask = (task: Task) => (
-    <div
-      key={task.id}
-      onClick={() => onProjectClick(task.projectId)}
-      className={`border-l-2 ${getPriorityStyles(task.priority)} rounded-r-lg p-3 cursor-pointer hover:bg-gray-800/50 transition-colors group`}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
-            <span className="text-sm font-medium text-blue-400">{task.projectNumber}</span>
-            <span className="text-xs text-gray-600">|</span>
-            <span className="text-xs text-gray-400 truncate">{task.client}</span>
-          </div>
-          <p className="text-sm text-white">{task.verdelerName}</p>
-          <div className="flex items-center space-x-3 mt-1">
-            <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-gray-400">
-              {task.verdelerStatus}
-            </span>
-            <span className={`text-xs font-medium ${getDeadlineColor(task)}`}>
-              {getDeadlineText(task)}
-            </span>
-          </div>
-        </div>
-        <ArrowRight size={14} className="text-gray-700 group-hover:text-gray-400 flex-shrink-0 mt-1 transition-colors" />
-      </div>
-    </div>
-  );
-
-  const renderSection = (
-    title: string,
-    icon: React.ReactNode,
-    tasks: Task[],
-    accentColor: string,
-    showWhenEmpty: boolean = false
-  ) => {
-    if (tasks.length === 0 && !showWhenEmpty) return null;
-    const visible = showAll ? tasks : tasks.slice(0, 4);
-
-    return (
-      <div className="mb-4 last:mb-0">
-        <div className="flex items-center space-x-2 mb-2">
-          {icon}
-          <span className={`text-xs font-semibold uppercase tracking-wider ${accentColor}`}>
-            {title}
-          </span>
-          <span className="text-xs text-gray-600">({tasks.length})</span>
-        </div>
-        {tasks.length > 0 ? (
-          <div className="space-y-2">
-            {visible.map(renderTask)}
-            {!showAll && tasks.length > 4 && (
-              <p className="text-xs text-gray-500 text-center pt-1">+{tasks.length - 4} meer</p>
-            )}
-          </div>
-        ) : (
-          <div className="py-4 text-center">
-            <CheckCircle2 size={20} className="mx-auto text-emerald-500/40 mb-1" />
-            <p className="text-xs text-gray-500">Geen taken</p>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const visibleIssues = showAll ? projectIssues : projectIssues.slice(0, 5);
 
   return (
     <div className="card p-5 h-full flex flex-col">
@@ -216,67 +179,130 @@ const MyTasksWidget: React.FC<MyTasksWidgetProps> = ({ projects, currentUsername
           </div>
           <div>
             <h2 className="text-lg font-semibold text-white">Mijn Taken</h2>
-            <p className="text-xs text-gray-500">{totalTasks} openstaande taken</p>
+            <p className="text-xs text-gray-500">
+              {myProjects.length} projecten | {totalIssueCount} actiepunten
+            </p>
           </div>
         </div>
         {totalTasks > 0 && (
-          <div className="flex items-center space-x-2">
-            {overdueTasks.length > 0 && (
-              <span className="flex items-center space-x-1 text-xs bg-red-500/10 text-red-400 px-2 py-1 rounded-full">
-                <AlertTriangle size={12} />
-                <span>{overdueTasks.length}</span>
-              </span>
-            )}
-          </div>
+          <span className="flex items-center space-x-1 text-xs bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-full font-medium">
+            <AlertTriangle size={12} />
+            <span>{totalTasks}</span>
+          </span>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-1 space-y-1 max-h-[520px]">
-        {totalTasks === 0 ? (
+      <div className="flex-1 overflow-y-auto pr-1 space-y-4 max-h-[600px]">
+        {isAdmin && pendingApprovals.length > 0 && (
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <Shield size={14} className="text-orange-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-orange-400">
+                Pre-Testing Goedkeuringen
+              </span>
+              <span className="text-xs text-gray-600">({pendingApprovals.length})</span>
+            </div>
+            <div className="space-y-2">
+              {pendingApprovals.map((approval: any, index: number) => (
+                <div
+                  key={`approval-${index}`}
+                  onClick={() => navigate(`/project/${approval.project?.id}`)}
+                  className="border-l-2 border-l-orange-500 bg-orange-500/5 rounded-r-lg p-3 cursor-pointer hover:bg-gray-800/50 transition-colors group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-blue-400">
+                          {approval.project?.project_number}
+                        </span>
+                        <span className="text-xs text-gray-600">|</span>
+                        <span className="text-xs text-gray-400 truncate">
+                          {approval.distributor?.kast_naam || approval.distributor?.distributor_id}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock size={10} className="text-gray-500" />
+                        <p className="text-xs text-gray-500">
+                          Ingediend door {approval.submittedBy}
+                          {approval.submittedAt && ` | ${new Date(approval.submittedAt).toLocaleDateString('nl-NL')}`}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowRight size={14} className="text-gray-700 group-hover:text-gray-400 flex-shrink-0 mt-1 transition-colors" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {isAdmin && (
+          <TestReviewNotifications embedded />
+        )}
+
+        {projectIssues.length > 0 && (
+          <div>
+            <div className="flex items-center space-x-2 mb-2">
+              <FileWarning size={14} className="text-amber-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                Onvolledige Projecten
+              </span>
+              <span className="text-xs text-gray-600">({projectIssues.length})</span>
+            </div>
+            <div className="space-y-2">
+              {visibleIssues.map(project => (
+                <div
+                  key={project.projectId}
+                  onClick={() => onProjectClick(project.projectId)}
+                  className="border-l-2 border-l-amber-500 bg-amber-500/5 rounded-r-lg p-3 cursor-pointer hover:bg-gray-800/50 transition-colors group"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-sm font-medium text-blue-400">{project.projectNumber}</span>
+                        <span className="text-xs text-gray-600">|</span>
+                        <span className="text-xs text-gray-400 truncate">{project.client}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {project.issues.map((issue, i) => (
+                          <p key={i} className="text-xs text-gray-400 flex items-center space-x-1.5">
+                            <AlertTriangle size={10} className="text-amber-500/70 flex-shrink-0" />
+                            <span>{issue}</span>
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                    <ArrowRight size={14} className="text-gray-700 group-hover:text-gray-400 flex-shrink-0 mt-1 transition-colors" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {totalTasks === 0 && !docLoading && (
           <div className="flex flex-col items-center justify-center py-12">
             <CheckCircle2 size={40} className="text-emerald-500/30 mb-3" />
             <p className="text-gray-400 text-sm font-medium">Alles bijgewerkt</p>
             <p className="text-gray-600 text-xs mt-1">Geen openstaande taken</p>
           </div>
-        ) : (
-          <>
-            {renderSection(
-              'Te laat',
-              <AlertTriangle size={14} className="text-red-400" />,
-              overdueTasks,
-              'text-red-400'
-            )}
-            {renderSection(
-              'Vandaag',
-              <Clock size={14} className="text-amber-400" />,
-              todayTasks,
-              'text-amber-400',
-              overdueTasks.length === 0
-            )}
-            {renderSection(
-              'Deze week',
-              <Calendar size={14} className="text-blue-400" />,
-              weekTasks,
-              'text-blue-400'
-            )}
-            {renderSection(
-              'Overig',
-              <ClipboardList size={14} className="text-gray-400" />,
-              upcomingTasks,
-              'text-gray-400'
-            )}
-          </>
+        )}
+
+        {docLoading && totalTasks === 0 && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
         )}
       </div>
 
-      {totalTasks > 8 && (
+      {projectIssues.length > 5 && (
         <div className="pt-3 border-t border-gray-800 mt-3">
           <button
             onClick={() => setShowAll(!showAll)}
             className="flex items-center justify-center space-x-1 text-xs text-gray-400 hover:text-blue-400 transition-colors w-full py-1"
           >
             {showAll ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            <span>{showAll ? 'Toon minder' : `Toon alle ${totalTasks} taken`}</span>
+            <span>{showAll ? 'Toon minder' : `Toon alle ${projectIssues.length} projecten`}</span>
           </button>
         </div>
       )}
