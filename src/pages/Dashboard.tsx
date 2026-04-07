@@ -21,7 +21,12 @@ import {
   Zap,
   BarChart3,
   FileText,
-  Users
+  Users,
+  CalendarDays,
+  Timer,
+  Wrench,
+  Target,
+  Activity
 } from 'lucide-react';
 import { supabase, dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
@@ -62,6 +67,26 @@ interface KPIData {
   overdueTasks: number;
 }
 
+interface MonteurWorkload {
+  name: string;
+  activeProjects: number;
+  verdelers: Array<{
+    project_number: string;
+    kast_naam: string;
+    status: string;
+    deadline?: string;
+  }>;
+}
+
+interface DeadlineItem {
+  project_number: string;
+  description: string;
+  deadline: string;
+  status: string;
+  daysUntil: number;
+  urgency: 'overdue' | 'today' | 'this_week' | 'this_month' | 'later';
+}
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
@@ -74,6 +99,8 @@ const Dashboard = () => {
   const [locationFilter, setLocationFilter] = useState('all');
   const [testNotifications, setTestNotifications] = useState<TestNotification[]>([]);
   const [showTestWidget, setShowTestWidget] = useState(false);
+  const [monteurWorkloads, setMonteurWorkloads] = useState<MonteurWorkload[]>([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState<DeadlineItem[]>([]);
 
   const [kpiData, setKpiData] = useState<KPIData>({
     totalActiveProjects: 0,
@@ -122,8 +149,9 @@ const Dashboard = () => {
       calculateKPIs(filteredProjects);
       identifyUrgentActions(filteredProjects);
       extractMyActivity(filteredProjects);
+      calculateMonteurWorkloads(filteredProjects);
+      calculateUpcomingDeadlines(filteredProjects);
 
-      // Get most recent projects
       const recent = [...filteredProjects]
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 10);
@@ -134,6 +162,77 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateUpcomingDeadlines = (projectList: Project[]) => {
+    const deadlines: DeadlineItem[] = [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    projectList.forEach(project => {
+      if (project.deadline) {
+        const deadline = new Date(project.deadline);
+        deadline.setHours(0, 0, 0, 0);
+
+        const diffTime = deadline.getTime() - now.getTime();
+        const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let urgency: DeadlineItem['urgency'];
+        if (daysUntil < 0) urgency = 'overdue';
+        else if (daysUntil === 0) urgency = 'today';
+        else if (daysUntil <= 7) urgency = 'this_week';
+        else if (daysUntil <= 30) urgency = 'this_month';
+        else urgency = 'later';
+
+        deadlines.push({
+          project_number: project.project_number,
+          description: project.description,
+          deadline: project.deadline,
+          status: project.status,
+          daysUntil,
+          urgency
+        });
+      }
+    });
+
+    deadlines.sort((a, b) => a.daysUntil - b.daysUntil);
+    setUpcomingDeadlines(deadlines.slice(0, 15));
+  };
+
+  const calculateMonteurWorkloads = (projectList: Project[]) => {
+    const workloadMap: Record<string, MonteurWorkload> = {};
+
+    projectList.forEach(project => {
+      project.distributors?.forEach((dist: any) => {
+        const monteur = dist.toegewezen_monteur;
+        if (monteur && monteur !== 'Vrij') {
+          if (!workloadMap[monteur]) {
+            workloadMap[monteur] = {
+              name: monteur,
+              activeProjects: 0,
+              verdelers: []
+            };
+          }
+
+          if (dist.status !== 'Voltooid') {
+            workloadMap[monteur].verdelers.push({
+              project_number: project.project_number,
+              kast_naam: dist.kast_naam,
+              status: dist.status || project.status,
+              deadline: project.deadline
+            });
+          }
+        }
+      });
+    });
+
+    Object.values(workloadMap).forEach(workload => {
+      const uniqueProjects = new Set(workload.verdelers.map(v => v.project_number));
+      workload.activeProjects = uniqueProjects.size;
+    });
+
+    const sorted = Object.values(workloadMap).sort((a, b) => b.verdelers.length - a.verdelers.length);
+    setMonteurWorkloads(sorted);
   };
 
   const calculateKPIs = (projectList: Project[]) => {
@@ -166,7 +265,6 @@ const Dashboard = () => {
     const now = new Date();
 
     projectList.forEach(project => {
-      // Overdue projects - CRITICAL
       if (project.deadline && new Date(project.deadline) < now) {
         actions.push({
           type: 'overdue',
@@ -179,7 +277,6 @@ const Dashboard = () => {
         });
       }
 
-      // Projects without distributors - HIGH
       if (!project.distributors || project.distributors.length === 0) {
         if (project.status !== 'Offerte' && project.status !== 'Engineering') {
           actions.push({
@@ -194,7 +291,6 @@ const Dashboard = () => {
         }
       }
 
-      // Distributors without monteur - MEDIUM
       const unassignedDist = project.distributors?.filter(
         (d: any) => !d.toegewezen_monteur || d.toegewezen_monteur === 'Vrij'
       ) || [];
@@ -212,7 +308,6 @@ const Dashboard = () => {
         });
       }
 
-      // Blocked projects - HIGH
       if (project.status === 'On Hold' || project.status === 'Wacht op onderdelen') {
         actions.push({
           type: 'blocked',
@@ -225,7 +320,6 @@ const Dashboard = () => {
         });
       }
 
-      // Projects ready for testing
       const readyForTest = project.distributors?.filter(
         (d: any) => d.status === 'Gereed voor testen'
       ) || [];
@@ -244,7 +338,6 @@ const Dashboard = () => {
       }
     });
 
-    // Sort by severity
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     actions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
@@ -256,7 +349,6 @@ const Dashboard = () => {
     const username = currentUser?.username;
 
     projectList.forEach(project => {
-      // Projects I created
       if (project.created_by === username) {
         const openDistributors = project.distributors?.filter(
           (d: any) => d.status !== 'Voltooid'
@@ -274,7 +366,6 @@ const Dashboard = () => {
         });
       }
 
-      // Distributors assigned to me
       project.distributors?.forEach((dist: any) => {
         if (dist.toegewezen_monteur === username) {
           activity.push({
@@ -292,7 +383,6 @@ const Dashboard = () => {
       });
     });
 
-    // If no activity, show recent projects the user has access to
     if (activity.length === 0) {
       projectList.slice(0, 10).forEach(project => {
         activity.push({
@@ -327,6 +417,33 @@ const Dashboard = () => {
       case 'medium': return 'bg-yellow-500';
       default: return 'bg-blue-500';
     }
+  };
+
+  const getUrgencyColor = (urgency: DeadlineItem['urgency']) => {
+    switch (urgency) {
+      case 'overdue': return 'border-red-500 bg-red-900/30';
+      case 'today': return 'border-orange-500 bg-orange-900/30';
+      case 'this_week': return 'border-yellow-500 bg-yellow-900/30';
+      case 'this_month': return 'border-blue-500 bg-blue-900/30';
+      default: return 'border-gray-500 bg-gray-900/30';
+    }
+  };
+
+  const getUrgencyBadge = (urgency: DeadlineItem['urgency']) => {
+    switch (urgency) {
+      case 'overdue': return 'bg-red-500';
+      case 'today': return 'bg-orange-500';
+      case 'this_week': return 'bg-yellow-500';
+      case 'this_month': return 'bg-blue-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const getUrgencyLabel = (item: DeadlineItem) => {
+    if (item.urgency === 'overdue') return `${Math.abs(item.daysUntil)} dagen te laat`;
+    if (item.urgency === 'today') return 'Vandaag';
+    if (item.daysUntil === 1) return 'Morgen';
+    return `Over ${item.daysUntil} dagen`;
   };
 
   const getProjectProgress = (project: Project) => {
@@ -397,140 +514,150 @@ const Dashboard = () => {
       <Sidebar />
 
       <div className="flex-1 overflow-y-auto">
-        {/* Top Action Bar */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-gray-800 to-gray-900 border-b border-gray-700 shadow-lg">
-          <div className="px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-white">Startpagina</h1>
-                <p className="text-sm text-gray-400 mt-1">
-                  Welkom terug, <span className="text-cyan-400 font-medium">{currentUser?.username}</span>
+        {/* Enhanced Hero Top Banner */}
+        <div className="sticky top-0 z-10 bg-gradient-to-br from-cyan-600 via-blue-700 to-blue-900 shadow-2xl">
+          <div className="px-8 py-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-4xl font-black text-white mb-2 tracking-tight">
+                  Dashboard Overzicht
+                </h1>
+                <p className="text-cyan-100 text-lg font-medium">
+                  Welkom terug, <span className="text-white font-bold">{currentUser?.username}</span>
+                  <span className="mx-2">•</span>
+                  <span className="text-cyan-200">{new Date().toLocaleDateString('nl-NL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Filter Button */}
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                >
-                  <Filter size={18} />
-                  Filters
-                  {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
+                {testNotifications.length > 0 && (
+                  <div className="relative">
+                    <button className="p-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-xl transition-all hover:scale-105">
+                      <Bell size={24} />
+                    </button>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                      {testNotifications.length}
+                    </span>
+                  </div>
+                )}
 
-                {/* Location Filter */}
-                <select
-                  value={filterMode}
-                  onChange={(e) => setFilterMode(e.target.value)}
-                  className="px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                >
-                  <option value="all">Alle Locaties</option>
-                  {AVAILABLE_LOCATIONS.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-
-                {/* New Project Button */}
                 <button
                   onClick={() => navigate('/create-project')}
-                  className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg transition-all shadow-lg hover:shadow-cyan-500/50"
+                  className="flex items-center gap-3 px-8 py-3 bg-white text-blue-700 rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all"
                 >
-                  <Plus size={18} />
+                  <Plus size={24} strokeWidth={3} />
                   Nieuw Project
                 </button>
 
-                {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+                  className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold shadow-xl hover:scale-105 transition-all"
                 >
-                  <LogOut size={18} />
+                  <LogOut size={20} />
                   Uitloggen
                 </button>
               </div>
             </div>
 
-            {/* Expandable Filters */}
-            {showFilters && (
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Status Filter</label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    >
-                      <option value="all">Alle Statussen</option>
-                      <option value="Offerte">Offerte</option>
-                      <option value="Engineering">Engineering</option>
-                      <option value="Productie">Productie</option>
-                      <option value="Testen">Testen</option>
-                      <option value="Afgeleverd">Afgeleverd</option>
-                      <option value="On Hold">On Hold</option>
-                      <option value="Wacht op onderdelen">Wacht op onderdelen</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-400 mb-2 block">Locatie Filter</label>
-                    <select
-                      value={locationFilter}
-                      onChange={(e) => setLocationFilter(e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    >
-                      <option value="all">Alle Locaties</option>
-                      {AVAILABLE_LOCATIONS.map(loc => (
-                        <option key={loc} value={loc}>{loc}</option>
-                      ))}
-                    </select>
-                  </div>
+            {/* Mini Stats in Header */}
+            <div className="grid grid-cols-5 gap-3">
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <Target className="text-cyan-200" size={18} />
+                  <span className="text-xs text-cyan-200 font-medium">Actief</span>
                 </div>
+                <div className="text-2xl font-bold text-white">{kpiData.totalActiveProjects}</div>
               </div>
-            )}
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="text-green-300" size={18} />
+                  <span className="text-xs text-green-200 font-medium">On Track</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{kpiData.projectsOnTrack}%</div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="text-orange-300" size={18} />
+                  <span className="text-xs text-orange-200 font-medium">At Risk</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{kpiData.projectsAtRisk}</div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="text-red-300" size={18} />
+                  <span className="text-xs text-red-200 font-medium">Te Laat</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{kpiData.overdueTasks}</div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <Wrench className="text-yellow-300" size={18} />
+                  <span className="text-xs text-yellow-200 font-medium">Monteurs</span>
+                </div>
+                <div className="text-2xl font-bold text-white">{monteurWorkloads.length}</div>
+              </div>
+            </div>
+
+            {/* Quick Filters Row */}
+            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/20">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-lg transition-all border border-white/20"
+              >
+                <Filter size={18} />
+                Filters
+                {showFilters ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+
+              <select
+                value={filterMode}
+                onChange={(e) => setFilterMode(e.target.value)}
+                className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+              >
+                <option value="all">Alle Locaties</option>
+                {AVAILABLE_LOCATIONS.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+
+              {showFilters && (
+                <>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  >
+                    <option value="all">Alle Statussen</option>
+                    <option value="Offerte">Offerte</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Productie">Productie</option>
+                    <option value="Testen">Testen</option>
+                    <option value="Afgeleverd">Afgeleverd</option>
+                    <option value="On Hold">On Hold</option>
+                    <option value="Wacht op onderdelen">Wacht op onderdelen</option>
+                  </select>
+
+                  <select
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  >
+                    <option value="all">Alle Locaties</option>
+                    {AVAILABLE_LOCATIONS.map(loc => (
+                      <option key={loc} value={loc}>{loc}</option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="p-8 max-w-[1800px] mx-auto">
-          {/* KPI Bar */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-gray-700 shadow-lg hover:shadow-cyan-500/10 transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm font-medium">Actieve Projecten</span>
-                <TrendingUp className="text-cyan-400" size={24} />
-              </div>
-              <div className="text-4xl font-bold text-white mb-1">{kpiData.totalActiveProjects}</div>
-              <div className="text-xs text-gray-500">Totaal in behandeling</div>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-green-700/30 shadow-lg hover:shadow-green-500/10 transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm font-medium">On Track</span>
-                <CheckCircle2 className="text-green-400" size={24} />
-              </div>
-              <div className="text-4xl font-bold text-green-400 mb-1">{kpiData.projectsOnTrack}%</div>
-              <div className="text-xs text-gray-500">Loopt volgens planning</div>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-orange-700/30 shadow-lg hover:shadow-orange-500/10 transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm font-medium">At Risk</span>
-                <AlertTriangle className="text-orange-400" size={24} />
-              </div>
-              <div className="text-4xl font-bold text-orange-400 mb-1">{kpiData.projectsAtRisk}</div>
-              <div className="text-xs text-gray-500">Vereist aandacht</div>
-            </div>
-
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 border border-red-700/30 shadow-lg hover:shadow-red-500/10 transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-400 text-sm font-medium">Achter Schema</span>
-                <Clock className="text-red-400" size={24} />
-              </div>
-              <div className="text-4xl font-bold text-red-400 mb-1">{kpiData.overdueTasks}</div>
-              <div className="text-xs text-gray-500">Past deadline</div>
-            </div>
-          </div>
-
           {/* Test Review Compact Widget */}
           {testNotifications.length > 0 && (
             <div className="mb-8">
@@ -595,6 +722,158 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+
+          {/* NEW: Deadline Calendar & Monteur Overview Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            {/* Deadline Calendar */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-900/40 to-cyan-900/40 px-6 py-4 border-b border-blue-700/50">
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="text-blue-400" size={24} />
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Agenda & Deadlines</h2>
+                    <p className="text-sm text-gray-400">Aankomende deadlines en mijlpalen</p>
+                  </div>
+                  <span className="ml-auto bg-blue-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                    {upcomingDeadlines.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="space-y-2 max-h-[500px] overflow-y-auto">
+                  {upcomingDeadlines.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <CalendarDays size={48} className="mx-auto mb-3 opacity-50" />
+                      <p>Geen deadlines gevonden</p>
+                    </div>
+                  ) : (
+                    upcomingDeadlines.map((item, index) => (
+                      <div
+                        key={index}
+                        onClick={() => handleProjectClick(item.project_number)}
+                        className={`flex items-start gap-3 p-3 rounded-lg border ${getUrgencyColor(item.urgency)} cursor-pointer hover:scale-[1.02] transition-transform`}
+                      >
+                        <div className={`${getUrgencyBadge(item.urgency)} p-2 rounded-lg flex-shrink-0`}>
+                          <Timer className="text-white" size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-white font-semibold text-sm">{item.project_number}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded ${getStatusColor(item.status)} text-white`}>
+                              {item.status}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-400 mb-1 truncate">{item.description}</div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-gray-500">
+                              {new Date(item.deadline).toLocaleDateString('nl-NL')}
+                            </span>
+                            <span className="text-gray-600">•</span>
+                            <span className={item.urgency === 'overdue' ? 'text-red-400 font-semibold' : 'text-gray-400'}>
+                              {getUrgencyLabel(item)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Monteur Workload Overview */}
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-900/40 to-yellow-900/40 px-6 py-4 border-b border-orange-700/50">
+                <div className="flex items-center gap-3">
+                  <Wrench className="text-orange-400" size={24} />
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Monteur Capaciteit</h2>
+                    <p className="text-sm text-gray-400">Werkbelasting per monteur</p>
+                  </div>
+                  <span className="ml-auto bg-orange-500 text-white text-sm px-3 py-1 rounded-full font-semibold">
+                    {monteurWorkloads.length}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                  {monteurWorkloads.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <Users size={48} className="mx-auto mb-3 opacity-50" />
+                      <p>Geen monteurs met actieve taken</p>
+                    </div>
+                  ) : (
+                    monteurWorkloads.map((workload, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-900/50 p-4 rounded-lg border border-gray-700 hover:border-orange-500 transition-all"
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-orange-600/20 p-2 rounded-lg">
+                              <User className="text-orange-400" size={18} />
+                            </div>
+                            <div>
+                              <h3 className="text-white font-semibold">{workload.name}</h3>
+                              <p className="text-xs text-gray-500">
+                                {workload.activeProjects} project{workload.activeProjects !== 1 ? 'en' : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-white">{workload.verdelers.length}</div>
+                            <div className="text-xs text-gray-500">verdelers</div>
+                          </div>
+                        </div>
+
+                        {/* Workload Bar */}
+                        <div className="mb-2">
+                          <div className="w-full bg-gray-700 rounded-full h-2">
+                            <div
+                              className={`h-2 rounded-full transition-all ${
+                                workload.verdelers.length > 10
+                                  ? 'bg-red-500'
+                                  : workload.verdelers.length > 5
+                                  ? 'bg-yellow-500'
+                                  : 'bg-green-500'
+                              }`}
+                              style={{ width: `${Math.min((workload.verdelers.length / 15) * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Top 3 Verdelers */}
+                        <div className="space-y-1">
+                          {workload.verdelers.slice(0, 3).map((v, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between text-xs cursor-pointer hover:text-orange-400 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleProjectClick(v.project_number);
+                              }}
+                            >
+                              <span className="text-gray-400">{v.project_number} - {v.kast_naam}</span>
+                              <span className={`px-2 py-0.5 rounded ${getStatusColor(v.status)} text-white`}>
+                                {v.status}
+                              </span>
+                            </div>
+                          ))}
+                          {workload.verdelers.length > 3 && (
+                            <div className="text-xs text-gray-500 italic">
+                              +{workload.verdelers.length - 3} meer...
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Urgent Actions Section */}
           {urgentActions.length > 0 && (
@@ -738,7 +1017,6 @@ const Dashboard = () => {
                         </div>
                         <div className="text-sm text-gray-400 mb-3 truncate">{project.description}</div>
 
-                        {/* Progress Bar */}
                         <div className="mb-3">
                           <div className="flex justify-between text-xs text-gray-500 mb-1">
                             <span>Voortgang</span>
@@ -772,7 +1050,7 @@ const Dashboard = () => {
           {/* Organization Status Summary */}
           <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-gray-700 shadow-lg p-6">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <BarChart3 className="text-cyan-400" size={24} />
+              <Activity className="text-cyan-400" size={24} />
               Organisatie Overzicht
             </h2>
 
