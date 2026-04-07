@@ -43,7 +43,7 @@ const NeedsAttentionBanner: React.FC<NeedsAttentionBannerProps> = ({
     const overdueProjects = projects.filter(p => {
       if (!p.expected_delivery_date) return false;
       const s = p.status?.toLowerCase();
-      if (!s || ['opgeleverd', 'verloren', 'gereed voor facturatie'].includes(s)) return false;
+      if (!s || ['opgeleverd', 'verloren', 'gereed voor facturatie', 'levering', 'gereed'].includes(s)) return false;
       const delivery = new Date(p.expected_delivery_date);
       delivery.setHours(0, 0, 0, 0);
       return delivery < today;
@@ -77,7 +77,7 @@ const NeedsAttentionBanner: React.FC<NeedsAttentionBannerProps> = ({
       if (!s || ['opgeleverd', 'verloren', 'gereed voor facturatie'].includes(s)) return;
       p.distributors?.forEach((d: any) => {
         const ds = d.status?.toLowerCase();
-        if (!ds || ['opgeleverd', 'gereed voor facturatie', 'levering'].includes(ds)) return;
+        if (!ds || ['opgeleverd', 'gereed voor facturatie'].includes(ds)) return;
         if (!d.toegewezen_monteur || d.toegewezen_monteur.trim() === '') {
           unassignedVerdelers.push({
             id: d.id,

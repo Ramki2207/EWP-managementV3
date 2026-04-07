@@ -1884,15 +1884,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin and Projectleider: Needs Attention + Two-Column Layout */}
+      {/* Admin and Projectleider: Two-Column Layout + Needs Attention */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
-          <NeedsAttentionBanner
-            projects={projects}
-            pendingApprovals={pendingApprovals}
-            onProjectClick={handleProjectClick}
-          />
-
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
             <div className="lg:col-span-2">
               <MyTasksWidget
@@ -1908,6 +1902,12 @@ const Dashboard = () => {
               />
             </div>
           </div>
+
+          <NeedsAttentionBanner
+            projects={projects}
+            pendingApprovals={pendingApprovals}
+            onProjectClick={handleProjectClick}
+          />
         </>
       )}
 
