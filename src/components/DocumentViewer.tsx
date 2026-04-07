@@ -833,40 +833,75 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
     }
   };
 
+  const isMobileDevice = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      ('ontouchstart' in window) ||
+      (navigator.maxTouchPoints > 0);
+  };
+
+  const triggerDownload = (url: string, filename: string) => {
+    if (isMobileDevice()) {
+      const newWindow = window.open(url, '_blank');
+      if (!newWindow) {
+        window.location.href = url;
+      }
+    } else {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const handleDownload = async (doc: Document) => {
     try {
       const content = await loadDocumentContent(doc);
 
-      // Check if it's a base64 data URL or a regular URL
       if (content.startsWith('data:')) {
-        // For base64 data URLs, we can download directly
-        const link = document.createElement('a');
-        link.href = content;
-        link.download = doc.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (isMobileDevice()) {
+          const response = await fetch(content);
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const newWindow = window.open(blobUrl, '_blank');
+          if (!newWindow) {
+            window.location.href = blobUrl;
+          }
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+        } else {
+          const link = document.createElement('a');
+          link.href = content;
+          link.download = doc.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       } else {
-        // For storage URLs, fetch as blob to avoid CORS issues
         toast.loading('Bestand wordt gedownload...', { id: 'download' });
 
-        const response = await fetch(content);
-        if (!response.ok) {
-          throw new Error('Failed to fetch file');
+        if (isMobileDevice()) {
+          triggerDownload(content, doc.name);
+        } else {
+          const response = await fetch(content);
+          if (!response.ok) {
+            throw new Error('Failed to fetch file');
+          }
+
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = doc.name;
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
         }
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = doc.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the blob URL
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       }
 
       toast.success('Document gedownload!', { id: 'download' });

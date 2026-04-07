@@ -233,12 +233,22 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
 
   const handleDownload = (doc: Document) => {
     try {
-      const link = document.createElement('a');
-      link.href = doc.content;
-      link.download = doc.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+        ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+      if (isMobile) {
+        const newWindow = window.open(doc.content, '_blank');
+        if (!newWindow) {
+          window.location.href = doc.content;
+        }
+      } else {
+        const link = document.createElement('a');
+        link.href = doc.content;
+        link.download = doc.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
     } catch (error) {
       console.error('Error downloading file:', error);
       toast.error('Er is een fout opgetreden bij het downloaden van het document');
