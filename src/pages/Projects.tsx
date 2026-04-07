@@ -512,10 +512,10 @@ const Projects = () => {
         console.log(`💼 ANNEMIEKE FILTER: Annemieke has special access - skipping role/location filters for ${project.project_number}`);
       }
 
-      // Role-based filtering for Montage users (skip for Annemieke and Sven)
+      // Role-based filtering for Montage users (skip for Annemieke, Sven, and Zouhair)
       if (!isAnnemieke && currentUser?.role === 'montage') {
-        // Exception for Sven - can see all projects
-        if (currentUser.username === 'Sven') {
+        // Exception for Sven and Zouhair - can see all projects
+        if (currentUser.username === 'Sven' || currentUser.username === 'Zouhair Taha') {
           console.log(`🔧 MONTAGE FILTER: Showing project ${project.project_number} to ${currentUser.username} - SPECIAL ACCESS`);
           // Skip the montage filtering - they can see all projects
         } else {
