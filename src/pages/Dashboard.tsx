@@ -15,10 +15,9 @@ import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
-import ProjectPipelineWidget from '../components/dashboard/ProjectPipelineWidget';
-import ActionItemsWidget from '../components/dashboard/ActionItemsWidget';
-import ProjectProgressionWidget from '../components/dashboard/ProjectProgressionWidget';
-import MonteurOverviewWidget from '../components/dashboard/MonteurOverviewWidget';
+import NeedsAttentionBanner from '../components/dashboard/NeedsAttentionBanner';
+import MyTasksWidget from '../components/dashboard/MyTasksWidget';
+import ProjectOverviewWidget from '../components/dashboard/ProjectOverviewWidget';
 
 interface Project {
   id: string;
@@ -1885,35 +1884,30 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Admin and Projectleider: New Dashboard Widgets */}
+      {/* Admin and Projectleider: Needs Attention + Two-Column Layout */}
       {(currentUser?.role === 'admin' || currentUser?.role === 'projectleider') && (
         <>
-          <ProjectPipelineWidget
+          <NeedsAttentionBanner
             projects={projects}
-            onStatusClick={(status) => {
-              setStatusFilter(status);
-              setShowFilters(true);
-              const element = document.getElementById('projecten-overzicht');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }}
-          />
-
-          <ActionItemsWidget
-            projects={projects}
+            pendingApprovals={pendingApprovals}
             onProjectClick={handleProjectClick}
           />
 
-          <ProjectProgressionWidget
-            projects={projects}
-            onProjectClick={handleProjectClick}
-          />
-
-          <MonteurOverviewWidget
-            projects={projects}
-            onProjectClick={handleProjectClick}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <MyTasksWidget
+                projects={projects}
+                currentUsername={username}
+                onProjectClick={handleProjectClick}
+              />
+            </div>
+            <div className="lg:col-span-3">
+              <ProjectOverviewWidget
+                projects={projects}
+                onProjectClick={handleProjectClick}
+              />
+            </div>
+          </div>
         </>
       )}
 
