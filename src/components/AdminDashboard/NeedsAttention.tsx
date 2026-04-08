@@ -142,7 +142,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
 
   if (attentionItems.length === 0) {
     return (
-      <div className="card mb-6 border border-green-500/30 bg-green-500/5">
+      <div className="card border border-green-500/30 bg-green-500/5">
         <div className="flex items-center gap-3 p-1">
           <div className="p-2 bg-green-500/20 rounded-lg">
             <AlertTriangle size={20} className="text-green-400" />
@@ -157,7 +157,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
   }
 
   return (
-    <div className="card mb-6 border border-red-500/20">
+    <div className="card border border-red-500/20">
       <div className="flex items-center gap-3 mb-5">
         <div className="p-2 bg-red-500/20 rounded-lg">
           <AlertTriangle size={20} className="text-red-400" />

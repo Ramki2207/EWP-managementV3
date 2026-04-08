@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart3, FolderOpen, Clock, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import NeedsAttention from './NeedsAttention';
+import TestingOverview from './TestingOverview';
 import MyTasks from './MyTasks';
 import ProjectOverview from './ProjectOverview';
 
@@ -96,7 +97,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
         />
       </div>
 
-      <NeedsAttention projects={projects} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <NeedsAttention projects={projects} />
+        <TestingOverview projects={projects} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MyTasks
