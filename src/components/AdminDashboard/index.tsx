@@ -79,11 +79,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MyTasks
-          projects={projects}
-          userId={userId}
-        />
-        <ProjectOverview projects={projects} />
+        <div className="h-[600px]">
+          <MyTasks
+            projects={projects}
+            userId={userId}
+          />
+        </div>
+        <div className="h-[600px]">
+          <ProjectOverview projects={projects} />
+        </div>
       </div>
     </div>
   );

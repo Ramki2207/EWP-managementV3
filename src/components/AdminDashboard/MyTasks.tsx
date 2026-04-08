@@ -147,18 +147,16 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
           </div>
         </div>
 
-        {myProjects.length > 5 && (
-          <div className="relative mb-3 flex-shrink-0">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Zoek project..."
-              className="w-full bg-[#1a1f2b] border border-gray-700/50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
-            />
-          </div>
-        )}
+        <div className="relative mb-3 flex-shrink-0">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Zoek op project, klant..."
+            className="w-full bg-[#161b24] border border-gray-700/50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+          />
+        </div>
 
         <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar space-y-2">
           {filteredProjects.length === 0 ? (
