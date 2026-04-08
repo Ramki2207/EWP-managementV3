@@ -15,6 +15,7 @@ import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
+import AdminDashboard from '../components/AdminDashboard';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -1089,6 +1090,14 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {currentUser?.role === 'admin' && viewAsRole === 'admin' && (
+        <AdminDashboard
+          projects={projects}
+          userId={currentUser.id}
+          username={username}
+        />
+      )}
 
       {/* Special Section for Sven */}
       {currentUser?.username === 'Sven' && (
