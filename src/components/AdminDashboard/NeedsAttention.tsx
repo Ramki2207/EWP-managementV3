@@ -142,7 +142,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
 
   if (attentionItems.length === 0) {
     return (
-      <div className="card border border-green-500/30 bg-green-500/5">
+      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex items-center justify-center">
         <div className="flex items-center gap-3 p-1">
           <div className="p-2 bg-green-500/20 rounded-lg">
             <AlertTriangle size={20} className="text-green-400" />
@@ -157,8 +157,8 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
   }
 
   return (
-    <div className="card border border-red-500/20">
-      <div className="flex items-center gap-3 mb-5">
+    <div className="card border border-red-500/20 h-[420px] flex flex-col">
+      <div className="flex items-center gap-3 mb-5 flex-shrink-0">
         <div className="p-2 bg-red-500/20 rounded-lg">
           <AlertTriangle size={20} className="text-red-400" />
         </div>
@@ -168,8 +168,8 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
         </div>
       </div>
 
-      <div className="space-y-2">
-        {attentionItems.slice(0, 8).map(item => (
+      <div className="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+        {attentionItems.map(item => (
           <div
             key={item.id}
             onClick={() => navigate(`/projects/${item.projectId}`)}
@@ -185,11 +185,6 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
             </span>
           </div>
         ))}
-        {attentionItems.length > 8 && (
-          <p className="text-xs text-gray-500 text-center pt-2">
-            + {attentionItems.length - 8} meer items
-          </p>
-        )}
       </div>
     </div>
   );

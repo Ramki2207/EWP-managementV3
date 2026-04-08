@@ -241,7 +241,7 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
 
   if (loading) {
     return (
-      <div className="card border border-cyan-500/20">
+      <div className="card border border-cyan-500/20 h-[420px] flex flex-col items-center justify-center">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 bg-cyan-500/20 rounded-lg">
             <FlaskConical size={20} className="text-cyan-400" />
@@ -257,7 +257,7 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
 
   if (totalItems === 0) {
     return (
-      <div className="card border border-green-500/30 bg-green-500/5">
+      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex items-center justify-center">
         <div className="flex items-center gap-3 p-1">
           <div className="p-2 bg-green-500/20 rounded-lg">
             <FlaskConical size={20} className="text-green-400" />
@@ -272,8 +272,8 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
   }
 
   return (
-    <div className="card border border-cyan-500/20">
-      <div className="flex items-center gap-3 mb-5">
+    <div className="card border border-cyan-500/20 h-[420px] flex flex-col">
+      <div className="flex items-center gap-3 mb-5 flex-shrink-0">
         <div className="p-2 bg-cyan-500/20 rounded-lg">
           <FlaskConical size={20} className="text-cyan-400" />
         </div>
@@ -285,6 +285,7 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
         </div>
       </div>
 
+      <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
       {preTestingApprovals.length > 0 && (
         <div className="mb-5">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-2">
@@ -373,6 +374,7 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
