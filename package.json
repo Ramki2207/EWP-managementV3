@@ -13,6 +13,7 @@
     "start": "vite preview --port 4173 --strictPort"
   },
   "dependencies": {
+    "@kenjiuno/msgreader": "^1.28.0",
     "@supabase/supabase-js": "^2.39.3",
     "bcryptjs": "^2.4.3",
     "date-fns": "^2.30.0",

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import { convertHeicToJpeg, isHeicFile } from '../lib/heicConverter';
+import MsgPreview from './MsgPreview';
 
 interface Document {
   id: string;
@@ -931,6 +932,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
 
   const isPDF = (type: string) => type === 'application/pdf';
 
+  const isMsgFile = (name: string) => {
+    return name.toLowerCase().endsWith('.msg');
+  };
+
   const renderPreview = (doc: Document) => {
     if (!doc.content) {
       return (
@@ -1066,6 +1071,14 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
             />
           </div>
         </div>
+      );
+    } else if (isMsgFile(doc.name) && doc.content) {
+      return (
+        <MsgPreview
+          url={doc.content}
+          fileName={doc.name}
+          onDownload={() => handleDownload(doc)}
+        />
       );
     } else {
       return (
