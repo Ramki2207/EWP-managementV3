@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BarChart3, FolderOpen, Clock, Users } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import React, { useMemo } from 'react';
+import { BarChart3, FolderOpen, Briefcase, Users } from 'lucide-react';
 import NeedsAttention from './NeedsAttention';
 import TestingOverview from './TestingOverview';
 import MyTasks from './MyTasks';
@@ -14,19 +13,17 @@ interface Project {
   expected_delivery_date?: string;
   description?: string;
   project_naam?: string;
+  created_by?: string;
+  location?: string;
+  contact_person?: string;
+  contactpersoon_voornaam?: string;
+  contactpersoon_achternaam?: string;
+  contactpersoon_telefoon?: string;
+  contactpersoon_email?: string;
+  referentie_ewp?: string;
+  referentie_klant?: string;
+  aflever_adres?: string;
   distributors?: any[];
-}
-
-interface AdminTask {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-  status: 'pending' | 'in_progress' | 'completed';
-  due_date: string | null;
-  project_id: string | null;
-  created_at: string;
-  completed_at: string | null;
 }
 
 interface AdminDashboardProps {
@@ -36,37 +33,16 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, username }) => {
-  const [tasks, setTasks] = useState<AdminTask[]>([]);
-  const [loadingTasks, setLoadingTasks] = useState(true);
-
-  const loadTasks = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('admin_tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTasks(data || []);
-    } catch (err) {
-      console.error('Error loading tasks:', err);
-    } finally {
-      setLoadingTasks(false);
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
-
   const activeStatuses = ['Offerte', 'Productie', 'Testen', 'Levering'];
   const activeProjects = projects.filter(p => activeStatuses.includes(p.status));
   const totalDistributors = projects.reduce((sum, p) => sum + (p.distributors?.length || 0), 0);
   const completedDistributors = projects.reduce((sum, p) =>
     sum + (p.distributors?.filter((d: any) => d.is_delivered || d.status === 'Opgeleverd' || d.is_closed).length || 0), 0
   );
-  const activeTasks = tasks.filter(t => t.status !== 'completed').length;
+
+  const myProjectsCount = useMemo(() => {
+    return projects.filter(p => p.created_by === userId && p.status !== 'Opgeleverd').length;
+  }, [projects, userId]);
 
   return (
     <div className="space-y-6">
@@ -84,9 +60,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
           color="green"
         />
         <StatCard
-          icon={<Clock size={20} />}
-          label="Open Taken"
-          value={activeTasks}
+          icon={<Briefcase size={20} />}
+          label="Mijn Projecten"
+          value={myProjectsCount}
           color="amber"
         />
         <StatCard
@@ -104,9 +80,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MyTasks
-          tasks={tasks}
+          projects={projects}
           userId={userId}
-          onTasksChanged={loadTasks}
         />
         <ProjectOverview projects={projects} />
       </div>
