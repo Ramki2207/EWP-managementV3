@@ -9,11 +9,13 @@ interface Project {
   client?: string;
   expected_delivery_date?: string;
   description?: string;
+  created_by?: string;
   distributors?: any[];
 }
 
 interface NeedsAttentionProps {
   projects: Project[];
+  userId: string;
 }
 
 type AttentionType = 'overdue' | 'no_owner' | 'behind_schedule' | 'pending_review';
@@ -34,9 +36,17 @@ const ATTENTION_TYPES: { key: AttentionType; label: string; color: string; activ
   { key: 'pending_review', label: 'Wacht op test', color: 'text-gray-400 border-gray-600 hover:border-blue-500/50', activeColor: 'text-blue-400 border-blue-500/60 bg-blue-500/10' },
 ];
 
-const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
+type ProjectScope = 'mine' | 'all';
+
+const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => {
   const navigate = useNavigate();
   const [activeFilters, setActiveFilters] = useState<Set<AttentionType>>(new Set());
+  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+
+  const scopedProjects = useMemo(() => {
+    if (projectScope === 'mine') return projects.filter(p => p.created_by === userId);
+    return projects;
+  }, [projects, userId, projectScope]);
 
   const allAttentionItems = useMemo((): AttentionItem[] => {
     const items: AttentionItem[] = [];
@@ -45,7 +55,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
 
     const activeStatuses = ['Offerte', 'Productie', 'Testen', 'Levering'];
 
-    projects.forEach(project => {
+    scopedProjects.forEach(project => {
       if (!activeStatuses.includes(project.status)) return;
 
       if (project.expected_delivery_date) {
@@ -118,7 +128,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
       const priority = { overdue: 0, behind_schedule: 1, no_owner: 2, pending_review: 3 };
       return priority[a.type] - priority[b.type];
     });
-  }, [projects]);
+  }, [scopedProjects]);
 
   const filteredItems = useMemo(() => {
     if (activeFilters.size === 0) return allAttentionItems;
@@ -171,17 +181,41 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
     pending_review: 'text-blue-400 bg-blue-500/20',
   };
 
+  const scopeToggle = (
+    <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">
+      {([
+        { key: 'mine' as ProjectScope, label: 'Mijn Projecten' },
+        { key: 'all' as ProjectScope, label: 'Alle Projecten' },
+      ]).map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => setProjectScope(key)}
+          className={`text-xs px-2.5 py-1 rounded-md transition-all ${
+            projectScope === key
+              ? 'bg-blue-500/20 text-blue-400'
+              : 'text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+
   if (allAttentionItems.length === 0) {
     return (
-      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex items-center justify-center">
-        <div className="flex items-center gap-3 p-1">
-          <div className="p-2 bg-green-500/20 rounded-lg">
-            <AlertTriangle size={20} className="text-green-400" />
+      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex flex-col">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <AlertTriangle size={20} className="text-green-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-green-400">Aandacht vereist</h2>
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-green-400">Alles op schema</h2>
-            <p className="text-sm text-gray-400">Er zijn geen items die direct aandacht vereisen.</p>
-          </div>
+          {scopeToggle}
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-gray-400">Er zijn geen items die direct aandacht vereisen.</p>
         </div>
       </div>
     );
@@ -201,14 +235,17 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects }) => {
             </p>
           </div>
         </div>
-        {activeFilters.size > 0 && (
-          <button
-            onClick={() => setActiveFilters(new Set())}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
-          >
-            Reset
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {activeFilters.size > 0 && (
+            <button
+              onClick={() => setActiveFilters(new Set())}
+              className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              Reset
+            </button>
+          )}
+          {scopeToggle}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1.5 mb-3 flex-shrink-0">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FlaskConical, Clock, Eye, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -30,18 +30,27 @@ interface TestReviewNotification {
 
 interface TestingOverviewProps {
   projects: any[];
+  userId: string;
 }
 
-const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
+type ProjectScope = 'mine' | 'all';
+
+const TestingOverview: React.FC<TestingOverviewProps> = ({ projects, userId }) => {
   const navigate = useNavigate();
   const [preTestingApprovals, setPreTestingApprovals] = useState<PreTestingApproval[]>([]);
   const [testReviewNotifications, setTestReviewNotifications] = useState<TestReviewNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+
+  const scopedProjects = useMemo(() => {
+    if (projectScope === 'mine') return projects.filter((p: any) => p.created_by === userId);
+    return projects;
+  }, [projects, userId, projectScope]);
 
   const loadPreTestingApprovals = useCallback(async () => {
     const approvals: PreTestingApproval[] = [];
 
-    for (const project of projects) {
+    for (const project of scopedProjects) {
       if (!project.distributors?.length) continue;
 
       for (const distributor of project.distributors) {
@@ -72,7 +81,7 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
     }
 
     setPreTestingApprovals(approvals);
-  }, [projects]);
+  }, [scopedProjects]);
 
   const loadTestReviewNotifications = useCallback(async () => {
     try {
@@ -237,18 +246,49 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
     }
   };
 
-  const totalItems = preTestingApprovals.length + testReviewNotifications.length;
+  const scopedProjectIds = useMemo(() => new Set(scopedProjects.map((p: any) => p.id)), [scopedProjects]);
+
+  const filteredTestNotifications = useMemo(() => {
+    if (projectScope === 'all') return testReviewNotifications;
+    return testReviewNotifications.filter(n => scopedProjectIds.has(n.project_id));
+  }, [testReviewNotifications, projectScope, scopedProjectIds]);
+
+  const totalItems = preTestingApprovals.length + filteredTestNotifications.length;
+
+  const scopeToggle = (
+    <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">
+      {([
+        { key: 'mine' as ProjectScope, label: 'Mijn Projecten' },
+        { key: 'all' as ProjectScope, label: 'Alle Projecten' },
+      ]).map(({ key, label }) => (
+        <button
+          key={key}
+          onClick={() => setProjectScope(key)}
+          className={`text-xs px-2.5 py-1 rounded-md transition-all ${
+            projectScope === key
+              ? 'bg-blue-500/20 text-blue-400'
+              : 'text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
 
   if (loading) {
     return (
-      <div className="card border border-cyan-500/20 h-[420px] flex flex-col items-center justify-center">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-cyan-500/20 rounded-lg">
-            <FlaskConical size={20} className="text-cyan-400" />
+      <div className="card border border-cyan-500/20 h-[420px] flex flex-col">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-cyan-500/20 rounded-lg">
+              <FlaskConical size={20} className="text-cyan-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-white">Testen - openstaande punten</h2>
           </div>
-          <h2 className="text-lg font-semibold text-white">Testen - openstaande punten</h2>
+          {scopeToggle}
         </div>
-        <div className="flex justify-center py-8">
+        <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-cyan-500"></div>
         </div>
       </div>
@@ -257,15 +297,18 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
 
   if (totalItems === 0) {
     return (
-      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex items-center justify-center">
-        <div className="flex items-center gap-3 p-1">
-          <div className="p-2 bg-green-500/20 rounded-lg">
-            <FlaskConical size={20} className="text-green-400" />
-          </div>
-          <div>
+      <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex flex-col">
+        <div className="flex items-center justify-between mb-3 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <FlaskConical size={20} className="text-green-400" />
+            </div>
             <h2 className="text-lg font-semibold text-green-400">Testen - openstaande punten</h2>
-            <p className="text-sm text-gray-400">Geen openstaande test items.</p>
           </div>
+          {scopeToggle}
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-sm text-gray-400">Geen openstaande test items.</p>
         </div>
       </div>
     );
@@ -273,16 +316,19 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
 
   return (
     <div className="card border border-cyan-500/20 h-[420px] flex flex-col">
-      <div className="flex items-center gap-3 mb-5 flex-shrink-0">
-        <div className="p-2 bg-cyan-500/20 rounded-lg">
-          <FlaskConical size={20} className="text-cyan-400" />
+      <div className="flex items-center justify-between mb-5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-cyan-500/20 rounded-lg">
+            <FlaskConical size={20} className="text-cyan-400" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-white">Testen - openstaande punten</h2>
+            <p className="text-sm text-gray-400">
+              {totalItems} item{totalItems !== 1 ? 's' : ''} wacht{totalItems === 1 ? '' : 'en'} op actie
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-white">Testen - openstaande punten</h2>
-          <p className="text-sm text-gray-400">
-            {totalItems} item{totalItems !== 1 ? 's' : ''} wacht{totalItems === 1 ? '' : 'en'} op actie
-          </p>
-        </div>
+        {scopeToggle}
       </div>
 
       <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
@@ -319,14 +365,14 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects }) => {
         </div>
       )}
 
-      {testReviewNotifications.length > 0 && (
+      {filteredTestNotifications.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-yellow-400 mb-3 flex items-center gap-2">
             <Clock size={14} />
-            Tests Ter Controle ({testReviewNotifications.length})
+            Tests Ter Controle ({filteredTestNotifications.length})
           </h3>
           <div className="space-y-2">
-            {testReviewNotifications.map(notification => (
+            {filteredTestNotifications.map(notification => (
               <div
                 key={notification.id}
                 className="p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 transition-all hover:border-yellow-500/40"

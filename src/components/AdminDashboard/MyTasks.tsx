@@ -58,18 +58,21 @@ interface MyTasksProps {
 }
 
 type StatusFilter = 'all' | 'active' | 'completed';
+type ProjectScope = 'mine' | 'all';
 
 const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
   const [selectedProject, setSelectedProject] = useState<MyTasksProject | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const [searchQuery, setSearchQuery] = useState('');
+  const [projectScope, setProjectScope] = useState<ProjectScope>('mine');
 
-  const myProjects = useMemo(() => {
-    return projects.filter(p => p.created_by === userId);
-  }, [projects, userId]);
+  const scopedProjects = useMemo(() => {
+    if (projectScope === 'mine') return projects.filter(p => p.created_by === userId);
+    return projects;
+  }, [projects, userId, projectScope]);
 
   const filteredProjects = useMemo(() => {
-    let result = myProjects;
+    let result = scopedProjects;
 
     if (statusFilter === 'active') {
       result = result.filter(p => p.status !== 'Opgeleverd');
@@ -87,7 +90,7 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
     }
 
     return result;
-  }, [myProjects, statusFilter, searchQuery]);
+  }, [scopedProjects, statusFilter, searchQuery]);
 
   const getStatusIndex = (status: string) => PROJECT_STATUSES.indexOf(status);
 
@@ -113,8 +116,8 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
     return { text: new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }), color: 'text-gray-400' };
   };
 
-  const activeCount = myProjects.filter(p => p.status !== 'Opgeleverd').length;
-  const completedCount = myProjects.filter(p => p.status === 'Opgeleverd').length;
+  const activeCount = scopedProjects.filter(p => p.status !== 'Opgeleverd').length;
+  const completedCount = scopedProjects.filter(p => p.status === 'Opgeleverd').length;
 
   return (
     <>
@@ -128,15 +131,14 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
           </div>
           <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">
             {([
-              { key: 'active' as StatusFilter, label: 'Actief' },
-              { key: 'completed' as StatusFilter, label: 'Gereed' },
-              { key: 'all' as StatusFilter, label: 'Alles' },
+              { key: 'mine' as ProjectScope, label: 'Mijn Projecten' },
+              { key: 'all' as ProjectScope, label: 'Alle Projecten' },
             ]).map(({ key, label }) => (
               <button
                 key={key}
-                onClick={() => setStatusFilter(key)}
+                onClick={() => setProjectScope(key)}
                 className={`text-xs px-2.5 py-1 rounded-md transition-all ${
-                  statusFilter === key
+                  projectScope === key
                     ? 'bg-blue-500/20 text-blue-400'
                     : 'text-gray-500 hover:text-gray-300'
                 }`}
@@ -145,6 +147,26 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5 mb-3 flex-shrink-0 w-fit">
+          {([
+            { key: 'active' as StatusFilter, label: 'Actief' },
+            { key: 'completed' as StatusFilter, label: 'Gereed' },
+            { key: 'all' as StatusFilter, label: 'Alles' },
+          ]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setStatusFilter(key)}
+              className={`text-xs px-2.5 py-1 rounded-md transition-all ${
+                statusFilter === key
+                  ? 'bg-blue-500/20 text-blue-400'
+                  : 'text-gray-500 hover:text-gray-300'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         <div className="relative mb-3 flex-shrink-0">
@@ -163,7 +185,7 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
             <div className="text-center py-8">
               <FolderOpen size={32} className="mx-auto text-gray-600 mb-3" />
               <p className="text-sm text-gray-400">
-                {myProjects.length === 0
+                {scopedProjects.length === 0
                   ? 'Geen projecten aangemaakt'
                   : 'Geen projecten gevonden'}
               </p>

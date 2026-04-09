@@ -22,6 +22,7 @@ interface Project {
 
 interface ProjectOverviewProps {
   projects: Project[];
+  userId: string;
 }
 
 interface VerdelerIssue {
@@ -45,18 +46,26 @@ type IssueFilter = 'all' | 'documents' | 'info';
 
 const REQUIRED_FOLDERS = ['Verdeler aanzicht', 'Installatie schema'];
 
-const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects }) => {
+type ProjectScope = 'mine' | 'all';
+
+const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects, userId }) => {
   const navigate = useNavigate();
   const [docMap, setDocMap] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
   const [issueFilter, setIssueFilter] = useState<IssueFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState<ProjectIssue | null>(null);
+  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+
+  const scopedProjects = useMemo(() => {
+    if (projectScope === 'mine') return projects.filter(p => p.created_by === userId);
+    return projects;
+  }, [projects, userId, projectScope]);
 
   const activeProjects = useMemo(() => {
     const active = ['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering'];
-    return projects.filter(p => active.includes(p.status));
-  }, [projects]);
+    return scopedProjects.filter(p => active.includes(p.status));
+  }, [scopedProjects]);
 
   const loadDocumentData = useCallback(async () => {
     if (activeProjects.length === 0) {
@@ -189,13 +198,33 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects }) => {
               {projectIssues.length} project{projectIssues.length !== 1 ? 'en' : ''} met aandachtspunten
             </p>
           </div>
-          <button
-            onClick={() => { setLoading(true); loadDocumentData(); }}
-            className="p-1.5 rounded-lg hover:bg-gray-700/50 text-gray-500 hover:text-gray-300 transition-all"
-            title="Vernieuwen"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">
+              {([
+                { key: 'mine' as ProjectScope, label: 'Mijn Projecten' },
+                { key: 'all' as ProjectScope, label: 'Alle Projecten' },
+              ]).map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setProjectScope(key)}
+                  className={`text-xs px-2.5 py-1 rounded-md transition-all ${
+                    projectScope === key
+                      ? 'bg-blue-500/20 text-blue-400'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { setLoading(true); loadDocumentData(); }}
+              className="p-1.5 rounded-lg hover:bg-gray-700/50 text-gray-500 hover:text-gray-300 transition-all"
+              title="Vernieuwen"
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2 mb-3 flex-shrink-0">
