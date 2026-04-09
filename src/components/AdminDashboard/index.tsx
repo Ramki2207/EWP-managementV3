@@ -4,6 +4,7 @@ import NeedsAttention from './NeedsAttention';
 import TestingOverview from './TestingOverview';
 import MyTasks from './MyTasks';
 import ProjectOverview from './ProjectOverview';
+import ProductiePlanning from './ProductiePlanning';
 
 interface Project {
   id: string;
@@ -89,6 +90,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
           <ProjectOverview projects={projects} userId={userId} />
         </div>
       </div>
+
+      <ProductiePlanning userId={userId} />
     </div>
   );
 };
