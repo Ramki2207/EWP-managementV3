@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FlaskConical, Clock, Eye, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
+import { FlaskConical, Clock, Eye, CheckCircle, XCircle, ShieldCheck, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../../lib/supabase';
 
@@ -40,7 +40,8 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects, userId }) =
   const [preTestingApprovals, setPreTestingApprovals] = useState<PreTestingApproval[]>([]);
   const [testReviewNotifications, setTestReviewNotifications] = useState<TestReviewNotification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+  const [projectScope, setProjectScope] = useState<ProjectScope>('mine');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const scopedProjects = useMemo(() => {
     if (projectScope === 'mine') return projects.filter((p: any) => p.created_by === userId);
@@ -253,7 +254,29 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects, userId }) =
     return testReviewNotifications.filter(n => scopedProjectIds.has(n.project_id));
   }, [testReviewNotifications, projectScope, scopedProjectIds]);
 
-  const totalItems = preTestingApprovals.length + filteredTestNotifications.length;
+  const searchedApprovals = useMemo(() => {
+    if (!searchQuery.trim()) return preTestingApprovals;
+    const q = searchQuery.toLowerCase();
+    return preTestingApprovals.filter(a =>
+      a.project?.project_number?.toLowerCase().includes(q) ||
+      a.project?.client?.toLowerCase().includes(q) ||
+      a.distributor?.kast_naam?.toLowerCase().includes(q) ||
+      a.distributor?.distributor_id?.toLowerCase().includes(q)
+    );
+  }, [preTestingApprovals, searchQuery]);
+
+  const searchedTestNotifications = useMemo(() => {
+    if (!searchQuery.trim()) return filteredTestNotifications;
+    const q = searchQuery.toLowerCase();
+    return filteredTestNotifications.filter(n =>
+      n.projects?.project_number?.toLowerCase().includes(q) ||
+      n.distributors?.kast_naam?.toLowerCase().includes(q) ||
+      n.distributors?.distributor_id?.toLowerCase().includes(q) ||
+      n.submitted_by?.toLowerCase().includes(q)
+    );
+  }, [filteredTestNotifications, searchQuery]);
+
+  const totalItems = searchedApprovals.length + searchedTestNotifications.length;
 
   const scopeToggle = (
     <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">
@@ -331,15 +354,26 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects, userId }) =
         {scopeToggle}
       </div>
 
+      <div className="relative mb-3 flex-shrink-0">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Zoek op project, klant, verdeler..."
+          className="w-full bg-[#161b24] border border-gray-700/50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+        />
+      </div>
+
       <div className="overflow-y-auto flex-1 pr-1 custom-scrollbar">
-      {preTestingApprovals.length > 0 && (
+      {searchedApprovals.length > 0 && (
         <div className="mb-5">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-2">
             <ShieldCheck size={14} />
-            Pre-Testing Goedkeuringen ({preTestingApprovals.length})
+            Pre-Testing Goedkeuringen ({searchedApprovals.length})
           </h3>
           <div className="space-y-2">
-            {preTestingApprovals.map((approval, index) => (
+            {searchedApprovals.map((approval, index) => (
               <div
                 key={`pre-${index}`}
                 onClick={() => navigate(`/project/${approval.project.id}`)}
@@ -365,14 +399,14 @@ const TestingOverview: React.FC<TestingOverviewProps> = ({ projects, userId }) =
         </div>
       )}
 
-      {filteredTestNotifications.length > 0 && (
+      {searchedTestNotifications.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-yellow-400 mb-3 flex items-center gap-2">
             <Clock size={14} />
-            Tests Ter Controle ({filteredTestNotifications.length})
+            Tests Ter Controle ({searchedTestNotifications.length})
           </h3>
           <div className="space-y-2">
-            {filteredTestNotifications.map(notification => (
+            {searchedTestNotifications.map(notification => (
               <div
                 key={notification.id}
                 className="p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 transition-all hover:border-yellow-500/40"

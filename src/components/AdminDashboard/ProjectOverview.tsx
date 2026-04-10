@@ -55,7 +55,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects, userId }) =
   const [issueFilter, setIssueFilter] = useState<IssueFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState<ProjectIssue | null>(null);
-  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+  const [projectScope, setProjectScope] = useState<ProjectScope>('mine');
 
   const scopedProjects = useMemo(() => {
     if (projectScope === 'mine') return projects.filter(p => p.created_by === userId);

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, UserX, ShieldAlert, Filter } from 'lucide-react';
+import { AlertTriangle, Clock, UserX, ShieldAlert, Filter, Search } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -41,7 +41,8 @@ type ProjectScope = 'mine' | 'all';
 const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => {
   const navigate = useNavigate();
   const [activeFilters, setActiveFilters] = useState<Set<AttentionType>>(new Set());
-  const [projectScope, setProjectScope] = useState<ProjectScope>('all');
+  const [projectScope, setProjectScope] = useState<ProjectScope>('mine');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const scopedProjects = useMemo(() => {
     if (projectScope === 'mine') return projects.filter(p => p.created_by === userId);
@@ -131,9 +132,20 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   }, [scopedProjects]);
 
   const filteredItems = useMemo(() => {
-    if (activeFilters.size === 0) return allAttentionItems;
-    return allAttentionItems.filter(item => activeFilters.has(item.type));
-  }, [allAttentionItems, activeFilters]);
+    let result = allAttentionItems;
+    if (activeFilters.size > 0) {
+      result = result.filter(item => activeFilters.has(item.type));
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(item =>
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.projectNumber.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [allAttentionItems, activeFilters, searchQuery]);
 
   const typeCounts = useMemo(() => {
     const counts: Record<AttentionType, number> = { overdue: 0, behind_schedule: 0, no_owner: 0, pending_review: 0 };
@@ -263,6 +275,17 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
             </button>
           );
         })}
+      </div>
+
+      <div className="relative mb-3 flex-shrink-0">
+        <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Zoek op project, klant..."
+          className="w-full bg-[#161b24] border border-gray-700/50 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+        />
       </div>
 
       <div className="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
