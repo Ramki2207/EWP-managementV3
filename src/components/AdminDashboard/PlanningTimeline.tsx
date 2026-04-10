@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { format, isToday, isWeekend } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScheduledBlock, MonteurDayCapacity } from './planningTypes';
-import { useNavigate } from 'react-router-dom';
 import { AlertTriangle } from 'lucide-react';
+import PlanningDetailModal from './PlanningDetailModal';
 
 interface PlanningTimelineProps {
   days: Date[];
@@ -29,8 +29,8 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   capacityMap,
   leaveDates,
 }) => {
-  const navigate = useNavigate();
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<ScheduledBlock | null>(null);
 
   const dayStrings = days.map(d => format(d, 'yyyy-MM-dd'));
 
@@ -189,7 +189,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                         return (
                           <div
                             key={block.verdeler.id}
-                            onClick={() => navigate(`/project/${block.verdeler.project_id}`)}
+                            onClick={() => setSelectedBlock(block)}
                             onMouseEnter={() => setHoveredBlock(block.verdeler.id)}
                             onMouseLeave={() => setHoveredBlock(null)}
                             className={`
@@ -273,6 +273,13 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
             Gestippelde randen geven dit aan.
           </p>
         </div>
+      )}
+
+      {selectedBlock && (
+        <PlanningDetailModal
+          block={selectedBlock}
+          onClose={() => setSelectedBlock(null)}
+        />
       )}
     </div>
   );
