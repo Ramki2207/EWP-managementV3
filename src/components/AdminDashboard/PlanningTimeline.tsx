@@ -177,7 +177,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                   <div
                     key={`${monteur}:${dateStr}`}
                     className={`border-b border-r border-gray-700/20 relative ${getCellBg(cap, day)} ${today ? 'ring-1 ring-inset ring-blue-500/20' : ''}`}
-                    style={{ minHeight: `${Math.max(rowCount * 28 + 20, 56)}px` }}
+                    style={{ minHeight: `${Math.max(rowCount * 38 + 20, 64)}px` }}
                   >
                     <div className="p-0.5 space-y-0.5">
                       {cellBlocks.map(({ block }) => {
@@ -193,7 +193,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                             onMouseEnter={() => setHoveredBlock(block.verdeler.id)}
                             onMouseLeave={() => setHoveredBlock(null)}
                             className={`
-                              relative px-1 py-0.5 rounded cursor-pointer transition-all text-[10px] leading-tight truncate
+                              relative px-1 py-0.5 rounded cursor-pointer transition-all text-[10px] leading-tight
                               border ${colors.border} ${colors.bg} ${colors.text}
                               ${block.isOverdue ? 'border-red-500/70 ring-1 ring-red-500/30' : ''}
                               ${block.cannotFit ? 'border-dashed' : ''}
@@ -201,11 +201,8 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                             `}
                             title={`${block.verdeler.kast_naam} - ${block.verdeler.project_number}\n${block.verdeler.client}\n${hours}u van ${block.verdeler.expected_hours}u totaal\nMonteur: ${block.monteur}`}
                           >
-                            {isStart ? (
-                              <span className="font-medium">{block.verdeler.kast_naam}</span>
-                            ) : (
-                              <span>{hours}u</span>
-                            )}
+                            <span className="font-medium">{block.verdeler.project_number} - {block.verdeler.kast_naam}</span>
+                            <span className="block text-[9px] opacity-75">{hours}u</span>
                           </div>
                         );
                       })}
