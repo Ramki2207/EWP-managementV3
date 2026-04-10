@@ -91,7 +91,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
         </div>
       </div>
 
-      <ProductiePlanning userId={userId} />
+      <ProductiePlanning userId={userId} username={username} />
     </div>
   );
 };

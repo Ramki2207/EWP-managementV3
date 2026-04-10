@@ -4,14 +4,19 @@ import { CalendarRange, RefreshCw, AlertTriangle, Users } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PlanningVerdeler, MonteurDayCapacity, ViewMode } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed } from './AutoScheduleEngine';
+import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import PlanningControls from './PlanningControls';
 import PlanningTimeline from './PlanningTimeline';
 
 interface ProductiePlanningProps {
   userId: string;
+  username: string;
 }
 
-const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId }) => {
+const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt'];
+
+const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username }) => {
+  const { isLocationVisible } = useLocationFilter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('twoWeek');
   const [selectedMonteur, setSelectedMonteur] = useState('all');
@@ -51,7 +56,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId }) => {
           .select(`
             id, distributor_id, kast_naam, toegewezen_monteur,
             gewenste_lever_datum, expected_hours, status, project_id,
-            projects!inner (id, project_number, client, expected_delivery_date)
+            projects!inner (id, project_number, client, expected_delivery_date, location)
           `)
           .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
 
@@ -93,8 +98,17 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId }) => {
       });
       setWorkHoursMap(hoursPerDistributor);
 
+      const usesLocationFilter = LOCATION_FILTERED_USERS.includes(username);
+
       const planningVerdelers: PlanningVerdeler[] = (distResult.data || [])
-        .filter((d: any) => d.toegewezen_monteur && d.toegewezen_monteur !== 'Vrij')
+        .filter((d: any) => {
+          if (!d.toegewezen_monteur || d.toegewezen_monteur === 'Vrij') return false;
+          if (usesLocationFilter) {
+            const project = d.projects as any;
+            if (!isLocationVisible(project?.location)) return false;
+          }
+          return true;
+        })
         .map((d: any) => {
           const project = d.projects as any;
           const actualHours = hoursPerDistributor[d.id] || 0;
@@ -139,7 +153,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [username, isLocationVisible]);
 
   useEffect(() => {
     loadData();
