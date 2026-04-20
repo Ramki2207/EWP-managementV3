@@ -178,20 +178,19 @@ In de portal vindt u:
 - Technische specificaties per verdeler
 - Installatie-instructies en handleidingen
 
-
 TOEGANG:
 De portal blijft onbeperkt toegankelijk voor uw project. U kunt altijd terugkeren om documenten te raadplegen of te downloaden.
 
-VRAGEN?
-Heeft u vragen over de levering of documentatie? Neem gerust contact met ons op:
-
-
 Met vriendelijke groet,
 
-EWP groep B.V.
+EWP Paneelbouw
 
----
-Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonlijk voor uw project.
+www.ewp-paneelbouw.nl
+levering@ewpgroep.nl
+
+EWP Paneelbouw Utrecht
+Gildenstraat | 4143HS Leerdam
+k.v.k. 91074460
     `.trim();
   }
 
@@ -298,14 +297,181 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
       }
 
       const emailTemplate = this.generateEmailTemplate(project, portal, verdelers, customDeliveryDate);
-      const emailSubject = `✅ Verdelers gereed voor levering - Project ${project.project_number}`;
+      const emailSubject = `Verdelers gereed voor levering - Project ${project.project_number}`;
 
-      // Convert plain text email template to HTML
-      const emailHtml = emailTemplate
-        .replace(/\n/g, '<br>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      const siteUrl = window.location.origin;
+      const logoUrl = `${siteUrl}/EWP%20logo%20test.png`;
 
-      // Send email via Edge Function
+      let deliveryDateText = 'Zoals afgesproken';
+      if (customDeliveryDate) {
+        const deliveryDate = new Date(customDeliveryDate);
+        deliveryDateText = deliveryDate.toLocaleDateString('nl-NL', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+
+      const emailHtml = `
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+          <!-- Logo -->
+          <tr>
+            <td style="padding:0 0 24px 0;">
+              <img src="${logoUrl}" alt="EWP Paneelbouw" width="120" style="display:block;height:auto;border:0;" />
+            </td>
+          </tr>
+          <!-- Main Content Card -->
+          <tr>
+            <td style="background-color:#ffffff;border-radius:8px;border:1px solid #e2e5e9;overflow:hidden;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <!-- Blue top accent -->
+                <tr>
+                  <td style="height:4px;background-color:#0066cc;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td style="padding:36px 40px;">
+                    <!-- Greeting -->
+                    <p style="margin:0 0 20px 0;font-size:16px;line-height:1.6;color:#1a1a1a;">
+                      Beste ${project.client || 'klant'},
+                    </p>
+                    <p style="margin:0 0 28px 0;font-size:16px;line-height:1.6;color:#1a1a1a;">
+                      Goed nieuws! Uw verdelers voor project <strong>${project.project_number}</strong> zijn succesvol getest en gereed voor levering.
+                    </p>
+
+                    <!-- Delivery Details -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;background-color:#f8f9fb;border-radius:6px;border:1px solid #e8eaed;">
+                      <tr>
+                        <td style="padding:20px 24px;">
+                          <p style="margin:0 0 12px 0;font-size:14px;font-weight:700;color:#0066cc;text-transform:uppercase;letter-spacing:0.5px;">Levering Details</p>
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
+                            <tr>
+                              <td style="padding:4px 0;font-size:14px;color:#555;width:160px;">Project:</td>
+                              <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;">${project.project_number}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:4px 0;font-size:14px;color:#555;width:160px;">Locatie:</td>
+                              <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;">${project.location || 'Zoals afgesproken'}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:4px 0;font-size:14px;color:#555;width:160px;">Verwachte leverdatum:</td>
+                              <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;">${deliveryDateText}</td>
+                            </tr>
+                            <tr>
+                              <td style="padding:4px 0;font-size:14px;color:#555;width:160px;">Aantal verdelers:</td>
+                              <td style="padding:4px 0;font-size:14px;color:#1a1a1a;font-weight:600;">${verdelers.length}</td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Documentation Portal -->
+                    <p style="margin:0 0 8px 0;font-size:14px;font-weight:700;color:#1a1a1a;text-transform:uppercase;letter-spacing:0.5px;">Documentatie Portal</p>
+                    <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#444;">
+                      Voor uw gemak hebben wij alle testdocumenten, certificaten en technische informatie beschikbaar gesteld in een beveiligde online portal.
+                    </p>
+
+                    <!-- Portal Access Box -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;background-color:#eef4ff;border-radius:6px;border:1px solid #c5d9f5;">
+                      <tr>
+                        <td style="padding:20px 24px;">
+                          <p style="margin:0 0 8px 0;font-size:13px;font-weight:700;color:#0066cc;text-transform:uppercase;letter-spacing:0.5px;">Portal Toegang</p>
+                          <p style="margin:0 0 6px 0;font-size:14px;color:#1a1a1a;">
+                            Link: <a href="${portal.portal_url}" style="color:#0066cc;text-decoration:underline;">${portal.portal_url}</a>
+                          </p>
+                          <p style="margin:0;font-size:14px;color:#1a1a1a;">
+                            Toegangscode: <strong style="font-size:16px;color:#0066cc;">${portal.access_code}</strong>
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- What you'll find -->
+                    <p style="margin:0 0 10px 0;font-size:14px;color:#444;">In de portal vindt u:</p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                      <tr>
+                        <td style="padding:3px 10px 3px 0;font-size:14px;color:#0066cc;vertical-align:top;">&#8226;</td>
+                        <td style="padding:3px 0;font-size:14px;color:#444;">Alle testcertificaten en keuringsrapporten</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:3px 10px 3px 0;font-size:14px;color:#0066cc;vertical-align:top;">&#8226;</td>
+                        <td style="padding:3px 0;font-size:14px;color:#444;">Technische specificaties per verdeler</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:3px 10px 3px 0;font-size:14px;color:#0066cc;vertical-align:top;">&#8226;</td>
+                        <td style="padding:3px 0;font-size:14px;color:#444;">Installatie-instructies en handleidingen</td>
+                      </tr>
+                    </table>
+
+                    <p style="margin:0 0 28px 0;font-size:14px;line-height:1.6;color:#444;">
+                      De portal blijft onbeperkt toegankelijk voor uw project. U kunt altijd terugkeren om documenten te raadplegen of te downloaden.
+                    </p>
+
+                    <!-- Divider -->
+                    <hr style="border:none;border-top:1px solid #e2e5e9;margin:0 0 24px 0;" />
+
+                    <!-- Signature -->
+                    <p style="margin:0 0 16px 0;font-size:14px;color:#1a1a1a;">Met vriendelijke groet,</p>
+                    <p style="margin:0 0 14px 0;font-size:15px;font-weight:700;color:#1a1a1a;">EWP Paneelbouw</p>
+                    <p style="margin:0 0 4px 0;font-size:13px;">
+                      <a href="https://www.ewp-paneelbouw.nl" style="color:#0066cc;text-decoration:none;">www.ewp-paneelbouw.nl</a>
+                    </p>
+                    <p style="margin:0 0 14px 0;font-size:13px;">
+                      <a href="mailto:levering@ewpgroep.nl" style="color:#0066cc;text-decoration:none;">levering@ewpgroep.nl</a>
+                    </p>
+                    <p style="margin:0 0 2px 0;font-size:13px;font-weight:700;color:#0066cc;">EWP Paneelbouw Utrecht</p>
+                    <p style="margin:0 0 2px 0;font-size:13px;color:#555;">Gildenstraat | 4143HS Leerdam</p>
+                    <p style="margin:0 0 0 0;font-size:13px;color:#555;">k.v.k. 91074460</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer Banner -->
+          <tr>
+            <td style="padding:24px 0 0 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a1a;border-radius:6px;overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 24px;" align="center">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
+                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | GROEP</span>
+                        </td>
+                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
+                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | PANEELBOUW</span>
+                        </td>
+                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
+                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | SERVICES</span>
+                        </td>
+                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
+                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | MEET &amp; REGEL</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -318,36 +484,7 @@ Dit is een automatisch gegenereerd bericht. De portal link is uniek en persoonli
         body: JSON.stringify({
           to: recipientEmail,
           subject: emailSubject,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-                .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-                .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h1 style="margin: 0;">EWP Paneelbouw</h1>
-                </div>
-                <div class="content">
-                  ${emailHtml}
-                </div>
-                <div class="footer">
-                  <p>Dit is een automatisch gegenereerd bericht van EWP Paneelbouw.</p>
-                  <p>Heeft u vragen? Neem contact met ons op.</p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `,
+          html: emailHtml,
           text: emailTemplate,
         }),
       });
