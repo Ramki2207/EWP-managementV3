@@ -455,34 +455,35 @@ export const dataService = {
         assignedMonteur = 'Marco';
       }
 
+      const updatePayload: Record<string, any> = {};
+
+      if (updates.distributorId !== undefined) updatePayload.distributor_id = updates.distributorId;
+      if (updates.projectId !== undefined) updatePayload.project_id = updates.projectId;
+      if (updates.kastNaam !== undefined) updatePayload.kast_naam = updates.kastNaam;
+      if (updates.systeem !== undefined) updatePayload.systeem = updates.systeem;
+      if (updates.voeding !== undefined) updatePayload.voeding = updates.voeding;
+      if (updates.stuurspanning !== undefined) updatePayload.stuurspanning = updates.stuurspanning;
+      if (updates.kaWaarde !== undefined) updatePayload.ka_waarde = updates.kaWaarde;
+      if (updates.ipWaarde !== undefined) updatePayload.ip_waarde = updates.ipWaarde;
+      if (updates.bouwjaar !== undefined) updatePayload.bouwjaar = updates.bouwjaar;
+      if (updates.keuringDatum !== undefined) updatePayload.keuring_datum = updates.keuringDatum;
+      if (updates.getestDoor !== undefined) updatePayload.getest_door = updates.getestDoor;
+      if (updates.unInV !== undefined) updatePayload.un_in_v = updates.unInV;
+      if (updates.inInA !== undefined) updatePayload.in_in_a = updates.inInA;
+      if (updates.ikThInKA1s !== undefined) updatePayload.ik_th_in_ka1s = updates.ikThInKA1s;
+      if (updates.ikDynInKA !== undefined) updatePayload.ik_dyn_in_ka = updates.ikDynInKA;
+      if (updates.freqInHz !== undefined) updatePayload.freq_in_hz = updates.freqInHz;
+      if (updates.typeNrHs !== undefined) updatePayload.type_nr_hs = updates.typeNrHs;
+      if (updates.fabrikant !== undefined) updatePayload.fabrikant = updates.fabrikant;
+      if (profilePhotoUrl !== '') updatePayload.profile_photo = profilePhotoUrl;
+      if (updates.status !== undefined) updatePayload.status = updates.status;
+      if (assignedMonteur !== undefined) updatePayload.toegewezen_monteur = assignedMonteur;
+      if (updates.gewensteLeverDatum !== undefined) updatePayload.gewenste_lever_datum = updates.gewensteLeverDatum;
+      if (updates.expectedHours !== undefined) updatePayload.expected_hours = updates.expectedHours;
+
       const { data, error } = await supabase
         .from('distributors')
-        .update({
-          distributor_id: updates.distributorId,
-          project_id: updates.projectId,
-          kast_naam: updates.kastNaam,
-          systeem: updates.systeem,
-          voeding: updates.voeding,
-          stuurspanning: updates.stuurspanning || null,
-          ka_waarde: updates.kaWaarde || null,
-          ip_waarde: updates.ipWaarde || '65',
-          bouwjaar: updates.bouwjaar,
-          keuring_datum: updates.keuringDatum,
-          getest_door: updates.getestDoor,
-          un_in_v: updates.unInV,
-          in_in_a: updates.inInA,
-          ik_th_in_ka1s: updates.ikThInKA1s,
-          ik_dyn_in_ka: updates.ikDynInKA,
-          freq_in_hz: updates.freqInHz,
-          type_nr_hs: updates.typeNrHs,
-          fabrikant: updates.fabrikant,
-          profile_photo: profilePhotoUrl,
-          status: updates.status,
-          // Add new columns conditionally to handle migration
-          ...(assignedMonteur !== undefined && { toegewezen_monteur: assignedMonteur }),
-          ...(updates.gewensteLeverDatum !== undefined && { gewenste_lever_datum: updates.gewensteLeverDatum }),
-          ...(updates.expectedHours !== undefined && { expected_hours: updates.expectedHours })
-        })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
