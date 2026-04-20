@@ -21,6 +21,7 @@ const ACTIVITY_CODES = [
   { code: '404', description: 'Opruimwerkzaamheden' },
   { code: '405', description: 'Corvee' },
   { code: '506', description: 'Dokter/Tandarts' },
+  { code: '507', description: 'Ziek' },
 ];
 
 const LEAVE_TYPES = [
