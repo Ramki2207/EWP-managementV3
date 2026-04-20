@@ -328,7 +328,7 @@ k.v.k. 91074460
           <!-- Logo -->
           <tr>
             <td style="padding:0 0 24px 0;">
-              <img src="${logoUrl}" alt="EWP Paneelbouw" width="120" style="display:block;height:auto;border:0;" />
+              <img src="${logoUrl}" alt="EWP Paneelbouw" width="280" style="display:block;height:auto;border:0;" />
             </td>
           </tr>
           <!-- Main Content Card -->
@@ -441,28 +441,7 @@ k.v.k. 91074460
           <!-- Footer Banner -->
           <tr>
             <td style="padding:24px 0 0 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a1a;border-radius:6px;overflow:hidden;">
-                <tr>
-                  <td style="padding:16px 24px;" align="center">
-                    <table role="presentation" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
-                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | GROEP</span>
-                        </td>
-                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
-                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | PANEELBOUW</span>
-                        </td>
-                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
-                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | SERVICES</span>
-                        </td>
-                        <td style="padding:0 16px;font-size:13px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">
-                          <span style="color:#f59e0b;">EW</span><span style="color:#ef4444;">P</span><span style="color:#ffffff;"> | MEET &amp; REGEL</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
+              <img src="${siteUrl}/image002.png" alt="EWP Groep | EWP Paneelbouw | EWP Services | EWP Meet &amp; Regel" width="600" style="display:block;width:100%;max-width:600px;height:auto;border-radius:6px;border:0;" />
             </td>
           </tr>
         </table>
