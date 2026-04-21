@@ -62,7 +62,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
       if (project.expected_delivery_date) {
         const deliveryDate = new Date(project.expected_delivery_date);
         deliveryDate.setHours(0, 0, 0, 0);
-        if (deliveryDate < today) {
+        if (deliveryDate < today && project.status !== 'Levering') {
           items.push({
             id: `overdue-${project.id}`,
             type: 'overdue',
