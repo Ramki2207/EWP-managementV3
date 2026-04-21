@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { format, isToday, isWeekend } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScheduledBlock, MonteurDayCapacity } from './planningTypes';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, ThermometerSun, UserX, CheckCircle2 } from 'lucide-react';
+import { ActiveAbsence } from './ProductiePlanning';
 import PlanningDetailModal from './PlanningDetailModal';
+import toast from 'react-hot-toast';
 
 interface PlanningTimelineProps {
   days: Date[];
@@ -11,6 +13,8 @@ interface PlanningTimelineProps {
   blocks: ScheduledBlock[];
   capacityMap: Record<string, MonteurDayCapacity>;
   leaveDates: Record<string, Set<string>>;
+  activeAbsences?: ActiveAbsence[];
+  onResolveAbsence?: (absenceId: string) => Promise<void>;
 }
 
 const STATUS_COLORS: Record<string, { bg: string; border: string; text: string }> = {
@@ -28,9 +32,28 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   blocks,
   capacityMap,
   leaveDates,
+  activeAbsences = [],
+  onResolveAbsence,
 }) => {
   const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<ScheduledBlock | null>(null);
+  const [resolvingAbsence, setResolvingAbsence] = useState<string | null>(null);
+
+  const getAbsenceForMonteur = (monteur: string): ActiveAbsence | undefined =>
+    activeAbsences.find(a => a.username === monteur);
+
+  const handleResolve = async (absence: ActiveAbsence) => {
+    if (!onResolveAbsence || resolvingAbsence) return;
+    setResolvingAbsence(absence.id);
+    try {
+      await onResolveAbsence(absence.id);
+      toast.success(`${absence.username} is weer aan het werk`);
+    } catch {
+      toast.error('Kon de status niet bijwerken');
+    } finally {
+      setResolvingAbsence(null);
+    }
+  };
 
   const dayStrings = days.map(d => format(d, 'yyyy-MM-dd'));
 
@@ -144,18 +167,52 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                 className="sticky left-0 z-10 bg-[#1A1F2C] border-b border-r border-gray-700/40 px-3 py-2 flex flex-col justify-center"
                 style={{ gridRow: `span 1` }}
               >
-                <p className="text-xs font-medium text-white truncate">{monteur}</p>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <div className="flex-1 h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${getUtilColor(totalAvailable > 0 ? (totalScheduled / totalAvailable) * 100 : 0)}`}
-                      style={{ width: `${totalAvailable > 0 ? Math.min((totalScheduled / totalAvailable) * 100, 100) : 0}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] text-gray-500 flex-shrink-0">
-                    {Math.round(totalScheduled)}/{totalAvailable}u
-                  </span>
-                </div>
+                {(() => {
+                  const absence = getAbsenceForMonteur(monteur);
+                  if (absence) {
+                    const isZiek = absence.absence_type === 'ziek';
+                    return (
+                      <>
+                        <p className="text-xs font-medium text-white truncate">{monteur}</p>
+                        <div className={`mt-1 flex items-center gap-1.5 px-2 py-1 rounded-md ${
+                          isZiek ? 'bg-red-500/15 border border-red-500/30' : 'bg-amber-500/15 border border-amber-500/30'
+                        }`}>
+                          {isZiek
+                            ? <ThermometerSun size={12} className="text-red-400 flex-shrink-0" />
+                            : <UserX size={12} className="text-amber-400 flex-shrink-0" />
+                          }
+                          <span className={`text-[10px] font-semibold ${isZiek ? 'text-red-400' : 'text-amber-400'}`}>
+                            {isZiek ? 'Ziek' : 'Afwezig'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleResolve(absence)}
+                          disabled={resolvingAbsence === absence.id}
+                          className="mt-1 flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all text-[10px] font-medium text-emerald-400"
+                        >
+                          <CheckCircle2 size={10} />
+                          {resolvingAbsence === absence.id ? 'Bezig...' : 'Weer aan het werk'}
+                        </button>
+                      </>
+                    );
+                  }
+                  return (
+                    <>
+                      <p className="text-xs font-medium text-white truncate">{monteur}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex-1 h-1.5 bg-gray-700/50 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${getUtilColor(totalAvailable > 0 ? (totalScheduled / totalAvailable) * 100 : 0)}`}
+                            style={{ width: `${totalAvailable > 0 ? Math.min((totalScheduled / totalAvailable) * 100, 100) : 0}%` }}
+                          />
+                        </div>
+                        <span className="text-[10px] text-gray-500 flex-shrink-0">
+                          {Math.round(totalScheduled)}/{totalAvailable}u
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {days.map((day, colIdx) => {
@@ -219,11 +276,26 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                       </div>
                     )}
 
-                    {cap.isOnLeave && !weekend && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-[9px] text-gray-500 font-medium">Verlof</span>
-                      </div>
-                    )}
+                    {cap.isOnLeave && !weekend && (() => {
+                      const absence = getAbsenceForMonteur(monteur);
+                      if (absence) {
+                        const isZiek = absence.absence_type === 'ziek';
+                        return (
+                          <div className={`absolute inset-0 flex items-center justify-center ${
+                            isZiek ? 'bg-red-500/8' : 'bg-amber-500/8'
+                          }`}>
+                            <span className={`text-[9px] font-semibold ${isZiek ? 'text-red-400/70' : 'text-amber-400/70'}`}>
+                              {isZiek ? 'Ziek' : 'Afwezig'}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-[9px] text-gray-500 font-medium">Verlof</span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}

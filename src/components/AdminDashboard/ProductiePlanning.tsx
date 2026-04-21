@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { startOfWeek, addDays, addWeeks, format } from 'date-fns';
-import { CalendarRange, RefreshCw, AlertTriangle, Users } from 'lucide-react';
+import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { PlanningVerdeler, MonteurDayCapacity, ViewMode } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import PlanningControls from './PlanningControls';
 import PlanningTimeline from './PlanningTimeline';
+import VerlofRegistratieModal from './VerlofRegistratieModal';
+
+export interface ActiveAbsence {
+  id: string;
+  user_id: string;
+  username: string;
+  absence_type: 'ziek' | 'afwezig';
+  start_date: string;
+  is_open_ended: boolean;
+  end_date: string | null;
+}
 
 interface ProductiePlanningProps {
   userId: string;
@@ -25,6 +36,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [users, setUsers] = useState<{ id: string; username: string }[]>([]);
   const [leaveDates, setLeaveDates] = useState<Record<string, Set<string>>>({});
   const [workHoursMap, setWorkHoursMap] = useState<Record<string, number>>({});
+  const [showVerlofModal, setShowVerlofModal] = useState(false);
+  const [activeAbsences, setActiveAbsences] = useState<ActiveAbsence[]>([]);
 
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
@@ -50,7 +63,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [distResult, usersResult, leaveResult, vacationResult, workResult] = await Promise.all([
+      const [distResult, usersResult, leaveResult, vacationResult, workResult, absenceResult] = await Promise.all([
         supabase
           .from('distributors')
           .select(`
@@ -62,7 +75,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
         supabase
           .from('users')
-          .select('id, username, role, is_active')
+          .select('id, username, role, is_active, assigned_locations')
           .eq('is_active', true),
 
         supabase
@@ -79,6 +92,11 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           .from('work_entries')
           .select('distributor_id, hours')
           .not('hours', 'is', null),
+
+        supabase
+          .from('employee_absences')
+          .select('id, user_id, absence_type, start_date, end_date, is_open_ended')
+          .eq('is_active', true),
       ]);
 
       const allUsers = usersResult.data || [];
@@ -147,6 +165,29 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
       (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date));
       (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date));
+
+      const absences = (absenceResult.data || []) as any[];
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const farFuture = format(addDays(new Date(), 365), 'yyyy-MM-dd');
+
+      const absWithNames: ActiveAbsence[] = [];
+      absences.forEach((a: any) => {
+        const uname = usernameById[a.user_id];
+        if (!uname) return;
+        const end = a.is_open_ended ? farFuture : a.end_date;
+        if (end) addLeaveRange(a.user_id, a.start_date, end);
+        absWithNames.push({
+          id: a.id,
+          user_id: a.user_id,
+          username: uname,
+          absence_type: a.absence_type,
+          start_date: a.start_date,
+          is_open_ended: a.is_open_ended,
+          end_date: a.end_date,
+        });
+      });
+      setActiveAbsences(absWithNames);
+
       setLeaveDates(leave);
     } catch (err) {
       console.error('Error loading planning data:', err);
@@ -259,6 +300,13 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           </p>
         </div>
         <button
+          onClick={() => setShowVerlofModal(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all text-xs font-medium"
+        >
+          <ClipboardList size={14} />
+          Verlof registratie
+        </button>
+        <button
           onClick={loadData}
           className="p-2 rounded-lg hover:bg-gray-700/50 text-gray-500 hover:text-gray-300 transition-all"
           title="Vernieuwen"
@@ -334,6 +382,16 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             blocks={filteredBlocks}
             capacityMap={capacityMap}
             leaveDates={leaveDates}
+            activeAbsences={activeAbsences}
+            onResolveAbsence={async (absenceId: string) => {
+              const { error } = await supabase
+                .from('employee_absences')
+                .update({ is_active: false, resolved_by: userId, resolved_at: new Date().toISOString() })
+                .eq('id', absenceId);
+              if (!error) {
+                loadData();
+              }
+            }}
           />
         )}
       </div>
@@ -360,6 +418,15 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           <span className="text-[10px] text-gray-400">Past niet in planning</span>
         </div>
       </div>
+      {showVerlofModal && (
+        <VerlofRegistratieModal
+          onClose={() => setShowVerlofModal(false)}
+          onSaved={loadData}
+          users={users}
+          currentUsername={username}
+          currentUserId={userId}
+        />
+      )}
     </div>
   );
 };
