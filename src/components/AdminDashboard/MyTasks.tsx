@@ -75,9 +75,9 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
     let result = scopedProjects;
 
     if (statusFilter === 'active') {
-      result = result.filter(p => p.status !== 'Opgeleverd');
+      result = result.filter(p => p.status !== 'Opgeleverd' && p.status !== 'Gereed');
     } else if (statusFilter === 'completed') {
-      result = result.filter(p => p.status === 'Opgeleverd');
+      result = result.filter(p => p.status === 'Opgeleverd' || p.status === 'Gereed');
     }
 
     if (searchQuery.trim()) {
@@ -116,8 +116,8 @@ const MyTasks: React.FC<MyTasksProps> = ({ projects, userId }) => {
     return { text: new Date(date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }), color: 'text-gray-400' };
   };
 
-  const activeCount = scopedProjects.filter(p => p.status !== 'Opgeleverd').length;
-  const completedCount = scopedProjects.filter(p => p.status === 'Opgeleverd').length;
+  const activeCount = scopedProjects.filter(p => p.status !== 'Opgeleverd' && p.status !== 'Gereed').length;
+  const completedCount = scopedProjects.filter(p => p.status === 'Opgeleverd' || p.status === 'Gereed').length;
 
   return (
     <>
