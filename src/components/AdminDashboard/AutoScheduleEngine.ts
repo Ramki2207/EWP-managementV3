@@ -61,26 +61,49 @@ export function autoSchedule(
     let hoursNeeded = verdeler.remaining_hours;
     const dailyHours: Record<string, number> = {};
     const monteurLeave = leaveDates[monteur] || new Set();
-
-    let cursor = addDays(deadline, -1);
-    const minDate = addDays(today, -30);
+    const isOverdueItem = today > deadline;
     let cannotFit = false;
 
-    while (hoursNeeded > 0 && cursor >= minDate) {
-      if (!isWeekend(cursor)) {
-        const dateStr = toDateStr(cursor);
-        if (!monteurLeave.has(dateStr)) {
-          const used = getUsed(monteur, dateStr);
-          const available = HOURS_PER_DAY - used;
-          if (available > 0) {
-            const allocate = Math.min(hoursNeeded, available);
-            dailyHours[dateStr] = allocate;
-            addUsed(monteur, dateStr, allocate);
-            hoursNeeded -= allocate;
+    if (isOverdueItem) {
+      // Overdue: schedule forward from today so work appears in the current week
+      let cursor = new Date(today);
+      const maxDate = addDays(today, 60);
+      while (hoursNeeded > 0 && cursor <= maxDate) {
+        if (!isWeekend(cursor)) {
+          const dateStr = toDateStr(cursor);
+          if (!monteurLeave.has(dateStr)) {
+            const used = getUsed(monteur, dateStr);
+            const available = HOURS_PER_DAY - used;
+            if (available > 0) {
+              const allocate = Math.min(hoursNeeded, available);
+              dailyHours[dateStr] = allocate;
+              addUsed(monteur, dateStr, allocate);
+              hoursNeeded -= allocate;
+            }
           }
         }
+        cursor = addDays(cursor, 1);
       }
-      cursor = addDays(cursor, -1);
+    } else {
+      // Future deadline: schedule backward from deadline
+      let cursor = addDays(deadline, -1);
+      const minDate = addDays(today, -30);
+      while (hoursNeeded > 0 && cursor >= minDate) {
+        if (!isWeekend(cursor)) {
+          const dateStr = toDateStr(cursor);
+          if (!monteurLeave.has(dateStr)) {
+            const used = getUsed(monteur, dateStr);
+            const available = HOURS_PER_DAY - used;
+            if (available > 0) {
+              const allocate = Math.min(hoursNeeded, available);
+              dailyHours[dateStr] = allocate;
+              addUsed(monteur, dateStr, allocate);
+              hoursNeeded -= allocate;
+            }
+          }
+        }
+        cursor = addDays(cursor, -1);
+      }
     }
 
     if (hoursNeeded > 0) {
@@ -103,7 +126,7 @@ export function autoSchedule(
       endDate: blockEnd,
       dailyHours,
       isAutoScheduled: true,
-      isOverdue: today > deadline,
+      isOverdue: isOverdueItem,
       cannotFit,
     });
   }
