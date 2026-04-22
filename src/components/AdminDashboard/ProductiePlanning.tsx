@@ -117,6 +117,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       setWorkHoursMap(hoursPerDistributor);
 
       const usesLocationFilter = LOCATION_FILTERED_USERS.includes(username);
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
 
       const planningVerdelers: PlanningVerdeler[] = (distResult.data || [])
         .filter((d: any) => {
@@ -124,6 +125,11 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           if (usesLocationFilter) {
             const project = d.projects as any;
             if (!isLocationVisible(project?.location)) return false;
+          }
+          if (d.status === 'Levering') {
+            const project = d.projects as any;
+            const deliveryDate = d.gewenste_lever_datum?.split('T')[0] || project?.expected_delivery_date || null;
+            if (deliveryDate && deliveryDate < todayStr) return false;
           }
           return true;
         })
