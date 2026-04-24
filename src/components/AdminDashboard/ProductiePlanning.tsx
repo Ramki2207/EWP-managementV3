@@ -270,7 +270,6 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     const dailyHours = buildDailyHoursFromRange(newStartDate, newEndDate, block.verdeler.remaining_hours, monteurLeave);
 
     if (block.overrideId) {
-      // Update existing override
       const { error } = await supabase
         .from('planning_overrides')
         .update({
@@ -281,9 +280,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           updated_at: new Date().toISOString(),
         })
         .eq('id', block.overrideId);
-      if (error) throw error;
+      if (error) { console.error('planning_overrides update error:', error); throw new Error(error.message); }
     } else {
-      // Insert new override
       const { error } = await supabase
         .from('planning_overrides')
         .insert({
@@ -294,7 +292,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           daily_hours: dailyHours,
           created_by: username,
         });
-      if (error) throw error;
+      if (error) { console.error('planning_overrides insert error:', error); throw new Error(error.message); }
     }
     await loadData();
   }, [leaveDates, username, loadData]);
@@ -322,7 +320,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       .from('planning_overrides')
       .delete()
       .eq('id', block.overrideId);
-    if (error) throw error;
+    if (error) { console.error('planning_overrides delete error:', error); throw new Error(error.message); }
     await loadData();
   }, [loadData]);
 
