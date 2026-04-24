@@ -1,4 +1,4 @@
-import { PlanningVerdeler, ScheduledBlock } from './planningTypes';
+import { PlanningVerdeler, PlanningOverride, ScheduledBlock } from './planningTypes';
 
 const HOURS_PER_DAY = 8;
 
@@ -21,17 +21,77 @@ function getDeadline(v: PlanningVerdeler): string | null {
   return v.gewenste_lever_datum || v.project_delivery_date;
 }
 
+export function buildDailyHoursFromRange(
+  startDate: string,
+  endDate: string,
+  totalHours: number,
+  leaveDates: Set<string>
+): Record<string, number> {
+  const dailyHours: Record<string, number> = {};
+  let remaining = totalHours;
+  let cursor = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (cursor <= end && remaining > 0) {
+    if (!isWeekend(cursor)) {
+      const dateStr = toDateStr(cursor);
+      if (!leaveDates.has(dateStr)) {
+        const allocate = Math.min(remaining, HOURS_PER_DAY);
+        if (allocate > 0) {
+          dailyHours[dateStr] = allocate;
+          remaining -= allocate;
+        }
+      }
+    }
+    cursor = addDays(cursor, 1);
+  }
+
+  return dailyHours;
+}
+
 export function autoSchedule(
   verdelers: PlanningVerdeler[],
   leaveDates: Record<string, Set<string>>,
   rangeStart: string,
-  rangeEnd: string
+  rangeEnd: string,
+  overrides: PlanningOverride[] = []
 ): ScheduledBlock[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Build a set of distributor IDs that have manual overrides
+  const overriddenIds = new Set(overrides.map(o => o.distributor_id));
+
+  // Convert overrides into ScheduledBlocks first
+  const overrideBlocks: ScheduledBlock[] = [];
+  for (const override of overrides) {
+    const verdeler = verdelers.find(v => v.id === override.distributor_id);
+    if (!verdeler) continue;
+    const deadline = getDeadline(verdeler);
+    const deadlineDate = deadline ? new Date(deadline) : null;
+    deadlineDate?.setHours(0, 0, 0, 0);
+
+    overrideBlocks.push({
+      verdeler,
+      monteur: override.monteur,
+      startDate: override.start_date,
+      endDate: override.end_date,
+      dailyHours: override.daily_hours,
+      isAutoScheduled: false,
+      isManual: true,
+      overrideId: override.id,
+      isOverdue: deadlineDate ? today > deadlineDate : false,
+      cannotFit: false,
+    });
+  }
+
+  // Auto-schedule the rest (skip overridden ones)
   const schedulable = verdelers.filter(v =>
     v.toegewezen_monteur &&
     v.toegewezen_monteur !== 'Vrij' &&
     v.remaining_hours > 0 &&
-    getDeadline(v)
+    getDeadline(v) &&
+    !overriddenIds.has(v.id)
   );
 
   schedulable.sort((a, b) => {
@@ -42,6 +102,14 @@ export function autoSchedule(
 
   const capacityUsed: Record<string, number> = {};
 
+  // Pre-fill capacity from manual overrides so auto-schedule respects them
+  for (const block of overrideBlocks) {
+    for (const [date, hours] of Object.entries(block.dailyHours)) {
+      const key = `${block.monteur}:${date}`;
+      capacityUsed[key] = (capacityUsed[key] || 0) + hours;
+    }
+  }
+
   const getUsed = (monteur: string, date: string): number =>
     capacityUsed[`${monteur}:${date}`] || 0;
 
@@ -50,9 +118,7 @@ export function autoSchedule(
     capacityUsed[key] = (capacityUsed[key] || 0) + hours;
   };
 
-  const blocks: ScheduledBlock[] = [];
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const autoBlocks: ScheduledBlock[] = [];
 
   for (const verdeler of schedulable) {
     const deadline = new Date(getDeadline(verdeler)!);
@@ -119,19 +185,20 @@ export function autoSchedule(
     const isInRange = blockEnd >= rangeStart && blockStart <= rangeEnd;
     if (!isInRange && !cannotFit) continue;
 
-    blocks.push({
+    autoBlocks.push({
       verdeler,
       monteur,
       startDate: blockStart,
       endDate: blockEnd,
       dailyHours,
       isAutoScheduled: true,
+      isManual: false,
       isOverdue: isOverdueItem,
       cannotFit,
     });
   }
 
-  return blocks;
+  return [...overrideBlocks, ...autoBlocks];
 }
 
 export function calculateCapacityUsed(

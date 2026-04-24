@@ -14,6 +14,18 @@ export interface PlanningVerdeler {
   status: string;
 }
 
+export interface PlanningOverride {
+  id: string;
+  distributor_id: string;
+  monteur: string;
+  start_date: string;
+  end_date: string;
+  daily_hours: Record<string, number>;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ScheduledBlock {
   verdeler: PlanningVerdeler;
   monteur: string;
@@ -23,6 +35,8 @@ export interface ScheduledBlock {
   isAutoScheduled: boolean;
   isOverdue: boolean;
   cannotFit: boolean;
+  overrideId?: string;
+  isManual?: boolean;
 }
 
 export interface MonteurDayCapacity {
