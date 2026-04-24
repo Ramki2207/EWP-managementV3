@@ -2342,9 +2342,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       className="input-field"
                       value={verdelerData.ipWaarde}
                       onChange={(e) => handleInputChange('ipWaarde', e.target.value)}
-                      placeholder="Bijv. 65"
+                      placeholder="Bijv. 44"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Standaard waarde is 65</p>
+                    <p className="text-xs text-gray-500 mt-1">Standaard waarde is 44</p>
                   </div>
 
                   <div>

@@ -544,7 +544,7 @@ const VerdelerDetails = () => {
           voeding: editedDistributor.voeding,
           stuurspanning: editedDistributor.stuurspanning,
           kaWaarde: editedDistributor.ka_waarde,
-          ipWaarde: editedDistributor.ip_waarde || '65',
+          ipWaarde: editedDistributor.ip_waarde || '44',
           bouwjaar: editedDistributor.bouwjaar,
           keuringDatum: editedDistributor.keuring_datum,
           getestDoor: editedDistributor.getest_door,
@@ -623,7 +623,7 @@ const VerdelerDetails = () => {
         voeding: editedDistributor.voeding,
         stuurspanning: editedDistributor.stuurspanning,
         kaWaarde: editedDistributor.ka_waarde,
-        ipWaarde: editedDistributor.ip_waarde || '65',
+        ipWaarde: editedDistributor.ip_waarde || '44',
         bouwjaar: editedDistributor.bouwjaar,
         keuringDatum: editedDistributor.keuring_datum,
         getestDoor: editedDistributor.getest_door,
@@ -1160,7 +1160,7 @@ const VerdelerDetails = () => {
                         className="input-field"
                         value={editedDistributor?.ip_waarde || ''}
                         onChange={(e) => handleInputChange('ip_waarde', e.target.value)}
-                        placeholder="Bijv. 65"
+                        placeholder="Bijv. 44"
                       />
                     ) : (
                       <div className="input-field">
