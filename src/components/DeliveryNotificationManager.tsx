@@ -297,10 +297,9 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
 
       console.log('Email sent successfully, updating project status...');
 
-      // Update project status to "Opgeleverd" when notification is sent
       await dataService.updateProject(project.id, {
         ...project,
-        status: 'Opgeleverd' // Automatically set to delivered when notification is sent
+        status: 'Gereed voor Facturatie'
       });
 
       console.log('Project status updated, preparing success modal...');
@@ -912,7 +911,7 @@ const DeliveryNotificationManager: React.FC<DeliveryNotificationManagerProps> = 
                     <CheckCircle size={18} className="text-green-400 mt-0.5 flex-shrink-0" />
                     <div>
                       <p className="text-sm text-gray-400">Project status</p>
-                      <p className="text-white font-medium">Opgeleverd</p>
+                      <p className="text-white font-medium">Gereed voor Facturatie</p>
                     </div>
                   </div>
                 </div>
