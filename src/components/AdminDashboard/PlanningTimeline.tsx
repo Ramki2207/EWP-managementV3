@@ -619,6 +619,3 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
 };
 
 export default PlanningTimeline;
-
-
-export default PlanningTimeline
