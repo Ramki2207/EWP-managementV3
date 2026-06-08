@@ -721,6 +721,8 @@ const Projects = () => {
     if (!status) return 'bg-gray-500/20 text-gray-400';
 
     switch (status.toLowerCase()) {
+      case 'concept':
+        return 'bg-gray-500/20 text-gray-300';
       case 'intake':
         return 'bg-blue-500/20 text-blue-400';
       case 'offerte':

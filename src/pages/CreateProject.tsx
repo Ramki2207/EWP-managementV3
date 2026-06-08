@@ -7,7 +7,7 @@ import StepNavigation from '../components/StepNavigation';
 import ProjectHoursPopup from '../components/ProjectHoursPopup';
 import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Save, Trash2 } from 'lucide-react';
+import { Save, Trash2, FileEdit } from 'lucide-react';
 
 const today = new Date();
 const DRAFT_STORAGE_KEY = 'projectDraft';
@@ -428,6 +428,121 @@ const CreateProject = () => {
     navigate('/projects');
   };
 
+  const handleSaveAsConcept = async () => {
+    if (!projectData.projectNumber) {
+      toast.error('Vul eerst een projectnummer in');
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const conceptProject = {
+        ...projectData,
+        status: 'Concept'
+      };
+
+      const savedProject = await dataService.createProject(conceptProject);
+
+      if (projectData.verdelers && projectData.verdelers.length > 0) {
+        for (const verdeler of projectData.verdelers) {
+          if (!verdeler.distributorId || !verdeler.kastNaam) continue;
+
+          const distributorData = {
+            distributorId: verdeler.distributorId,
+            projectId: savedProject.id,
+            kastNaam: verdeler.kastNaam,
+            toegewezenMonteur: verdeler.toegewezenMonteur,
+            systeem: verdeler.systeem,
+            voeding: verdeler.voeding,
+            stuurspanning: verdeler.stuurspanning,
+            kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde,
+            bouwjaar: verdeler.bouwjaar,
+            keuringDatum: verdeler.keuringDatum,
+            getestDoor: verdeler.getestDoor,
+            unInV: verdeler.unInV,
+            inInA: verdeler.inInA,
+            ikThInKA1s: verdeler.ikThInKA1s,
+            ikDynInKA: verdeler.ikDynInKA,
+            freqInHz: verdeler.freqInHz,
+            typeNrHs: verdeler.typeNrHs,
+            fabrikant: verdeler.fabrikant,
+            profilePhoto: verdeler.profilePhoto,
+            status: verdeler.status,
+            expectedHours: verdeler.expectedHours || verdeler.expected_hours,
+            gewensteLeverDatum: verdeler.deliveryDate || verdeler.gewenste_lever_datum
+          };
+
+          try {
+            await dataService.createDistributor(distributorData);
+          } catch (err) {
+            console.error('Error saving distributor in concept:', err);
+          }
+        }
+      }
+
+      if (Object.keys(tempDocuments).length > 0) {
+        const createdDistributors = await dataService.getDistributorsByProject(savedProject.id);
+
+        for (const [key, docs] of Object.entries(tempDocuments)) {
+          const firstDashIndex = key.indexOf('-');
+          const distributorId = key.substring(0, firstDashIndex);
+          const folder = key.substring(firstDashIndex + 1);
+
+          if (distributorId === 'project') {
+            for (const doc of docs) {
+              try {
+                await dataService.createDocument({
+                  projectId: savedProject.id,
+                  distributorId: null,
+                  folder: folder,
+                  name: doc.name,
+                  type: doc.type,
+                  size: doc.size,
+                  content: doc.content
+                });
+              } catch (error) {
+                console.error('Error saving project-level document:', error);
+              }
+            }
+          } else {
+            const dbDistributor = createdDistributors.find((d: any) => d.distributor_id === distributorId);
+            if (dbDistributor) {
+              for (const doc of docs) {
+                try {
+                  await dataService.createDocument({
+                    projectId: savedProject.id,
+                    distributorId: dbDistributor.id,
+                    folder: folder,
+                    name: doc.name,
+                    type: doc.type,
+                    size: doc.size,
+                    content: doc.content
+                  });
+                } catch (error) {
+                  console.error('Error saving distributor document:', error);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+      sessionStorage.removeItem('draftBannerDismissed');
+      setHasDraft(false);
+
+      toast.success('Project opgeslagen als concept!');
+      navigate('/projects');
+    } catch (error) {
+      console.error('Error saving project as concept:', error);
+      toast.error('Er is een fout opgetreden bij het opslaan als concept');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -470,6 +585,19 @@ const CreateProject = () => {
 
   return (
     <div className="page-container">
+      {projectData.projectNumber && (
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={handleSaveAsConcept}
+            disabled={saving}
+            className="btn-secondary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sla project op als concept om er later mee verder te gaan"
+          >
+            <FileEdit className="w-4 h-4" />
+            <span>{saving ? 'Opslaan...' : 'Opslaan als Concept'}</span>
+          </button>
+        </div>
+      )}
       {hasDraft && (
         <div className="mb-4 bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
