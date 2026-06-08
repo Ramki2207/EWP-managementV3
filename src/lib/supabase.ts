@@ -566,7 +566,9 @@ export const dataService = {
       }
       if (folder) {
         // Match folder and all its subfolders (e.g., "Verdeler aanzicht" includes "Verdeler aanzicht/Actueel")
-        query = query.or(`folder.eq.${folder},folder.like.${folder}/%`);
+        // Use quoted values to handle special characters like parentheses in folder names
+        const escapedFolder = folder.replace(/"/g, '\\"');
+        query = query.or(`folder.eq."${escapedFolder}",folder.like."${escapedFolder}/%"`);
       }
 
       const { data, error } = await query.limit(100); // Increased limit now that we have indexes
