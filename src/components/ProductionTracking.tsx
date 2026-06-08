@@ -876,7 +876,17 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                     required
                   >
                     <option value="">Selecteer medewerker</option>
-                    {users.map((user) => (
+                    {users
+                      .filter((user) => {
+                        if (!currentUser?.assigned_locations?.length) return true;
+                        if (!user.assigned_locations?.length) return false;
+                        return user.assigned_locations.some((loc: string) =>
+                          currentUser.assigned_locations.some((myLoc: string) =>
+                            loc.startsWith(myLoc.split(' (')[0]) || myLoc.startsWith(loc.split(' (')[0])
+                          )
+                        );
+                      })
+                      .map((user) => (
                       <option key={user.id} value={user.id}>
                         {user.username}
                       </option>

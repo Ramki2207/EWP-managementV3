@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle, Download, Filter } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle, Download, Filter, Printer } from 'lucide-react';
 import { exportWeekstaatToSyntess, exportMultipleWeekstatenToSyntess } from '../lib/excelExport';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
@@ -397,6 +397,67 @@ export default function Personeelsbeheer() {
 
     setWeekstaatEntries(entries || []);
     setSelectedWeekstaat(weekstaat);
+  };
+
+  const printWeekstaat = () => {
+    if (!selectedWeekstaat) return;
+    const username = selectedWeekstaat.user?.username || 'Onbekend';
+    const weekNumber = selectedWeekstaat.week_number;
+    const year = selectedWeekstaat.year;
+    const totalHours = weekstaatEntries.reduce((sum, e) =>
+      sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+      (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+    ).toFixed(1);
+
+    const rows = weekstaatEntries.map(e => {
+      const rowTotal = ((e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0)).toFixed(1);
+      return `<tr>
+        <td style="padding:6px;border:1px solid #ddd;">${e.activity_code}</td>
+        <td style="padding:6px;border:1px solid #ddd;">${e.activity_description}</td>
+        <td style="padding:6px;border:1px solid #ddd;">${e.workorder_number || '-'}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.monday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.tuesday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.wednesday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.thursday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.friday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.saturday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.sunday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;font-weight:bold;">${rowTotal}</td>
+      </tr>`;
+    }).join('');
+
+    const totalsRow = `<tr style="font-weight:bold;background:#f0f0f0;">
+      <td style="padding:6px;border:1px solid #ddd;" colspan="3">Totaal</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${totalHours}</td>
+    </tr>`;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html><head><title>Weekstaat - ${username} - Week ${weekNumber} ${year}</title>
+      <style>body{font-family:Arial,sans-serif;padding:40px;color:#333;}table{width:100%;border-collapse:collapse;margin-top:20px;}th{background:#1e3a5f;color:white;padding:8px;border:1px solid #ddd;text-align:center;}th:nth-child(1),th:nth-child(2),th:nth-child(3){text-align:left;}h1{margin-bottom:4px;}@media print{body{padding:20px;}}</style>
+      </head><body>
+      <h1>Weekstaat</h1>
+      <p><strong>Medewerker:</strong> ${username}</p>
+      <p><strong>Week:</strong> ${weekNumber} - ${year}</p>
+      <p><strong>Status:</strong> ${selectedWeekstaat.status}</p>
+      <table>
+        <thead><tr><th>Code</th><th>Activiteit</th><th>WB nr</th><th>Ma</th><th>Di</th><th>Wo</th><th>Do</th><th>Vr</th><th>Za</th><th>Zo</th><th>Totaal</th></tr></thead>
+        <tbody>${rows}${totalsRow}</tbody>
+      </table>
+      <p style="margin-top:30px;"><strong>Totaal uren: ${totalHours}</strong></p>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const approveWeekstaat = async () => {
@@ -1864,6 +1925,13 @@ export default function Personeelsbeheer() {
                 className="btn-secondary"
               >
                 Annuleren
+              </button>
+              <button
+                onClick={printWeekstaat}
+                className="btn-secondary flex items-center space-x-2"
+              >
+                <Printer className="w-5 h-5" />
+                <span>Afdrukken</span>
               </button>
               {selectedRequest && selectedRequest.action === 'decline' ? (
                 <button

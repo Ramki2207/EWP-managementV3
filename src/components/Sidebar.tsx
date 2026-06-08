@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  FolderOpen, Users, Bell, Upload, LayoutDashboard, UserCircle,
-  HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe,
-  Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus, Zap
-} from 'lucide-react';
+import { FolderOpen, Users, Bell, Upload, LayoutDashboard, CircleUser as UserCircle, HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe, Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus, Zap } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
 import { useTabContext } from '../contexts/TabContext';
@@ -114,6 +110,11 @@ const Sidebar = () => {
       return true;
     }
 
+    // Special access for specific users to worksheets (Personeelsbeheer)
+    if (['Annemieke', 'Sylvia Guth'].includes(currentUser.username) && module === 'worksheets') {
+      return true;
+    }
+
     // If admin is viewing as another role, treat them as that role
     if (effectiveRole === 'projectleider') {
       console.log('🔍 SIDEBAR: Admin viewing as projectleider - checking projectleider permissions for', module);
@@ -122,12 +123,6 @@ const Sidebar = () => {
       const hasAccess = projectleiderModules.includes(module);
       console.log('✅ SIDEBAR: Projectleider access to', module, ':', hasAccess);
       return hasAccess;
-    }
-
-    // Special access for Annemieke to worksheets (Personeelsbeheer)
-    if (currentUser.username === 'Annemieke' && module === 'worksheets') {
-      console.log('✅ SIDEBAR: Special access granted to Annemieke for worksheets');
-      return true;
     }
 
     // Check specific module permissions

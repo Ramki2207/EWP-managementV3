@@ -446,7 +446,7 @@ const Dashboard = () => {
 
   // Load agenda data for specific users
   useEffect(() => {
-    if (currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username)) {
+    if (currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter', 'Kris de Kleijn'].includes(currentUser.username)) {
       loadAgendaProjects();
     }
   }, [currentUser, selectedMonth]);
@@ -1297,7 +1297,7 @@ const Dashboard = () => {
       )}
 
       {/* Agenda Section for Radjesh, Ronald, and Michel de Ruiter */}
-      {currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter'].includes(currentUser.username) && (
+      {currentUser && ['Radjesh', 'Ronald', 'Michel de Ruiter', 'Kris de Kleijn'].includes(currentUser.username) && (
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-blue-500/20 rounded-lg">

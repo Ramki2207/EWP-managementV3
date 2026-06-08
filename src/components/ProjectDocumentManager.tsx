@@ -36,6 +36,7 @@ const projectLevelFolders = [
   'Ondersteuning',
   'Verzend foto\'s',
   'Software bestand',
+  'Getekende Pakbon(en)',
   'Facturen',
 ];
 

@@ -22,6 +22,7 @@ const ACTIVITY_CODES = [
   { code: '405', description: 'Corvee' },
   { code: '506', description: 'Dokter/Tandarts' },
   { code: '507', description: 'Ziek' },
+  { code: '508', description: 'Verplichte ATV' },
 ];
 
 const LEAVE_TYPES = [
