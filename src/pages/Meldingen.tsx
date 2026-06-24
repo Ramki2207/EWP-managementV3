@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Bell, Search, AlertCircle, CheckCircle2, Clock, X,
-  Filter, MessageSquare, UserCircle, Calendar, Building,
-  FileDown, Eye, Edit, Wrench, ClipboardList, Package,
-  ChevronRight, User, MapPin, Phone, Mail, Check
-} from 'lucide-react';
+import { Bell, Search, AlertCircle, CheckCircle2, Clock, X, Filter, MessageSquare, CircleUser as UserCircle, Calendar, Building, FileDown, Eye, FileEdit as Edit, Wrench, ClipboardList, Package, ChevronRight, User, MapPin, Phone, Mail, Check } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase } from '../lib/supabase';
 import jsPDF from 'jspdf';
@@ -612,7 +607,7 @@ const Meldingen = () => {
       <div className="card p-4 sm:p-6 mb-6 sm:mb-8">
         <div className="card-header">
           <div>
-            <h1 className="page-title">Meldingen</h1>
+            <h1 className="page-title">EWP Services</h1>
             <p className="text-gray-400">Beheer alle onderhouds- en servicemeldingen</p>
           </div>
           <div className="action-buttons">

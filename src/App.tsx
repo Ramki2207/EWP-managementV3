@@ -27,6 +27,7 @@ import ClientPortal from "./pages/ClientPortal";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import UrenstaatVerlof from "./pages/UrenstaatVerlof";
 import Personeelsbeheer from "./pages/Personeelsbeheer";
+import VerlofMeldingen from "./pages/VerlofMeldingen";
 import PDFOptimizer from "./pages/PDFOptimizer";
 import { requestNotificationPermission, subscribeToNotifications, subscribeToTestingNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
@@ -114,6 +115,7 @@ const App = () => {
             <Route path="/client-portals" element={<PermissionRoute requiredPermission={{ module: 'client_portals', permission: 'read' }}><ClientPortalManagement /></PermissionRoute>} />
             <Route path="/account" element={<PermissionRoute><Account /></PermissionRoute>} />
             <Route path="/meldingen" element={<PermissionRoute><Meldingen /></PermissionRoute>} />
+            <Route path="/verlof-meldingen" element={<PermissionRoute><VerlofMeldingen /></PermissionRoute>} />
             <Route path="/help" element={<PermissionRoute><Help /></PermissionRoute>} />
             <Route path="/urenstaat-verlof" element={<PermissionRoute><UrenstaatVerlof /></PermissionRoute>} />
             <Route path="/personeelsbeheer" element={<PermissionRoute requiredPermission={{ module: 'worksheets', permission: 'read' }}><Personeelsbeheer /></PermissionRoute>} />
