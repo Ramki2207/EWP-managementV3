@@ -4,6 +4,7 @@ import { FolderOpen, Users, Bell, Upload, LayoutDashboard, CircleUser as UserCir
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { SystemModule } from '../types/userRoles';
 import { useTabContext } from '../contexts/TabContext';
+import { supabase } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
 import processLogo from '../assets/process-logo.png';
 
@@ -95,6 +96,35 @@ const Sidebar = () => {
     };
   }, []);
 
+  const [pendingMeldingenCount, setPendingMeldingenCount] = useState(0);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const fetchPendingCount = async () => {
+      const myLocations: string[] = currentUser.assigned_locations || [];
+
+      const [{ data: leaveData }, { data: vacationData }] = await Promise.all([
+        supabase.from('leave_requests').select('*, user:users!leave_requests_user_id_fkey(assigned_locations)').eq('status', 'pending'),
+        supabase.from('vacation_requests').select('*, user:users!vacation_requests_user_id_fkey(assigned_locations)').eq('status', 'pending')
+      ]);
+
+      const hasOverlap = (userLocations: string[] | null) => {
+        if (myLocations.length === 0) return true;
+        if (!userLocations || userLocations.length === 0) return true;
+        return myLocations.some(loc => userLocations.includes(loc));
+      };
+
+      const filteredLeave = (leaveData || []).filter(r => hasOverlap(r.user?.assigned_locations));
+      const filteredVacation = (vacationData || []).filter(r => hasOverlap(r.user?.assigned_locations));
+      setPendingMeldingenCount(filteredLeave.length + filteredVacation.length);
+    };
+
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser]);
+
   const hasModuleAccess = (module?: SystemModule) => {
     if (!module) return true;
     if (!currentUser) {
@@ -180,6 +210,11 @@ const Sidebar = () => {
                 >
                   <Icon size={20} />
                   <span className="text-base">{item.label}</span>
+                  {item.path === '/verlof-meldingen' && pendingMeldingenCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center ml-auto">
+                      {pendingMeldingenCount}
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={(e) => {

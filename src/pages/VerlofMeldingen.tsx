@@ -10,10 +10,39 @@ export default function VerlofMeldingen() {
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [activeFilter, setActiveFilter] = useState<'all' | 'verlof' | 'vakantie'>('all');
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    loadData();
+    loadCurrentUser();
   }, []);
+
+  useEffect(() => {
+    if (currentUser !== null) {
+      loadData();
+    }
+  }, [currentUser]);
+
+  const loadCurrentUser = async () => {
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (currentUserId) {
+      const { data } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', currentUserId)
+        .maybeSingle();
+      setCurrentUser(data);
+    } else {
+      setCurrentUser({});
+    }
+  };
+
+  const hasLocationOverlap = (userLocations: string[] | null) => {
+    if (!currentUser) return true;
+    const myLocations = currentUser.assigned_locations || [];
+    if (myLocations.length === 0) return true;
+    if (!userLocations || userLocations.length === 0) return true;
+    return myLocations.some((loc: string) => userLocations.includes(loc));
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -34,7 +63,8 @@ export default function VerlofMeldingen() {
       console.error('Error loading leave requests:', error);
       return;
     }
-    setLeaveRequests(data || []);
+    const filtered = (data || []).filter(r => hasLocationOverlap(r.user?.assigned_locations));
+    setLeaveRequests(filtered);
   };
 
   const loadVacationRequests = async () => {
@@ -50,7 +80,8 @@ export default function VerlofMeldingen() {
       console.error('Error loading vacation requests:', error);
       return;
     }
-    setVacationRequests(data || []);
+    const filtered = (data || []).filter(r => hasLocationOverlap(r.user?.assigned_locations));
+    setVacationRequests(filtered);
   };
 
   const approveLeaveRequest = async (id: string) => {
