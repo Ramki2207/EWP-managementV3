@@ -99,13 +99,19 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   useEffect(() => {
     loadClients();
     loadExistingProjects();
-    
+
     // Extract year and suffix from existing project number if editing
     if (projectData.projectNumber) {
-      const match = projectData.projectNumber.match(/^P[MDR](\d{2})(\d{3})$/);
-      if (match) {
-        setProjectNumberYear(match[1]);
-        setProjectNumberSuffix(match[2]);
+      // New-style: e.g. 1P261111 (prefix 2 chars, year 2, suffix 4)
+      const newStyleMatch = projectData.projectNumber.match(/^[1-9]P(\d{2})(\d{4})$/);
+      // Old-style: e.g. PU25001 (prefix 2 chars, year 2, suffix 3)
+      const oldStyleMatch = projectData.projectNumber.match(/^P[UMWDR](\d{2})(\d{3})$/);
+      if (newStyleMatch) {
+        setProjectNumberYear(newStyleMatch[1]);
+        setProjectNumberSuffix(newStyleMatch[2]);
+      } else if (oldStyleMatch) {
+        setProjectNumberYear(oldStyleMatch[1]);
+        setProjectNumberSuffix(oldStyleMatch[2]);
       }
     }
   }, []);
@@ -137,27 +143,26 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   const generateProjectNumber = (location: string, year: string, suffix: string) => {
     let prefix = '';
     switch (location) {
-      case 'Leerdam':
-        prefix = 'PU';
-        break;
-      case 'Leerdam (PM)':
-        prefix = 'PM';
-        break;
-      case 'Naaldwijk (PD)':
-        prefix = 'PD';
-        break;
-      case 'Naaldwijk (PW)':
-        prefix = 'PW';
-        break;
-      case 'Rotterdam':
-        prefix = 'PR';
-        break;
-      default:
-        prefix = 'PU'; // Default to PU if no location selected
+      case 'Leerdam':        prefix = 'PU'; break;
+      case 'Leerdam (PM)':   prefix = 'PM'; break;
+      case 'Naaldwijk (PD)': prefix = 'PD'; break;
+      case 'Naaldwijk (PW)': prefix = 'PW'; break;
+      case 'Rotterdam':      prefix = 'PR'; break;
+      case 'Den Haag':       prefix = '1P'; break;
+      case 'Rotterdam (2P)': prefix = '2P'; break;
+      case 'Utrecht':        prefix = '3P'; break;
+      case 'Arnhem':         prefix = '4P'; break;
+      case 'Service':        prefix = '9P'; break;
+      default:               prefix = 'PU';
     }
-
     return `${prefix}${year}${suffix}`;
   };
+
+  // New-style locations use a 4-digit suffix; old-style use 3
+  const isNewStyleLocation = (location: string) =>
+    ['Den Haag', 'Rotterdam (2P)', 'Utrecht', 'Arnhem', 'Service'].includes(location);
+
+  const suffixMaxLength = isNewStyleLocation(projectData.location) ? 4 : 3;
 
   const checkProjectNumberExists = (projectNumber: string) => {
     return existingProjects.some(project => 
@@ -177,9 +182,10 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       return;
     }
 
-    // Validate suffix format (exactly 3 digits)
-    if (!/^\d{3}$/.test(suffix)) {
-      setDuplicateError('Projectnummer moet precies 3 cijfers bevatten (001-999)');
+    // Validate suffix format: 4 digits for new-style, 3 digits for old-style
+    const expectedLen = isNewStyleLocation(location) ? 4 : 3;
+    if (suffix.length !== expectedLen || !/^\d+$/.test(suffix)) {
+      setDuplicateError(`Projectnummer moet precies ${expectedLen} cijfers bevatten`);
       return;
     }
 
@@ -221,12 +227,12 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   };
 
   const handleProjectNumberSuffixChange = (suffix: string) => {
-    // Only allow digits and limit to 3 characters
-    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 3);
+    // Only allow digits, limit to 3 or 4 based on location type
+    const cleanSuffix = suffix.replace(/\D/g, '').slice(0, suffixMaxLength);
     setProjectNumberSuffix(cleanSuffix);
 
     // Validate if we have all required fields
-    if (projectNumberYear.length === 2 && cleanSuffix.length === 3 && projectData.location) {
+    if (projectNumberYear.length === 2 && cleanSuffix.length === suffixMaxLength && projectData.location) {
       validateProjectNumber(projectNumberYear, cleanSuffix, projectData.location);
     } else {
       setDuplicateError('');
@@ -234,26 +240,29 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
   };
 
   const handleLocationChange = (location: string) => {
+    const newMax = isNewStyleLocation(location) ? 4 : 3;
+    const suffixComplete = projectNumberSuffix.length === newMax;
+
+    // When switching style, clear suffix if it no longer matches the required length
+    const oldMax = isNewStyleLocation(projectData.location) ? 4 : 3;
+    if (oldMax !== newMax) {
+      setProjectNumberSuffix('');
+      setDuplicateError('');
+      onProjectChange({ ...projectData, location, projectNumber: '' });
+      return;
+    }
+
     // When location changes, validate if we have complete number
-    if (projectNumberYear.length === 2 && projectNumberSuffix.length === 3) {
+    if (projectNumberYear.length === 2 && suffixComplete) {
       validateProjectNumber(projectNumberYear, projectNumberSuffix, location);
     } else {
-      // Clear project number if not complete
-      const updatedData = {
-        ...projectData,
-        location: location,
-        projectNumber: ''
-      };
-      onProjectChange(updatedData);
+      setDuplicateError('');
+      onProjectChange({ ...projectData, location, projectNumber: '' });
+      return;
     }
 
     // Always update location
-    const updatedData = {
-      ...projectData,
-      location: location
-    };
-
-    onProjectChange(updatedData);
+    onProjectChange({ ...projectData, location });
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -392,6 +401,11 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       return;
     }
 
+    if (projectNumberSuffix.length !== suffixMaxLength) {
+      toast.error(`Projectnummer moet ${suffixMaxLength} cijfers bevatten`);
+      return;
+    }
+
     if (duplicateError) {
       toast.error('Los eerst de projectnummer fout op voordat je verder gaat');
       return;
@@ -431,11 +445,20 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   onChange={(e) => handleLocationChange(e.target.value)}
                 >
                   <option value="">Selecteer locatie</option>
-                  <option value="Leerdam">Leerdam (PU)</option>
-                  <option value="Leerdam (PM)">Leerdam (PM)</option>
-                  <option value="Naaldwijk (PD)">Naaldwijk (PD)</option>
-                  <option value="Naaldwijk (PW)">Naaldwijk (PW)</option>
-                  <option value="Rotterdam">Rotterdam (PR)</option>
+                  <optgroup label="Bestaande locaties">
+                    <option value="Leerdam">Leerdam (PU)</option>
+                    <option value="Leerdam (PM)">Leerdam (PM)</option>
+                    <option value="Naaldwijk (PD)">Naaldwijk (PD)</option>
+                    <option value="Naaldwijk (PW)">Naaldwijk (PW)</option>
+                    <option value="Rotterdam">Rotterdam (PR)</option>
+                  </optgroup>
+                  <optgroup label="Nieuwe locaties (4-cijferig nummer)">
+                    <option value="Den Haag">Den Haag (1P)</option>
+                    <option value="Rotterdam (2P)">Rotterdam (2P)</option>
+                    <option value="Utrecht">Utrecht (3P)</option>
+                    <option value="Arnhem">Arnhem (4P)</option>
+                    <option value="Service">Service (9P)</option>
+                  </optgroup>
                 </select>
               </div>
             </div>
@@ -455,7 +478,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">3-cijferig projectnummer</label>
+              <label className="block text-xs text-gray-500 mb-1">
+                {suffixMaxLength === 4 ? '4-cijferig projectnummer' : '3-cijferig projectnummer'}
+              </label>
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -463,9 +488,9 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
                   className={`input-field pl-10 ${duplicateError ? 'border-red-500' : ''}`}
                   value={projectNumberSuffix}
                   onChange={(e) => handleProjectNumberSuffixChange(e.target.value)}
-                  placeholder="001"
-                  maxLength={3}
-                  pattern="\d{3}"
+                  placeholder={suffixMaxLength === 4 ? '0001' : '001'}
+                  maxLength={suffixMaxLength}
+                  pattern={`\\d{${suffixMaxLength}}`}
                 />
                 {isCheckingDuplicate && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -481,7 +506,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           {/* Project Number Preview */}
-          {projectData.location && projectNumberYear.length === 2 && projectNumberSuffix.length === 3 && !duplicateError && (
+          {projectData.location && projectNumberYear.length === 2 && projectNumberSuffix.length === suffixMaxLength && !duplicateError && (
             <div className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
               <div className="flex items-center space-x-2">
                 <Briefcase size={16} className="text-green-400" />
@@ -493,7 +518,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
           )}
 
           <p className="text-xs text-gray-500 mt-2">
-            Format: [Locatie Prefix][Jaar][3 cijfers] (bijv. PU25001, PM25002, PD25123, PW25456, PR25999)
+            Bestaande locaties: [Prefix][Jaar][3 cijfers] (bijv. PU25001) · Nieuwe locaties: [Prefix][Jaar][4 cijfers] (bijv. 3P261111)
           </p>
         </div>
 

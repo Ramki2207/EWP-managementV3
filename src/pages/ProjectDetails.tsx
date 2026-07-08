@@ -4,7 +4,7 @@ import { ArrowLeft, FileEdit as Edit, Save, X, Plus, Trash2, Upload, FileText, S
 import { Eye } from 'lucide-react';
 import VerdelersStep from '../components/VerdelersStep';
 import DocumentViewer from '../components/DocumentViewer';
-import { dataService } from '../lib/supabase';
+import { dataService, supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { projectLockManager } from '../lib/projectLocks';
 import ProjectDocumentManager from '../components/ProjectDocumentManager';
@@ -286,6 +286,21 @@ const ProjectDetails = () => {
       toast.error('Je hebt geen toestemming om projecten bij te werken');
       return;
     }
+
+    // If admin changed the project number, check for duplicates
+    if (currentUser?.role === 'admin' && editedProject.project_number !== project?.project_number) {
+      const newNumber = editedProject.project_number?.trim();
+      if (!newNumber) {
+        toast.error('Projectnummer mag niet leeg zijn');
+        return;
+      }
+      const { data: dup } = await supabase.from('projects').select('id').eq('project_number', newNumber).maybeSingle();
+      if (dup) {
+        toast.error(`Projectnummer ${newNumber} is al in gebruik`);
+        return;
+      }
+    }
+
     try {
       const updateData = {
         projectNumber: editedProject.project_number,
@@ -1041,7 +1056,7 @@ const ProjectDetails = () => {
 
             <div className="grid grid-cols-2 gap-6">
               {[
-                { label: "Projectnummer", field: "project_number", readOnly: true },
+                { label: "Projectnummer", field: "project_number", readOnly: currentUser?.role !== 'admin' },
                 { label: "Datum", field: "date", type: "date" },
                 { label: "Verwachte leverdatum", field: "expected_delivery_date", type: "date" },
                 { label: "Locatie", field: "location" },
