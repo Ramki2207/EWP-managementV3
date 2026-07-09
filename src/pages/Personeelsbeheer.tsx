@@ -597,6 +597,20 @@ export default function Personeelsbeheer() {
     setRejectionReason('');
   };
 
+  const getWeekDates = (weekNumber: number, year: number): Date[] => {
+    const jan4 = new Date(year, 0, 4);
+    const dayOfWeek = (jan4.getDay() + 6) % 7;
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - dayOfWeek + (weekNumber - 1) * 7);
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'draft': return 'bg-gray-500/20 text-gray-400';
@@ -1760,14 +1774,22 @@ export default function Personeelsbeheer() {
                         <tr className="border-b border-gray-700">
                           <th className="text-left p-2 text-gray-400">Code</th>
                           <th className="text-left p-2 text-gray-400">Activiteit</th>
+                          <th className="text-left p-2 text-gray-400">Project nr.</th>
                           <th className="text-left p-2 text-gray-400">WB nr</th>
-                          <th className="text-center p-2 text-gray-400">Ma</th>
-                          <th className="text-center p-2 text-gray-400">Di</th>
-                          <th className="text-center p-2 text-gray-400">Wo</th>
-                          <th className="text-center p-2 text-gray-400">Do</th>
-                          <th className="text-center p-2 text-gray-400">Vr</th>
-                          <th className="text-center p-2 text-gray-400">Za</th>
-                          <th className="text-center p-2 text-gray-400">Zo</th>
+                          {(() => {
+                            const dayLabels = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+                            const weekDates = selectedWeekstaat ? getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year) : [];
+                            return dayLabels.map((label, i) => (
+                              <th key={label} className="text-center p-2 text-gray-400">
+                                <div>{label}</div>
+                                {weekDates[i] && (
+                                  <div className="text-xs text-gray-500 font-normal">
+                                    {weekDates[i].getDate()}/{weekDates[i].getMonth() + 1}
+                                  </div>
+                                )}
+                              </th>
+                            ));
+                          })()}
                           <th className="text-center p-2 text-gray-400">Totaal</th>
                         </tr>
                       </thead>
@@ -1779,6 +1801,7 @@ export default function Personeelsbeheer() {
                             <tr key={index} className="border-b border-gray-800">
                               <td className="p-2 text-white">{entry.activity_code}</td>
                               <td className="p-2 text-white">{entry.activity_description}</td>
+                              <td className="p-2 text-white">{entry.project_number || '-'}</td>
                               <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
@@ -1792,7 +1815,7 @@ export default function Personeelsbeheer() {
                           );
                         })}
                         <tr className="bg-purple-500/10 font-bold">
-                          <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
+                          <td colSpan={4} className="p-2 text-right text-white">Totaal:</td>
                           <td className="p-2 text-center text-white">
                             {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(1)}
                           </td>

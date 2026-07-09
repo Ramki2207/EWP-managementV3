@@ -41,6 +41,7 @@ interface WeekstaatEntry {
   id?: string;
   activity_code: string;
   activity_description: string;
+  project_number: string;
   workorder_number: string;
   monday: number;
   tuesday: number;
@@ -131,6 +132,20 @@ export default function UrenstaatVerlof() {
     // Determine the year for the week (ISO week year)
     const targetYear = target.getFullYear();
     return { week, year: targetYear };
+  };
+
+  const getWeekDates = (weekNumber: number, year: number): Date[] => {
+    const jan4 = new Date(year, 0, 4);
+    const dayOfWeek = (jan4.getDay() + 6) % 7;
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - dayOfWeek + (weekNumber - 1) * 7);
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
   };
 
   const generateWeeksList = () => {
@@ -347,6 +362,7 @@ export default function UrenstaatVerlof() {
             weekstaat_id: selectedWeekstaat.id,
             activity_code: entry.activity_code,
             activity_description: entry.activity_description,
+            project_number: entry.project_number || null,
             workorder_number: entry.workorder_number,
             monday: entry.monday === '' ? 0 : (parseFloat(entry.monday.toString()) || 0),
             tuesday: entry.tuesday === '' ? 0 : (parseFloat(entry.tuesday.toString()) || 0),
@@ -394,6 +410,7 @@ export default function UrenstaatVerlof() {
     setEntries([...entries, {
       activity_code: '100',
       activity_description: 'Montage verdelers',
+      project_number: '',
       workorder_number: '',
       monday: '' as any,
       tuesday: '' as any,
@@ -1075,14 +1092,22 @@ export default function UrenstaatVerlof() {
                         <thead>
                           <tr className="border-b border-gray-700">
                             <th className="text-left p-2 text-gray-400 text-sm min-w-[250px]">Activiteit</th>
+                            <th className="text-left p-2 text-gray-400 text-sm">Project nr.</th>
                             <th className="text-left p-2 text-gray-400 text-sm">Omschrijving</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Ma</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Di</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Wo</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Do</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Vr</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Za</th>
-                            <th className="text-center p-2 text-gray-400 text-sm">Zo</th>
+                            {(() => {
+                              const dayLabels = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+                              const weekDates = selectedWeekstaat ? getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year) : [];
+                              return dayLabels.map((label, i) => (
+                                <th key={label} className="text-center p-2 text-gray-400 text-sm">
+                                  <div>{label}</div>
+                                  {weekDates[i] && (
+                                    <div className="text-xs text-gray-500 font-normal">
+                                      {weekDates[i].getDate()}/{weekDates[i].getMonth() + 1}
+                                    </div>
+                                  )}
+                                </th>
+                              ));
+                            })()}
                             <th className="text-center p-2 text-gray-400 text-sm"></th>
                           </tr>
                         </thead>
@@ -1113,6 +1138,19 @@ export default function UrenstaatVerlof() {
                                   </select>
                                 ) : (
                                   <span className="text-white">{entry.activity_code} - {entry.activity_description}</span>
+                                )}
+                              </td>
+                              <td className="p-2">
+                                {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
+                                  <input
+                                    type="text"
+                                    value={entry.project_number || ''}
+                                    onChange={(e) => updateEntry(index, 'project_number', e.target.value)}
+                                    className="input-field text-sm"
+                                    placeholder="Project nr."
+                                  />
+                                ) : (
+                                  <span className="text-white">{entry.project_number || '-'}</span>
                                 )}
                               </td>
                               <td className="p-2">
@@ -1160,7 +1198,7 @@ export default function UrenstaatVerlof() {
                           {/* Totals Row */}
                           {entries.length > 0 && (
                             <tr className="bg-purple-500/10 font-semibold">
-                              <td colSpan={2} className="p-2 text-right text-white">Totaal:</td>
+                              <td colSpan={3} className="p-2 text-right text-white">Totaal:</td>
                               {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
                                 const totals = calculateTotals();
                                 return (

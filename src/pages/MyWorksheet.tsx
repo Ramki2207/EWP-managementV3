@@ -34,6 +34,7 @@ interface WeekstaatEntry {
   tempId?: string;
   activity_code: string;
   activity_description: string;
+  project_number: string;
   workorder_number: string;
   overtime_start_time: string;
   monday: number;
@@ -143,11 +144,26 @@ export default function MyWorksheet() {
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   };
 
+  const getWeekDates = (weekNumber: number, year: number) => {
+    const jan4 = new Date(year, 0, 4);
+    const dayOfWeek = jan4.getDay() || 7;
+    const monday = new Date(jan4);
+    monday.setDate(jan4.getDate() - (dayOfWeek - 1) + (weekNumber - 1) * 7);
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  };
+
   const addEntry = () => {
     const newEntry: WeekstaatEntry = {
       tempId: `temp_${Date.now()}_${Math.random()}`,
       activity_code: '100',
       activity_description: 'Montage verdelers',
+      project_number: '',
       workorder_number: '',
       overtime_start_time: '',
       monday: 0,
@@ -272,6 +288,7 @@ export default function MyWorksheet() {
           weekstaat_id: weekstaatId,
           activity_code: entry.activity_code,
           activity_description: entry.activity_description,
+          project_number: entry.project_number || null,
           workorder_number: entry.workorder_number || null,
           overtime_start_time: entry.overtime_start_time || null,
           monday: entry.monday || 0,
@@ -486,14 +503,20 @@ export default function MyWorksheet() {
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="text-left p-2 min-w-[250px]">Activiteit</th>
+                <th className="text-left p-2 min-w-[100px]">Project nr.</th>
                 <th className="text-left p-2 min-w-[120px]">WB nr</th>
-                <th className="text-left p-2 w-16">Ma</th>
-                <th className="text-left p-2 w-16">Di</th>
-                <th className="text-left p-2 w-16">Wo</th>
-                <th className="text-left p-2 w-16">Do</th>
-                <th className="text-left p-2 w-16">Vr</th>
-                <th className="text-left p-2 w-16">Za</th>
-                <th className="text-left p-2 w-16">Zo</th>
+                {(() => {
+                  const dayNames = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+                  const dates = getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year);
+                  return dayNames.map((day, i) => (
+                    <th key={day} className="text-left p-2 w-16">
+                      <div>{day}</div>
+                      <div className="text-[10px] text-gray-400 font-normal">
+                        {dates[i].getDate()}/{dates[i].getMonth() + 1}/{dates[i].getFullYear()}
+                      </div>
+                    </th>
+                  ));
+                })()}
                 <th className="text-left p-2 min-w-[80px]">Overwerk</th>
                 {canEdit && <th className="text-left p-2 w-10"></th>}
               </tr>
@@ -518,6 +541,16 @@ export default function MyWorksheet() {
                         </option>
                       ))}
                     </select>
+                  </td>
+                  <td className="p-2">
+                    <input
+                      type="text"
+                      value={entry.project_number}
+                      onChange={(e) => updateEntry(index, 'project_number', e.target.value)}
+                      disabled={!canEdit}
+                      placeholder="Project nr."
+                      className="input-field text-xs p-1 w-full"
+                    />
                   </td>
                   <td className="p-2">
                     <input
@@ -619,7 +652,7 @@ export default function MyWorksheet() {
                 </tr>
               ))}
               <tr className="font-bold bg-gray-800/50">
-                <td colSpan={2} className="p-2 text-right">Totaal uren:</td>
+                <td colSpan={3} className="p-2 text-right">Totaal uren:</td>
                 <td className="p-2">{totals.monday.toFixed(2)}</td>
                 <td className="p-2">{totals.tuesday.toFixed(2)}</td>
                 <td className="p-2">{totals.wednesday.toFixed(2)}</td>
