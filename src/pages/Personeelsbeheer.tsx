@@ -18,6 +18,34 @@ interface DayEvent {
 }
 
 export default function Personeelsbeheer() {
+  const notationToRealHours = (val: any): number => {
+    if (val === '' || val === null || val === undefined || val === 0) return 0;
+    const num = typeof val === 'number' ? val : parseFloat(val.toString());
+    if (isNaN(num)) return 0;
+    const hours = Math.floor(num);
+    const decimal = Math.round((num - hours) * 100);
+    let realMinFraction = 0;
+    if (decimal === 15) realMinFraction = 0.25;
+    else if (decimal === 30) realMinFraction = 0.50;
+    else if (decimal === 75) realMinFraction = 0.75;
+    return hours + realMinFraction;
+  };
+
+  const realHoursToNotation = (realHours: number): number => {
+    const hours = Math.floor(realHours);
+    const frac = Math.round((realHours - hours) * 100) / 100;
+    let notation = 0;
+    if (frac >= 0.70) notation = 75;
+    else if (frac >= 0.45) notation = 30;
+    else if (frac >= 0.20) notation = 15;
+    else notation = 0;
+    return parseFloat(`${hours}.${notation.toString().padStart(2, '0')}`);
+  };
+
+  const formatNotation = (realHours: number): string => {
+    return realHoursToNotation(realHours).toFixed(2);
+  };
+
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
   const { getFilteredLocations } = useLocationFilter();
@@ -404,14 +432,14 @@ export default function Personeelsbeheer() {
     const username = selectedWeekstaat.user?.username || 'Onbekend';
     const weekNumber = selectedWeekstaat.week_number;
     const year = selectedWeekstaat.year;
-    const totalHours = weekstaatEntries.reduce((sum, e) =>
-      sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-      (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-    ).toFixed(2);
+    const totalHours = formatNotation(weekstaatEntries.reduce((sum, e) =>
+      sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+      notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
+    ));
 
     const rows = weekstaatEntries.map(e => {
-      const rowTotal = ((e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0)).toFixed(2);
+      const rowTotal = formatNotation(notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+        notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday));
       return `<tr>
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_code}</td>
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_description}</td>
@@ -429,13 +457,13 @@ export default function Personeelsbeheer() {
 
     const totalsRow = `<tr style="font-weight:bold;background:#f0f0f0;">
       <td style="padding:6px;border:1px solid #ddd;" colspan="3">Totaal</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(2)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.monday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.tuesday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.wednesday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.thursday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.friday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.saturday), 0))}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(weekstaatEntries.reduce((s, e) => s + notationToRealHours(e.sunday), 0))}</td>
       <td style="padding:6px;border:1px solid #ddd;text-align:center;">${totalHours}</td>
     </tr>`;
 
@@ -1474,8 +1502,8 @@ export default function Personeelsbeheer() {
                     const totalHours = allWeekstaatEntries
                       .filter(e => e.weekstaat_id === weekstaat.id)
                       .reduce((sum, e) =>
-                        sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-                        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                        sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                        notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                       );
 
                     return (
@@ -1505,7 +1533,7 @@ export default function Personeelsbeheer() {
                           </span>
                         </td>
                         <td className="p-3 text-white font-medium">
-                          {totalHours > 0 ? `${totalHours.toFixed(2)}u` : '-'}
+                          {totalHours > 0 ? `${formatNotation(totalHours)}u` : '-'}
                         </td>
                       </tr>
                     );
@@ -1786,8 +1814,8 @@ export default function Personeelsbeheer() {
                             if (categoryEntries.length === 0) return null;
 
                             const categoryTotal = categoryEntries.reduce((sum, e) =>
-                              sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-                              (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                              sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                              notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                             );
 
                             return (
@@ -1818,8 +1846,8 @@ export default function Personeelsbeheer() {
                                     </thead>
                                     <tbody>
                                       {categoryEntries.map((entry, index) => {
-                                        const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
-                                                         (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
+                                        const rowTotal = notationToRealHours(entry.monday) + notationToRealHours(entry.tuesday) + notationToRealHours(entry.wednesday) +
+                                                         notationToRealHours(entry.thursday) + notationToRealHours(entry.friday) + notationToRealHours(entry.saturday) + notationToRealHours(entry.sunday);
                                         return (
                                           <tr key={index} className="border-b border-gray-800">
                                             <td className="p-2 text-white">{entry.activity_code}</td>
@@ -1833,20 +1861,20 @@ export default function Personeelsbeheer() {
                                             <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
                                             <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
                                             <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white font-semibold">{rowTotal.toFixed(2)}</td>
+                                            <td className="p-2 text-center text-white font-semibold">{formatNotation(rowTotal)}</td>
                                           </tr>
                                         );
                                       })}
                                       <tr className={`${category.bgClass} font-bold`}>
                                         <td colSpan={4} className="p-2 text-right text-white">Subtotaal:</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(2)}</td>
-                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(2)}</td>
-                                        <td className={`p-2 text-center ${category.totalClass} font-bold`}>{categoryTotal.toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.monday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.tuesday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.wednesday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.thursday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.friday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.saturday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.sunday), 0))}</td>
+                                        <td className={`p-2 text-center ${category.totalClass} font-bold`}>{formatNotation(categoryTotal)}</td>
                                       </tr>
                                     </tbody>
                                   </table>
@@ -1859,10 +1887,10 @@ export default function Personeelsbeheer() {
                           <div className="bg-purple-500/10 rounded-lg p-3 flex justify-between items-center">
                             <span className="text-white font-bold">Totaal alle uren:</span>
                             <span className="text-purple-400 font-bold text-lg">
-                              {weekstaatEntries.reduce((sum, e) =>
-                                sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-                                (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                              ).toFixed(2)} uur
+                              {formatNotation(weekstaatEntries.reduce((sum, e) =>
+                                sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                                notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
+                              ))} uur
                             </span>
                           </div>
                         </div>
@@ -1899,8 +1927,8 @@ export default function Personeelsbeheer() {
                       </thead>
                       <tbody>
                         {weekstaatEntries.map((entry, index) => {
-                          const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
-                                           (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
+                          const rowTotal = notationToRealHours(entry.monday) + notationToRealHours(entry.tuesday) + notationToRealHours(entry.wednesday) +
+                                           notationToRealHours(entry.thursday) + notationToRealHours(entry.friday) + notationToRealHours(entry.saturday) + notationToRealHours(entry.sunday);
                           return (
                             <tr key={index} className="border-b border-gray-800">
                               <td className="p-2 text-white">{entry.activity_code}</td>
@@ -1914,38 +1942,38 @@ export default function Personeelsbeheer() {
                               <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
-                              <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(2)}</td>
+                              <td className="p-2 text-center text-purple-400 font-semibold">{formatNotation(rowTotal)}</td>
                             </tr>
                           );
                         })}
                         <tr className="bg-purple-500/10 font-bold">
                           <td colSpan={4} className="p-2 text-right text-white">Totaal:</td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.monday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.tuesday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.wednesday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.thursday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.friday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.saturday), 0))}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.sunday), 0))}
                           </td>
                           <td className="p-2 text-center text-purple-400 font-bold text-lg">
-                            {weekstaatEntries.reduce((sum, e) =>
-                              sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-                              (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                            ).toFixed(2)}
+                            {formatNotation(weekstaatEntries.reduce((sum, e) =>
+                              sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                              notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
+                            ))}
                           </td>
                         </tr>
                       </tbody>
@@ -2009,10 +2037,10 @@ export default function Personeelsbeheer() {
                     <div>
                       <p className="text-xs text-gray-400 mb-1">Totaal Uren</p>
                       <p className="text-2xl font-bold text-purple-400">
-                        {weekstaatEntries.reduce((sum, e) =>
-                          sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-                          (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                        ).toFixed(2)}u
+                        {formatNotation(weekstaatEntries.reduce((sum, e) =>
+                          sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                          notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
+                        ))}u
                       </p>
                     </div>
 

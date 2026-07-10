@@ -723,6 +723,30 @@ export default function UrenstaatVerlof() {
     }
   };
 
+  const notationToRealHours = (val: any): number => {
+    if (val === '' || val === null || val === undefined) return 0;
+    const num = parseFloat(val.toString());
+    if (isNaN(num)) return 0;
+    const hours = Math.floor(num);
+    const decimal = Math.round((num - hours) * 100);
+    let realMinFraction = 0;
+    if (decimal === 15) realMinFraction = 0.25;
+    else if (decimal === 30) realMinFraction = 0.50;
+    else if (decimal === 75) realMinFraction = 0.75;
+    return hours + realMinFraction;
+  };
+
+  const realHoursToNotation = (realHours: number): number => {
+    const hours = Math.floor(realHours);
+    const frac = Math.round((realHours - hours) * 100) / 100;
+    let notation = 0;
+    if (frac >= 0.70) notation = 75;
+    else if (frac >= 0.45) notation = 30;
+    else if (frac >= 0.20) notation = 15;
+    else notation = 0;
+    return parseFloat(`${hours}.${notation.toString().padStart(2, '0')}`);
+  };
+
   const calculateTotals = () => {
     const totals = {
       monday: 0,
@@ -736,19 +760,23 @@ export default function UrenstaatVerlof() {
     };
 
     entries.forEach(entry => {
-      totals.monday += (entry.monday === '' || entry.monday === null || entry.monday === undefined) ? 0 : parseFloat(entry.monday.toString());
-      totals.tuesday += (entry.tuesday === '' || entry.tuesday === null || entry.tuesday === undefined) ? 0 : parseFloat(entry.tuesday.toString());
-      totals.wednesday += (entry.wednesday === '' || entry.wednesday === null || entry.wednesday === undefined) ? 0 : parseFloat(entry.wednesday.toString());
-      totals.thursday += (entry.thursday === '' || entry.thursday === null || entry.thursday === undefined) ? 0 : parseFloat(entry.thursday.toString());
-      totals.friday += (entry.friday === '' || entry.friday === null || entry.friday === undefined) ? 0 : parseFloat(entry.friday.toString());
-      totals.saturday += (entry.saturday === '' || entry.saturday === null || entry.saturday === undefined) ? 0 : parseFloat(entry.saturday.toString());
-      totals.sunday += (entry.sunday === '' || entry.sunday === null || entry.sunday === undefined) ? 0 : parseFloat(entry.sunday.toString());
+      totals.monday += notationToRealHours(entry.monday);
+      totals.tuesday += notationToRealHours(entry.tuesday);
+      totals.wednesday += notationToRealHours(entry.wednesday);
+      totals.thursday += notationToRealHours(entry.thursday);
+      totals.friday += notationToRealHours(entry.friday);
+      totals.saturday += notationToRealHours(entry.saturday);
+      totals.sunday += notationToRealHours(entry.sunday);
     });
 
     totals.total = totals.monday + totals.tuesday + totals.wednesday + totals.thursday +
                    totals.friday + totals.saturday + totals.sunday;
 
     return totals;
+  };
+
+  const formatTotalAsNotation = (realHours: number): string => {
+    return realHoursToNotation(realHours).toFixed(2);
   };
 
   const handlePrint = () => {
@@ -983,13 +1011,13 @@ export default function UrenstaatVerlof() {
                   <tbody>
                     {entries.map((entry, index) => {
                       const rowTotal =
-                        (parseFloat(entry.monday?.toString()) || 0) +
-                        (parseFloat(entry.tuesday?.toString()) || 0) +
-                        (parseFloat(entry.wednesday?.toString()) || 0) +
-                        (parseFloat(entry.thursday?.toString()) || 0) +
-                        (parseFloat(entry.friday?.toString()) || 0) +
-                        (parseFloat(entry.saturday?.toString()) || 0) +
-                        (parseFloat(entry.sunday?.toString()) || 0);
+                        notationToRealHours(entry.monday) +
+                        notationToRealHours(entry.tuesday) +
+                        notationToRealHours(entry.wednesday) +
+                        notationToRealHours(entry.thursday) +
+                        notationToRealHours(entry.friday) +
+                        notationToRealHours(entry.saturday) +
+                        notationToRealHours(entry.sunday);
 
                       return (
                         <tr key={index}>
@@ -1006,7 +1034,7 @@ export default function UrenstaatVerlof() {
                           <td className="print-day-cell">{entry.friday === '' || entry.friday === 0 ? '-' : entry.friday}</td>
                           <td className="print-day-cell">{entry.saturday === '' || entry.saturday === 0 ? '-' : entry.saturday}</td>
                           <td className="print-day-cell">{entry.sunday === '' || entry.sunday === 0 ? '-' : entry.sunday}</td>
-                          <td className="print-day-cell">{rowTotal.toFixed(2)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(rowTotal)}</td>
                         </tr>
                       );
                     })}
@@ -1022,14 +1050,14 @@ export default function UrenstaatVerlof() {
                       return (
                         <tr className="print-totals-row">
                           <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>TOTAAL:</td>
-                          <td className="print-day-cell">{totals.monday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.tuesday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.wednesday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.thursday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.friday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.saturday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.sunday.toFixed(2)}</td>
-                          <td className="print-day-cell">{totals.total.toFixed(2)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.monday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.tuesday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.wednesday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.thursday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.friday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.saturday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.sunday)}</td>
+                          <td className="print-day-cell">{formatTotalAsNotation(totals.total)}</td>
                         </tr>
                       );
                     })()}
@@ -1252,12 +1280,12 @@ export default function UrenstaatVerlof() {
                                 const totals = calculateTotals();
                                 return (
                                   <td key={day} className="p-2 text-center text-white">
-                                    {totals[day as keyof typeof totals].toFixed(2)}
+                                    {formatTotalAsNotation(totals[day as keyof typeof totals])}
                                   </td>
                                 );
                               })}
                               <td className="p-2 text-center text-purple-400">
-                                {calculateTotals().total.toFixed(2)}
+                                {formatTotalAsNotation(calculateTotals().total)}
                               </td>
                             </tr>
                           )}
