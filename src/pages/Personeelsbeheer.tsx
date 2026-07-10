@@ -27,7 +27,7 @@ export default function Personeelsbeheer() {
     let realMinFraction = 0;
     if (decimal === 15) realMinFraction = 0.25;
     else if (decimal === 30) realMinFraction = 0.50;
-    else if (decimal === 75) realMinFraction = 0.75;
+    else if (decimal === 45) realMinFraction = 0.75;
     return hours + realMinFraction;
   };
 
@@ -35,7 +35,7 @@ export default function Personeelsbeheer() {
     const hours = Math.floor(realHours);
     const frac = Math.round((realHours - hours) * 100) / 100;
     let notation = 0;
-    if (frac >= 0.70) notation = 75;
+    if (frac >= 0.70) notation = 45;
     else if (frac >= 0.45) notation = 30;
     else if (frac >= 0.20) notation = 15;
     else notation = 0;

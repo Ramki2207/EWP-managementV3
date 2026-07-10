@@ -732,7 +732,7 @@ export default function UrenstaatVerlof() {
     let realMinFraction = 0;
     if (decimal === 15) realMinFraction = 0.25;
     else if (decimal === 30) realMinFraction = 0.50;
-    else if (decimal === 75) realMinFraction = 0.75;
+    else if (decimal === 45) realMinFraction = 0.75;
     return hours + realMinFraction;
   };
 
@@ -740,7 +740,7 @@ export default function UrenstaatVerlof() {
     const hours = Math.floor(realHours);
     const frac = Math.round((realHours - hours) * 100) / 100;
     let notation = 0;
-    if (frac >= 0.70) notation = 75;
+    if (frac >= 0.70) notation = 45;
     else if (frac >= 0.45) notation = 30;
     else if (frac >= 0.20) notation = 15;
     else notation = 0;
@@ -1220,7 +1220,7 @@ export default function UrenstaatVerlof() {
                                 const numVal = typeof rawVal === 'number' ? rawVal : (parseFloat(rawVal?.toString() || '0') || 0);
                                 const hoursPart = Math.floor(numVal);
                                 const minsPart = Math.round((numVal - hoursPart) * 100);
-                                const validMins = [0, 15, 30, 75].includes(minsPart) ? minsPart : 0;
+                                const validMins = [0, 15, 30, 45].includes(minsPart) ? minsPart : 0;
                                 return (
                                 <td key={day} className="p-2">
                                   {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
@@ -1236,9 +1236,9 @@ export default function UrenstaatVerlof() {
                                           updateEntry(index, day, combined === 0 ? '' : combined);
                                         }}
                                         placeholder="0"
-                                        className="input-field text-sm text-center w-10"
+                                        className="input-field text-sm text-center w-14"
                                       />
-                                      <span className="text-gray-400 text-xs">.</span>
+                                      <span className="text-gray-400 text-xs">:</span>
                                       <select
                                         value={rawVal === 0 || rawVal === '' || rawVal === null || rawVal === undefined ? 0 : validMins}
                                         onChange={(e) => {
@@ -1251,7 +1251,7 @@ export default function UrenstaatVerlof() {
                                         <option value={0}>00</option>
                                         <option value={15}>15</option>
                                         <option value={30}>30</option>
-                                        <option value={75}>75</option>
+                                        <option value={45}>45</option>
                                       </select>
                                     </div>
                                   ) : (
