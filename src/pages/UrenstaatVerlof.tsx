@@ -1192,11 +1192,18 @@ export default function UrenstaatVerlof() {
                                   {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
                                     <input
                                       type="number"
-                                      step="0.01"
+                                      step="0.25"
                                       min="0"
                                       max="24"
                                       value={entry[day as keyof WeekstaatEntry] === 0 ? 0 : (entry[day as keyof WeekstaatEntry] || '')}
                                       onChange={(e) => updateEntry(index, day, e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
+                                      onBlur={(e) => {
+                                        if (e.target.value !== '') {
+                                          const snapped = Math.round(parseFloat(e.target.value) * 4) / 4;
+                                          const clamped = Math.max(0, Math.min(24, snapped));
+                                          updateEntry(index, day, clamped);
+                                        }
+                                      }}
                                       className="input-field text-sm text-center w-20"
                                     />
                                   ) : (
