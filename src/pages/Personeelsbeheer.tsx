@@ -1792,9 +1792,8 @@ export default function Personeelsbeheer() {
 
                             return (
                               <div key={category.title}>
-                                <div className="flex items-center justify-between mb-2">
+                                <div className="mb-2">
                                   <h4 className={`text-base font-semibold ${category.titleClass}`}>{category.title}</h4>
-                                  <span className={`text-sm font-medium ${category.totalClass}`}>{categoryTotal.toFixed(2)} uur</span>
                                 </div>
                                 <div className="overflow-x-auto">
                                   <table className="w-full text-sm">
@@ -1834,7 +1833,7 @@ export default function Personeelsbeheer() {
                                             <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
                                             <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
                                             <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
-                                            <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(2)}</td>
+                                            <td className="p-2 text-center text-white font-semibold">{rowTotal.toFixed(2)}</td>
                                           </tr>
                                         );
                                       })}
