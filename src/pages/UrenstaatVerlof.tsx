@@ -1187,30 +1187,51 @@ export default function UrenstaatVerlof() {
                                   <span className="text-white">{entry.workorder_number || '-'}</span>
                                 )}
                               </td>
-                              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => (
+                              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(day => {
+                                const rawVal = entry[day as keyof WeekstaatEntry];
+                                const numVal = typeof rawVal === 'number' ? rawVal : (parseFloat(rawVal?.toString() || '0') || 0);
+                                const hoursPart = Math.floor(numVal);
+                                const minsPart = Math.round((numVal - hoursPart) * 100);
+                                const validMins = [0, 15, 30, 75].includes(minsPart) ? minsPart : 0;
+                                return (
                                 <td key={day} className="p-2">
                                   {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
-                                    <input
-                                      type="number"
-                                      step="0.25"
-                                      min="0"
-                                      max="24"
-                                      value={entry[day as keyof WeekstaatEntry] === 0 ? 0 : (entry[day as keyof WeekstaatEntry] || '')}
-                                      onChange={(e) => updateEntry(index, day, e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
-                                      onBlur={(e) => {
-                                        if (e.target.value !== '') {
-                                          const snapped = Math.round(parseFloat(e.target.value) * 4) / 4;
-                                          const clamped = Math.max(0, Math.min(24, snapped));
-                                          updateEntry(index, day, clamped);
-                                        }
-                                      }}
-                                      className="input-field text-sm text-center w-20"
-                                    />
+                                    <div className="flex items-center gap-0.5">
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max="24"
+                                        value={rawVal === 0 || rawVal === '' || rawVal === null || rawVal === undefined ? '' : hoursPart}
+                                        onChange={(e) => {
+                                          const h = e.target.value === '' ? 0 : (parseInt(e.target.value) || 0);
+                                          const combined = h + validMins / 100;
+                                          updateEntry(index, day, combined === 0 ? '' : combined);
+                                        }}
+                                        placeholder="0"
+                                        className="input-field text-sm text-center w-10"
+                                      />
+                                      <span className="text-gray-400 text-xs">.</span>
+                                      <select
+                                        value={rawVal === 0 || rawVal === '' || rawVal === null || rawVal === undefined ? 0 : validMins}
+                                        onChange={(e) => {
+                                          const m = parseInt(e.target.value);
+                                          const combined = hoursPart + m / 100;
+                                          updateEntry(index, day, combined === 0 ? '' : combined);
+                                        }}
+                                        className="input-field text-sm text-center w-14 appearance-none"
+                                      >
+                                        <option value={0}>00</option>
+                                        <option value={15}>15</option>
+                                        <option value={30}>30</option>
+                                        <option value={75}>75</option>
+                                      </select>
+                                    </div>
                                   ) : (
-                                    <span className="text-white text-center block">{entry[day as keyof WeekstaatEntry] || '-'}</span>
+                                    <span className="text-white text-center block">{rawVal || '-'}</span>
                                   )}
                                 </td>
-                              ))}
+                                );
+                              })}
                               {(selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected') && (
                                 <td className="p-2 text-center">
                                   <button
