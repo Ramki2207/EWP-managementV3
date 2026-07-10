@@ -152,8 +152,8 @@ export default function UrenstaatVerlof() {
     const weeks = [];
     const today = new Date();
 
-    // Generate past 16 weeks plus current week (total 17 weeks)
-    for (let i = -16; i <= 0; i++) {
+    // Generate past 16 weeks plus current week and next 4 weeks
+    for (let i = -16; i <= 4; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + (i * 7));
       const { week, year } = getISOWeekAndYear(date);
@@ -304,8 +304,30 @@ export default function UrenstaatVerlof() {
       return;
     }
     const currentDate = new Date();
-    const weekNumber = getISOWeek(currentDate);
-    const year = currentDate.getFullYear();
+    let weekNumber = getISOWeek(currentDate);
+    let year = currentDate.getFullYear();
+
+    // Check if current week already exists, if so try next week
+    const { data: existingCurrent } = await supabase
+      .from('weekstaten')
+      .select('id, status')
+      .eq('user_id', user.id)
+      .eq('week_number', weekNumber)
+      .eq('year', year)
+      .maybeSingle();
+
+    if (existingCurrent) {
+      if (existingCurrent.status === 'draft' || existingCurrent.status === 'rejected') {
+        await loadWeekstaatDetails(existingCurrent);
+        return;
+      }
+      // Current week is submitted/approved, try next week
+      const nextWeekDate = new Date(currentDate);
+      nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+      const nextWeekInfo = getISOWeekAndYear(nextWeekDate);
+      weekNumber = nextWeekInfo.week;
+      year = nextWeekInfo.year;
+    }
 
     const { data, error } = await supabase
       .from('weekstaten')
@@ -320,7 +342,6 @@ export default function UrenstaatVerlof() {
 
     if (error) {
       if (error.code === '23505') {
-        toast.error('Er bestaat al een weekstaat voor deze week');
         const { data: existing } = await supabase
           .from('weekstaten')
           .select('*')
