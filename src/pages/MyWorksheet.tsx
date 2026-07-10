@@ -493,9 +493,9 @@ export default function MyWorksheet() {
         </div>
 
         <div className="text-xs text-gray-400 mb-4 flex space-x-4">
-          <span>0,25 = 15 min (kwartier)</span>
           <span>0,50 = 30 min (half uur)</span>
-          <span>0,75 = 45 min (3 kwartier)</span>
+          <span>1,00 = 60 min (1 uur)</span>
+          <span>8,50 = 8 uur en 30 min</span>
         </div>
 
         <div className="overflow-x-auto">
@@ -509,7 +509,7 @@ export default function MyWorksheet() {
                   const dayNames = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
                   const dates = getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year);
                   return dayNames.map((day, i) => (
-                    <th key={day} className="text-left p-2 w-16">
+                    <th key={day} className="text-left p-2 w-20">
                       <div>{day}</div>
                       <div className="text-[10px] text-gray-400 font-normal">
                         {dates[i].getDate()}/{dates[i].getMonth() + 1}/{dates[i].getFullYear()}
@@ -565,71 +565,71 @@ export default function MyWorksheet() {
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.monday}
                       onChange={(e) => updateEntry(index, 'monday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.tuesday}
                       onChange={(e) => updateEntry(index, 'tuesday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.wednesday}
                       onChange={(e) => updateEntry(index, 'wednesday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.thursday}
                       onChange={(e) => updateEntry(index, 'thursday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.friday}
                       onChange={(e) => updateEntry(index, 'friday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.saturday}
                       onChange={(e) => updateEntry(index, 'saturday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="number"
-                      step="0.25"
+                      step="0.01"
                       value={entry.sunday}
                       onChange={(e) => updateEntry(index, 'sunday', e.target.value)}
                       disabled={!canEdit}
-                      className="input-field text-xs p-1 w-16"
+                      className="input-field text-xs p-1.5 w-20"
                     />
                   </td>
                   <td className="p-2">

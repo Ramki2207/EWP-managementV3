@@ -985,7 +985,7 @@ export default function UrenstaatVerlof() {
                           <td className="print-day-cell">{entry.friday === '' || entry.friday === 0 ? '-' : entry.friday}</td>
                           <td className="print-day-cell">{entry.saturday === '' || entry.saturday === 0 ? '-' : entry.saturday}</td>
                           <td className="print-day-cell">{entry.sunday === '' || entry.sunday === 0 ? '-' : entry.sunday}</td>
-                          <td className="print-day-cell">{rowTotal.toFixed(1)}</td>
+                          <td className="print-day-cell">{rowTotal.toFixed(2)}</td>
                         </tr>
                       );
                     })}
@@ -1001,14 +1001,14 @@ export default function UrenstaatVerlof() {
                       return (
                         <tr className="print-totals-row">
                           <td colSpan={2} style={{ textAlign: 'right', fontWeight: 'bold' }}>TOTAAL:</td>
-                          <td className="print-day-cell">{totals.monday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.tuesday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.wednesday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.thursday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.friday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.saturday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.sunday.toFixed(1)}</td>
-                          <td className="print-day-cell">{totals.total.toFixed(1)}</td>
+                          <td className="print-day-cell">{totals.monday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.tuesday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.wednesday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.thursday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.friday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.saturday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.sunday.toFixed(2)}</td>
+                          <td className="print-day-cell">{totals.total.toFixed(2)}</td>
                         </tr>
                       );
                     })()}
@@ -1171,12 +1171,12 @@ export default function UrenstaatVerlof() {
                                   {selectedWeekstaat.status === 'draft' || selectedWeekstaat.status === 'rejected' ? (
                                     <input
                                       type="number"
-                                      step="0.5"
+                                      step="0.01"
                                       min="0"
                                       max="24"
                                       value={entry[day as keyof WeekstaatEntry] === 0 ? 0 : (entry[day as keyof WeekstaatEntry] || '')}
                                       onChange={(e) => updateEntry(index, day, e.target.value === '' ? '' : (parseFloat(e.target.value) || 0))}
-                                      className="input-field text-sm text-center w-16"
+                                      className="input-field text-sm text-center w-20"
                                     />
                                   ) : (
                                     <span className="text-white text-center block">{entry[day as keyof WeekstaatEntry] || '-'}</span>
@@ -1203,12 +1203,12 @@ export default function UrenstaatVerlof() {
                                 const totals = calculateTotals();
                                 return (
                                   <td key={day} className="p-2 text-center text-white">
-                                    {totals[day as keyof typeof totals].toFixed(1)}
+                                    {totals[day as keyof typeof totals].toFixed(2)}
                                   </td>
                                 );
                               })}
                               <td className="p-2 text-center text-purple-400">
-                                {calculateTotals().total.toFixed(1)}
+                                {calculateTotals().total.toFixed(2)}
                               </td>
                             </tr>
                           )}

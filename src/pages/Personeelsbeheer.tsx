@@ -407,11 +407,11 @@ export default function Personeelsbeheer() {
     const totalHours = weekstaatEntries.reduce((sum, e) =>
       sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
       (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-    ).toFixed(1);
+    ).toFixed(2);
 
     const rows = weekstaatEntries.map(e => {
       const rowTotal = ((e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
-        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0)).toFixed(1);
+        (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0)).toFixed(2);
       return `<tr>
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_code}</td>
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_description}</td>
@@ -429,13 +429,13 @@ export default function Personeelsbeheer() {
 
     const totalsRow = `<tr style="font-weight:bold;background:#f0f0f0;">
       <td style="padding:6px;border:1px solid #ddd;" colspan="3">Totaal</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(1)}</td>
-      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(1)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(2)}</td>
+      <td style="padding:6px;border:1px solid #ddd;text-align:center;">${weekstaatEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(2)}</td>
       <td style="padding:6px;border:1px solid #ddd;text-align:center;">${totalHours}</td>
     </tr>`;
 
@@ -1505,7 +1505,7 @@ export default function Personeelsbeheer() {
                           </span>
                         </td>
                         <td className="p-3 text-white font-medium">
-                          {totalHours > 0 ? `${totalHours.toFixed(1)}u` : '-'}
+                          {totalHours > 0 ? `${totalHours.toFixed(2)}u` : '-'}
                         </td>
                       </tr>
                     );
@@ -1810,38 +1810,38 @@ export default function Personeelsbeheer() {
                               <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
                               <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
-                              <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(1)}</td>
+                              <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(2)}</td>
                             </tr>
                           );
                         })}
                         <tr className="bg-purple-500/10 font-bold">
                           <td colSpan={4} className="p-2 text-right text-white">Totaal:</td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.monday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.tuesday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.wednesday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.thursday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.friday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.saturday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-white">
-                            {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(1)}
+                            {weekstaatEntries.reduce((sum, e) => sum + (e.sunday || 0), 0).toFixed(2)}
                           </td>
                           <td className="p-2 text-center text-purple-400 font-bold text-lg">
                             {weekstaatEntries.reduce((sum, e) =>
                               sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
                               (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                            ).toFixed(1)}
+                            ).toFixed(2)}
                           </td>
                         </tr>
                       </tbody>
@@ -1906,7 +1906,7 @@ export default function Personeelsbeheer() {
                         {weekstaatEntries.reduce((sum, e) =>
                           sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
                           (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
-                        ).toFixed(1)}u
+                        ).toFixed(2)}u
                       </p>
                     </div>
 
