@@ -1826,13 +1826,13 @@ export default function Personeelsbeheer() {
                                             <td className="p-2 text-white">{entry.activity_description}</td>
                                             <td className="p-2 text-white">{entry.project_number || '-'}</td>
                                             <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.wednesday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.thursday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.monday ? Number(entry.monday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.tuesday ? Number(entry.tuesday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.wednesday ? Number(entry.wednesday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.thursday ? Number(entry.thursday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
                                             <td className="p-2 text-center text-white font-semibold">{rowTotal.toFixed(2)}</td>
                                           </tr>
                                         );
