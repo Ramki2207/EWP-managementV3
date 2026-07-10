@@ -1767,6 +1767,111 @@ export default function Personeelsbeheer() {
               {/* Left: Weekstaat Details (2/3) */}
               <div className="lg:col-span-2">
                 <div className="bg-[#2A303C] rounded-lg p-4">
+                  {currentUser?.username === 'Annemieke' ? (
+                    // Categorized view for Annemieke
+                    (() => {
+                      const categories = [
+                        { title: 'Gewerkte uren montage', codes: ['100', '102', '104', '105', '106', '107', '108', '181', '404', '405'], titleClass: 'text-blue-400', totalClass: 'text-blue-400', bgClass: 'bg-blue-500/10' },
+                        { title: 'Montage buiten', codes: ['103'], titleClass: 'text-green-400', totalClass: 'text-green-400', bgClass: 'bg-green-500/10' },
+                        { title: 'Verlof', codes: ['506', '507', '508', '402'], titleClass: 'text-orange-400', totalClass: 'text-orange-400', bgClass: 'bg-orange-500/10' },
+                        { title: 'Administratie', codes: ['200', '301', '302', '403'], titleClass: 'text-purple-400', totalClass: 'text-purple-400', bgClass: 'bg-purple-500/10' },
+                      ];
+                      const weekDates = selectedWeekstaat ? getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year) : [];
+                      const dayLabels = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+
+                      return (
+                        <div className="space-y-6">
+                          {categories.map(category => {
+                            const categoryEntries = weekstaatEntries.filter(e => category.codes.includes(e.activity_code));
+                            if (categoryEntries.length === 0) return null;
+
+                            const categoryTotal = categoryEntries.reduce((sum, e) =>
+                              sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+                              (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                            );
+
+                            return (
+                              <div key={category.title}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className={`text-base font-semibold ${category.titleClass}`}>{category.title}</h4>
+                                  <span className={`text-sm font-medium ${category.totalClass}`}>{categoryTotal.toFixed(2)} uur</span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-gray-700">
+                                        <th className="text-left p-2 text-gray-400">Code</th>
+                                        <th className="text-left p-2 text-gray-400">Activiteit</th>
+                                        <th className="text-left p-2 text-gray-400">Project nr.</th>
+                                        <th className="text-left p-2 text-gray-400">WB nr</th>
+                                        {dayLabels.map((label, i) => (
+                                          <th key={label} className="text-center p-2 text-gray-400">
+                                            <div>{label}</div>
+                                            {weekDates[i] && (
+                                              <div className="text-xs text-gray-500 font-normal">
+                                                {weekDates[i].getDate()}/{weekDates[i].getMonth() + 1}
+                                              </div>
+                                            )}
+                                          </th>
+                                        ))}
+                                        <th className="text-center p-2 text-gray-400">Totaal</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {categoryEntries.map((entry, index) => {
+                                        const rowTotal = (entry.monday || 0) + (entry.tuesday || 0) + (entry.wednesday || 0) +
+                                                         (entry.thursday || 0) + (entry.friday || 0) + (entry.saturday || 0) + (entry.sunday || 0);
+                                        return (
+                                          <tr key={index} className="border-b border-gray-800">
+                                            <td className="p-2 text-white">{entry.activity_code}</td>
+                                            <td className="p-2 text-white">{entry.activity_description}</td>
+                                            <td className="p-2 text-white">{entry.project_number || '-'}</td>
+                                            <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.monday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.tuesday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.wednesday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.thursday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.friday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.saturday || '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.sunday || '-'}</td>
+                                            <td className="p-2 text-center text-purple-400 font-semibold">{rowTotal.toFixed(2)}</td>
+                                          </tr>
+                                        );
+                                      })}
+                                      <tr className={`${category.bgClass} font-bold`}>
+                                        <td colSpan={4} className="p-2 text-right text-white">Subtotaal:</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.monday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.tuesday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.wednesday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.thursday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.friday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.saturday || 0), 0).toFixed(2)}</td>
+                                        <td className="p-2 text-center text-white">{categoryEntries.reduce((s, e) => s + (e.sunday || 0), 0).toFixed(2)}</td>
+                                        <td className={`p-2 text-center ${category.totalClass} font-bold`}>{categoryTotal.toFixed(2)}</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Grand total */}
+                          <div className="bg-purple-500/10 rounded-lg p-3 flex justify-between items-center">
+                            <span className="text-white font-bold">Totaal alle uren:</span>
+                            <span className="text-purple-400 font-bold text-lg">
+                              {weekstaatEntries.reduce((sum, e) =>
+                                sum + (e.monday || 0) + (e.tuesday || 0) + (e.wednesday || 0) +
+                                (e.thursday || 0) + (e.friday || 0) + (e.saturday || 0) + (e.sunday || 0), 0
+                              ).toFixed(2)} uur
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    // Default view for all other users
+                    <>
                   <h4 className="text-lg font-semibold text-white mb-4">Activiteiten</h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -1847,6 +1952,8 @@ export default function Personeelsbeheer() {
                       </tbody>
                     </table>
                   </div>
+                    </>
+                  )}
                 </div>
               </div>
 
