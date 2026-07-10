@@ -29,12 +29,12 @@ export const LocationFilterProvider: React.FC<{ children: React.ReactNode }> = (
   const getFilteredLocations = (): string[] => {
     switch (filterMode) {
       case 'naaldwijk':
-        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
+        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Den Haag', 'Rotterdam (2P)', 'Utrecht', 'Arnhem', 'Service'];
       case 'leerdam':
         return ['Leerdam', 'Leerdam (PM)'];
       case 'all':
       default:
-        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam', 'Leerdam (PM)'];
+        return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam', 'Leerdam (PM)', 'Den Haag', 'Rotterdam (2P)', 'Utrecht', 'Arnhem', 'Service'];
     }
   };
 
