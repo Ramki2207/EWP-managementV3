@@ -1799,10 +1799,10 @@ export default function Personeelsbeheer() {
                     // Categorized view for Annemieke
                     (() => {
                       const categories = [
-                        { title: 'Gewerkte uren montage', codes: ['100', '102', '104', '105', '106', '107', '108', '181', '404', '405'], titleClass: 'text-blue-400', totalClass: 'text-blue-400', bgClass: 'bg-blue-500/10' },
-                        { title: 'Montage buiten', codes: ['103'], titleClass: 'text-green-400', totalClass: 'text-green-400', bgClass: 'bg-green-500/10' },
-                        { title: 'Verlof', codes: ['506', '507', '508', '402'], titleClass: 'text-orange-400', totalClass: 'text-orange-400', bgClass: 'bg-orange-500/10' },
-                        { title: 'Administratie', codes: ['200', '301', '302', '403'], titleClass: 'text-purple-400', totalClass: 'text-purple-400', bgClass: 'bg-purple-500/10' },
+                        { title: 'Gewerkte uren montage', codes: ['01', '02', '04', '05', '06', '09', '10', '11', '12', '15', '50', '60', '70'], titleClass: 'text-blue-400', totalClass: 'text-blue-400', bgClass: 'bg-blue-500/10' },
+                        { title: 'Montage buiten', codes: ['07', '08'], titleClass: 'text-green-400', totalClass: 'text-green-400', bgClass: 'bg-green-500/10' },
+                        { title: 'Verlof', codes: ['21', '22', '25', '30', '35'], titleClass: 'text-orange-400', totalClass: 'text-orange-400', bgClass: 'bg-orange-500/10' },
+                        { title: 'Administratie', codes: ['13', '14'], titleClass: 'text-purple-400', totalClass: 'text-purple-400', bgClass: 'bg-purple-500/10' },
                       ];
                       const weekDates = selectedWeekstaat ? getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year) : [];
                       const dayLabels = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
