@@ -80,14 +80,44 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
       const start = new Date(`2000-01-01T${formData.start_time}`);
       const end = new Date(`2000-01-01T${formData.end_time}`);
       const diffMs = end.getTime() - start.getTime();
-      const hours = Math.max(0, diffMs / (1000 * 60 * 60));
-      const roundedHours = Math.round(hours * 100) / 100;
-      console.log('🕐 Auto-calculating hours:', { start: formData.start_time, end: formData.end_time, hours: roundedHours });
-      if (roundedHours !== formData.hours) {
-        setFormData(prev => ({ ...prev, hours: roundedHours }));
+      const totalMinutes = Math.max(0, diffMs / (1000 * 60));
+      const hours = Math.floor(totalMinutes / 60);
+      const mins = totalMinutes % 60;
+      // Snap to nearest quarter (0, 15, 30, 45)
+      let notationMins = 0;
+      if (mins >= 52.5) { notationMins = 0; }
+      else if (mins >= 37.5) { notationMins = 45; }
+      else if (mins >= 22.5) { notationMins = 30; }
+      else if (mins >= 7.5) { notationMins = 15; }
+      const notationHours = parseFloat(`${hours}.${notationMins.toString().padStart(2, '0')}`);
+      if (notationHours !== formData.hours) {
+        setFormData(prev => ({ ...prev, hours: notationHours }));
       }
     }
   }, [formData.start_time, formData.end_time]);
+
+  const notationToRealHours = (val: any): number => {
+    if (val === '' || val === null || val === undefined || val === 0) return 0;
+    const num = typeof val === 'number' ? val : parseFloat(val.toString());
+    if (isNaN(num)) return 0;
+    const h = Math.floor(num);
+    const dec = Math.round((num - h) * 100);
+    let frac = 0;
+    if (dec === 15) frac = 0.25;
+    else if (dec === 30) frac = 0.50;
+    else if (dec === 45) frac = 0.75;
+    return h + frac;
+  };
+
+  const realHoursToNotation = (realHours: number): number => {
+    const h = Math.floor(realHours);
+    const frac = Math.round((realHours - h) * 100) / 100;
+    let mins = 0;
+    if (frac >= 0.70) mins = 45;
+    else if (frac >= 0.45) mins = 30;
+    else if (frac >= 0.20) mins = 15;
+    return parseFloat(`${h}.${mins.toString().padStart(2, '0')}`);
+  };
 
   const syncToWeekstaat = async (workerId: string, date: string, hours: number, projectNumber: string, distributorName: string) => {
     try {
@@ -145,9 +175,10 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         .maybeSingle();
 
       if (existingEntry) {
-        const currentHours = parseFloat(existingEntry[dayColumn] || 0);
+        const currentNotation = parseFloat(existingEntry[dayColumn] || 0);
+        const combined = realHoursToNotation(notationToRealHours(currentNotation) + notationToRealHours(hours));
         const updateData = {
-          [dayColumn]: currentHours + hours,
+          [dayColumn]: combined,
           activity_description: activityDescription,
           workorder_number: `${projectNumber} - ${distributorName}`
         };
@@ -940,15 +971,42 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
                     <label className="block text-sm text-gray-400 mb-2">
                       Totale uren <span className="text-red-400">*</span>
                     </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      className="input-field"
-                      value={formData.hours}
-                      onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) || 0 })}
-                      required
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min="0"
+                        max="24"
+                        placeholder="0"
+                        className="input-field text-center w-16"
+                        value={formData.hours === 0 ? '' : Math.floor(formData.hours)}
+                        onChange={(e) => {
+                          const h = e.target.value === '' ? 0 : (parseInt(e.target.value) || 0);
+                          const currentMins = Math.round((formData.hours - Math.floor(formData.hours)) * 100);
+                          const validMins = [0, 15, 30, 45].includes(currentMins) ? currentMins : 0;
+                          const combined = parseFloat(`${h}.${validMins.toString().padStart(2, '0')}`);
+                          setFormData({ ...formData, hours: combined });
+                        }}
+                      />
+                      <span className="text-gray-400">:</span>
+                      <select
+                        className="input-field text-center w-16 appearance-none"
+                        value={(() => {
+                          const m = Math.round((formData.hours - Math.floor(formData.hours)) * 100);
+                          return [0, 15, 30, 45].includes(m) ? m : 0;
+                        })()}
+                        onChange={(e) => {
+                          const m = parseInt(e.target.value);
+                          const h = Math.floor(formData.hours);
+                          const combined = parseFloat(`${h}.${m.toString().padStart(2, '0')}`);
+                          setFormData({ ...formData, hours: combined });
+                        }}
+                      >
+                        <option value={0}>00</option>
+                        <option value={15}>15</option>
+                        <option value={30}>30</option>
+                        <option value={45}>45</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
