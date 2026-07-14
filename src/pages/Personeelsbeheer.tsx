@@ -255,14 +255,24 @@ export default function Personeelsbeheer() {
       }
 
       const weekstaatIds = weekstaatData?.map(w => w.id) || [];
-      const { data: entriesData } = await supabase
-        .from('weekstaat_entries')
-        .select('*')
-        .in('weekstaat_id', weekstaatIds);
+
+      // Batch the entries query to avoid URL length limits
+      let allEntries: any[] = [];
+      const batchSize = 50;
+      for (let i = 0; i < weekstaatIds.length; i += batchSize) {
+        const batch = weekstaatIds.slice(i, i + batchSize);
+        const { data: entriesData } = await supabase
+          .from('weekstaat_entries')
+          .select('*')
+          .in('weekstaat_id', batch);
+        if (entriesData) {
+          allEntries = allEntries.concat(entriesData);
+        }
+      }
 
       const enrichedWeekstaten = (weekstaatData || []).map(weekstaat => ({
         ...weekstaat,
-        entries: (entriesData || []).filter(e => e.weekstaat_id === weekstaat.id)
+        entries: allEntries.filter(e => e.weekstaat_id === weekstaat.id)
       }));
 
       let filteredWeekstaten = enrichedWeekstaten;
@@ -2359,7 +2369,10 @@ export default function Personeelsbeheer() {
                             {getStatusLabel(weekstaat.status)}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-white">{weekstaat.entries.length}</td>
+                        <td className="py-3 px-4 text-white">{weekstaat.entries.reduce((count: number, e: any) => {
+                          const days = [e.monday, e.tuesday, e.wednesday, e.thursday, e.friday, e.saturday, e.sunday];
+                          return count + days.filter((d: any) => notationToRealHours(d) > 0).length;
+                        }, 0)}</td>
                         <td className="py-3 px-4">
                           <button
                             onClick={() => {
