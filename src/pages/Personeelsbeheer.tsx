@@ -81,7 +81,8 @@ export default function Personeelsbeheer() {
     employee: '',
     week: '',
     year: new Date().getFullYear().toString(),
-    status: ''
+    status: '',
+    location: '' as '' | 'utrecht' | 'denhaag'
   });
   const [syntessWeekstaten, setSyntessWeekstaten] = useState<any[]>([]);
   const [selectedSyntessWeekstaten, setSelectedSyntessWeekstaten] = useState<Set<string>>(new Set());
@@ -812,6 +813,14 @@ export default function Personeelsbeheer() {
     if (syntessFilters.status && weekstaat.status !== syntessFilters.status) return false;
     if (syntessFilters.week && weekstaat.week_number !== parseInt(syntessFilters.week)) return false;
     if (syntessFilters.year && weekstaat.year !== parseInt(syntessFilters.year)) return false;
+    if (syntessFilters.location) {
+      const userLocations: string[] = weekstaat.user?.assigned_locations || [];
+      if (syntessFilters.location === 'utrecht') {
+        if (!userLocations.some((loc: string) => loc.toLowerCase().includes('leerdam'))) return false;
+      } else if (syntessFilters.location === 'denhaag') {
+        if (!userLocations.some((loc: string) => loc.toLowerCase().includes('naaldwijk'))) return false;
+      }
+    }
     return true;
   });
 
@@ -2183,6 +2192,28 @@ export default function Personeelsbeheer() {
             <div className="flex items-center space-x-2 mb-4">
               <Filter className="w-5 h-5 text-purple-400" />
               <h2 className="text-xl font-semibold text-white">Filters</h2>
+            </div>
+            <div className="flex space-x-2 mb-4">
+              <button
+                onClick={() => setSyntessFilters({ ...syntessFilters, location: syntessFilters.location === 'utrecht' ? '' : 'utrecht' })}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  syntessFilters.location === 'utrecht'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Utrecht
+              </button>
+              <button
+                onClick={() => setSyntessFilters({ ...syntessFilters, location: syntessFilters.location === 'denhaag' ? '' : 'denhaag' })}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  syntessFilters.location === 'denhaag'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                Den Haag
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
