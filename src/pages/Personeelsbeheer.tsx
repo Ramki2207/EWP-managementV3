@@ -70,7 +70,9 @@ export default function Personeelsbeheer() {
   const [selectedWeekstaat, setSelectedWeekstaat] = useState<any>(null);
   const [weekstaatEntries, setWeekstaatEntries] = useState<any[]>([]);
   const [allWeekstaatEntries, setAllWeekstaatEntries] = useState<any[]>([]);
-  const [teBeooordelenCollapsed, setTeBeoordelenCollapsed] = useState(false);
+  const [teBeooordelenCollapsed, setTeBeoordelenCollapsed] = useState(() => {
+    return localStorage.getItem('teBeoordelenCollapsed') === 'true';
+  });
   const [weekstaatFilters, setWeekstaatFilters] = useState({
     employee: '',
     status: '',
@@ -1324,7 +1326,11 @@ export default function Personeelsbeheer() {
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <button
-                  onClick={() => setTeBeoordelenCollapsed(!teBeooordelenCollapsed)}
+                  onClick={() => {
+                    const next = !teBeooordelenCollapsed;
+                    setTeBeoordelenCollapsed(next);
+                    localStorage.setItem('teBeoordelenCollapsed', String(next));
+                  }}
                   className="flex items-center space-x-2 group"
                 >
                   {teBeooordelenCollapsed ? (
