@@ -1823,13 +1823,20 @@ export default function Personeelsbeheer() {
                         { title: 'Verlof', codes: ['21', '22', '25', '30', '35'], titleClass: 'text-orange-400', totalClass: 'text-orange-400', bgClass: 'bg-orange-500/10' },
                         { title: 'Administratie', codes: ['13', '14'], titleClass: 'text-purple-400', totalClass: 'text-purple-400', bgClass: 'bg-purple-500/10' },
                       ];
+                      const allDefinedCodes = categories.flatMap(c => c.codes);
+                      const uncategorizedEntries = weekstaatEntries.filter(e => !allDefinedCodes.includes(e.activity_code));
+                      const allCategories = uncategorizedEntries.length > 0
+                        ? [...categories, { title: 'Overig', codes: [] as string[], titleClass: 'text-gray-400', totalClass: 'text-gray-400', bgClass: 'bg-gray-500/10' }]
+                        : categories;
                       const weekDates = selectedWeekstaat ? getWeekDates(selectedWeekstaat.week_number, selectedWeekstaat.year) : [];
                       const dayLabels = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
 
                       return (
                         <div className="space-y-6">
-                          {categories.map(category => {
-                            const categoryEntries = weekstaatEntries.filter(e => category.codes.includes(e.activity_code));
+                          {allCategories.map(category => {
+                            const categoryEntries = category.title === 'Overig'
+                              ? uncategorizedEntries
+                              : weekstaatEntries.filter(e => category.codes.includes(e.activity_code));
                             if (categoryEntries.length === 0) return null;
 
                             const categoryTotal = categoryEntries.reduce((sum, e) =>
