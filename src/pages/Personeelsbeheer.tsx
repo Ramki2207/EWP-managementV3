@@ -1470,7 +1470,7 @@ export default function Personeelsbeheer() {
                   type="number"
                   min="1"
                   max="53"
-                  placeholder="1-53"
+                  placeholder="Vul het weeknummer in"
                   value={weekstaatFilters.week}
                   onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, week: e.target.value })}
                   className="input-field w-full"
@@ -1483,7 +1483,7 @@ export default function Personeelsbeheer() {
                   type="number"
                   min="2020"
                   max="2030"
-                  placeholder="2025"
+                  placeholder="Vul het jaar in"
                   value={weekstaatFilters.year}
                   onChange={(e) => setWeekstaatFilters({ ...weekstaatFilters, year: e.target.value })}
                   className="input-field w-full"
