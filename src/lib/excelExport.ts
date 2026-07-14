@@ -201,9 +201,26 @@ const getDateOfWeek = (week: number, year: number, dayOffset: number): Date => {
   return ISOweekStart;
 };
 
+const SYNTESS_COLUMNS = [
+  { wch: 10 },  // Aantal
+  { wch: 10 },  // Bedrag
+  { wch: 18 },  // Besteksparagraaf
+  { wch: 12 },  // Datum
+  { wch: 15 },  // Kostenplaats
+  { wch: 12 },  // Kostensoort
+  { wch: 22 },  // Medewerker
+  { wch: 40 },  // Omschrijving
+  { wch: 15 },  // Project
+  { wch: 10 },  // Taak
+  { wch: 10 },  // Tarief
+  { wch: 12 },  // Tariefsoort
+  { wch: 15 },  // Werkbon
+  { wch: 18 },  // Werkbonparagraaf
+  { wch: 15 },  // Referentie
+];
+
 const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
   const rows: any[] = [];
-  let regelNr = 1;
 
   weekstaten.forEach(weekstaat => {
     weekstaat.entries.forEach(entry => {
@@ -225,15 +242,21 @@ const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
           const codeInfo = SYNTESS_CODE_MAP[entry.activity_code] || { urensoort: '01', tarief: 'F001', tariefsoort: '' };
 
           rows.push({
-            'Regels': regelNr++,
+            'Aantal': realHours,
+            'Bedrag': '',
+            'Besteksparagraaf': '',
             'Datum': formattedDate,
+            'Kostenplaats': '',
+            'Kostensoort': codeInfo.urensoort,
             'Medewerker': weekstaat.username,
             'Omschrijving': entry.activity_description,
-            'Project nr.': entry.project_number || entry.workorder_number || '',
-            'Aantal': realHours,
-            'Urensoort': codeInfo.urensoort,
-            'Tarief': codeInfo.tarief,
+            'Project': entry.project_number || entry.workorder_number || '',
+            'Taak': codeInfo.tarief,
+            'Tarief': '',
             'Tariefsoort': codeInfo.tariefsoort,
+            'Werkbon': '',
+            'Werkbonparagraaf': '',
+            'Referentie': '',
           });
         }
       });
@@ -248,18 +271,7 @@ export const exportWeekstaatToSyntess = (weekstaat: WeekstaatWithEntries) => {
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
-
-  ws['!cols'] = [
-    { wch: 8 },   // Regels
-    { wch: 12 },  // Datum
-    { wch: 22 },  // Medewerker
-    { wch: 40 },  // Omschrijving
-    { wch: 15 },  // Project nr.
-    { wch: 8 },   // Aantal
-    { wch: 10 },  // Urensoort
-    { wch: 8 },   // Tarief
-    { wch: 12 },  // Tariefsoort
-  ];
+  ws['!cols'] = SYNTESS_COLUMNS;
 
   XLSX.utils.book_append_sheet(wb, ws, 'Syntess');
 
@@ -272,18 +284,7 @@ export const exportMultipleWeekstatenToSyntess = (weekstaten: WeekstaatWithEntri
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
-
-  ws['!cols'] = [
-    { wch: 8 },   // Regels
-    { wch: 12 },  // Datum
-    { wch: 22 },  // Medewerker
-    { wch: 40 },  // Omschrijving
-    { wch: 15 },  // Project nr.
-    { wch: 8 },   // Aantal
-    { wch: 10 },  // Urensoort
-    { wch: 8 },   // Tarief
-    { wch: 12 },  // Tariefsoort
-  ];
+  ws['!cols'] = SYNTESS_COLUMNS;
 
   XLSX.utils.book_append_sheet(wb, ws, 'Syntess');
 
