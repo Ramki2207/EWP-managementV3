@@ -100,23 +100,11 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
     if (val === '' || val === null || val === undefined || val === 0) return 0;
     const num = typeof val === 'number' ? val : parseFloat(val.toString());
     if (isNaN(num)) return 0;
-    const h = Math.floor(num);
-    const dec = Math.round((num - h) * 100);
-    let frac = 0;
-    if (dec === 15) frac = 0.25;
-    else if (dec === 30) frac = 0.50;
-    else if (dec === 45) frac = 0.75;
-    return h + frac;
+    return num;
   };
 
   const realHoursToNotation = (realHours: number): number => {
-    const h = Math.floor(realHours);
-    const frac = Math.round((realHours - h) * 100) / 100;
-    let mins = 0;
-    if (frac >= 0.70) mins = 45;
-    else if (frac >= 0.45) mins = 30;
-    else if (frac >= 0.20) mins = 15;
-    return parseFloat(`${h}.${mins.toString().padStart(2, '0')}`);
+    return parseFloat(realHours.toFixed(2));
   };
 
   const syncToWeekstaat = async (workerId: string, date: string, hours: number, projectNumber: string, distributorName: string) => {

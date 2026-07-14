@@ -730,24 +730,11 @@ export default function UrenstaatVerlof() {
     if (val === '' || val === null || val === undefined) return 0;
     const num = parseFloat(val.toString());
     if (isNaN(num)) return 0;
-    const hours = Math.floor(num);
-    const decimal = Math.round((num - hours) * 100);
-    let realMinFraction = 0;
-    if (decimal === 15) realMinFraction = 0.25;
-    else if (decimal === 30) realMinFraction = 0.50;
-    else if (decimal === 45) realMinFraction = 0.75;
-    return hours + realMinFraction;
+    return num;
   };
 
-  const realHoursToNotation = (realHours: number): number => {
-    const hours = Math.floor(realHours);
-    const frac = Math.round((realHours - hours) * 100) / 100;
-    let notation = 0;
-    if (frac >= 0.70) notation = 45;
-    else if (frac >= 0.45) notation = 30;
-    else if (frac >= 0.20) notation = 15;
-    else notation = 0;
-    return parseFloat(`${hours}.${notation.toString().padStart(2, '0')}`);
+  const realHoursToNotation = (realHours: number): string => {
+    return realHours.toFixed(2);
   };
 
   const calculateTotals = () => {
@@ -779,7 +766,7 @@ export default function UrenstaatVerlof() {
   };
 
   const formatTotalAsNotation = (realHours: number): string => {
-    return realHoursToNotation(realHours).toFixed(2);
+    return realHoursToNotation(realHours);
   };
 
   const handlePrint = () => {

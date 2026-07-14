@@ -179,13 +179,7 @@ const notationToRealHours = (val: any): number => {
   if (val === '' || val === null || val === undefined || val === 0) return 0;
   const num = typeof val === 'number' ? val : parseFloat(val.toString());
   if (isNaN(num)) return 0;
-  const h = Math.floor(num);
-  const dec = Math.round((num - h) * 100);
-  let frac = 0;
-  if (dec === 15) frac = 0.25;
-  else if (dec === 30) frac = 0.50;
-  else if (dec === 45) frac = 0.75;
-  return h + frac;
+  return num;
 };
 
 const getDateOfWeek = (week: number, year: number, dayOffset: number): Date => {
