@@ -219,10 +219,19 @@ const SYNTESS_COLUMNS = [
   { wch: 15 },  // Referentie
 ];
 
+const formatSyntessName = (fullName: string): string => {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length < 2) return fullName;
+  const firstInitial = parts[0].charAt(0).toUpperCase();
+  const lastName = parts.slice(1).join('');
+  return `${firstInitial}.${lastName}`;
+};
+
 const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
   const rows: any[] = [];
 
   weekstaten.forEach(weekstaat => {
+    const medewerker = formatSyntessName(weekstaat.username);
     weekstaat.entries.forEach(entry => {
       const days = [
         { hours: entry.monday, offset: 0 },
@@ -248,7 +257,7 @@ const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
             'Datum': formattedDate,
             'Kostenplaats': '',
             'Kostensoort': codeInfo.urensoort,
-            'Medewerker': weekstaat.username,
+            'Medewerker': medewerker,
             'Omschrijving': entry.activity_description,
             'Project': entry.project_number || entry.workorder_number || '',
             'Taak': codeInfo.tarief,
