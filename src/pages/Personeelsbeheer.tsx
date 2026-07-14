@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
-import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, Clock, Eye, XCircle, CheckCircle, Download, Filter, Printer } from 'lucide-react';
+import { Calendar as CalendarIcon, Check, X, Users, FileText, Umbrella, Sun, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Clock, Eye, XCircle, CheckCircle, Download, Filter, Printer } from 'lucide-react';
 import { exportWeekstaatToSyntess, exportMultipleWeekstatenToSyntess } from '../lib/excelExport';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
 import { AVAILABLE_LOCATIONS } from '../types/userRoles';
@@ -70,6 +70,7 @@ export default function Personeelsbeheer() {
   const [selectedWeekstaat, setSelectedWeekstaat] = useState<any>(null);
   const [weekstaatEntries, setWeekstaatEntries] = useState<any[]>([]);
   const [allWeekstaatEntries, setAllWeekstaatEntries] = useState<any[]>([]);
+  const [teBeooordelenCollapsed, setTeBeoordelenCollapsed] = useState(false);
   const [weekstaatFilters, setWeekstaatFilters] = useState({
     employee: '',
     status: '',
@@ -1322,10 +1323,21 @@ export default function Personeelsbeheer() {
           {weekstaten.filter(w => w.status === 'submitted').length > 0 && (
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-yellow-400" />
-                  <span>Te Beoordelen ({pendingCount.weekstaten})</span>
-                </h2>
+                <button
+                  onClick={() => setTeBeoordelenCollapsed(!teBeooordelenCollapsed)}
+                  className="flex items-center space-x-2 group"
+                >
+                  {teBeooordelenCollapsed ? (
+                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
+                  )}
+                  <h2 className="text-xl font-semibold text-white flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-yellow-400" />
+                    <span>Te Beoordelen ({pendingCount.weekstaten})</span>
+                  </h2>
+                </button>
+                {!teBeooordelenCollapsed && (
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-400 mr-2">Locatie:</span>
                   <button
@@ -1359,7 +1371,9 @@ export default function Personeelsbeheer() {
                     Den Haag
                   </button>
                 </div>
+                )}
               </div>
+              {!teBeooordelenCollapsed && (
               <div className="space-y-3">
                 {weekstaten
                   .filter(w => {
@@ -1405,6 +1419,7 @@ export default function Personeelsbeheer() {
                     </div>
                   ))}
               </div>
+              )}
             </div>
           )}
 
