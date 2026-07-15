@@ -1575,20 +1575,7 @@ const Dashboard = () => {
       )}
 
       {username === 'Alec Werkhoven' && (
-        <LogisticsCalendar
-          verdelers={projects.flatMap(p =>
-            (p.distributors || []).map(d => ({
-              id: d.id,
-              distributor_id: d.distributor_id,
-              kast_naam: d.kast_naam || '',
-              status: d.status || '',
-              gewenste_lever_datum: d.gewenste_lever_datum || null,
-              project_id: p.id,
-              project_number: p.project_number,
-              client: p.client || '',
-            }))
-          )}
-        />
+        <LogisticsCalendar />
       )}
 
       <div id="projecten-overzicht" className="card p-6 mb-8">

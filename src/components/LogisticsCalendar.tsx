@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, ChevronLeft, ChevronRight, Truck, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Package } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface VerdelerDelivery {
   id: string;
@@ -11,10 +12,6 @@ interface VerdelerDelivery {
   project_id: string;
   project_number: string;
   client: string;
-}
-
-interface LogisticsCalendarProps {
-  verdelers: VerdelerDelivery[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -41,10 +38,43 @@ const getWeekNumber = (date: Date): number => {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 };
 
-const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
+const LogisticsCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
+  const [verdelers, setVerdelers] = useState<VerdelerDelivery[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadVerdelers = async () => {
+      const { data, error } = await supabase
+        .from('distributors')
+        .select('id, distributor_id, kast_naam, status, gewenste_lever_datum, project_id, projects ( project_number, client )')
+        .not('gewenste_lever_datum', 'is', null);
+
+      if (error) {
+        console.error('Error loading verdelers:', error);
+        setLoading(false);
+        return;
+      }
+
+      const mapped: VerdelerDelivery[] = (data || []).map((d: any) => ({
+        id: d.id,
+        distributor_id: d.distributor_id,
+        kast_naam: d.kast_naam || '',
+        status: d.status || '',
+        gewenste_lever_datum: d.gewenste_lever_datum,
+        project_id: d.project_id || '',
+        project_number: d.projects?.project_number || '',
+        client: d.projects?.client || '',
+      }));
+
+      setVerdelers(mapped);
+      setLoading(false);
+    };
+
+    loadVerdelers();
+  }, []);
 
   const verdelersWithDates = useMemo(() => {
     return verdelers
@@ -94,6 +124,12 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
     setCurrentDate(new Date());
   };
 
+  const navigateToProject = (projectId: string) => {
+    if (projectId) {
+      navigate(`/project/${projectId}`);
+    }
+  };
+
   const calendarDays = generateCalendarDays();
   const today = new Date();
   const todayVerdelers = verdelersForDay(today);
@@ -107,6 +143,19 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
 
   const getStatusColor = (status: string) => STATUS_COLORS[status] || 'bg-gray-500/20 text-gray-300 border-gray-500/30';
   const getStatusDot = (status: string) => STATUS_DOT[status] || 'bg-gray-400';
+
+  const getDisplayName = (v: VerdelerDelivery) => {
+    const parts = [v.kast_naam, v.project_number].filter(Boolean);
+    return parts.length > 0 ? parts.join(' - ') : v.distributor_id;
+  };
+
+  if (loading) {
+    return (
+      <div className="mb-8 card p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-green-400"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-8">
@@ -140,7 +189,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
         </div>
       </div>
 
-      {/* Today's deliveries summary */}
       {todayVerdelers.length > 0 && (
         <div className="card p-4 mb-4 border-l-4 border-l-green-500">
           <div className="flex items-center space-x-2 mb-2">
@@ -153,22 +201,19 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
             {todayVerdelers.map(v => (
               <div
                 key={v.id}
-                onClick={() => navigate(`/verdelers/${v.id}`)}
+                onClick={() => navigateToProject(v.project_id)}
                 className="flex items-center justify-between p-2 rounded-lg bg-[#2A303C] hover:bg-[#353B48] cursor-pointer transition-colors border border-gray-700"
               >
                 <div className="flex items-center space-x-2 min-w-0">
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(v.status)}`} />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-white truncate">{v.distributor_id}</div>
-                    <div className="text-xs text-gray-400 truncate">{v.kast_naam}</div>
+                    <div className="text-sm font-medium text-white truncate">{v.kast_naam || v.distributor_id}</div>
+                    <div className="text-xs text-gray-400 truncate">{v.project_number}</div>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
-                  <span className="text-xs text-gray-400">{v.project_number}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded border ${getStatusColor(v.status)}`}>
-                    {v.status}
-                  </span>
-                </div>
+                <span className={`text-xs px-2 py-0.5 rounded border flex-shrink-0 ${getStatusColor(v.status)}`}>
+                  {v.status}
+                </span>
               </div>
             ))}
           </div>
@@ -177,7 +222,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
 
       {viewMode === 'calendar' ? (
         <>
-          {/* Month Navigation */}
           <div className="card p-4 flex items-center justify-between mb-4">
             <button onClick={previousMonth} className="btn-secondary p-2">
               <ChevronLeft className="w-5 h-5" />
@@ -198,7 +242,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
             </button>
           </div>
 
-          {/* Calendar Grid */}
           <div className="card p-6">
             <div className="grid grid-cols-8 gap-2 mb-2">
               <div className="text-center font-semibold text-gray-400 text-sm py-2">Week</div>
@@ -243,13 +286,13 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
                             {dayVerdelers.map((v) => (
                               <div
                                 key={v.id}
-                                onClick={() => navigate(`/verdelers/${v.id}`)}
+                                onClick={() => navigateToProject(v.project_id)}
                                 className="text-xs p-1.5 rounded bg-green-500/15 hover:bg-green-500/25 cursor-pointer transition-all border border-green-500/20"
                               >
                                 <div className="flex items-center space-x-1">
                                   <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getStatusDot(v.status)}`} />
                                   <div className="truncate font-medium text-white">
-                                    {v.distributor_id}
+                                    {v.kast_naam || v.distributor_id}
                                   </div>
                                 </div>
                                 <div className="truncate text-gray-400 text-[10px] mt-0.5">
@@ -266,7 +309,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
               })}
             </div>
 
-            {/* Legend */}
             <div className="mt-6 flex items-center flex-wrap gap-4 text-sm">
               {Object.entries(STATUS_DOT).map(([status, color]) => (
                 <div key={status} className="flex items-center space-x-2">
@@ -278,8 +320,27 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
           </div>
         </>
       ) : (
-        /* List View - sorted by delivery date */
         <div className="card p-6">
+          <div className="card p-4 flex items-center justify-between mb-4">
+            <button onClick={previousMonth} className="btn-secondary p-2">
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center space-x-4">
+              <h2 className="text-xl font-semibold text-white">
+                {currentDate.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })}
+              </h2>
+              <button
+                onClick={goToToday}
+                className="text-xs px-3 py-1 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors"
+              >
+                Vandaag
+              </button>
+            </div>
+            <button onClick={nextMonth} className="btn-secondary p-2">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+
           {verdelersForMonth.length === 0 ? (
             <p className="text-gray-400 text-center py-8">
               Geen verdelers met een verwachte leverdatum in {currentDate.toLocaleDateString('nl-NL', { month: 'long' })}.
@@ -290,7 +351,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
                 <thead>
                   <tr className="border-b border-gray-700">
                     <th className="text-left p-3 text-sm font-semibold text-gray-400">Leverdatum</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Verdeler ID</th>
                     <th className="text-left p-3 text-sm font-semibold text-gray-400">Kastnaam</th>
                     <th className="text-left p-3 text-sm font-semibold text-gray-400">Projectnummer</th>
                     <th className="text-left p-3 text-sm font-semibold text-gray-400">Klant</th>
@@ -301,17 +361,16 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
                   {verdelersForMonth.map((v) => (
                     <tr
                       key={v.id}
-                      onClick={() => navigate(`/verdelers/${v.id}`)}
+                      onClick={() => navigateToProject(v.project_id)}
                       className="border-b border-gray-800 hover:bg-[#2A303C] cursor-pointer transition-colors"
                     >
                       <td className="p-3 text-sm text-white whitespace-nowrap">
                         <div className="flex items-center space-x-2">
                           <div className={`w-2 h-2 rounded-full ${getStatusDot(v.status)}`} />
-                          {formatDate(v.parsedDate)}
+                          <span>{formatDate(v.parsedDate)}</span>
                         </div>
                       </td>
-                      <td className="p-3 text-sm text-white font-medium">{v.distributor_id}</td>
-                      <td className="p-3 text-sm text-gray-300">{v.kast_naam || '-'}</td>
+                      <td className="p-3 text-sm text-white font-medium">{v.kast_naam || '-'}</td>
                       <td className="p-3 text-sm text-gray-300">{v.project_number}</td>
                       <td className="p-3 text-sm text-gray-300">{v.client || '-'}</td>
                       <td className="p-3">
@@ -328,7 +387,6 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
         </div>
       )}
 
-      {/* Upcoming deliveries preview */}
       {upcomingVerdelers.length > 0 && viewMode === 'calendar' && (
         <div className="card p-4 mt-4">
           <h3 className="font-semibold text-gray-300 mb-3 flex items-center space-x-2">
@@ -339,18 +397,17 @@ const LogisticsCalendar: React.FC<LogisticsCalendarProps> = ({ verdelers }) => {
             {upcomingVerdelers.map(v => (
               <div
                 key={v.id}
-                onClick={() => navigate(`/verdelers/${v.id}`)}
+                onClick={() => navigateToProject(v.project_id)}
                 className="flex items-center justify-between p-2 rounded-lg bg-[#2A303C] hover:bg-[#353B48] cursor-pointer transition-colors"
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-2 h-2 rounded-full ${getStatusDot(v.status)}`} />
                   <div>
-                    <span className="text-sm font-medium text-white">{v.distributor_id}</span>
-                    <span className="text-xs text-gray-400 ml-2">{v.kast_naam}</span>
+                    <span className="text-sm font-medium text-white">{v.kast_naam || v.distributor_id}</span>
+                    <span className="text-xs text-gray-400 ml-2">{v.project_number}</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <span className="text-xs text-gray-400">{v.project_number}</span>
                   <span className="text-sm text-gray-300">{formatDate(v.parsedDate)}</span>
                   <span className={`text-xs px-2 py-0.5 rounded border ${getStatusColor(v.status)}`}>
                     {v.status}
