@@ -52,7 +52,8 @@ const LogisticsCalendar: React.FC = () => {
       const { data, error } = await supabase
         .from('distributors')
         .select('id, distributor_id, kast_naam, status, gewenste_lever_datum, project_id, projects ( project_number, client )')
-        .not('gewenste_lever_datum', 'is', null);
+        .not('gewenste_lever_datum', 'is', null)
+        .in('status', ['Productie', 'Testen', 'Levering']);
 
       if (error) {
         console.error('Error loading verdelers:', error);
