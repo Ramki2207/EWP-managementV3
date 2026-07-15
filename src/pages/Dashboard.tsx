@@ -12,6 +12,7 @@ import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
 import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
+import LogisticsCalendar from '../components/LogisticsCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
@@ -1571,6 +1572,23 @@ const Dashboard = () => {
         <div className="mb-8">
           <TestReviewNotifications />
         </div>
+      )}
+
+      {username === 'Alec Werkhoven' && (
+        <LogisticsCalendar
+          verdelers={projects.flatMap(p =>
+            (p.distributors || []).map(d => ({
+              id: d.id,
+              distributor_id: d.distributor_id,
+              kast_naam: d.kast_naam || '',
+              status: d.status || '',
+              gewenste_lever_datum: d.gewenste_lever_datum || null,
+              project_id: p.id,
+              project_number: p.project_number,
+              client: p.client || '',
+            }))
+          )}
+        />
       )}
 
       <div id="projecten-overzicht" className="card p-6 mb-8">
