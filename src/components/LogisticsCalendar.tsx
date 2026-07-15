@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Truck, Package } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Truck, Package, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface VerdelerDelivery {
@@ -44,6 +44,8 @@ const LogisticsCalendar: React.FC = () => {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar');
   const [verdelers, setVerdelers] = useState<VerdelerDelivery[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterKlant, setFilterKlant] = useState('');
+  const [filterProject, setFilterProject] = useState('');
 
   useEffect(() => {
     const loadVerdelers = async () => {
@@ -208,7 +210,7 @@ const LogisticsCalendar: React.FC = () => {
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(v.status)}`} />
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-white truncate">{v.kast_naam || v.distributor_id}</div>
-                    <div className="text-xs text-gray-400 truncate">{v.project_number}</div>
+                    <div className="text-xs text-gray-400 truncate">{v.project_number} - {v.client}</div>
                   </div>
                 </div>
                 <span className={`text-xs px-2 py-0.5 rounded border flex-shrink-0 ${getStatusColor(v.status)}`}>
@@ -296,7 +298,12 @@ const LogisticsCalendar: React.FC = () => {
                                   </div>
                                 </div>
                                 <div className="truncate text-gray-400 text-[10px] mt-0.5">
-                                  {v.project_number}
+                                  {v.project_number} - {v.client}
+                                </div>
+                                <div className="mt-0.5">
+                                  <span className={`text-[9px] px-1 py-0.5 rounded border ${getStatusColor(v.status)}`}>
+                                    {v.status}
+                                  </span>
                                 </div>
                               </div>
                             ))}
@@ -341,49 +348,82 @@ const LogisticsCalendar: React.FC = () => {
             </button>
           </div>
 
-          {verdelersForMonth.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">
-              Geen verdelers met een verwachte leverdatum in {currentDate.toLocaleDateString('nl-NL', { month: 'long' })}.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Leverdatum</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Kastnaam</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Projectnummer</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Klant</th>
-                    <th className="text-left p-3 text-sm font-semibold text-gray-400">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {verdelersForMonth.map((v) => (
-                    <tr
-                      key={v.id}
-                      onClick={() => navigateToProject(v.project_id)}
-                      className="border-b border-gray-800 hover:bg-[#2A303C] cursor-pointer transition-colors"
-                    >
-                      <td className="p-3 text-sm text-white whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          <div className={`w-2 h-2 rounded-full ${getStatusDot(v.status)}`} />
-                          <span>{formatDate(v.parsedDate)}</span>
-                        </div>
-                      </td>
-                      <td className="p-3 text-sm text-white font-medium">{v.kast_naam || '-'}</td>
-                      <td className="p-3 text-sm text-gray-300">{v.project_number}</td>
-                      <td className="p-3 text-sm text-gray-300">{v.client || '-'}</td>
-                      <td className="p-3">
-                        <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(v.status)}`}>
-                          {v.status || 'Onbekend'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Zoeken op klant..."
+                value={filterKlant}
+                onChange={(e) => setFilterKlant(e.target.value)}
+                className="input pl-9 w-full"
+              />
             </div>
-          )}
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Zoeken op projectnummer..."
+                value={filterProject}
+                onChange={(e) => setFilterProject(e.target.value)}
+                className="input pl-9 w-full"
+              />
+            </div>
+          </div>
+
+          {(() => {
+            const filtered = verdelersForMonth.filter(v => {
+              const matchKlant = !filterKlant || v.client.toLowerCase().includes(filterKlant.toLowerCase());
+              const matchProject = !filterProject || v.project_number.toLowerCase().includes(filterProject.toLowerCase());
+              return matchKlant && matchProject;
+            });
+
+            return filtered.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">
+                {verdelersForMonth.length === 0
+                  ? `Geen verdelers met een verwachte leverdatum in ${currentDate.toLocaleDateString('nl-NL', { month: 'long' })}.`
+                  : 'Geen resultaten gevonden voor de huidige filters.'}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-700">
+                      <th className="text-left p-3 text-sm font-semibold text-gray-400">Leverdatum</th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-400">Kastnaam</th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-400">Projectnummer</th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-400">Klant</th>
+                      <th className="text-left p-3 text-sm font-semibold text-gray-400">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((v) => (
+                      <tr
+                        key={v.id}
+                        onClick={() => navigateToProject(v.project_id)}
+                        className="border-b border-gray-800 hover:bg-[#2A303C] cursor-pointer transition-colors"
+                      >
+                        <td className="p-3 text-sm text-white whitespace-nowrap">
+                          <div className="flex items-center space-x-2">
+                            <div className={`w-2 h-2 rounded-full ${getStatusDot(v.status)}`} />
+                            <span>{formatDate(v.parsedDate)}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-sm text-white font-medium">{v.kast_naam || '-'}</td>
+                        <td className="p-3 text-sm text-gray-300">{v.project_number}</td>
+                        <td className="p-3 text-sm text-gray-300">{v.client || '-'}</td>
+                        <td className="p-3">
+                          <span className={`text-xs px-2 py-1 rounded border ${getStatusColor(v.status)}`}>
+                            {v.status || 'Onbekend'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
