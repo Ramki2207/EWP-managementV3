@@ -357,7 +357,7 @@ const LogisticsCalendar: React.FC = () => {
                 placeholder="Zoeken op klant..."
                 value={filterKlant}
                 onChange={(e) => setFilterKlant(e.target.value)}
-                className="input pl-9 w-full"
+                className="input-field pl-9 w-full"
               />
             </div>
             <div className="relative flex-1">
@@ -367,7 +367,7 @@ const LogisticsCalendar: React.FC = () => {
                 placeholder="Zoeken op projectnummer..."
                 value={filterProject}
                 onChange={(e) => setFilterProject(e.target.value)}
-                className="input pl-9 w-full"
+                className="input-field pl-9 w-full"
               />
             </div>
           </div>
@@ -464,3 +464,6 @@ const LogisticsCalendar: React.FC = () => {
 };
 
 export default LogisticsCalendar;
+
+
+export default LogisticsCalendar
