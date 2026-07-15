@@ -33,16 +33,7 @@ export default function Personeelsbeheer() {
     return realHours.toFixed(2);
   };
 
-  const decimalToTime = (val: any): string => {
-    if (val === '' || val === null || val === undefined || val === 0 || val === '0' || val === '0.00') return '';
-    const num = typeof val === 'number' ? val : parseFloat(val.toString());
-    if (isNaN(num) || num === 0) return '';
-    const hours = Math.floor(num);
-    const minutes = Math.round((num - hours) * 60);
-    if (hours === 0) return `${minutes}m`;
-    if (minutes === 0) return `${hours}u`;
-    return `${hours}u${minutes}m`;
-  };
+
 
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
@@ -1899,27 +1890,27 @@ export default function Personeelsbeheer() {
                                             <td className="p-2 text-white">{entry.activity_description}</td>
                                             <td className="p-2 text-white">{entry.project_number || '-'}</td>
                                             <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.monday ? <>{Number(entry.monday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.monday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.tuesday ? <>{Number(entry.tuesday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.tuesday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.wednesday ? <>{Number(entry.wednesday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.wednesday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.thursday ? <>{Number(entry.thursday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.thursday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.friday ? <>{Number(entry.friday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.friday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.saturday ? <>{Number(entry.saturday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.saturday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.sunday ? <>{Number(entry.sunday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.sunday)}</div></> : '-'}</td>
-                                            <td className="p-2 text-center text-white font-semibold">{formatNotation(rowTotal)}<div className="text-xs text-gray-400">{decimalToTime(rowTotal)}</div></td>
+                                            <td className="p-2 text-center text-white">{entry.monday ? Number(entry.monday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.tuesday ? Number(entry.tuesday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.wednesday ? Number(entry.wednesday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.thursday ? Number(entry.thursday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white font-semibold">{formatNotation(rowTotal)}</td>
                                           </tr>
                                         );
                                       })}
                                       <tr className={`${category.bgClass} font-bold`}>
                                         <td colSpan={4} className="p-2 text-right text-white">Subtotaal:</td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.monday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.monday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.tuesday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.tuesday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.wednesday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.wednesday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.thursday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.thursday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.friday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.friday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.saturday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.saturday), 0))}</div></td>
-                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.sunday), 0))}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryEntries.reduce((s, e) => s + notationToRealHours(e.sunday), 0))}</div></td>
-                                        <td className={`p-2 text-center ${category.totalClass} font-bold`}>{formatNotation(categoryTotal)}<div className="text-xs text-gray-400 font-normal">{decimalToTime(categoryTotal)}</div></td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.monday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.tuesday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.wednesday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.thursday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.friday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.saturday), 0))}</td>
+                                        <td className="p-2 text-center text-white">{formatNotation(categoryEntries.reduce((s, e) => s + notationToRealHours(e.sunday), 0))}</td>
+                                        <td className={`p-2 text-center ${category.totalClass} font-bold`}>{formatNotation(categoryTotal)}</td>
                                       </tr>
                                     </tbody>
                                   </table>
@@ -1937,7 +1928,7 @@ export default function Personeelsbeheer() {
                                   sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
                                   notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                                 );
-                                return `${formatNotation(total)} (${decimalToTime(total)})`;
+                                return formatNotation(total);
                               })()}
                             </span>
                           </div>
@@ -1983,14 +1974,14 @@ export default function Personeelsbeheer() {
                               <td className="p-2 text-white">{entry.activity_description}</td>
                               <td className="p-2 text-white">{entry.project_number || '-'}</td>
                               <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.monday ? <>{Number(entry.monday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.monday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.tuesday ? <>{Number(entry.tuesday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.tuesday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.wednesday ? <>{Number(entry.wednesday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.wednesday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.thursday ? <>{Number(entry.thursday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.thursday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.friday ? <>{Number(entry.friday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.friday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.saturday ? <>{Number(entry.saturday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.saturday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.sunday ? <>{Number(entry.sunday).toFixed(2)}<div className="text-xs text-gray-400">{decimalToTime(entry.sunday)}</div></> : '-'}</td>
-                              <td className="p-2 text-center text-purple-400 font-semibold">{formatNotation(rowTotal)}<div className="text-xs text-gray-400 font-normal">{decimalToTime(rowTotal)}</div></td>
+                              <td className="p-2 text-center text-white">{entry.monday ? Number(entry.monday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.tuesday ? Number(entry.tuesday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.wednesday ? Number(entry.wednesday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.thursday ? Number(entry.thursday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-purple-400 font-semibold">{formatNotation(rowTotal)}</td>
                             </tr>
                           );
                         })}
@@ -1998,31 +1989,24 @@ export default function Personeelsbeheer() {
                           <td colSpan={4} className="p-2 text-right text-white">Totaal:</td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.monday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.monday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.tuesday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.tuesday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.wednesday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.wednesday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.thursday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.thursday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.friday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.friday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.saturday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.saturday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-white">
                             {formatNotation(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.sunday), 0))}
-                            <div className="text-xs text-gray-400 font-normal">{decimalToTime(weekstaatEntries.reduce((sum, e) => sum + notationToRealHours(e.sunday), 0))}</div>
                           </td>
                           <td className="p-2 text-center text-purple-400 font-bold text-lg">
                             {(() => {
@@ -2030,7 +2014,7 @@ export default function Personeelsbeheer() {
                                 sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
                                 notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                               );
-                              return <>{formatNotation(total)}<div className="text-xs text-gray-400 font-normal">{decimalToTime(total)}</div></>;
+                              return formatNotation(total);
                             })()}
                           </td>
                         </tr>

@@ -3,6 +3,59 @@ import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { Plus, Save, Trash2, FileText, Send, Calendar, XCircle } from 'lucide-react';
 
+const WEEK_29_YEAR = 2025;
+const WEEK_29_NUMBER = 29;
+
+const isWeek29OrLater = (weekNumber: number, year: number): boolean => {
+  if (year > WEEK_29_YEAR) return true;
+  if (year === WEEK_29_YEAR && weekNumber >= WEEK_29_NUMBER) return true;
+  return false;
+};
+
+const TimeInput = ({ value, onChange, disabled }: { value: number; onChange: (val: string) => void; disabled: boolean }) => {
+  const numVal = typeof value === 'number' ? value : parseFloat(value as any) || 0;
+  const hours = Math.floor(numVal);
+  const minutePart = Math.round((numVal - hours) * 100);
+  const minutes = minutePart === 15 || minutePart === 30 || minutePart === 45 ? minutePart : 0;
+
+  const handleHoursChange = (newHours: number) => {
+    const combined = newHours + (minutes / 100);
+    onChange(combined.toFixed(2));
+  };
+
+  const handleMinutesChange = (newMinutes: number) => {
+    const combined = hours + (newMinutes / 100);
+    onChange(combined.toFixed(2));
+  };
+
+  return (
+    <div className="flex items-center space-x-0.5">
+      <input
+        type="number"
+        min="0"
+        max="24"
+        step="1"
+        value={hours}
+        onChange={(e) => handleHoursChange(parseInt(e.target.value) || 0)}
+        disabled={disabled}
+        className="input-field text-xs p-1 w-10 text-center"
+      />
+      <span className="text-gray-400 text-xs">:</span>
+      <select
+        value={minutes}
+        onChange={(e) => handleMinutesChange(parseInt(e.target.value))}
+        disabled={disabled}
+        className="input-field text-xs p-1 w-12"
+      >
+        <option value={0}>00</option>
+        <option value={15}>15</option>
+        <option value={30}>30</option>
+        <option value={45}>45</option>
+      </select>
+    </div>
+  );
+};
+
 const ACTIVITY_CODES = [
   { code: '01', description: 'Arbeid Intern < 630A', section: 'Gewerkte uren montage' },
   { code: '02', description: 'Arbeid int. > 630A < 1000A', section: 'Gewerkte uren montage' },
@@ -412,17 +465,7 @@ export default function MyWorksheet() {
   const isDraft = selectedWeekstaat.status === 'draft';
   const isRejected = selectedWeekstaat.status === 'rejected';
   const canEdit = isDraft || isRejected;
-
-  // Debug: show status and canEdit on page load
-  useEffect(() => {
-    if (selectedWeekstaat) {
-      console.log('Selected weekstaat status:', selectedWeekstaat.status);
-      console.log('canEdit:', canEdit);
-      console.log('entries count:', entries.length);
-      // Show prominent alert
-      alert(`STATUS: ${selectedWeekstaat.status}\nCAN EDIT: ${canEdit}\nDRAFT: ${isDraft}\nREJECTED: ${isRejected}`);
-    }
-  }, [selectedWeekstaat, canEdit, entries.length]);
+  const useNewTimeInput = isWeek29OrLater(selectedWeekstaat.week_number, selectedWeekstaat.year);
 
   return (
     <div className="p-8">
@@ -491,11 +534,16 @@ export default function MyWorksheet() {
           )}
         </div>
 
-        <div className="text-xs text-gray-400 mb-4 flex space-x-4">
-          <span>0,50 = 30 min (half uur)</span>
-          <span>1,00 = 60 min (1 uur)</span>
-          <span>8,50 = 8 uur en 30 min</span>
-        </div>
+        {!useNewTimeInput && (
+          <div className="text-xs text-gray-400 mb-4 flex space-x-4">
+            <span>Achter de komma staan werkelijke minuten (bijv. 4,50 = 4 uur en 50 minuten)</span>
+          </div>
+        )}
+        {useNewTimeInput && (
+          <div className="text-xs text-gray-400 mb-4 flex space-x-4">
+            <span>Kies uren en minuten (15, 30 of 45 min)</span>
+          </div>
+        )}
 
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -562,74 +610,53 @@ export default function MyWorksheet() {
                     />
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.monday}
-                      onChange={(e) => updateEntry(index, 'monday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.monday} onChange={(val) => updateEntry(index, 'monday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.monday} onChange={(e) => updateEntry(index, 'monday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.tuesday}
-                      onChange={(e) => updateEntry(index, 'tuesday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.tuesday} onChange={(val) => updateEntry(index, 'tuesday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.tuesday} onChange={(e) => updateEntry(index, 'tuesday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.wednesday}
-                      onChange={(e) => updateEntry(index, 'wednesday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.wednesday} onChange={(val) => updateEntry(index, 'wednesday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.wednesday} onChange={(e) => updateEntry(index, 'wednesday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.thursday}
-                      onChange={(e) => updateEntry(index, 'thursday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.thursday} onChange={(val) => updateEntry(index, 'thursday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.thursday} onChange={(e) => updateEntry(index, 'thursday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.friday}
-                      onChange={(e) => updateEntry(index, 'friday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.friday} onChange={(val) => updateEntry(index, 'friday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.friday} onChange={(e) => updateEntry(index, 'friday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.saturday}
-                      onChange={(e) => updateEntry(index, 'saturday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.saturday} onChange={(val) => updateEntry(index, 'saturday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.saturday} onChange={(e) => updateEntry(index, 'saturday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={entry.sunday}
-                      onChange={(e) => updateEntry(index, 'sunday', e.target.value)}
-                      disabled={!canEdit}
-                      className="input-field text-xs p-1.5 w-20"
-                    />
+                    {useNewTimeInput ? (
+                      <TimeInput value={entry.sunday} onChange={(val) => updateEntry(index, 'sunday', val)} disabled={!canEdit} />
+                    ) : (
+                      <input type="number" step="0.01" value={entry.sunday} onChange={(e) => updateEntry(index, 'sunday', e.target.value)} disabled={!canEdit} className="input-field text-xs p-1.5 w-20" />
+                    )}
                   </td>
                   <td className="p-2">
                     <input

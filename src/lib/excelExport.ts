@@ -175,11 +175,27 @@ const SYNTESS_CODE_MAP: Record<string, { urensoort: string; tarief: string; tari
   '70': { urensoort: '01', tarief: 'F001', tariefsoort: '' },
 };
 
-const notationToRealHours = (val: any): number => {
+const WEEK_29_YEAR = 2025;
+const WEEK_29_NUMBER = 29;
+
+const notationToDecimalHours = (val: any, weekNumber: number, year: number): number => {
   if (val === '' || val === null || val === undefined || val === 0) return 0;
   const num = typeof val === 'number' ? val : parseFloat(val.toString());
   if (isNaN(num)) return 0;
-  return num;
+  
+  const hours = Math.floor(num);
+  const minutePart = Math.round((num - hours) * 100);
+  
+  if (year > WEEK_29_YEAR || (year === WEEK_29_YEAR && weekNumber >= WEEK_29_NUMBER)) {
+    let decimalMinutes = 0;
+    if (minutePart === 15) decimalMinutes = 0.25;
+    else if (minutePart === 30) decimalMinutes = 0.50;
+    else if (minutePart === 45) decimalMinutes = 0.75;
+    return hours + decimalMinutes;
+  }
+  
+  // Weeks 22-28: the decimal part represents actual minutes (e.g. 4.50 = 4h 50min)
+  return hours + (minutePart / 60);
 };
 
 const getDateOfWeek = (week: number, year: number, dayOffset: number): Date => {
@@ -238,14 +254,14 @@ const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
       ];
 
       days.forEach(day => {
-        const realHours = notationToRealHours(day.hours);
+        const realHours = notationToDecimalHours(day.hours, weekstaat.week_number, weekstaat.year);
         if (realHours > 0) {
           const date = getDateOfWeek(weekstaat.week_number, weekstaat.year, day.offset);
           const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
           const codeInfo = SYNTESS_CODE_MAP[entry.activity_code] || { urensoort: '01', tarief: 'F001', tariefsoort: '' };
 
           rows.push({
-            'Aantal': realHours,
+            'Aantal': parseFloat(realHours.toFixed(2)),
             'Bedrag': '',
             'Besteksparagraaf': '',
             'Datum': formattedDate,
