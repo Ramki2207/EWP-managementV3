@@ -18,19 +18,27 @@ interface DayEvent {
 }
 
 export default function Personeelsbeheer() {
-  const notationToRealHours = (val: any): number => {
+  const notationToMinutes = (val: any): number => {
     if (val === '' || val === null || val === undefined || val === 0) return 0;
     const num = typeof val === 'number' ? val : parseFloat(val.toString());
-    if (isNaN(num)) return 0;
-    return num;
+    if (isNaN(num) || num === 0) return 0;
+    const hours = Math.floor(num);
+    const minutePart = Math.round((num - hours) * 100);
+    return hours * 60 + minutePart;
   };
 
-  const realHoursToNotation = (realHours: number): string => {
-    return realHours.toFixed(2);
+  const minutesToNotation = (totalMinutes: number): number => {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return hours + (mins / 100);
   };
 
-  const formatNotation = (realHours: number): string => {
-    return realHours.toFixed(2);
+  const notationToRealHours = (val: any): number => {
+    return notationToMinutes(val);
+  };
+
+  const formatNotation = (minuteVal: number): string => {
+    return minutesToNotation(minuteVal).toFixed(2);
   };
 
 

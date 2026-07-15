@@ -6,6 +6,20 @@ import { Plus, Save, Trash2, FileText, Send, Calendar, XCircle } from 'lucide-re
 const WEEK_29_YEAR = 2025;
 const WEEK_29_NUMBER = 29;
 
+const notationToMinutes = (val: any): number => {
+  const num = typeof val === 'number' ? val : parseFloat(val) || 0;
+  if (num === 0) return 0;
+  const hours = Math.floor(num);
+  const minutePart = Math.round((num - hours) * 100);
+  return hours * 60 + minutePart;
+};
+
+const minutesToNotation = (totalMinutes: number): number => {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  return hours + (mins / 100);
+};
+
 const isWeek29OrLater = (weekNumber: number, year: number): boolean => {
   if (year > WEEK_29_YEAR) return true;
   if (year === WEEK_29_YEAR && weekNumber >= WEEK_29_NUMBER) return true;
@@ -257,29 +271,24 @@ export default function MyWorksheet() {
   };
 
   const calculateTotals = () => {
-    const dayTotals = {
-      monday: 0,
-      tuesday: 0,
-      wednesday: 0,
-      thursday: 0,
-      friday: 0,
-      saturday: 0,
-      sunday: 0
-    };
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
+    const dayMinutes = { monday: 0, tuesday: 0, wednesday: 0, thursday: 0, friday: 0, saturday: 0, sunday: 0 };
 
     entries.forEach(entry => {
-      dayTotals.monday += parseFloat(entry.monday as any) || 0;
-      dayTotals.tuesday += parseFloat(entry.tuesday as any) || 0;
-      dayTotals.wednesday += parseFloat(entry.wednesday as any) || 0;
-      dayTotals.thursday += parseFloat(entry.thursday as any) || 0;
-      dayTotals.friday += parseFloat(entry.friday as any) || 0;
-      dayTotals.saturday += parseFloat(entry.saturday as any) || 0;
-      dayTotals.sunday += parseFloat(entry.sunday as any) || 0;
+      days.forEach(day => {
+        dayMinutes[day] += notationToMinutes(entry[day]);
+      });
     });
 
-    const total = Object.values(dayTotals).reduce((sum, val) => sum + val, 0);
+    const dayTotals: Record<string, number> = {};
+    let totalMinutes = 0;
+    days.forEach(day => {
+      dayTotals[day] = minutesToNotation(dayMinutes[day]);
+      totalMinutes += dayMinutes[day];
+    });
+    dayTotals.total = minutesToNotation(totalMinutes);
 
-    return { ...dayTotals, total };
+    return dayTotals;
   };
 
   const saveWeekstaat = async (submit = false) => {
