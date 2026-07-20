@@ -17,46 +17,27 @@ interface DayEvent {
   hours?: number;
 }
 
-const WEEK_29_YEAR = 2025;
-const WEEK_29_NUMBER = 29;
-
-const isWeek29OrLater = (weekNumber: number, year: number): boolean => {
-  if (year > WEEK_29_YEAR) return true;
-  if (year === WEEK_29_YEAR && weekNumber >= WEEK_29_NUMBER) return true;
-  return false;
-};
-
-const minutesToNotation = (totalMinutes: number): number => {
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  return hours + (mins / 100);
-};
-
 export default function Personeelsbeheer() {
-  const notationToRealHours = (val: any, weekstaat?: any): number => {
-    const weekNumber = weekstaat?.week_number ?? selectedWeekstaat?.week_number ?? 0;
-    const year = weekstaat?.year ?? selectedWeekstaat?.year ?? WEEK_29_YEAR;
+  const notationToMinutes = (val: any): number => {
     if (val === '' || val === null || val === undefined || val === 0) return 0;
     const num = typeof val === 'number' ? val : parseFloat(val.toString());
     if (isNaN(num) || num === 0) return 0;
-
-    if (isWeek29OrLater(weekNumber, year)) {
-      return num * 60;
-    }
-
     const hours = Math.floor(num);
     const minutePart = Math.round((num - hours) * 100);
     return hours * 60 + minutePart;
   };
 
-  const formatNotation = (minuteVal: number, weekstaat?: any): string => {
-    const weekNumber = weekstaat?.week_number ?? selectedWeekstaat?.week_number ?? 0;
-    const year = weekstaat?.year ?? selectedWeekstaat?.year ?? WEEK_29_YEAR;
+  const minutesToNotation = (totalMinutes: number): number => {
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return hours + (mins / 100);
+  };
 
-    if (isWeek29OrLater(weekNumber, year)) {
-      return (minuteVal / 60).toFixed(2);
-    }
+  const notationToRealHours = (val: any): number => {
+    return notationToMinutes(val);
+  };
 
+  const formatNotation = (minuteVal: number): string => {
     return minutesToNotation(minuteVal).toFixed(2);
   };
 
@@ -1558,8 +1539,8 @@ export default function Personeelsbeheer() {
                     const totalHours = allWeekstaatEntries
                       .filter(e => e.weekstaat_id === weekstaat.id)
                       .reduce((sum, e) =>
-                        sum + notationToRealHours(e.monday, weekstaat) + notationToRealHours(e.tuesday, weekstaat) + notationToRealHours(e.wednesday, weekstaat) +
-                        notationToRealHours(e.thursday, weekstaat) + notationToRealHours(e.friday, weekstaat) + notationToRealHours(e.saturday, weekstaat) + notationToRealHours(e.sunday, weekstaat), 0
+                        sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                        notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                       );
 
                     return (
@@ -1589,7 +1570,7 @@ export default function Personeelsbeheer() {
                           </span>
                         </td>
                         <td className="p-3 text-white font-medium">
-                          {totalHours > 0 ? `${formatNotation(totalHours, weekstaat)}u` : '-'}
+                          {totalHours > 0 ? `${formatNotation(totalHours)}u` : '-'}
                         </td>
                       </tr>
                     );
