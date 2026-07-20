@@ -14,10 +14,10 @@ const notationToMinutes = (val: any): number => {
   return hours * 60 + minutePart;
 };
 
-const minutesToNotation = (totalMinutes: number): number => {
+const minutesToNotation = (totalMinutes: number): string => {
   const hours = Math.floor(totalMinutes / 60);
   const mins = totalMinutes % 60;
-  return hours + (mins / 100);
+  return `${hours}:${mins.toString().padStart(2, '0')}`;
 };
 
 const isWeek29OrLater = (weekNumber: number, year: number): boolean => {
@@ -280,7 +280,7 @@ export default function MyWorksheet() {
       });
     });
 
-    const dayTotals: Record<string, number> = {};
+    const dayTotals: Record<string, string> = {};
     let totalMinutes = 0;
     days.forEach(day => {
       dayTotals[day] = minutesToNotation(dayMinutes[day]);
@@ -688,14 +688,14 @@ export default function MyWorksheet() {
               ))}
               <tr className="font-bold bg-gray-800/50">
                 <td colSpan={3} className="p-2 text-right">Totaal uren:</td>
-                <td className="p-2">{totals.monday.toFixed(2)}</td>
-                <td className="p-2">{totals.tuesday.toFixed(2)}</td>
-                <td className="p-2">{totals.wednesday.toFixed(2)}</td>
-                <td className="p-2">{totals.thursday.toFixed(2)}</td>
-                <td className="p-2">{totals.friday.toFixed(2)}</td>
-                <td className="p-2">{totals.saturday.toFixed(2)}</td>
-                <td className="p-2">{totals.sunday.toFixed(2)}</td>
-                <td className="p-2 text-blue-400">{totals.total.toFixed(2)}</td>
+                <td className="p-2">{totals.monday}</td>
+                <td className="p-2">{totals.tuesday}</td>
+                <td className="p-2">{totals.wednesday}</td>
+                <td className="p-2">{totals.thursday}</td>
+                <td className="p-2">{totals.friday}</td>
+                <td className="p-2">{totals.saturday}</td>
+                <td className="p-2">{totals.sunday}</td>
+                <td className="p-2 text-blue-400">{totals.total}</td>
                 {isDraft && <td></td>}
               </tr>
             </tbody>

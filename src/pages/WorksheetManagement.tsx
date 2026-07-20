@@ -182,7 +182,7 @@ export default function WorksheetManagement() {
   const minutesToNotation = (totalMinutes: number): string => {
     const hours = Math.floor(totalMinutes / 60);
     const mins = totalMinutes % 60;
-    return (hours + (mins / 100)).toFixed(2);
+    return `${hours}:${mins.toString().padStart(2, '0')}`;
   };
 
   const calculateTotals = () => {

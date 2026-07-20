@@ -730,11 +730,15 @@ export default function UrenstaatVerlof() {
     if (val === '' || val === null || val === undefined) return 0;
     const num = parseFloat(val.toString());
     if (isNaN(num)) return 0;
-    return num;
+    const hours = Math.floor(num);
+    const minutePart = Math.round((num - hours) * 100);
+    return hours + minutePart / 60;
   };
 
   const realHoursToNotation = (realHours: number): string => {
-    return realHours.toFixed(2);
+    const hours = Math.floor(realHours);
+    const mins = Math.round((realHours - hours) * 60);
+    return `${hours}:${mins.toString().padStart(2, '0')}`;
   };
 
   const calculateTotals = () => {
