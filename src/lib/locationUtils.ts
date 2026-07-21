@@ -40,6 +40,12 @@ export const hasLocationAccess = (
     return true;
   }
 
+  // Users with "Leerdam" or "Leerdam (PM)" can see Utrecht projects (same region)
+  if (projectLocation === 'Utrecht' && 
+      (userAssignedLocations.includes('Leerdam') || userAssignedLocations.includes('Leerdam (PM)'))) {
+    return true;
+  }
+
   // Backward compatibility: if user has "Naaldwijk", they can see both PD and PW variants
   if ((projectLocation === 'Naaldwijk (PD)' || projectLocation === 'Naaldwijk (PW)') &&
       userAssignedLocations.includes('Naaldwijk')) {
