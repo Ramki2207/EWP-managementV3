@@ -2403,6 +2403,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <option value="Rittal">Rittal</option>
                       <option value="Phoenix Contact">Phoenix Contact</option>
                       <option value="Weidmüller">Weidmüller</option>
+                      <option value="Zador">Zador</option>
                       <option value="Anders">Anders</option>
                     </select>
                   </div>
