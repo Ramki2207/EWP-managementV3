@@ -219,7 +219,7 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
     setProjectNumberYear(cleanYear);
 
     // Validate if we have all required fields
-    if (cleanYear.length === 2 && projectNumberSuffix.length === 3 && projectData.location) {
+    if (cleanYear.length === 2 && projectNumberSuffix.length === suffixMaxLength && projectData.location) {
       validateProjectNumber(cleanYear, projectNumberSuffix, projectData.location);
     } else {
       setDuplicateError('');
@@ -254,15 +254,12 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
 
     // When location changes, validate if we have complete number
     if (projectNumberYear.length === 2 && suffixComplete) {
+      // Update location first, then validate (validateProjectNumber will set projectNumber)
+      onProjectChange({ ...projectData, location, projectNumber: generateProjectNumber(location, projectNumberYear, projectNumberSuffix) });
       validateProjectNumber(projectNumberYear, projectNumberSuffix, location);
     } else {
-      setDuplicateError('');
       onProjectChange({ ...projectData, location, projectNumber: '' });
-      return;
     }
-
-    // Always update location
-    onProjectChange({ ...projectData, location });
   };
 
   const handleInputChange = (field: string, value: string) => {
