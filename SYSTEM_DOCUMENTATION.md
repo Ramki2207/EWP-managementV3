@@ -365,12 +365,6 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### Default Users
-- admin / admin123
-- Patrick Herman / Welkom123
-- Stefano de Weger / Welkom123
-- Lysander koenraadt / Welkom123
-
 ### Default Folders
 - Verdeler aanzicht
 - Test certificaat
