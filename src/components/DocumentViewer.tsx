@@ -1156,7 +1156,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({ projectId, distributorI
           onChange={handleFileUpload}
           className="hidden"
           id="file-upload"
-          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.msg"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.msg,.txt"
           multiple
           disabled={isUploading}
         />
