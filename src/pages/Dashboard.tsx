@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
@@ -1091,6 +1091,41 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Concept Projects Banner */}
+      {(() => {
+        const currentUserId = localStorage.getItem('currentUserId');
+        const conceptCount = projects.filter(p => p.status === 'Concept' && (p as any).created_by === currentUserId).length;
+        if (conceptCount === 0) return null;
+        return (
+          <div className="mx-4 md:mx-8 mb-4 md:mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <FileText size={20} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm md:text-base">
+                  Je hebt {conceptCount} {conceptCount === 1 ? 'project' : 'projecten'} in Concept
+                </p>
+                <p className="text-gray-400 text-xs md:text-sm">
+                  Deze projecten zijn nog niet definitief opgeslagen
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                localStorage.setItem('projects_statusFilter', 'Concept');
+                localStorage.setItem('projects_creatorFilter', username);
+                localStorage.setItem('projects_showFilters', 'true');
+                navigate('/projects');
+              }}
+              className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              Bekijk concepten
+            </button>
+          </div>
+        );
+      })()}
 
       {currentUser?.role === 'admin' && viewAsRole === 'admin' && (
         <AdminDashboard
