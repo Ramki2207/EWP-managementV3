@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
@@ -102,7 +102,18 @@ const Projects = () => {
   const [users, setUsers] = useState<any[]>([]);
 
   // Load saved filters from localStorage on mount
+  const location = useLocation();
+
   useEffect(() => {
+    const navState = location.state as { statusFilter?: string; creatorFilter?: string; showFilters?: boolean } | null;
+    if (navState?.statusFilter || navState?.creatorFilter) {
+      if (navState.statusFilter) setStatusFilter(navState.statusFilter);
+      if (navState.creatorFilter) setCreatorFilter(navState.creatorFilter);
+      if (navState.showFilters !== undefined) setShowFilters(navState.showFilters);
+      window.history.replaceState({}, '');
+      return;
+    }
+
     const savedSearchTerm = localStorage.getItem('projects_searchTerm');
     const savedStatusFilter = localStorage.getItem('projects_statusFilter');
     const savedClientFilter = localStorage.getItem('projects_clientFilter');

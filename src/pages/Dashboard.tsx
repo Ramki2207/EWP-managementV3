@@ -1123,10 +1123,7 @@ const Dashboard = () => {
           </div>
           <button
             onClick={() => {
-              localStorage.setItem('projects_statusFilter', 'Concept');
-              localStorage.setItem('projects_creatorFilter', username);
-              localStorage.setItem('projects_showFilters', 'true');
-              navigate('/projects');
+              navigate('/projects', { state: { statusFilter: 'Concept', creatorFilter: username, showFilters: true } });
             }}
             className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
           >
