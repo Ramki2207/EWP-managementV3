@@ -66,6 +66,7 @@ const Dashboard = () => {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [conceptProjectCount, setConceptProjectCount] = useState(0);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
     return localStorage.getItem('viewAsRole') || 'admin';
@@ -395,6 +396,17 @@ const Dashboard = () => {
     setPendingApprovals(approvals);
   };
 
+  const loadConceptCount = async () => {
+    const currentUserId = localStorage.getItem('currentUserId');
+    if (!currentUserId) return;
+    const { count } = await supabase
+      .from('projects')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'Concept')
+      .eq('created_by', currentUserId);
+    setConceptProjectCount(count || 0);
+  };
+
 
   // Get current user ID from localStorage
   const userId = localStorage.getItem('currentUserId');
@@ -420,6 +432,7 @@ const Dashboard = () => {
 
     // Load data
     loadProjects();
+    loadConceptCount();
     fetchNotifications();
 
     // Set up real-time subscription for notifications
@@ -1093,39 +1106,34 @@ const Dashboard = () => {
       </div>
 
       {/* Concept Projects Banner */}
-      {(() => {
-        const currentUserId = localStorage.getItem('currentUserId');
-        const conceptCount = projects.filter(p => p.status === 'Concept' && (p as any).created_by === currentUserId).length;
-        if (conceptCount === 0) return null;
-        return (
-          <div className="mx-4 md:mx-8 mb-4 md:mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/20 rounded-lg">
-                <FileText size={20} className="text-amber-400" />
-              </div>
-              <div>
-                <p className="text-white font-medium text-sm md:text-base">
-                  Je hebt {conceptCount} {conceptCount === 1 ? 'project' : 'projecten'} in Concept
-                </p>
-                <p className="text-gray-400 text-xs md:text-sm">
-                  Deze projecten zijn nog niet definitief opgeslagen
-                </p>
-              </div>
+      {conceptProjectCount > 0 && (
+        <div className="mx-4 md:mx-8 mb-4 md:mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-500/20 rounded-lg">
+              <FileText size={20} className="text-amber-400" />
             </div>
-            <button
-              onClick={() => {
-                localStorage.setItem('projects_statusFilter', 'Concept');
-                localStorage.setItem('projects_creatorFilter', username);
-                localStorage.setItem('projects_showFilters', 'true');
-                navigate('/projects');
-              }}
-              className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-            >
-              Bekijk concepten
-            </button>
+            <div>
+              <p className="text-white font-medium text-sm md:text-base">
+                Je hebt {conceptProjectCount} {conceptProjectCount === 1 ? 'project' : 'projecten'} in Concept
+              </p>
+              <p className="text-gray-400 text-xs md:text-sm">
+                Deze projecten zijn nog niet definitief opgeslagen
+              </p>
+            </div>
           </div>
-        );
-      })()}
+          <button
+            onClick={() => {
+              localStorage.setItem('projects_statusFilter', 'Concept');
+              localStorage.setItem('projects_creatorFilter', username);
+              localStorage.setItem('projects_showFilters', 'true');
+              navigate('/projects');
+            }}
+            className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+          >
+            Bekijk concepten
+          </button>
+        </div>
+      )}
 
       {currentUser?.role === 'admin' && viewAsRole === 'admin' && (
         <AdminDashboard
