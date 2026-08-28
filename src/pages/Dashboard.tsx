@@ -1465,6 +1465,7 @@ const Dashboard = () => {
       <ProjectLockBanner
         projectLocks={projectLocks}
         currentUserId={currentUser?.id || ''}
+        projects={projects}
       />
 
       {/* Admin toggle for Pre-Testing widget - Always visible for admins */}

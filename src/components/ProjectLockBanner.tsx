@@ -5,9 +5,15 @@ import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 interface ProjectLockBannerProps {
   projectLocks: ProjectLock[];
   currentUserId: string;
+  projects?: { id: string; project_number?: string }[];
 }
 
-const ProjectLockBanner: React.FC<ProjectLockBannerProps> = ({ projectLocks, currentUserId }) => {
+const ProjectLockBanner: React.FC<ProjectLockBannerProps> = ({ projectLocks, currentUserId, projects = [] }) => {
+  const getProjectLabel = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    return project?.project_number || projectId.slice(0, 8) + '...';
+  };
+
   const [showBanner, setShowBanner] = useState(true);
 
   // Get locks for projects other than current user's
@@ -40,7 +46,7 @@ const ProjectLockBanner: React.FC<ProjectLockBannerProps> = ({ projectLocks, cur
                 {myLocks.map(lock => (
                   <div key={lock.id} className="flex items-center space-x-2 text-sm">
                     <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                    <span className="text-blue-400">Project {lock.project_id.slice(0, 8)}...</span>
+                    <span className="text-blue-400">Project {getProjectLabel(lock.project_id)}</span>
                     <span className="text-gray-400">
                       ({projectLockManager.getTimeSinceLocked(lock.locked_at)})
                     </span>
@@ -58,7 +64,7 @@ const ProjectLockBanner: React.FC<ProjectLockBannerProps> = ({ projectLocks, cur
                   <div key={lock.id} className="flex items-center space-x-2 text-sm">
                     <Lock size={12} className="text-red-400" />
                     <span className="text-red-400">{lock.username}</span>
-                    <span className="text-gray-400">in project {lock.project_id.slice(0, 8)}...</span>
+                    <span className="text-gray-400">in project {getProjectLabel(lock.project_id)}</span>
                     <span className="text-gray-500 text-xs">
                       ({projectLockManager.getTimeSinceActivity(lock.last_activity)})
                     </span>
