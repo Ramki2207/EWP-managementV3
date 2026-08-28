@@ -1106,7 +1106,6 @@ const Dashboard = () => {
       </div>
 
       {/* Concept Projects Banner */}
-      {conceptProjectCount > 0 && (
         <div className="mx-4 md:mx-8 mb-4 md:mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-500/20 rounded-lg">
@@ -1114,23 +1113,28 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-white font-medium text-sm md:text-base">
-                Je hebt {conceptProjectCount} {conceptProjectCount === 1 ? 'project' : 'projecten'} in Concept
+                {conceptProjectCount > 0
+                  ? `Je hebt ${conceptProjectCount} ${conceptProjectCount === 1 ? 'project' : 'projecten'} in Concept`
+                  : 'Geen projecten in Concept'}
               </p>
               <p className="text-gray-400 text-xs md:text-sm">
-                Deze projecten zijn nog niet definitief opgeslagen
+                {conceptProjectCount > 0
+                  ? 'Deze projecten zijn nog niet definitief opgeslagen'
+                  : 'Alle projecten zijn definitief opgeslagen'}
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              navigate('/projects', { state: { statusFilter: 'Concept', creatorFilter: username, showFilters: true } });
-            }}
-            className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-          >
-            Bekijk concepten
-          </button>
+          {conceptProjectCount > 0 && (
+            <button
+              onClick={() => {
+                navigate('/projects', { state: { statusFilter: 'Concept', creatorFilter: username, showFilters: true } });
+              }}
+              className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+            >
+              Bekijk concepten
+            </button>
+          )}
         </div>
-      )}
 
       {currentUser?.role === 'admin' && viewAsRole === 'admin' && (
         <AdminDashboard

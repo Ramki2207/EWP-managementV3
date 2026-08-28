@@ -585,7 +585,7 @@ const CreateProject = () => {
 
   return (
     <div className="page-container">
-      {projectData.projectNumber && (
+      {(projectData.projectNumber || projectData.client || projectData.description || projectData.location || projectData.verdelers.length > 0) && (
         <div className="mb-4 flex justify-end">
           <button
             onClick={handleSaveAsConcept}
