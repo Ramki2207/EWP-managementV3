@@ -223,6 +223,11 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       validateProjectNumber(cleanYear, projectNumberSuffix, projectData.location);
     } else {
       setDuplicateError('');
+      // Always propagate partial project number for concept saving
+      if (projectData.location && (cleanYear || projectNumberSuffix)) {
+        const partial = generateProjectNumber(projectData.location, cleanYear, projectNumberSuffix);
+        onProjectChange({ ...projectData, projectNumber: partial });
+      }
     }
   };
 
@@ -236,6 +241,11 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       validateProjectNumber(projectNumberYear, cleanSuffix, projectData.location);
     } else {
       setDuplicateError('');
+      // Always propagate partial project number for concept saving
+      if (projectData.location && (projectNumberYear || cleanSuffix)) {
+        const partial = generateProjectNumber(projectData.location, projectNumberYear, cleanSuffix);
+        onProjectChange({ ...projectData, projectNumber: partial });
+      }
     }
   };
 
@@ -258,7 +268,10 @@ const ProjectStep: React.FC<ProjectStepProps> = ({ projectData, onProjectChange,
       onProjectChange({ ...projectData, location, projectNumber: generateProjectNumber(location, projectNumberYear, projectNumberSuffix) });
       validateProjectNumber(projectNumberYear, projectNumberSuffix, location);
     } else {
-      onProjectChange({ ...projectData, location, projectNumber: '' });
+      const partial = (projectNumberYear || projectNumberSuffix)
+        ? generateProjectNumber(location, projectNumberYear, projectNumberSuffix)
+        : '';
+      onProjectChange({ ...projectData, location, projectNumber: partial });
     }
   };
 

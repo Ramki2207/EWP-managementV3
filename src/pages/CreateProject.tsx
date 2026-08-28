@@ -429,8 +429,8 @@ const CreateProject = () => {
   };
 
   const handleSaveAsConcept = async () => {
-    if (!projectData.projectNumber) {
-      toast.error('Vul eerst een projectnummer in');
+    if (!projectData.projectNumber && !projectData.client && !projectData.location) {
+      toast.error('Vul eerst projectgegevens in (locatie, klant of projectnummer)');
       return;
     }
 
