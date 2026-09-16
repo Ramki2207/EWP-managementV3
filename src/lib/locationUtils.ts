@@ -46,6 +46,18 @@ export const hasLocationAccess = (
     return true;
   }
 
+  // Users with "Leerdam" or "Leerdam (PM)" can see Arnhem projects (same region)
+  if (projectLocation === 'Arnhem' && 
+      (userAssignedLocations.includes('Leerdam') || userAssignedLocations.includes('Leerdam (PM)'))) {
+    return true;
+  }
+
+  // Users with "Leerdam" or "Leerdam (PM)" can see Service projects (same region)
+  if (projectLocation === 'Service' && 
+      (userAssignedLocations.includes('Leerdam') || userAssignedLocations.includes('Leerdam (PM)'))) {
+    return true;
+  }
+
   // Backward compatibility: if user has "Naaldwijk", they can see both PD and PW variants
   if ((projectLocation === 'Naaldwijk (PD)' || projectLocation === 'Naaldwijk (PW)') &&
       userAssignedLocations.includes('Naaldwijk')) {
