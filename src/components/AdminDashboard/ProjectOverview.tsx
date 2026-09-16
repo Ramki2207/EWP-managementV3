@@ -63,7 +63,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects, userId }) =
   }, [projects, userId, projectScope]);
 
   const activeProjects = useMemo(() => {
-    const active = ['Intake', 'Offerte', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering'];
+    const active = ['Intake', 'Order', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering'];
     return scopedProjects.filter(p => active.includes(p.status));
   }, [scopedProjects]);
 
@@ -334,7 +334,7 @@ const ProjectOverview: React.FC<ProjectOverviewProps> = ({ projects, userId }) =
         <ProjectDetailModal
           projectIssue={selectedProject}
           onClose={() => setSelectedProject(null)}
-          onNavigate={(id) => navigate(`/projects/${id}`)}
+          onNavigate={(id) => navigate(`/project/${id}`)}
         />
       )}
     </>
