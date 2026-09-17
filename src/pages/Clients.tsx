@@ -64,7 +64,8 @@ const Clients = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
           if (!isLocationVisible(client.location)) {
@@ -80,7 +81,8 @@ const Clients = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations?.length > 0) {
         const beforeFilter = data?.length || 0;

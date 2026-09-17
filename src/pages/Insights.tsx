@@ -95,7 +95,8 @@ const Insights = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeProjectFilter = projectsData?.length || 0;
         projectsData = projectsData?.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -124,7 +125,8 @@ const Insights = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
         const hasAllLocations =

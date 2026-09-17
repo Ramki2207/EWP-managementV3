@@ -20,7 +20,7 @@ interface VerlofRegistratieModalProps {
 
 const LEERDAM_LOCATIONS = ['Leerdam', 'Leerdam (PM)'];
 const NAALDWIJK_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
-const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt'];
+const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier'];
 
 const VerlofRegistratieModal: React.FC<VerlofRegistratieModalProps> = ({
   onClose,

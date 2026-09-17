@@ -134,7 +134,8 @@ const Meldingen = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeFilter = enrichedNotifications.length;
         enrichedNotifications = enrichedNotifications.filter((notification: any) => {
           if (!isLocationVisible(notification.location)) {
@@ -150,7 +151,8 @@ const Meldingen = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
         const hasAllLocations =

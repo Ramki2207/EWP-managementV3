@@ -132,7 +132,8 @@ export default function Personeelsbeheer() {
     // Location filter for specific users (applies first)
     if (currentUser?.username === 'Lysander Koenraadt' ||
         currentUser?.username === 'Patrick Herman' ||
-        currentUser?.username === 'Stefano de Weger') {
+        currentUser?.username === 'Stefano de Weger' ||
+        currentUser?.username === 'Chris Louwrier') {
       const lysanderFilteredLocations = getFilteredLocations();
       const beforeFilter = filteredUsers.length;
 
@@ -299,7 +300,8 @@ export default function Personeelsbeheer() {
 
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const lysanderFilteredLocations = getFilteredLocations();
         filteredWeekstaten = filteredWeekstaten.filter((weekstaat: any) => {
           const userLocations = weekstaat.user?.assigned_locations || [];

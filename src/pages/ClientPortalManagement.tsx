@@ -59,7 +59,8 @@ const ClientPortalManagement = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.id] = project.location;
@@ -104,7 +105,8 @@ const ClientPortalManagement = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const projects = await dataService.getProjects();
@@ -270,7 +272,8 @@ const ClientPortalManagement = () => {
     // Skip assignedLocations filter for users who use the location dropdown filter
     const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                  currentUser?.username === 'Patrick Herman' ||
-                                 currentUser?.username === 'Stefano de Weger';
+                                 currentUser?.username === 'Stefano de Weger' ||
+                                 currentUser?.username === 'Chris Louwrier';
 
     if (!usesDropdownFilter2 && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
       const hasAllLocations =

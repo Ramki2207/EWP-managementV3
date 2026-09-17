@@ -78,7 +78,8 @@ const AccessCodes = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.project_number] = project.location;
@@ -182,7 +183,8 @@ const AccessCodes = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.id] = project.location;
@@ -227,7 +229,8 @@ const AccessCodes = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
-                                   currentUser?.username === 'Stefano de Weger';
+                                   currentUser?.username === 'Stefano de Weger' ||
+                                   currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter2 && currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const projects = await dataService.getProjects();

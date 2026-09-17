@@ -102,7 +102,8 @@ const Verdelers = () => {
       // Location filter for specific users (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectLocation = distributor.projects?.location;
@@ -119,7 +120,8 @@ const Verdelers = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
@@ -153,7 +155,7 @@ const Verdelers = () => {
       const viewAsRole = localStorage.getItem('viewAsRole');
       if (
         currentUser &&
-        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman') &&
+        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman' || currentUser.username === 'Chris Louwrier') &&
         viewAsRole === 'projectleider'
       ) {
         const beforeFilter = filteredDistributors.length;

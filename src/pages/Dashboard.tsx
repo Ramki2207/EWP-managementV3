@@ -191,7 +191,7 @@ const Dashboard = () => {
       // Filter for Stefano de Weger and Patrick Herman when viewing as Projectleider
       if (
         currentUser &&
-        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman') &&
+        (currentUser.username === 'Stefano de Weger' || currentUser.username === 'Patrick Herman' || currentUser.username === 'Chris Louwrier') &&
         viewAsRole === 'projectleider'
       ) {
         const beforeFilter = filteredData.length;
@@ -206,7 +206,8 @@ const Dashboard = () => {
       // Location filter for Lysander, Patrick Herman, and Stefano de Weger (applies first)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -222,7 +223,8 @@ const Dashboard = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
-                                  currentUser?.username === 'Stefano de Weger';
+                                  currentUser?.username === 'Stefano de Weger' ||
+                                  currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
@@ -577,7 +579,8 @@ const Dashboard = () => {
       // Location filter for Lysander, Patrick Herman, and Stefano de Weger (based on filterMode)
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
-          currentUser?.username === 'Stefano de Weger') {
+          currentUser?.username === 'Stefano de Weger' ||
+          currentUser?.username === 'Chris Louwrier') {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -592,7 +595,8 @@ const Dashboard = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
-                                   currentUser?.username === 'Stefano de Weger';
+                                   currentUser?.username === 'Stefano de Weger' ||
+                                   currentUser?.username === 'Chris Louwrier';
 
       // Only skip location filter for Sven (montage user with special access)
       const skipLocationFilter = usesDropdownFilter2 || (effectiveRole === 'montage' && currentUser?.username === 'Sven');
@@ -743,7 +747,8 @@ const Dashboard = () => {
       // Skip assignedLocations filter for users who use the location dropdown filter
       const usesDropdownFilter3 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
-                                   currentUser?.username === 'Stefano de Weger';
+                                   currentUser?.username === 'Stefano de Weger' ||
+                                   currentUser?.username === 'Chris Louwrier';
 
       if (!usesDropdownFilter3 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
@@ -977,7 +982,8 @@ const Dashboard = () => {
   console.log('🎯 DASHBOARD RENDER: Has location filter =',
     currentUser?.username === 'Lysander Koenraadt' ||
     currentUser?.username === 'Patrick Herman' ||
-    currentUser?.username === 'Stefano de Weger'
+    currentUser?.username === 'Stefano de Weger' ||
+    currentUser?.username === 'Chris Louwrier'
   );
   console.log('🎯 DASHBOARD RENDER: Filter mode =', filterMode);
 
@@ -1059,7 +1065,8 @@ const Dashboard = () => {
                   {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
                   {(currentUser?.username === 'Lysander Koenraadt' ||
                     currentUser?.username === 'Patrick Herman' ||
-                    currentUser?.username === 'Stefano de Weger') && (
+                    currentUser?.username === 'Stefano de Weger' ||
+                    currentUser?.username === 'Chris Louwrier') && (
                     <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
                       <span className="text-sm text-gray-300">
                         Locatie filter:

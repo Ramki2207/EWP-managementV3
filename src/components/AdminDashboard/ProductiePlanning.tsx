@@ -24,7 +24,7 @@ interface ProductiePlanningProps {
   username: string;
 }
 
-const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt'];
+const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier'];
 
 const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username }) => {
   const { isLocationVisible } = useLocationFilter();

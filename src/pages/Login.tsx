@@ -79,6 +79,15 @@ const Login: React.FC = () => {
           role: 'admin',
           createdAt: new Date().toISOString(),
           profilePicture: '',
+        },
+        {
+          id: uuidv4(),
+          username: 'Chris Louwrier',
+          email: 'chris.louwrier@ewp-paneelbouw.nl',
+          password: bcrypt.hashSync('Welkom123', 10),
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          profilePicture: '',
         }
       ];
       localStorage.setItem('users', JSON.stringify(defaultAdmins));

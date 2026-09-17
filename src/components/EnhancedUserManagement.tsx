@@ -458,7 +458,8 @@ const EnhancedUserManagement = () => {
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
 
     // Lysander's location filter
-    if (currentUser?.username === 'Lysander Koenraadt') {
+    if (currentUser?.username === 'Lysander Koenraadt' ||
+        currentUser?.username === 'Chris Louwrier') {
       const lysanderFilteredLocations = getFilteredLocations();
       const userLocations = user.assignedLocations || [];
 
