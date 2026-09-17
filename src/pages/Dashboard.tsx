@@ -1074,7 +1074,7 @@ const Dashboard = () => {
                       <select
                         value={filterMode}
                         onChange={(e) => {
-                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam';
+                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam' | 'rotterdam';
                           console.log('Setting filter to:', newMode);
                           setFilterMode(newMode);
                         }}
@@ -1083,6 +1083,7 @@ const Dashboard = () => {
                         <option value="all">Alles</option>
                         <option value="naaldwijk">Den Haag</option>
                         <option value="leerdam">Utrecht</option>
+                        <option value="rotterdam">Rotterdam</option>
                       </select>
                     </div>
                   )}
