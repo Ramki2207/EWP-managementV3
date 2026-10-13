@@ -17,6 +17,8 @@ import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
 import AdminDashboard from '../components/AdminDashboard';
+import ProductiePlanning from '../components/AdminDashboard/ProductiePlanning';
+import { PLANNING_EDITORS } from '../components/AdminDashboard/planningTypes';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
@@ -1150,6 +1152,10 @@ const Dashboard = () => {
           userId={currentUser.id}
           username={username}
         />
+      )}
+
+      {currentUser && currentUser.role !== 'admin' && PLANNING_EDITORS.includes(username) && (
+        <ProductiePlanning userId={currentUser.id} username={username} />
       )}
 
       {/* Special Section for Sven */}

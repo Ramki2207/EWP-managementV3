@@ -59,3 +59,5 @@ export interface DaySummary {
 }
 
 export type ViewMode = 'week' | 'twoWeek' | 'month';
+
+export const PLANNING_EDITORS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier', 'Sylvia Guth'];

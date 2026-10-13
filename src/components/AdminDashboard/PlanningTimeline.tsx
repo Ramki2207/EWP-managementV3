@@ -13,6 +13,8 @@ interface PlanningTimelineProps {
   blocks: ScheduledBlock[];
   capacityMap: Record<string, MonteurDayCapacity>;
   leaveDates: Record<string, Set<string>>;
+  leaveInfo?: Record<string, string>;
+  allMonteurs?: string[];
   activeAbsences?: ActiveAbsence[];
   onResolveAbsence?: (absenceId: string) => Promise<void>;
   onBlockMove?: (block: ScheduledBlock, newStartDate: string, newEndDate: string, newMonteur: string) => Promise<void>;
@@ -84,6 +86,8 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   blocks,
   capacityMap,
   leaveDates,
+  leaveInfo = {},
+  allMonteurs = [],
   activeAbsences = [],
   onResolveAbsence,
   onBlockMove,
@@ -625,6 +629,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                       data-cell
                       data-date={dateStr}
                       data-monteur={monteur}
+                      title={cap.isOnLeave && !weekend ? leaveInfo[`${monteur}:${dateStr}`] : undefined}
                       className={[
                         'border-b border-r border-gray-700/20 relative',
                         getCellBg(cap, day),
@@ -735,7 +740,13 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
       </div>
 
       {selectedBlock && (
-        <PlanningDetailModal block={selectedBlock} onClose={() => setSelectedBlock(null)} />
+        <PlanningDetailModal
+          block={selectedBlock}
+          monteurs={allMonteurs.length > 0 ? allMonteurs : monteurs}
+          onClose={() => setSelectedBlock(null)}
+          onSave={onBlockMove}
+          onReset={onBlockReset}
+        />
       )}
     </>
   );

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { X, UserX, ThermometerSun, Calendar, Clock, Check, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
+import { PLANNING_EDITORS } from './planningTypes';
 
 interface User {
   id: string;
@@ -20,7 +21,7 @@ interface VerlofRegistratieModalProps {
 
 const LEERDAM_LOCATIONS = ['Leerdam', 'Leerdam (PM)'];
 const NAALDWIJK_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
-const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier'];
+const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
 
 const VerlofRegistratieModal: React.FC<VerlofRegistratieModalProps> = ({
   onClose,

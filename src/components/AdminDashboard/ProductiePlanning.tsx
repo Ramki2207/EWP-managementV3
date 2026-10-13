@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { startOfWeek, addDays, addWeeks, format } from 'date-fns';
+import { startOfWeek, addDays, addWeeks, format, parseISO } from 'date-fns';
+import { nl } from 'date-fns/locale';
 import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock } from './planningTypes';
+import { PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed, buildDailyHoursFromRange } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import PlanningControls from './PlanningControls';
@@ -24,7 +25,9 @@ interface ProductiePlanningProps {
   username: string;
 }
 
-const LOCATION_FILTERED_USERS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier'];
+const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
+
+const toLocalDate = (value: string) => parseISO(value.split('T')[0]);
 
 const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username }) => {
   const { isLocationVisible } = useLocationFilter();
@@ -36,6 +39,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [overrides, setOverrides] = useState<PlanningOverride[]>([]);
   const [users, setUsers] = useState<{ id: string; username: string }[]>([]);
   const [leaveDates, setLeaveDates] = useState<Record<string, Set<string>>>({});
+  const [leaveInfo, setLeaveInfo] = useState<Record<string, string>>({});
   const [workHoursMap, setWorkHoursMap] = useState<Record<string, number>>({});
   const [showVerlofModal, setShowVerlofModal] = useState(false);
   const [activeAbsences, setActiveAbsences] = useState<ActiveAbsence[]>([]);
@@ -72,8 +76,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
 
         supabase.from('users').select('id, username, role, is_active, assigned_locations').eq('is_active', true),
-        supabase.from('leave_requests').select('user_id, start_date, end_date, leave_type').eq('status', 'approved'),
-        supabase.from('vacation_requests').select('user_id, start_date, end_date').eq('status', 'approved'),
+        supabase.from('leave_requests').select('user_id, start_date, end_date, leave_type, description').eq('status', 'approved'),
+        supabase.from('vacation_requests').select('user_id, start_date, end_date, description').eq('status', 'approved'),
         supabase.from('work_entries').select('distributor_id, hours').not('hours', 'is', null),
         supabase.from('employee_absences').select('id, user_id, absence_type, start_date, end_date, is_open_ended').eq('is_active', true),
         supabase.from('planning_overrides').select('*'),
@@ -148,20 +152,28 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
       // Build leave dates
       const leave: Record<string, Set<string>> = {};
-      const addLeaveRange = (uId: string, start: string, end: string) => {
+      const info: Record<string, string> = {};
+      const fmt = (d: Date) => format(d, 'd MMM yyyy', { locale: nl });
+      const addLeaveRange = (uId: string, start: string, end: string, label: string) => {
         const uname = usernameById[uId];
-        if (!uname) return;
+        if (!uname || !start || !end) return;
         if (!leave[uname]) leave[uname] = new Set();
-        let cur = new Date(start);
-        const endDate = new Date(end);
+        let cur = toLocalDate(start);
+        const endDate = toLocalDate(end);
+        const source = `${label}: ${fmt(cur)} t/m ${fmt(endDate)}`;
         while (cur <= endDate) {
-          leave[uname].add(format(cur, 'yyyy-MM-dd'));
+          const key = format(cur, 'yyyy-MM-dd');
+          leave[uname].add(key);
+          const infoKey = `${uname}:${key}`;
+          info[infoKey] = info[infoKey] ? `${info[infoKey]}\n${source}` : source;
           cur = addDays(cur, 1);
         }
       };
+      const describe = (type: string | null, description: string | null) =>
+        [type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Verlof', description?.trim()].filter(Boolean).join(' - ');
 
-      (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date));
-      (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date));
+      (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date, describe(l.leave_type, l.description)));
+      (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date, describe('vakantie', v.description)));
 
       const absences = (absenceResult.data || []) as any[];
       const farFuture = format(addDays(new Date(), 365), 'yyyy-MM-dd');
@@ -170,7 +182,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         const uname = usernameById[a.user_id];
         if (!uname) return;
         const end = a.is_open_ended ? farFuture : a.end_date;
-        if (end) addLeaveRange(a.user_id, a.start_date, end);
+        if (end) addLeaveRange(a.user_id, a.start_date, end, a.absence_type === 'ziek' ? 'Ziekmelding' : 'Afwezig');
         absWithNames.push({
           id: a.id, user_id: a.user_id, username: uname,
           absence_type: a.absence_type, start_date: a.start_date,
@@ -179,6 +191,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       });
       setActiveAbsences(absWithNames);
       setLeaveDates(leave);
+      setLeaveInfo(info);
     } catch (err) {
       console.error('Error loading planning data:', err);
     } finally {
@@ -217,7 +230,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       const monteurLeave = leaveDates[monteur] || new Set();
       dayStrings.forEach(dateStr => {
         const key = `${monteur}:${dateStr}`;
-        const day = new Date(dateStr);
+        const day = toLocalDate(dateStr);
         const weekend = day.getDay() === 0 || day.getDay() === 6;
         const onLeave = monteurLeave.has(dateStr);
         const totalAvailable = weekend ? 0 : onLeave ? 0 : 8;
@@ -333,7 +346,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         <div className="flex-1">
           <h2 className="text-lg font-semibold text-white">Productieplanning</h2>
           <p className="text-sm text-gray-400">
-            Automatische inplanning — sleep en versleep blokken om handmatig bij te sturen
+            Sleep een blok om te verplaatsen, trek aan de randen om te verlengen, of klik op een blok om datums en monteur aan te passen
           </p>
         </div>
         <button
@@ -419,6 +432,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             blocks={filteredBlocks}
             capacityMap={capacityMap}
             leaveDates={leaveDates}
+            leaveInfo={leaveInfo}
+            allMonteurs={monteurList}
             activeAbsences={activeAbsences}
             onResolveAbsence={async (absenceId) => {
               const { error } = await supabase

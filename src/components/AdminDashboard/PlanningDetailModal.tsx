@@ -5,10 +5,14 @@ import { nl } from 'date-fns/locale';
 import { supabase } from '../../lib/supabase';
 import { ScheduledBlock } from './planningTypes';
 import { useNavigate } from 'react-router-dom';
+import PlanningEditForm from './PlanningEditForm';
 
 interface PlanningDetailModalProps {
   block: ScheduledBlock;
+  monteurs?: string[];
   onClose: () => void;
+  onSave?: (block: ScheduledBlock, start: string, end: string, monteur: string) => Promise<void>;
+  onReset?: (block: ScheduledBlock) => Promise<void>;
 }
 
 interface WorkEntry {
@@ -45,7 +49,7 @@ interface VerdelerInfo {
   delivery_week: number | null;
 }
 
-const PlanningDetailModal: React.FC<PlanningDetailModalProps> = ({ block, onClose }) => {
+const PlanningDetailModal: React.FC<PlanningDetailModalProps> = ({ block, monteurs = [], onClose, onSave, onReset }) => {
   const navigate = useNavigate();
   const [workEntries, setWorkEntries] = useState<WorkEntry[]>([]);
   const [projectInfo, setProjectInfo] = useState<ProjectInfo | null>(null);
@@ -182,6 +186,10 @@ const PlanningDetailModal: React.FC<PlanningDetailModalProps> = ({ block, onClos
             </div>
           ) : (
             <>
+              {onSave && (
+                <PlanningEditForm block={block} monteurs={monteurs} onSave={onSave} onReset={onReset} onDone={onClose} />
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <InfoCard
                   icon={<User size={14} />}
