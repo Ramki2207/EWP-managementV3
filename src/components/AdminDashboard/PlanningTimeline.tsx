@@ -15,6 +15,7 @@ interface PlanningTimelineProps {
   capacityMap: Record<string, MonteurDayCapacity>;
   leaveDates: Record<string, Set<string>>;
   leaveInfo?: Record<string, string>;
+  onLeaveClick?: (monteur: string, date: string) => void;
   allMonteurs?: string[];
   activeAbsences?: ActiveAbsence[];
   onResolveAbsence?: (absenceId: string) => Promise<void>;
@@ -88,6 +89,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   capacityMap,
   leaveDates,
   leaveInfo = {},
+  onLeaveClick,
   allMonteurs = [],
   activeAbsences = [],
   onResolveAbsence,
@@ -639,8 +641,14 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                         setLeaveTooltip({ monteur, text, x: r.left + r.width / 2, y: r.top });
                       }}
                       onMouseLeave={() => setLeaveTooltip(null)}
+                      onClick={() => {
+                        if (!cap.isOnLeave || weekend || isDragging || !onLeaveClick) return;
+                        setLeaveTooltip(null);
+                        onLeaveClick(monteur, dateStr);
+                      }}
                       className={[
                         'border-b border-r border-gray-700/20 relative',
+                        cap.isOnLeave && !weekend && onLeaveClick ? 'cursor-pointer hover:brightness-125 transition-[filter]' : '',
                         getCellBg(cap, day),
                         todayDay ? 'ring-1 ring-inset ring-blue-500/15' : '',
                       ].join(' ')}
@@ -758,6 +766,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
             {leaveTooltip.text.split('\n').map((line, i) => (
               <p key={i} className="text-xs text-gray-100 leading-snug whitespace-nowrap">{line}</p>
             ))}
+            {onLeaveClick && <p className="text-[10px] text-amber-300/70 mt-1.5">Klik om aan te passen</p>}
             <div className="absolute left-1/2 -bottom-[5px] w-2.5 h-2.5 -translate-x-1/2 rotate-45 bg-[#1E2530] border-r border-b border-amber-500/30" />
           </div>
         </div>,

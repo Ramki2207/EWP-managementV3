@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { startOfWeek, addDays, addWeeks, format, parseISO } from 'date-fns';
+import { startOfWeek, addDays, addWeeks, format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS } from './planningTypes';
+import { PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS, LeaveEntry, LeaveUpdate } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed, buildDailyHoursFromRange } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import PlanningControls from './PlanningControls';
 import PlanningTimeline from './PlanningTimeline';
 import VerlofRegistratieModal from './VerlofRegistratieModal';
+import LeaveEditModal from './LeaveEditModal';
+import toast from 'react-hot-toast';
 
 export interface ActiveAbsence {
   id: string;
@@ -50,6 +52,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [users, setUsers] = useState<{ id: string; username: string }[]>([]);
   const [leaveDates, setLeaveDates] = useState<Record<string, Set<string>>>({});
   const [leaveInfo, setLeaveInfo] = useState<Record<string, string>>({});
+  const [leaveEntries, setLeaveEntries] = useState<Record<string, LeaveEntry[]>>({});
+  const [editingLeave, setEditingLeave] = useState<{ monteur: string; date: string } | null>(null);
   const [workHoursMap, setWorkHoursMap] = useState<Record<string, number>>({});
   const [showVerlofModal, setShowVerlofModal] = useState(false);
   const [activeAbsences, setActiveAbsences] = useState<ActiveAbsence[]>([]);
@@ -86,10 +90,10 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
 
         supabase.from('users').select('id, username, role, is_active, assigned_locations').eq('is_active', true),
-        supabase.from('leave_requests').select('user_id, start_date, end_date, leave_type, description').eq('status', 'approved'),
-        supabase.from('vacation_requests').select('user_id, start_date, end_date, description').eq('status', 'approved'),
+        supabase.from('leave_requests').select('id, user_id, start_date, end_date, leave_type, description').eq('status', 'approved'),
+        supabase.from('vacation_requests').select('id, user_id, start_date, end_date, description').eq('status', 'approved'),
         supabase.from('work_entries').select('distributor_id, hours').not('hours', 'is', null),
-        supabase.from('employee_absences').select('id, user_id, absence_type, start_date, end_date, is_open_ended').eq('is_active', true),
+        supabase.from('employee_absences').select('id, user_id, absence_type, start_date, end_date, is_open_ended, notes').eq('is_active', true),
         supabase.from('planning_overrides').select('*'),
       ]);
 
@@ -163,27 +167,36 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       // Build leave dates
       const leave: Record<string, Set<string>> = {};
       const info: Record<string, string> = {};
+      const entriesByDay: Record<string, LeaveEntry[]> = {};
       const fmt = (d: Date) => format(d, 'd MMM yyyy', { locale: nl });
-      const addLeaveRange = (uId: string, start: string, end: string, label: string) => {
+      const addLeaveRange = (uId: string, start: string, end: string, label: string, entry: Omit<LeaveEntry, 'username' | 'label'>) => {
         const uname = usernameById[uId];
         if (!uname || !start || !end) return;
         if (!leave[uname]) leave[uname] = new Set();
         let cur = toLocalDate(start);
         const endDate = toLocalDate(end);
-        const source = `${label}: ${fmt(cur)} t/m ${fmt(endDate)}`;
+        const source = `${label}: ${fmt(cur)} t/m ${entry.is_open_ended ? 'onbepaald' : fmt(endDate)}`;
+        const fullEntry: LeaveEntry = { ...entry, username: uname, label };
         while (cur <= endDate) {
           const key = format(cur, 'yyyy-MM-dd');
           leave[uname].add(key);
           const infoKey = `${uname}:${key}`;
           info[infoKey] = info[infoKey] ? `${info[infoKey]}\n${source}` : source;
+          (entriesByDay[infoKey] ||= []).push(fullEntry);
           cur = addDays(cur, 1);
         }
       };
       const describe = (type: string | null, description: string | null) =>
         [LEAVE_TYPE_LABELS[type || ''] || 'Verlof', description?.trim()].filter(Boolean).join(' - ');
 
-      (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date, describe(l.leave_type, l.description)));
-      (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date, describe('vakantie', v.description)));
+      (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date, describe(l.leave_type, l.description), {
+        id: l.id, source: 'leave_requests', leave_type: l.leave_type, description: l.description,
+        start_date: l.start_date.split('T')[0], end_date: l.end_date.split('T')[0],
+      }));
+      (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date, describe('vakantie', v.description), {
+        id: v.id, source: 'vacation_requests', leave_type: null, description: v.description,
+        start_date: v.start_date.split('T')[0], end_date: v.end_date.split('T')[0],
+      }));
 
       const absences = (absenceResult.data || []) as any[];
       const farFuture = format(addDays(new Date(), 365), 'yyyy-MM-dd');
@@ -192,7 +205,10 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         const uname = usernameById[a.user_id];
         if (!uname) return;
         const end = a.is_open_ended ? farFuture : a.end_date;
-        if (end) addLeaveRange(a.user_id, a.start_date, end, a.absence_type === 'ziek' ? 'Ziekmelding' : 'Afwezig');
+        if (end) addLeaveRange(a.user_id, a.start_date, end, a.absence_type === 'ziek' ? 'Ziekmelding' : 'Afwezig', {
+          id: a.id, source: 'employee_absences', leave_type: a.absence_type, description: a.notes,
+          start_date: a.start_date, end_date: a.is_open_ended ? null : a.end_date, is_open_ended: a.is_open_ended,
+        });
         absWithNames.push({
           id: a.id, user_id: a.user_id, username: uname,
           absence_type: a.absence_type, start_date: a.start_date,
@@ -202,6 +218,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       setActiveAbsences(absWithNames);
       setLeaveDates(leave);
       setLeaveInfo(info);
+      setLeaveEntries(entriesByDay);
     } catch (err) {
       console.error('Error loading planning data:', err);
     } finally {
@@ -347,6 +364,46 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     await loadData();
   }, [loadData]);
 
+  const handleLeaveSave = useCallback(async (entry: LeaveEntry, update: LeaveUpdate) => {
+    let result;
+    if (entry.source === 'employee_absences') {
+      result = await supabase
+        .from('employee_absences')
+        .update({
+          start_date: update.start_date,
+          end_date: update.end_date,
+          is_open_ended: !update.end_date,
+          notes: update.description || null,
+        })
+        .eq('id', entry.id);
+    } else {
+      const end = update.end_date || update.start_date;
+      const daysCount = differenceInCalendarDays(parseISO(end), parseISO(update.start_date)) + 1;
+      const changes: Record<string, unknown> = {
+        start_date: update.start_date,
+        end_date: end,
+        days_count: daysCount,
+        description: update.description || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (entry.source === 'leave_requests' && update.leave_type) changes.leave_type = update.leave_type;
+      result = await supabase.from(entry.source).update(changes).eq('id', entry.id);
+    }
+    if (result.error) { console.error('leave update error:', result.error); throw new Error(result.error.message); }
+    await loadData();
+  }, [loadData]);
+
+  const handleLeaveDelete = useCallback(async (entry: LeaveEntry) => {
+    const result = entry.source === 'employee_absences'
+      ? await supabase
+          .from('employee_absences')
+          .update({ is_active: false, resolved_by: userId, resolved_at: new Date().toISOString() })
+          .eq('id', entry.id)
+      : await supabase.from(entry.source).delete().eq('id', entry.id);
+    if (result.error) { console.error('leave delete error:', result.error); throw new Error(result.error.message); }
+    await loadData();
+  }, [userId, loadData]);
+
   return (
     <div className="card">
       <div className="flex items-center gap-3 mb-5">
@@ -443,6 +500,10 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             capacityMap={capacityMap}
             leaveDates={leaveDates}
             leaveInfo={leaveInfo}
+            onLeaveClick={(monteur, date) => {
+              if (leaveEntries[`${monteur}:${date}`]?.length) setEditingLeave({ monteur, date });
+              else toast.error('Geen verlof gevonden voor deze dag');
+            }}
             allMonteurs={monteurList}
             activeAbsences={activeAbsences}
             onResolveAbsence={async (absenceId) => {
@@ -493,6 +554,18 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           users={users}
           currentUsername={username}
           currentUserId={userId}
+        />
+      )}
+
+      {editingLeave && (
+        <LeaveEditModal
+          monteur={editingLeave.monteur}
+          date={editingLeave.date}
+          entries={leaveEntries[`${editingLeave.monteur}:${editingLeave.date}`] || []}
+          leaveTypeLabels={LEAVE_TYPE_LABELS}
+          onSave={handleLeaveSave}
+          onDelete={handleLeaveDelete}
+          onClose={() => setEditingLeave(null)}
         />
       )}
     </div>

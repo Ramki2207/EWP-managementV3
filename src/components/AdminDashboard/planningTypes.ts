@@ -61,3 +61,24 @@ export interface DaySummary {
 export type ViewMode = 'week' | 'twoWeek' | 'month';
 
 export const PLANNING_EDITORS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier', 'Sylvia Guth'];
+
+export type LeaveSource = 'leave_requests' | 'vacation_requests' | 'employee_absences';
+
+export interface LeaveEntry {
+  id: string;
+  source: LeaveSource;
+  username: string;
+  label: string;
+  leave_type: string | null;
+  description: string | null;
+  start_date: string;
+  end_date: string | null;
+  is_open_ended?: boolean;
+}
+
+export interface LeaveUpdate {
+  start_date: string;
+  end_date: string | null;
+  description: string;
+  leave_type: string | null;
+}
