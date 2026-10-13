@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { format, isToday, isWeekend } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { ScheduledBlock, MonteurDayCapacity } from './planningTypes';
@@ -747,18 +748,20 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
         )}
       </div>
 
-      {leaveTooltip && (
+      {leaveTooltip && createPortal(
         <div
-          className="fixed z-[9998] pointer-events-none -translate-x-1/2 -translate-y-full"
-          style={{ left: leaveTooltip.x, top: leaveTooltip.y - 6 }}
+          className="fixed z-[9998] pointer-events-none"
+          style={{ left: leaveTooltip.x, top: leaveTooltip.y - 8, transform: 'translate(-50%, -100%)' }}
         >
-          <div className="max-w-xs rounded-lg border border-amber-500/30 bg-[#1E2530]/95 backdrop-blur-lg shadow-2xl px-3 py-2">
+          <div className="relative max-w-xs rounded-lg border border-amber-500/30 bg-[#1E2530] shadow-2xl shadow-black/50 px-3 py-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 mb-1">{leaveTooltip.monteur}</p>
             {leaveTooltip.text.split('\n').map((line, i) => (
-              <p key={i} className="text-xs text-gray-100 leading-snug">{line}</p>
+              <p key={i} className="text-xs text-gray-100 leading-snug whitespace-nowrap">{line}</p>
             ))}
+            <div className="absolute left-1/2 -bottom-[5px] w-2.5 h-2.5 -translate-x-1/2 rotate-45 bg-[#1E2530] border-r border-b border-amber-500/30" />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {selectedBlock && (

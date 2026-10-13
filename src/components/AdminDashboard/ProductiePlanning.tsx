@@ -29,6 +29,16 @@ const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
 
 const toLocalDate = (value: string) => parseISO(value.split('T')[0]);
 
+const LEAVE_TYPE_LABELS: Record<string, string> = {
+  vakantie: 'Vakantie',
+  sick: 'Ziek',
+  special_leave: 'Bijzonder verlof',
+  specialist: 'Specialist',
+  doctor: 'Huisarts',
+  adv: 'ADV',
+  public_holiday: 'Feestdag',
+};
+
 const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username }) => {
   const { isLocationVisible } = useLocationFilter();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -170,7 +180,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         }
       };
       const describe = (type: string | null, description: string | null) =>
-        [type ? type.charAt(0).toUpperCase() + type.slice(1) : 'Verlof', description?.trim()].filter(Boolean).join(' - ');
+        [LEAVE_TYPE_LABELS[type || ''] || 'Verlof', description?.trim()].filter(Boolean).join(' - ');
 
       (leaveResult.data || []).forEach((l: any) => addLeaveRange(l.user_id, l.start_date, l.end_date, describe(l.leave_type, l.description)));
       (vacationResult.data || []).forEach((v: any) => addLeaveRange(v.user_id, v.start_date, v.end_date, describe('vakantie', v.description)));
