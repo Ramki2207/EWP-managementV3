@@ -100,6 +100,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   const [savingBlock, setSavingBlock] = useState<string | null>(null);
   const [dropPreview, setDropPreview] = useState<{ start: string; end: string; monteur: string } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [leaveTooltip, setLeaveTooltip] = useState<{ monteur: string; text: string; x: number; y: number } | null>(null);
 
   const dragRef = useRef<ActiveDrag | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
@@ -389,6 +390,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
             border: `1px solid ${colors.solid}${isHovered ? 'cc' : '60'}`,
             boxShadow: isHovered ? `0 2px 12px ${colors.solid}30` : block.isManual ? `inset 0 0 0 1px ${colors.solid}30` : 'none',
             transition: 'opacity 0.15s, box-shadow 0.1s',
+            pointerEvents: isSaving ? 'none' : 'auto',
             cursor: canDrag ? 'grab' : 'pointer',
           }}
           onClick={() => { if (!isDragging) setSelectedBlock(block); }}
@@ -629,7 +631,13 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                       data-cell
                       data-date={dateStr}
                       data-monteur={monteur}
-                      title={cap.isOnLeave && !weekend ? leaveInfo[`${monteur}:${dateStr}`] : undefined}
+                      onMouseEnter={(e) => {
+                        const text = cap.isOnLeave && !weekend ? leaveInfo[`${monteur}:${dateStr}`] : undefined;
+                        if (!text || isDragging) return;
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setLeaveTooltip({ monteur, text, x: r.left + r.width / 2, y: r.top });
+                      }}
+                      onMouseLeave={() => setLeaveTooltip(null)}
                       className={[
                         'border-b border-r border-gray-700/20 relative',
                         getCellBg(cap, day),
@@ -688,7 +696,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                     zIndex: 5,
                   }}
                 >
-                  <div style={{ position: 'absolute', inset: 0, height: rowHeight, pointerEvents: 'auto' }}>
+                  <div style={{ position: 'absolute', inset: 0, height: rowHeight, pointerEvents: 'none' }}>
                     {renderSpanningBlocks(monteur, rowHeight)}
                     {renderDropPreview(monteur, rowHeight)}
                   </div>
@@ -738,6 +746,20 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
           </div>
         )}
       </div>
+
+      {leaveTooltip && (
+        <div
+          className="fixed z-[9998] pointer-events-none -translate-x-1/2 -translate-y-full"
+          style={{ left: leaveTooltip.x, top: leaveTooltip.y - 6 }}
+        >
+          <div className="max-w-xs rounded-lg border border-amber-500/30 bg-[#1E2530]/95 backdrop-blur-lg shadow-2xl px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 mb-1">{leaveTooltip.monteur}</p>
+            {leaveTooltip.text.split('\n').map((line, i) => (
+              <p key={i} className="text-xs text-gray-100 leading-snug">{line}</p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {selectedBlock && (
         <PlanningDetailModal
