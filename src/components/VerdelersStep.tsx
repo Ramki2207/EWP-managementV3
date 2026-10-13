@@ -1820,6 +1820,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       <p className="text-white">{(selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde) ? `${selectedVerdeler.kaWaarde || selectedVerdeler.ka_waarde} kA` : '-'}</p>
                     </div>
                     <div>
+                      <span className="text-gray-400">IP-Waarde:</span>
+                      <p className="text-white">{(selectedVerdeler.ipWaarde || selectedVerdeler.ip_waarde) ? `IP${selectedVerdeler.ipWaarde || selectedVerdeler.ip_waarde}` : '-'}</p>
+                    </div>
+                    <div>
                       <span className="text-gray-400">Bouwjaar:</span>
                       <p className="text-white">{selectedVerdeler.bouwjaar || '-'}</p>
                     </div>

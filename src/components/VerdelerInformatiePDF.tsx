@@ -98,7 +98,7 @@ const VerdelerInformatiePDF: React.FC<VerdelerInformatiePDFProps> = ({ verdeler,
       { label: 'Stuurspanning', value: verdeler.stuurspanning || '-' },
       { label: 'kA Waarde', value: (verdeler.kaWaarde || verdeler.ka_waarde) ? `${verdeler.kaWaarde || verdeler.ka_waarde} kA` : '-' },
       { label: 'Voorbeveiliging', value: verdeler.voorbeveiliging ? 'Ja' : 'Nee' },
-      { label: 'IP Waarde', value: verdeler.ipWaarde ? `IP${verdeler.ipWaarde}` : '-' },
+      { label: 'IP Waarde', value: (verdeler.ipWaarde || verdeler.ip_waarde) ? `IP${verdeler.ipWaarde || verdeler.ip_waarde}` : '-' },
       { label: 'Bouwjaar', value: verdeler.bouwjaar || '-' },
       { label: 'Fabrikant', value: verdeler.fabrikant || '-' },
       { label: 'Gewenste leverdatum', value: (() => {

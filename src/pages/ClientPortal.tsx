@@ -724,6 +724,10 @@ const ClientPortal = () => {
                       <p className="text-2xl font-bold text-white">{distributor.ka_waarde || '-'}</p>
                     </div>
                     <div>
+                      <label className="block text-sm text-gray-400 mb-1">IP-Waarde:</label>
+                      <p className="text-2xl font-bold text-white">{distributor.ip_waarde ? `IP${distributor.ip_waarde}` : '-'}</p>
+                    </div>
+                    <div>
                       <label className="block text-sm text-gray-400 mb-1">Bouwjaar:</label>
                       <p className="text-2xl font-bold text-white">{distributor.bouwjaar || '-'}</p>
                     </div>

@@ -373,7 +373,7 @@ export const dataService = {
         voeding: distributor.voeding,
         stuurspanning: distributor.stuurspanning || null,
         ka_waarde: distributor.kaWaarde || null,
-        ip_waarde: distributor.ipWaarde || '65',
+        ip_waarde: distributor.ipWaarde || distributor.ip_waarde || '44',
         bouwjaar: distributor.bouwjaar,
         keuring_datum: distributor.keuringDatum,
         getest_door: distributor.getestDoor,
