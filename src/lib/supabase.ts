@@ -643,11 +643,15 @@ export const dataService = {
 
       console.log('📤 Uploading file to storage:', storagePath);
 
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      const emailContentType = ext === 'msg' ? 'application/vnd.ms-outlook' : ext === 'eml' ? 'message/rfc822' : undefined;
+
       const { data, error } = await supabase.storage
         .from('documents')
         .upload(storagePath, file, {
           cacheControl: '3600',
-          upsert: false
+          upsert: false,
+          ...(emailContentType ? { contentType: emailContentType } : {}),
         });
 
       if (error) {
