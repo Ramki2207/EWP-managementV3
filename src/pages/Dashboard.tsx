@@ -600,10 +600,7 @@ const Dashboard = () => {
                                    currentUser?.username === 'Stefano de Weger' ||
                                    currentUser?.username === 'Chris Louwrier';
 
-      // Only skip location filter for Sven (montage user with special access)
-      const skipLocationFilter = usesDropdownFilter2 || (effectiveRole === 'montage' && currentUser?.username === 'Sven');
-
-      if (!skipLocationFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
+      if (!usesDropdownFilter2 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           const beforeFilter = filteredProjects.length;
