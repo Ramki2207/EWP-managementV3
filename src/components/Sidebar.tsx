@@ -298,19 +298,24 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <button
-        className="fixed top-4 right-4 z-50 p-3 bg-[#2A303C] rounded-lg lg:hidden shadow-lg border border-white/10 min-h-[48px] min-w-[48px] flex items-center justify-center"
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        aria-label="Toggle menu"
-      >
-        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
+      {/* Top bar for tablet and mobile */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 z-[60] bg-[#1E2530]/95 backdrop-blur-lg border-b border-white/10 flex items-center justify-between px-4">
+        <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center h-full py-2">
+          <img src={ewpLogo} alt="EWP Paneelbouw" className="h-9 object-contain" />
+        </Link>
+        <button
+          className="p-2 rounded-lg hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? 'Menu sluiten' : 'Menu openen'}
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
       {/* Mobile navigation */}
       {isMobileMenuOpen && (
-        <div className="mobile-nav">
-          <div className="mobile-nav-content safe-area-padding">
+        <div className="mobile-nav pt-14" onClick={(e) => { if (e.target === e.currentTarget) setIsMobileMenuOpen(false); }}>
+          <div className="mobile-nav-content safe-area-padding sm:max-w-sm sm:border-r sm:border-white/10 sm:bg-[#1E2530]">
             <NavContent />
           </div>
         </div>

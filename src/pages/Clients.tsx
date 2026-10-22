@@ -466,7 +466,7 @@ const Clients = () => {
                       <Trash2 size={16} />
                     </button>
                   </div>
-                  <div className="grid grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                     <input
                       type="text"
                       placeholder="Voornaam"

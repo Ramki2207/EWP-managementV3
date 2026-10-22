@@ -1326,7 +1326,7 @@ const ProjectDetails = () => {
                 {/* Extra Opties */}
                 <div className="bg-[#2A303C] p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-400 mb-4">Extra Opties</h3>
-                  <div className="grid grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Meterbord</label>
                       <p className="input-field">{project.intake_form.meterbord ? 'Ja' : 'Nee'}</p>

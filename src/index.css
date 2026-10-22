@@ -172,7 +172,7 @@
   }
 
   .test-section {
-    @apply bg-[#1E2530] p-3 md:p-4 rounded-lg mb-4 border border-gray-700/60;
+    @apply bg-[#1E2530] p-3 md:p-4 rounded-lg mb-4 border border-gray-700/60 overflow-x-auto;
   }
 
   .test-table {
@@ -206,6 +206,54 @@
 
   .test-actions {
     @apply flex flex-col-reverse sm:flex-row sm:justify-between gap-3 mt-4;
+  }
+}
+
+/* Touch devices (tablets): larger tap targets, no hover-only controls */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+select,
+label,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="hidden"]),
+  select,
+  textarea {
+    min-height: 44px;
+    font-size: max(16px, 1em);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+  }
+
+  button:has(> svg:only-child):not(.absolute) {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .group-hover\:opacity-100 {
+    opacity: 1 !important;
+  }
+
+  .overflow-x-auto,
+  .overflow-auto,
+  .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
   }
 }
 

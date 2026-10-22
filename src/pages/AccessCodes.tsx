@@ -668,8 +668,8 @@ CREATE INDEX IF NOT EXISTS idx_access_codes_project_number ON access_codes(proje
       </div>
 
       {/* Codes Table */}
-      <div className="card p-6">
-        <table className="w-full">
+      <div className="card p-6 overflow-x-auto">
+        <table className="w-full min-w-[720px]">
           <thead>
             <tr>
               <th className="table-header text-left">Code</th>

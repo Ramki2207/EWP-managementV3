@@ -238,7 +238,7 @@ const ClientDetails = () => {
       <div className="bg-[#1E2530] rounded-xl p-6 shadow-lg space-y-6 mb-8">
         <h2 className="card-title text-[#4169e1] mb-4">Contactpersonen</h2>
         {client.contacts.map((contact: any, index: number) => (
-          <div key={index} className="grid grid-cols-6 gap-2 items-center mb-2">
+          <div key={index} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2 items-center mb-4 xl:mb-2">
             {["first_name", "last_name", "email", "phone", "department"].map((field) => (
               <input
                 key={field}

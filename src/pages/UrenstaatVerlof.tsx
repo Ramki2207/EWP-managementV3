@@ -1480,7 +1480,7 @@ export default function UrenstaatVerlof() {
           {vacationBalance && (
             <div className="card p-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20">
               <h2 className="text-xl font-semibold text-white mb-4">Vakantiedagen Saldo {vacationBalance.year}</h2>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-purple-400">{vacationBalance.total_days}</p>
                   <p className="text-sm text-gray-400 mt-1">Totaal</p>
