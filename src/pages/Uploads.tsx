@@ -212,7 +212,7 @@ const Uploads = () => {
   return (
     <div className="flex min-h-screen">
       {/* Enhanced Sidebar */}
-      <div className="w-80 card m-4 p-0 h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+      <div className="w-64 xl:w-80 flex-shrink-0 card m-4 mr-0 p-0 h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
         {/* Sidebar Header */}
         <div className="p-4 border-b border-gray-700">
           <h2 className="text-lg font-semibold text-white mb-3">Document Explorer</h2>
@@ -335,11 +335,11 @@ const Uploads = () => {
       </div>
 
       {/* Main content */}
-      <div className="flex-1 p-4">
+      <div className="flex-1 min-w-0 p-4">
         {/* Enhanced Header */}
-        <div className="card p-6 mb-4">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
+        <div className="card p-4 md:p-6 mb-4">
+          <div className="flex flex-col xl:flex-row xl:justify-between xl:items-start gap-3">
+            <div className="flex-1 min-w-0">
               <h1 className="text-xl font-semibold text-white mb-2">
                 {selectedProject && selectedDistributor && selectedFolder
                   ? 'Document Viewer'
@@ -352,12 +352,12 @@ const Uploads = () => {
               
               {/* Breadcrumb */}
               {getBreadcrumb() && (
-                <div className="flex items-center text-sm text-gray-400 space-x-2">
+                <div className="flex flex-wrap items-center text-sm text-gray-400 gap-2">
                   <span>Locatie:</span>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
                     {getBreadcrumb().split(' / ').map((part, index, array) => (
                       <React.Fragment key={index}>
-                        <span className="text-blue-400">{part}</span>
+                        <span className="text-blue-400 break-all">{part}</span>
                         {index < array.length - 1 && <ChevronRight size={14} />}
                       </React.Fragment>
                     ))}
@@ -367,7 +367,7 @@ const Uploads = () => {
             </div>
             
             {/* Quick Stats */}
-            <div className="text-right">
+            <div className="flex gap-4 xl:block xl:text-right flex-shrink-0">
               <div className="text-sm text-gray-400">
                 {projects.length} projecten
               </div>
@@ -397,18 +397,18 @@ const Uploads = () => {
           </div>
         ) : selectedProject && selectedDistributor ? (
           /* Folder Grid View */
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
             {defaultFolders.map((folderName) => (
               <div
                 key={folderName}
                 onClick={() => handleSelectFolder(selectedProject, selectedDistributor, folderName)}
-                className="card p-6 flex flex-col items-center justify-center space-y-3 hover:bg-[#2A303C] transition-colors cursor-pointer group min-h-[120px]"
+                className="card p-4 md:p-6 flex flex-col items-center justify-center space-y-3 hover:bg-[#2A303C] transition-colors cursor-pointer group min-h-[120px] min-w-0"
               >
                 <Folder
                   size={40}
                   className="text-gray-400 group-hover:text-purple-400 transition-colors"
                 />
-                <span className="text-sm text-center font-medium group-hover:text-white transition-colors">
+                <span className="text-sm text-center font-medium group-hover:text-white transition-colors break-words w-full">
                   {folderName}
                 </span>
               </div>
@@ -416,12 +416,12 @@ const Uploads = () => {
           </div>
         ) : selectedProject ? (
           /* Distributor Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
             {projects.find(p => p.id === selectedProject)?.distributors?.map((distributor: any) => (
               <div
                 key={distributor.id}
                 onClick={() => handleSelectFolder(selectedProject, distributor.id)}
-                className="card p-6 hover:bg-[#2A303C] transition-colors cursor-pointer group"
+                className="card p-4 md:p-6 hover:bg-[#2A303C] transition-colors cursor-pointer group min-w-0"
               >
                 <div className="flex items-start space-x-4">
                   <Server
@@ -429,11 +429,11 @@ const Uploads = () => {
                     className="text-gray-400 group-hover:text-green-400 transition-colors flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors">
+                    <h3 className="font-semibold text-white group-hover:text-green-400 transition-colors truncate">
                       {distributor.distributor_id}
                     </h3>
                     {distributor.kast_naam && (
-                      <p className="text-sm text-gray-400 mt-1">{distributor.kast_naam}</p>
+                      <p className="text-sm text-gray-400 mt-1 truncate">{distributor.kast_naam}</p>
                     )}
                     {distributor.systeem && (
                       <p className="text-xs text-gray-500 mt-1">{distributor.systeem}</p>
@@ -450,7 +450,7 @@ const Uploads = () => {
           </div>
         ) : (
           /* Project Grid View */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
             {filteredProjects.map((project) => (
               <div
                 key={project.id}
@@ -460,7 +460,7 @@ const Uploads = () => {
                     setExpandedProjects(prev => new Set([...prev, project.id]));
                   }
                 }}
-                className="card p-6 hover:bg-[#2A303C] transition-colors cursor-pointer group"
+                className="card p-4 md:p-6 hover:bg-[#2A303C] transition-colors cursor-pointer group min-w-0"
               >
                 <div className="flex items-start space-x-4">
                   <Building
@@ -468,13 +468,13 @@ const Uploads = () => {
                     className="text-gray-400 group-hover:text-blue-400 transition-colors flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors">
+                    <h3 className="font-semibold text-white group-hover:text-blue-400 transition-colors truncate">
                       {project.project_number}
                     </h3>
                     {project.client && (
-                      <p className="text-sm text-gray-400 mt-1">{project.client}</p>
+                      <p className="text-sm text-gray-400 mt-1 truncate">{project.client}</p>
                     )}
-                    <div className="flex items-center justify-between mt-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
                       <span className="text-xs text-gray-500">
                         {project.distributors?.length || 0} verdelers
                       </span>
