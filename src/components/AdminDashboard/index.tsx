@@ -74,12 +74,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ projects, userId, usern
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <NeedsAttention projects={projects} userId={userId} />
         <TestingOverview projects={projects} userId={userId} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="h-[600px]">
           <MyTasks
             projects={projects}

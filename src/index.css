@@ -79,7 +79,7 @@
   }
 
   .table-header {
-    @apply text-blue-400 pb-3 md:pb-4 font-medium whitespace-nowrap text-sm md:text-base;
+    @apply text-blue-400 pb-3 md:pb-4 px-2 md:px-4 font-medium whitespace-nowrap text-sm md:text-base;
   }
 
   .table-row {
@@ -87,7 +87,15 @@
   }
 
   .table-cell {
-    @apply py-3 md:py-4 px-2 md:px-4 text-sm md:text-base;
+    @apply py-3 md:py-4 px-2 md:px-4 text-sm md:text-base whitespace-nowrap;
+  }
+
+  .table-cell[class*="max-w-"] {
+    @apply whitespace-normal min-w-[180px];
+  }
+
+  .table-cell.truncate {
+    @apply whitespace-nowrap;
   }
 
   /* Text utilities */

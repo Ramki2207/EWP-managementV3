@@ -71,10 +71,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen">
       {showSidebar && <Sidebar />}
-      <div className={`flex-1 flex flex-col ${showSidebar ? 'ml-0 lg:ml-64 pt-14 lg:pt-0' : ''}`}>
+      <div className={`flex-1 min-w-0 flex flex-col ${showSidebar ? 'ml-0 lg:ml-64 pt-14 lg:pt-0' : ''}`}>
         {showSidebar && <TabBar />}
         {showSidebar && <DraftProjectBanner />}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {children}
         </div>
       </div>

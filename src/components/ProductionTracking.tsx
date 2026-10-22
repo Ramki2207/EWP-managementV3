@@ -689,8 +689,8 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
   return (
     <div className="space-y-8">
       {/* Production Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-xl p-4 md:p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
               <Clock size={24} className="text-white" />
@@ -703,7 +703,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         </div>
 
 
-        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-4 md:p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl">
               <Users size={24} className="text-white" />
@@ -715,7 +715,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-6">
+        <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 border border-orange-500/20 rounded-xl p-4 md:p-6">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
               <Activity size={24} className="text-white" />
