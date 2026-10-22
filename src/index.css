@@ -215,6 +215,27 @@
   .test-actions {
     @apply flex flex-col-reverse sm:flex-row sm:justify-between gap-3 mt-4;
   }
+
+  .test-buttons > button {
+    @apply w-full justify-start text-left gap-2;
+  }
+
+  .test-buttons > button > * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .test-buttons > button > svg {
+    @apply flex-shrink-0;
+  }
+
+  .test-buttons > button > span {
+    @apply flex-1 min-w-0;
+  }
+
+  .test-buttons > button > div {
+    @apply flex-shrink-0 whitespace-nowrap;
+  }
 }
 
 /* Touch devices (tablets): larger tap targets, no hover-only controls */

@@ -1780,9 +1780,9 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
               {/* Verdeler Information */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="xl:col-span-2 space-y-6">
                 {/* Basis Informatie */}
                 <div className="bg-[#2A303C] p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-blue-400 mb-4">Basis Informatie</h3>
@@ -1916,10 +1916,10 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
               </div>
 
               {/* Action Buttons Sidebar */}
-              <div className="space-y-4">
-                <div className="bg-[#2A303C] p-6 rounded-lg">
+              <div className="space-y-4 order-first xl:order-none">
+                <div className="bg-[#2A303C] p-4 md:p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-gray-400 mb-4">Acties</h3>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 xl:grid-cols-1 gap-3">
                     <button
                       onClick={() => handleEditVerdeler(selectedVerdeler)}
                       className="btn-secondary w-full flex items-center space-x-2"
@@ -1950,11 +1950,11 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                 </div>
 
                 {/* Testing Actions */}
-                <div className="bg-[#2A303C] p-6 rounded-lg">
+                <div className="bg-[#2A303C] p-4 md:p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-400 mb-4">Testing</h3>
 
                   {selectedVerdeler?.status === 'Testen' && hasPermission('testing', 'create') ? (
-                    <div className="space-y-3">
+                    <div className="test-buttons grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
                       <VerdelerTesting
                         verdeler={selectedVerdeler}
                         projectNumber={projectData.project_number || projectData.projectNumber}
