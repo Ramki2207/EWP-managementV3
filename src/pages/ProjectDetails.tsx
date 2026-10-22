@@ -245,10 +245,11 @@ const ProjectDetails = () => {
 
   const loadUsers = async () => {
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      setUsers(users);
+      const dbUsers = await dataService.getUsers();
+      setUsers(dbUsers || []);
     } catch (error) {
       console.error('Error loading users:', error);
+      setUsers(JSON.parse(localStorage.getItem('users') || '[]'));
     }
   };
 

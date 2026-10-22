@@ -73,10 +73,20 @@ const EnhancedUserManagement = () => {
         console.log('Database users loaded:', dbUsers.length);
         
         // Merge database users with localStorage (localStorage takes precedence)
-        const mergedUsers = enhancedUsers.map(localUser => {
-          const dbUser = dbUsers.find((u: any) => u.id === localUser.id);
-          return dbUser ? { ...dbUser, ...localUser } : localUser;
+        const localById = new Map(enhancedUsers.map(u => [u.id, u]));
+        const mergedUsers: EnhancedUser[] = dbUsers.map((dbUser: any) => {
+          const localUser = localById.get(dbUser.id);
+          return localUser
+            ? { ...dbUser, ...localUser }
+            : {
+                ...dbUser,
+                permissions: dbUser.permissions || getDefaultPermissions(dbUser.role || 'standard_user'),
+                isActive: dbUser.is_active !== false,
+                assignedLocations: dbUser.assigned_locations || dbUser.assignedLocations || []
+              };
         });
+        const dbIds = new Set(dbUsers.map((u: any) => u.id));
+        enhancedUsers.forEach(u => { if (!dbIds.has(u.id)) mergedUsers.push(u); });
         
         setUsers(mergedUsers);
       } catch (dbError) {

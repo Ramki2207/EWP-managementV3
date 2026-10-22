@@ -55,7 +55,8 @@ export const AVAILABLE_LOCATIONS = [
   'Naaldwijk (PD)',
   'Naaldwijk (PW)',
   'Rotterdam',
-  'Utrecht'
+  'Utrecht',
+  'Arnhem'
 ] as const;
 
 export type Location = typeof AVAILABLE_LOCATIONS[number];
