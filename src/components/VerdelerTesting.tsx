@@ -505,12 +505,12 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-blue-400">Werkplaats Test</h2>
         
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Datum</label>
             <input
               type="date"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.workshopChecklist.date}
               onChange={workshopDateHandler}
             />
@@ -519,7 +519,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             <label className="block text-sm text-gray-400 mb-1">Getest door</label>
             <input
               type="text"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.workshopChecklist.testedBy}
               onChange={workshopTesterHandler}
               placeholder="Naam Tester"
@@ -528,31 +528,32 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
         </div>
         
         {Object.keys(itemsByCategory).map((category) => (
-          <div key={category} className="bg-[#1E2530] p-4 rounded-lg mb-4">
+          <div key={category} className="test-section">
             <h3 className="font-medium mb-3 text-blue-400">{categoryTitles[category as keyof typeof categoryTitles]}</h3>
-            <table className="w-full">
+            <table className="test-table">
               <thead>
                 <tr>
-                  <th className="text-left p-2">Veld</th>
-                  <th className="text-left p-2">Controle</th>
-                  <th className="text-center w-32 p-2">Status</th>
-                  <th className="text-left p-2">Opmerkingen</th>
+                  <th className="w-14">Veld</th>
+                  <th>Controle</th>
+                  <th className="!text-center whitespace-nowrap">Status</th>
+                  <th className="w-[28%]">Opmerkingen</th>
                 </tr>
               </thead>
               <tbody>
                 {itemsByCategory[category].map((item: any) => (
-                  <tr key={item.id} className="border-t border-gray-700">
-                    <td className="p-2 text-sm text-gray-400">{item.field}</td>
-                    <td className="p-2">{item.description}</td>
-                    <td className="p-2 text-center">
+                  <tr key={item.id}>
+                    <td className="text-sm text-gray-400">{item.field}</td>
+                    <td className="text-sm md:text-base leading-snug">{item.description}</td>
+                    <td className="text-center whitespace-nowrap">
                       {item.options && item.options.includes('text') ? (
                         <span className="text-sm text-gray-400">Tekstveld</span>
                       ) : item.options && item.options.length <= 4 ? (
-                        <div className="flex justify-center space-x-1">
+                        <div className="flex justify-center gap-1.5">
                           {item.options.map((option: string) => (
                             <button
                               key={option}
-                              className={`px-2 py-1 rounded text-xs font-medium ${
+                              type="button"
+                              className={`test-status-btn ${
                                 item.passed === option 
                                   ? option === 'akkoord' ? 'bg-green-600 text-white' :
                                     option === 'n.v.t.' ? 'bg-yellow-600 text-white' :
@@ -573,9 +574,9 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                           ))}
                         </div>
                       ) : item.options && item.options.length > 4 ? (
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="flex items-center justify-center gap-2">
                           <select
-                            className="bg-[#2A303C] text-white border border-gray-700 rounded p-1 text-xs"
+                            className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-2 min-h-[44px] text-sm"
                             value={item.passed || ''}
                             onChange={(e) => handleItemChange('workshopChecklist', item.id, 'passed', e.target.value)}
                           >
@@ -586,7 +587,8 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                           </select>
                           {item.field === '2.02' && (
                             <button
-                              className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                              type="button"
+                              className={`test-status-btn whitespace-nowrap ${
                                 item.passed === 'n.v.t.'
                                   ? 'bg-yellow-600 text-white'
                                   : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
@@ -599,26 +601,28 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                           )}
                         </div>
                       ) : (
-                        <div className="flex justify-center space-x-2">
+                        <div className="flex justify-center gap-2">
                           <button
-                            className={`p-1 rounded ${item.passed === true ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
+                            type="button"
+                            className={`test-status-btn ${item.passed === true ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
                             onClick={() => handleItemChange('workshopChecklist', item.id, 'passed', true)}
                           >
-                            <Check size={18} />
+                            <Check size={20} />
                           </button>
                           <button
-                            className={`p-1 rounded ${item.passed === false ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
+                            type="button"
+                            className={`test-status-btn ${item.passed === false ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
                             onClick={() => handleItemChange('workshopChecklist', item.id, 'passed', false)}
                           >
-                            <X size={18} />
+                            <X size={20} />
                           </button>
                         </div>
                       )}
                     </td>
-                    <td className="p-2">
+                    <td>
                       <input
                         type="text"
-                        className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        className="test-input"
                         value={item.notes}
                         onChange={(e) => handleItemChange('workshopChecklist', item.id, 'notes', e.target.value)}
                         placeholder="Opmerkingen"
@@ -631,7 +635,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           </div>
         ))}
         
-        <div className="flex justify-between mt-4">
+        <div className="test-actions">
           <button
             className="btn-secondary"
             onClick={async () => {
@@ -711,12 +715,12 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-blue-400">Keuringsrapport</h2>
         
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Datum</label>
             <input
               type="date"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.inspectionReport.date}
               onChange={inspectionDateHandler}
             />
@@ -725,7 +729,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             <label className="block text-sm text-gray-400 mb-1">Geïnspecteerd door</label>
             <input
               type="text"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.inspectionReport.inspectedBy}
               onChange={inspectionInspectedByHandler}
               placeholder="Naam inspecteur"
@@ -735,7 +739,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
             <label className="block text-sm text-gray-400 mb-1">Goedgekeurd door</label>
             <input
               type="text"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.inspectionReport.approvedBy}
               onChange={inspectionApprovedByHandler}
               placeholder="Naam goedkeurder"
@@ -743,39 +747,41 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           </div>
         </div>
         
-        <div className="bg-[#1E2530] p-4 rounded-lg mb-4">
-          <table className="w-full">
+        <div className="test-section">
+          <table className="test-table">
             <thead>
               <tr>
-                <th className="text-left p-2">Controle</th>
-                <th className="text-center w-24 p-2">Status</th>
-                <th className="text-left p-2">Opmerkingen</th>
+                <th>Controle</th>
+                <th className="!text-center whitespace-nowrap">Status</th>
+                <th className="w-[32%]">Opmerkingen</th>
               </tr>
             </thead>
             <tbody>
               {testData.inspectionReport.items.map((item: any) => (
-                <tr key={item.id} className="border-t border-gray-700">
-                  <td className="p-2">{item.description}</td>
-                  <td className="p-2 text-center">
-                    <div className="flex justify-center space-x-2">
+                <tr key={item.id}>
+                  <td className="text-sm md:text-base leading-snug">{item.description}</td>
+                  <td className="text-center whitespace-nowrap">
+                    <div className="flex justify-center gap-2">
                       <button
-                        className={`p-1 rounded ${item.passed === true ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
+                        type="button"
+                        className={`test-status-btn ${item.passed === true ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
                         onClick={() => handleItemChange('inspectionReport', item.id, 'passed', true)}
                       >
-                        <Check size={18} />
+                        <Check size={20} />
                       </button>
                       <button
-                        className={`p-1 rounded ${item.passed === false ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
+                        type="button"
+                        className={`test-status-btn ${item.passed === false ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
                         onClick={() => handleItemChange('inspectionReport', item.id, 'passed', false)}
                       >
-                        <X size={18} />
+                        <X size={20} />
                       </button>
                     </div>
                   </td>
-                  <td className="p-2">
+                  <td>
                     <input
                       type="text"
-                      className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      className="test-input"
                       value={item.notes}
                       onChange={(e) => handleItemChange('inspectionReport', item.id, 'notes', e.target.value)}
                       placeholder="Opmerkingen"
@@ -790,9 +796,9 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
         <div className="bg-[#1E2530] p-4 rounded-lg">
           <div className="mb-4">
             <label className="block text-sm text-gray-400 mb-1">Eindresultaat</label>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-3">
               <button
-                className={`px-4 py-2 rounded ${testData.inspectionReport.result === 'approved' ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
+                className={`px-4 min-h-[48px] rounded-lg ${testData.inspectionReport.result === 'approved' ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`}
                 onClick={() => setTestData(prev => ({
                   ...prev,
                   inspectionReport: { ...prev.inspectionReport, result: 'approved' }
@@ -801,7 +807,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                 Goedgekeurd
               </button>
               <button
-                className={`px-4 py-2 rounded ${testData.inspectionReport.result === 'conditionallyApproved' ? 'bg-yellow-600' : 'bg-gray-700 hover:bg-yellow-600'}`}
+                className={`px-4 min-h-[48px] rounded-lg ${testData.inspectionReport.result === 'conditionallyApproved' ? 'bg-yellow-600' : 'bg-gray-700 hover:bg-yellow-600'}`}
                 onClick={() => setTestData(prev => ({
                   ...prev,
                   inspectionReport: { ...prev.inspectionReport, result: 'conditionallyApproved' }
@@ -810,7 +816,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                 Voorwaardelijk goedgekeurd
               </button>
               <button
-                className={`px-4 py-2 rounded ${testData.inspectionReport.result === 'rejected' ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
+                className={`px-4 min-h-[48px] rounded-lg ${testData.inspectionReport.result === 'rejected' ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`}
                 onClick={() => setTestData(prev => ({
                   ...prev,
                   inspectionReport: { ...prev.inspectionReport, result: 'rejected' }
@@ -832,7 +838,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           </div>
         </div>
         
-        <div className="flex justify-between mt-4">
+        <div className="test-actions">
           <button
             className="btn-secondary"
             onClick={() => setCurrentStep(0)}
@@ -864,7 +870,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
                 }
               }}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                 index < currentStep 
                   ? 'bg-blue-400 text-white' 
                   : index === currentStep 
@@ -931,21 +937,22 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
     
     return (
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+        className="test-modal-overlay"
         style={{ zIndex: 999999 }}
         onClick={handleBackdropClick}
       >
         <div 
-          className="bg-[#1E2530] rounded-xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+          className="test-modal"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">
+          <div className="flex justify-between items-start gap-4 mb-4">
+            <h2 className="text-xl md:text-2xl font-semibold leading-tight">
               Verdeler Testen: {verdelerInfo.id} - {verdelerInfo.name}
             </h2>
             <button
               onClick={() => setShowModal(false)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 shrink-0"
+              aria-label="Sluiten"
             >
               <X size={24} />
             </button>
@@ -957,7 +964,7 @@ const VerdelerTesting: React.FC<VerdelerTestingProps> = ({
           {/* Show restart option if test is completed */}
           {testData.inspectionReport.completed && (
             <div className="mt-6 pt-6 border-t border-gray-700">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
                   <h3 className="font-medium text-green-400">Test voltooid</h3>
                   <p className="text-sm text-gray-400">PDF rapport is automatisch gegenereerd en opgeslagen</p>

@@ -168,7 +168,7 @@ const Sidebar = () => {
   // Show loading state while user data is being loaded
   if (userLoading) {
     return (
-      <div className="hidden md:flex w-64 bg-[#1E2530]/80 backdrop-blur-lg border-r border-white/10 text-white h-screen fixed left-0 top-0 flex-col overflow-y-auto">
+      <div className="hidden lg:flex w-64 bg-[#1E2530]/80 backdrop-blur-lg border-r border-white/10 text-white h-screen fixed left-0 top-0 flex-col overflow-y-auto">
         <div className="p-6">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
@@ -226,7 +226,7 @@ const Sidebar = () => {
                     });
                     setIsMobileMenuOpen(false);
                   }}
-                  className="absolute right-2 opacity-0 md:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  className="absolute right-2 opacity-0 lg:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
                   title="Open in nieuw tabblad"
                 >
                   <Plus size={14} />
@@ -270,7 +270,7 @@ const Sidebar = () => {
                     });
                     setIsMobileMenuOpen(false);
                   }}
-                  className="absolute right-2 opacity-0 md:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
+                  className="absolute right-2 opacity-0 lg:group-hover:opacity-100 p-1.5 bg-blue-500/20 hover:bg-blue-500/40 rounded transition-all"
                   title="Open in nieuw tabblad"
                 >
                   <Plus size={14} />
@@ -300,7 +300,7 @@ const Sidebar = () => {
     <>
       {/* Mobile menu button */}
       <button
-        className="fixed top-4 right-4 z-50 p-3 bg-[#2A303C] rounded-lg md:hidden shadow-lg border border-white/10 min-h-[48px] min-w-[48px] flex items-center justify-center"
+        className="fixed top-4 right-4 z-50 p-3 bg-[#2A303C] rounded-lg lg:hidden shadow-lg border border-white/10 min-h-[48px] min-w-[48px] flex items-center justify-center"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         aria-label="Toggle menu"
       >
@@ -317,7 +317,7 @@ const Sidebar = () => {
       )}
 
       {/* Desktop navigation */}
-      <div className="hidden md:flex w-64 bg-[#1E2530]/80 backdrop-blur-lg border-r border-white/10 text-white h-screen fixed left-0 top-0 flex-col overflow-y-auto">
+      <div className="hidden lg:flex w-64 bg-[#1E2530]/80 backdrop-blur-lg border-r border-white/10 text-white h-screen fixed left-0 top-0 flex-col overflow-y-auto">
         <NavContent />
       </div>
     </>

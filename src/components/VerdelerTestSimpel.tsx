@@ -422,12 +422,12 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
       <div className="space-y-6">
         <h2 className="text-xl font-semibold text-blue-400">Keuringsrapport - Verdeler Test Simpel</h2>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Datum</label>
             <input
               type="date"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.verdelerTestSimpel.date}
               onChange={dateHandler}
             />
@@ -436,7 +436,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
             <label className="block text-sm text-gray-400 mb-1">Tester</label>
             <input
               type="text"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.verdelerTestSimpel.testedBy}
               onChange={testerHandler}
               placeholder="Naam tester"
@@ -444,14 +444,14 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
           </div>
         </div>
 
-        <div className="bg-[#1E2530] p-4 rounded-lg mb-4">
+        <div className="test-section">
           <h3 className="font-medium mb-3">Technische Specificaties</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Un [Vac]</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.un}
                 onChange={unHandler}
                 placeholder="400"
@@ -461,7 +461,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">In [A]</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.inValue}
                 onChange={inValueHandler}
                 placeholder="Ampère"
@@ -471,7 +471,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">Ik dyn [kA]</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.ikDyn}
                 onChange={ikDynHandler}
                 placeholder="kA"
@@ -481,7 +481,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">Ik th [kA]</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.ikTh}
                 onChange={ikThHandler}
                 placeholder="kA"
@@ -491,7 +491,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">F [Hz]</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.frequency}
                 onChange={frequencyHandler}
                 placeholder="50"
@@ -527,7 +527,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
             <label className="block text-sm text-gray-400 mb-1">Afwijkend [V]</label>
             <input
               type="text"
-              className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="test-input"
               value={testData.verdelerTestSimpel.afwijkend}
               onChange={afwijkendHandler}
               placeholder="Afwijkende spanning"
@@ -535,14 +535,14 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
           </div>
         </div>
 
-        <div className="bg-[#1E2530] p-4 rounded-lg mb-4">
+        <div className="test-section">
           <h3 className="font-medium mb-3">Handtekeningen</h3>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Monteur</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.monteur}
                 onChange={monteurHandler}
                 placeholder="Naam monteur"
@@ -552,7 +552,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">Eindcontroleur</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.eindcontroleur}
                 onChange={eindcontroleurHandler}
                 placeholder="Naam eindcontroleur"
@@ -562,7 +562,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
               <label className="block text-sm text-gray-400 mb-1">Beproevingen</label>
               <input
                 type="text"
-                className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="test-input"
                 value={testData.verdelerTestSimpel.beproevingen}
                 onChange={beproevingenHandler}
                 placeholder="Ja/Nee"
@@ -572,41 +572,43 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
         </div>
 
         {Object.keys(itemsByCategory).map((category) => (
-          <div key={category} className="bg-[#1E2530] p-4 rounded-lg mb-4">
-            <div className="flex justify-between items-center mb-3">
+          <div key={category} className="test-section">
+            <div className="flex justify-between items-center gap-3 mb-3">
               <h3 className="font-medium text-blue-400">{categoryTitles[category as keyof typeof categoryTitles]}</h3>
               <button
+                type="button"
                 onClick={() => handleCheckAllInCategory(category)}
-                className="btn-secondary flex items-center space-x-2 text-sm px-3 py-1"
+                className="bg-[#2A303C] text-white border border-gray-700 hover:bg-gray-700 rounded-lg flex items-center gap-2 text-sm px-3 min-h-[44px] shrink-0 transition"
                 title="Kruis alle vragen in dit hoofdstuk aan als akkoord"
               >
                 <CheckCircle size={16} />
                 <span>Alles akkoord</span>
               </button>
             </div>
-            <table className="w-full">
+            <table className="test-table">
               <thead>
                 <tr>
-                  <th className="text-left p-2">Veld</th>
-                  <th className="text-left p-2">Controle</th>
-                  <th className="text-center w-32 p-2">Status</th>
-                  <th className="text-left p-2">Opmerkingen</th>
+                  <th className="w-14">Veld</th>
+                  <th>Controle</th>
+                  <th className="!text-center whitespace-nowrap">Status</th>
+                  <th className="w-[28%]">Opmerkingen</th>
                 </tr>
               </thead>
               <tbody>
                 {itemsByCategory[category].map((item: any) => (
-                  <tr key={item.id} className="border-t border-gray-700">
-                    <td className="p-2 text-sm text-gray-400">{item.field}</td>
-                    <td className="p-2">{item.description}</td>
-                    <td className="p-2 text-center">
+                  <tr key={item.id}>
+                    <td className="text-sm text-gray-400">{item.field}</td>
+                    <td className="text-sm md:text-base leading-snug">{item.description}</td>
+                    <td className="text-center whitespace-nowrap">
                       {item.options && item.options.includes('text') ? (
                         <span className="text-sm text-gray-400">Tekstveld</span>
                       ) : (
-                        <div className="flex justify-center space-x-1">
+                        <div className="flex justify-center gap-1.5">
                           {item.options.map((option: string) => (
                             <button
                               key={option}
-                              className={`px-2 py-1 rounded text-xs font-medium ${
+                              type="button"
+                              className={`test-status-btn ${
                                 item.passed === option
                                   ? option === 'akkoord' ? 'bg-green-600 text-white' :
                                     option === 'n.v.t.' ? 'bg-yellow-600 text-white' :
@@ -628,10 +630,10 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
                         </div>
                       )}
                     </td>
-                    <td className="p-2">
+                    <td>
                       <input
                         type="text"
-                        className="w-full bg-[#2A303C] text-white border border-gray-700 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                        className="test-input"
                         value={item.notes}
                         onChange={(e) => handleItemChange(item.id, 'notes', e.target.value)}
                         placeholder="Opmerkingen"
@@ -644,7 +646,7 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
           </div>
         ))}
 
-        <div className="flex justify-between mt-4">
+        <div className="test-actions">
           <button
             className="btn-secondary"
             onClick={async () => {
@@ -746,21 +748,22 @@ const VerdelerTestSimpel: React.FC<VerdelerTestSimpelProps> = ({
 
     return (
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+        className="test-modal-overlay"
         style={{ zIndex: 999999 }}
         onClick={handleBackdropClick}
       >
         <div
-          className="bg-[#1E2530] rounded-xl p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+          className="test-modal"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold">
+          <div className="flex justify-between items-start gap-4 mb-4">
+            <h2 className="text-xl md:text-2xl font-semibold leading-tight">
               Verdeler Test Simpel: {verdelerInfo.id} - {verdelerInfo.name}
             </h2>
             <button
               onClick={() => setShowModal(false)}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-white/10 shrink-0"
+              aria-label="Sluiten"
             >
               <X size={24} />
             </button>
