@@ -14,7 +14,7 @@ import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import LogisticsCalendar from '../components/LogisticsCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
-import { useLocationFilter } from '../contexts/LocationFilterContext';
+import { useLocationFilter, LocationFilterMode } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
 import AdminDashboard from '../components/AdminDashboard';
 import ProductiePlanning from '../components/AdminDashboard/ProductiePlanning';
@@ -1073,16 +1073,15 @@ const Dashboard = () => {
                       <select
                         value={filterMode}
                         onChange={(e) => {
-                          const newMode = e.target.value as 'all' | 'naaldwijk' | 'leerdam' | 'rotterdam';
-                          console.log('Setting filter to:', newMode);
-                          setFilterMode(newMode);
+                          setFilterMode(e.target.value as LocationFilterMode);
                         }}
                         className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="all">Alles</option>
                         <option value="naaldwijk">Den Haag</option>
-                        <option value="leerdam">Utrecht</option>
                         <option value="rotterdam">Rotterdam</option>
+                        <option value="leerdam">Utrecht</option>
+                        <option value="arnhem">Arnhem</option>
                       </select>
                     </div>
                   )}

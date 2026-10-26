@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type LocationFilterMode = 'all' | 'naaldwijk' | 'leerdam' | 'rotterdam';
+export type LocationFilterMode = 'all' | 'naaldwijk' | 'leerdam' | 'rotterdam' | 'arnhem';
 
 interface LocationFilterContextType {
   filterMode: LocationFilterMode;
@@ -17,7 +17,7 @@ export const LocationFilterProvider: React.FC<{ children: React.ReactNode }> = (
   // Save filter preference to localStorage
   useEffect(() => {
     const savedFilter = localStorage.getItem('location_filter_preference');
-    if (savedFilter === 'naaldwijk' || savedFilter === 'leerdam' || savedFilter === 'rotterdam' || savedFilter === 'all') {
+    if (savedFilter === 'naaldwijk' || savedFilter === 'leerdam' || savedFilter === 'rotterdam' || savedFilter === 'arnhem' || savedFilter === 'all') {
       setFilterMode(savedFilter);
     }
   }, []);
@@ -34,6 +34,8 @@ export const LocationFilterProvider: React.FC<{ children: React.ReactNode }> = (
         return ['Leerdam', 'Leerdam (PM)', 'Utrecht', 'Arnhem', 'Service'];
       case 'rotterdam':
         return ['Rotterdam', 'Rotterdam (2P)', 'Rotterdam (PR)'];
+      case 'arnhem':
+        return ['Arnhem'];
       case 'all':
       default:
         return ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam', 'Leerdam (PM)', 'Den Haag', 'Rotterdam (2P)', 'Rotterdam (PR)', 'Utrecht', 'Arnhem', 'Service'];
