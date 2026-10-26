@@ -69,6 +69,18 @@ export const hasLocationAccess = (
     return true;
   }
 
+  // Den Haag (1P) belongs to the Naaldwijk region
+  if (projectLocation === 'Den Haag' &&
+      userAssignedLocations.some(loc => loc.startsWith('Naaldwijk'))) {
+    return true;
+  }
+
+  // Rotterdam (2P) belongs to the Rotterdam / Naaldwijk region
+  if (projectLocation === 'Rotterdam (2P)' &&
+      userAssignedLocations.some(loc => loc.startsWith('Rotterdam') || loc.startsWith('Naaldwijk'))) {
+    return true;
+  }
+
   // Check if project is shared with any of the user's locations
   if (projectSharedLocations && projectSharedLocations.length > 0) {
     const sharedLocationNames = projectSharedLocations.map(sl => sl.location);
