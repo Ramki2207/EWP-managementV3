@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
@@ -545,7 +545,7 @@ const Projects = () => {
       }
 
       // Role-based filtering for Tester users (skip for Annemieke)
-      if (!isAnnemieke && currentUser?.role === 'tester') {
+      if (!isAnnemieke && currentUser?.role === 'tester' && !isTesterProjectManager(currentUser?.username)) {
         const isTestingStatus = project.status?.toLowerCase() === 'testen';
 
         // For production projects, we need to check database for pending approvals

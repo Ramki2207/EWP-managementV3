@@ -6,7 +6,7 @@ import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
@@ -85,6 +85,7 @@ const Dashboard = () => {
   const [agendaProjects, setAgendaProjects] = useState<any[]>([]);
 
   const effectiveRole = currentUser?.role === 'admin' ? viewAsRole : currentUser?.role;
+  const isTesterPM = effectiveRole === 'tester' && isTesterProjectManager(currentUser?.username);
 
   const handleRoleChange = (role: string) => {
     setViewAsRole(role);
@@ -128,7 +129,7 @@ const Dashboard = () => {
       }
 
       // Role-based filtering for Tester users
-      if (effectiveRole === 'tester') {
+      if (effectiveRole === 'tester' && !isTesterPM) {
         const beforeRoleFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           const projectHasTestingStatus = project.status?.toLowerCase() === 'testen';
@@ -489,7 +490,7 @@ const Dashboard = () => {
       console.log('🌍 DASHBOARD: Current user:', currentUser?.username, 'Assigned locations:', currentUser?.assignedLocations);
 
       // Role-based filtering for Tester users
-      if (effectiveRole === 'tester') {
+      if (effectiveRole === 'tester' && !isTesterPM) {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           const hasTestingStatus = project.status?.toLowerCase() === 'testen';
@@ -1272,7 +1273,7 @@ const Dashboard = () => {
       )}
 
       {/* Admin and Projectleider: Quick Actions at Top */}
-      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider' || isTesterPM) && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -2006,7 +2007,7 @@ const Dashboard = () => {
       )}
 
       {/* Admin and Projectleider: Compact Dashboard Sections */}
-      {(effectiveRole === 'admin' || effectiveRole === 'projectleider') && (
+      {(effectiveRole === 'admin' || effectiveRole === 'projectleider' || isTesterPM) && (
         <>
           {/* Three Column Layout for Key Metrics */}
           <div className="responsive-grid-3 mb-6 md:mb-8">

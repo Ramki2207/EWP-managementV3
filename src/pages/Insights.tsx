@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -196,7 +196,7 @@ const Insights = () => {
       : projects.filter((p: any) => p.client === selectedClient);
 
     // Role-based filtering for Tester users
-    if (currentUser?.role === 'tester') {
+    if (currentUser?.role === 'tester' && !isTesterProjectManager(currentUser?.username)) {
       const beforeRoleFilter = filteredProjects.length;
       filteredProjects = filteredProjects.filter((p: any) => {
         const hasTestingStatus = p.status?.toLowerCase() === 'testen';

@@ -383,3 +383,8 @@ export const comparePermissions = (
   
   return changes;
 };
+// Testers who also act as project manager see all projects for their locations
+const TESTER_PROJECT_MANAGERS = ['Ricardo'];
+
+export const isTesterProjectManager = (username?: string): boolean =>
+  !!username && TESTER_PROJECT_MANAGERS.includes(username);

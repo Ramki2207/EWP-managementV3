@@ -4,7 +4,7 @@ import { Search, FolderOpen, Trash2, Server } from 'lucide-react';
 import toast from "react-hot-toast";
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
@@ -61,7 +61,7 @@ const Verdelers = () => {
       }
 
       // Role-based filtering for Tester users
-      if (currentUser?.role === 'tester') {
+      if (currentUser?.role === 'tester' && !isTesterProjectManager(currentUser?.username)) {
         const beforeRoleFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectStatus = distributor.projects?.status;
