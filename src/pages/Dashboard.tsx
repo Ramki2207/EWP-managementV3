@@ -1818,7 +1818,7 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredProjects.slice(0, 10).map((project) => (
+              {filteredProjects.map((project) => (
                 <tr 
                   key={project.id} 
                   className={`table-row ${
