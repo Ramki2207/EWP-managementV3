@@ -8,6 +8,7 @@ interface UploadsStepProps {
   onSave: () => void;
   verdelers: any[];
   saving?: boolean;
+  saveProgress?: string;
   onDocumentsChange?: (documents: { [key: string]: any[] }) => void;
   tempDocuments?: { [key: string]: any[] };
 }
@@ -55,6 +56,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
   onSave,
   verdelers,
   saving = false,
+  saveProgress = '',
   onDocumentsChange,
   tempDocuments = {}
 }) => {
@@ -835,7 +837,7 @@ const UploadsStep: React.FC<UploadsStepProps> = ({
             {saving ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                <span>Project opslaan...</span>
+                <span>{saveProgress || 'Project opslaan...'}</span>
               </>
             ) : (
               <span>Project opslaan</span>

@@ -16,6 +16,7 @@ const DRAFT_TIMESTAMP_KEY = 'projectDraftTimestamp';
 const CreateProject = () => {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState('');
   const [tempDocuments, setTempDocuments] = useState<{ [key: string]: any[] }>({});
   const [showHoursPopup, setShowHoursPopup] = useState(false);
   const [savedProjectData, setSavedProjectData] = useState<any>(null);
@@ -100,9 +101,13 @@ const CreateProject = () => {
         currentStep,
         tempVerdelerData
       };
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
-      localStorage.setItem(DRAFT_TIMESTAMP_KEY, new Date().toISOString());
-      setHasDraft(true);
+      try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
+        localStorage.setItem(DRAFT_TIMESTAMP_KEY, new Date().toISOString());
+        setHasDraft(true);
+      } catch (error) {
+        console.warn('Concept kon niet lokaal worden bewaard (te groot):', error);
+      }
     }
   }, [projectData, currentStep, tempVerdelerData]);
 
@@ -147,14 +152,13 @@ const CreateProject = () => {
   };
 
   const handleSaveProject = async () => {
+    if (saving) return;
+    let savedProject: any = null;
     try {
       setSaving(true);
+      setSaveProgress('Project aanmaken...');
 
-      console.log('Saving project with data:', projectData);
-      console.log('Intake form data being saved:', projectData.intakeForm);
-
-      // Create the project first
-      const savedProject = await dataService.createProject(projectData);
+      savedProject = await dataService.createProject(projectData);
 
       // Create distributors if any
       if (projectData.verdelers && projectData.verdelers.length > 0) {
@@ -216,7 +220,7 @@ const CreateProject = () => {
             continue;
           }
           
-          console.log('✅ SAVE: Validation passed, calling createDistributor...');
+          setSaveProgress(`Verdeler ${verdeler.distributorId} opslaan...`);
           await dataService.createDistributor(distributorData);
           console.log('✅ SAVE: Distributor saved successfully');
         }
@@ -224,69 +228,13 @@ const CreateProject = () => {
         console.log('🎉 SAVE: All verdelers processed');
       }
 
-      // Save documents after project and distributors are created
-      if (Object.keys(tempDocuments).length > 0) {
-        console.log('Saving temporary documents to database...');
+      const failedDocuments = await saveTempDocuments(savedProject.id);
 
-        // Get the created distributors to map IDs
-        const createdDistributors = await dataService.getDistributorsByProject(savedProject.id);
-
-        for (const [key, docs] of Object.entries(tempDocuments)) {
-          // Split only on the first dash to handle folder names with dashes
-          const firstDashIndex = key.indexOf('-');
-          const distributorId = key.substring(0, firstDashIndex);
-          const folder = key.substring(firstDashIndex + 1);
-
-          // Check if this is a project-level document or distributor-level document
-          if (distributorId === 'project') {
-            // Save project-level documents with distributorId: null
-            if (docs.length > 0) {
-              for (const doc of docs) {
-                try {
-                  await dataService.createDocument({
-                    projectId: savedProject.id,
-                    distributorId: null,
-                    folder: folder,
-                    name: doc.name,
-                    type: doc.type,
-                    size: doc.size,
-                    content: doc.content
-                  });
-                  console.log(`Saved project-level document: ${doc.name} in folder: ${folder}`);
-                } catch (error) {
-                  console.error(`Error saving project-level document ${doc.name}:`, error);
-                }
-              }
-            }
-          } else {
-            // Find the actual database ID for this distributor
-            const dbDistributor = createdDistributors.find((d: any) => d.distributor_id === distributorId);
-
-            if (dbDistributor && docs.length > 0) {
-              for (const doc of docs) {
-                try {
-                  await dataService.createDocument({
-                    projectId: savedProject.id,
-                    distributorId: dbDistributor.id,
-                    folder: folder,
-                    name: doc.name,
-                    type: doc.type,
-                    size: doc.size,
-                    content: doc.content
-                  });
-                  console.log(`Saved distributor document: ${doc.name} for ${distributorId} in folder: ${folder}`);
-                } catch (error) {
-                  console.error(`Error saving document ${doc.name}:`, error);
-                }
-              }
-            }
-          }
-        }
-
-        console.log('All temporary documents saved to database');
+      if (failedDocuments.length > 0) {
+        toast.error(`Project aangemaakt, maar ${failedDocuments.length} document(en) konden niet worden opgeslagen: ${failedDocuments.join(', ')}. Upload deze opnieuw in het project.`, { duration: 8000 });
+      } else {
+        toast.success('Project succesvol aangemaakt!');
       }
-
-      toast.success('Project succesvol aangemaakt!');
 
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
@@ -301,10 +249,68 @@ const CreateProject = () => {
       }
     } catch (error) {
       console.error('Error saving project:', error);
-      toast.error('Er is een fout opgetreden bij het opslaan van het project');
+      if (savedProject) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+        setHasDraft(false);
+        toast.error('Het project is aangemaakt, maar niet alles kon worden opgeslagen. Controleer de verdelers en documenten in het project.', { duration: 8000 });
+        navigate(`/project/${savedProject.id}`);
+      } else {
+        toast.error('Er is een fout opgetreden bij het opslaan van het project');
+      }
     } finally {
       setSaving(false);
+      setSaveProgress('');
     }
+  };
+
+  const saveTempDocuments = async (projectId: string): Promise<string[]> => {
+    const entries = Object.entries(tempDocuments).filter(([, docs]) => docs.length > 0);
+    if (entries.length === 0) return [];
+
+    const createdDistributors = await dataService.getDistributorsByProject(projectId);
+    const jobs: { doc: any; distributorId: string | null; folder: string }[] = [];
+
+    for (const [key, docs] of entries) {
+      // Split only on the first dash to handle folder names with dashes
+      const firstDashIndex = key.indexOf('-');
+      const distributorKey = key.substring(0, firstDashIndex);
+      const folder = key.substring(firstDashIndex + 1);
+      const dbDistributorId = distributorKey === 'project'
+        ? null
+        : createdDistributors.find((d: any) => d.distributor_id === distributorKey)?.id;
+      if (dbDistributorId === undefined) continue;
+      docs.forEach(doc => jobs.push({ doc, distributorId: dbDistributorId, folder }));
+    }
+
+    const failed: string[] = [];
+    let done = 0;
+    setSaveProgress(`Documenten opslaan (0/${jobs.length})...`);
+
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
+      await Promise.all(jobs.slice(i, i + BATCH_SIZE).map(async ({ doc, distributorId, folder }) => {
+        try {
+          await dataService.createDocument({
+            projectId,
+            distributorId,
+            folder,
+            name: doc.name,
+            type: doc.type,
+            size: doc.size,
+            content: doc.content
+          });
+        } catch (error) {
+          console.error(`Error saving document ${doc.name}:`, error);
+          failed.push(doc.name);
+        } finally {
+          done++;
+          setSaveProgress(`Documenten opslaan (${done}/${jobs.length})...`);
+        }
+      }));
+    }
+
+    return failed;
   };
 
   const getWeekNumber = (date: Date) => {
@@ -576,6 +582,7 @@ const CreateProject = () => {
             onSave={handleSaveProject}
             verdelers={projectData.verdelers}
             saving={saving}
+            saveProgress={saveProgress}
             onDocumentsChange={setTempDocuments}
             tempDocuments={tempDocuments}
           />
