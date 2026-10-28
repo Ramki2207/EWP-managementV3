@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Clock, UserX, ShieldAlert, Filter, Search } from 'lucide-react';
+import { AlertTriangle, Clock, UserX, ShieldAlert, Search, Wrench } from 'lucide-react';
 
 interface Project {
   id: string;
@@ -18,7 +18,14 @@ interface NeedsAttentionProps {
   userId: string;
 }
 
-type AttentionType = 'overdue' | 'no_owner' | 'behind_schedule' | 'pending_review';
+type AttentionType = 'overdue' | 'no_owner' | 'no_monteur' | 'behind_schedule' | 'pending_review';
+
+const MONTEUR_REQUIRED_STATUSES = ['Werkvoorbereiding', 'Productie'];
+
+const hasNoMonteur = (d: any) => {
+  const monteur = (d.toegewezen_monteur || '').trim().toLowerCase();
+  return monteur === '' || monteur === 'vrij';
+};
 
 interface AttentionItem {
   id: string;
@@ -32,6 +39,7 @@ interface AttentionItem {
 const ATTENTION_TYPES: { key: AttentionType; label: string; color: string; activeColor: string }[] = [
   { key: 'overdue', label: 'Verlopen', color: 'text-gray-400 border-gray-600 hover:border-red-500/50', activeColor: 'text-red-400 border-red-500/60 bg-red-500/10' },
   { key: 'behind_schedule', label: 'Achter schema', color: 'text-gray-400 border-gray-600 hover:border-amber-500/50', activeColor: 'text-amber-400 border-amber-500/60 bg-amber-500/10' },
+  { key: 'no_monteur', label: 'Geen monteur', color: 'text-gray-400 border-gray-600 hover:border-teal-500/50', activeColor: 'text-teal-400 border-teal-500/60 bg-teal-500/10' },
   { key: 'no_owner', label: 'Niet toegewezen', color: 'text-gray-400 border-gray-600 hover:border-orange-500/50', activeColor: 'text-orange-400 border-orange-500/60 bg-orange-500/10' },
   { key: 'pending_review', label: 'Wacht op test', color: 'text-gray-400 border-gray-600 hover:border-blue-500/50', activeColor: 'text-blue-400 border-blue-500/60 bg-blue-500/10' },
 ];
@@ -54,7 +62,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const activeStatuses = ['Offerte', 'Productie', 'Testen', 'Levering'];
+    const activeStatuses = ['Offerte', 'Werkvoorbereiding', 'Productie', 'Testen', 'Levering'];
 
     scopedProjects.forEach(project => {
       if (!activeStatuses.includes(project.status)) return;
@@ -94,7 +102,23 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
         }
       }
 
-      const unassignedDistributors = project.distributors?.filter(
+      const needsMonteur = MONTEUR_REQUIRED_STATUSES.includes(project.status);
+
+      if (needsMonteur) {
+        const withoutMonteur = project.distributors?.filter(hasNoMonteur) || [];
+        if (withoutMonteur.length > 0) {
+          items.push({
+            id: `nomonteur-${project.id}`,
+            type: 'no_monteur',
+            title: `${project.project_number} - ${withoutMonteur.length} verdeler${withoutMonteur.length !== 1 ? 's' : ''} zonder monteur`,
+            subtitle: `${project.client || 'Geen klant'} - ${project.status} - ${withoutMonteur.map((d: any) => d.kast_naam || d.distributor_id).join(', ')}`,
+            projectId: project.id,
+            projectNumber: project.project_number,
+          });
+        }
+      }
+
+      const unassignedDistributors = needsMonteur ? [] : project.distributors?.filter(
         (d: any) => !d.toegewezen_monteur && !['Opgeleverd', 'Levering'].includes(d.status || '')
       ) || [];
 
@@ -126,7 +150,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
     });
 
     return items.sort((a, b) => {
-      const priority = { overdue: 0, behind_schedule: 1, no_owner: 2, pending_review: 3 };
+      const priority = { overdue: 0, behind_schedule: 1, no_monteur: 2, no_owner: 3, pending_review: 4 };
       return priority[a.type] - priority[b.type];
     });
   }, [scopedProjects]);
@@ -148,7 +172,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   }, [allAttentionItems, activeFilters, searchQuery]);
 
   const typeCounts = useMemo(() => {
-    const counts: Record<AttentionType, number> = { overdue: 0, behind_schedule: 0, no_owner: 0, pending_review: 0 };
+    const counts: Record<AttentionType, number> = { overdue: 0, behind_schedule: 0, no_monteur: 0, no_owner: 0, pending_review: 0 };
     allAttentionItems.forEach(item => { counts[item.type]++; });
     return counts;
   }, [allAttentionItems]);
@@ -168,6 +192,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   const iconMap = {
     overdue: <Clock size={18} className="text-red-400" />,
     behind_schedule: <AlertTriangle size={18} className="text-amber-400" />,
+    no_monteur: <Wrench size={18} className="text-teal-400" />,
     no_owner: <UserX size={18} className="text-orange-400" />,
     pending_review: <ShieldAlert size={18} className="text-blue-400" />,
   };
@@ -175,6 +200,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   const bgMap = {
     overdue: 'border-red-500/30 bg-red-500/5',
     behind_schedule: 'border-amber-500/30 bg-amber-500/5',
+    no_monteur: 'border-teal-500/30 bg-teal-500/5',
     no_owner: 'border-orange-500/30 bg-orange-500/5',
     pending_review: 'border-blue-500/30 bg-blue-500/5',
   };
@@ -182,6 +208,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   const labelMap = {
     overdue: 'Verlopen',
     behind_schedule: 'Achter schema',
+    no_monteur: 'Geen monteur',
     no_owner: 'Niet toegewezen',
     pending_review: 'Wacht op test',
   };
@@ -189,6 +216,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
   const labelColorMap = {
     overdue: 'text-red-400 bg-red-500/20',
     behind_schedule: 'text-amber-400 bg-amber-500/20',
+    no_monteur: 'text-teal-400 bg-teal-500/20',
     no_owner: 'text-orange-400 bg-orange-500/20',
     pending_review: 'text-blue-400 bg-blue-500/20',
   };
