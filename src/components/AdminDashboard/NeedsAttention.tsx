@@ -242,6 +242,31 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
     </div>
   );
 
+  const ALWAYS_VISIBLE_FILTERS: AttentionType[] = ['no_monteur'];
+
+  const filterChips = (
+    <div className="flex flex-wrap gap-1.5 mb-3 flex-shrink-0">
+      {ATTENTION_TYPES.map(({ key, label, color, activeColor }) => {
+        const count = typeCounts[key];
+        if (count === 0 && !ALWAYS_VISIBLE_FILTERS.includes(key)) return null;
+        const isActive = activeFilters.has(key);
+        return (
+          <button
+            key={key}
+            onClick={() => toggleFilter(key)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-all ${isActive ? activeColor : color}`}
+          >
+            {label} ({count})
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const emptyFilterMessage = activeFilters.size === 1 && activeFilters.has('no_monteur')
+    ? 'Alle verdelers in Werkvoorbereiding en Productie hebben een monteur'
+    : 'Geen items voor geselecteerde filters';
+
   if (allAttentionItems.length === 0) {
     return (
       <div className="card border border-green-500/30 bg-green-500/5 h-[420px] flex flex-col">
@@ -254,8 +279,11 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
           </div>
           {scopeToggle}
         </div>
+        {filterChips}
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-sm text-gray-400">Er zijn geen items die direct aandacht vereisen.</p>
+          <p className="text-sm text-gray-400 text-center">
+            {activeFilters.size > 0 ? emptyFilterMessage : 'Er zijn geen items die direct aandacht vereisen.'}
+          </p>
         </div>
       </div>
     );
@@ -288,22 +316,7 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 mb-3 flex-shrink-0">
-        {ATTENTION_TYPES.map(({ key, label, color, activeColor }) => {
-          const count = typeCounts[key];
-          if (count === 0) return null;
-          const isActive = activeFilters.has(key);
-          return (
-            <button
-              key={key}
-              onClick={() => toggleFilter(key)}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${isActive ? activeColor : color}`}
-            >
-              {label} ({count})
-            </button>
-          );
-        })}
-      </div>
+      {filterChips}
 
       <div className="relative mb-3 flex-shrink-0">
         <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -318,8 +331,8 @@ const NeedsAttention: React.FC<NeedsAttentionProps> = ({ projects, userId }) => 
 
       <div className="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar">
         {filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-sm text-gray-500">
-            Geen items voor geselecteerde filters
+          <div className="flex items-center justify-center h-full text-sm text-gray-500 text-center">
+            {emptyFilterMessage}
           </div>
         ) : (
           filteredItems.map(item => (
