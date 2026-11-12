@@ -137,7 +137,7 @@ const Insights = () => {
           // Filter projects by location
           const beforeProjectFilter = projectsData?.length || 0;
           projectsData = projectsData?.filter((project: any) => {
-            const hasAccess = hasLocationAccess(project.location, currentUser.assignedLocations);
+            const hasAccess = hasLocationAccess(project.location, currentUser.assignedLocations, undefined, currentUser.username);
             if (!hasAccess) {
               console.log(`🌍 INSIGHTS FILTER: Hiding project ${project.project_number} (location: ${project.location || 'none'}) from user ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')}`);
             }

@@ -133,7 +133,7 @@ const Verdelers = () => {
           filteredDistributors = filteredDistributors.filter((distributor: any) => {
             const projectLocation = distributor.projects?.location;
             // Check if user has access to this location (with backward compatibility)
-            const hasAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations);
+            const hasAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations, undefined, currentUser.username);
 
             if (!hasAccess) {
               console.log(`🌍 VERDELERS FILTER: Hiding distributor ${distributor.distributor_id} (project location: ${projectLocation}) from user ${currentUser.username} - NO ACCESS`);

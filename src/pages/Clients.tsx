@@ -96,7 +96,7 @@ const Clients = () => {
           }
 
           // Check if user has access based on location (with backward compatibility)
-          const shouldShow = hasLocationAccess(client.location, currentUser.assignedLocations);
+          const shouldShow = hasLocationAccess(client.location, currentUser.assignedLocations, undefined, currentUser.username);
 
           if (!shouldShow) {
             console.log(`📍 CLIENTS LOCATION FILTER: Hiding client ${client.name} (location: ${client.location || 'NONE'}) from ${currentUser.username} with locations: ${currentUser.assignedLocations.join(', ')}`);

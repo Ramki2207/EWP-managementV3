@@ -240,7 +240,7 @@ const Dashboard = () => {
               return true;
             }
 
-            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations);
+            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations, currentUser.username);
             console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (location: ${project.location}) - Access: ${locationAccess}`);
             return locationAccess;
           });
@@ -616,7 +616,7 @@ const Dashboard = () => {
 
             // If project has a location, user must have access to that specific location
             // If project has no location, allow access (legacy projects)
-            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations);
+            const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations, currentUser.username);
 
             if (!locationAccess) {
               console.log(`🌍 DASHBOARD FILTER: Hiding project ${project.project_number} (location: ${project.location}) from user ${currentUser.username} - NO ACCESS`);
@@ -757,7 +757,7 @@ const Dashboard = () => {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
           filteredProjects = filteredProjects.filter((project: any) => {
             const projectLocation = project.location;
-            const locationAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations, project.project_shared_locations);
+            const locationAccess = hasLocationAccess(projectLocation, currentUser.assignedLocations, project.project_shared_locations, currentUser.username);
 
             console.log(`🌍 DASHBOARD FILTER: Project ${project.project_number} (${projectLocation}) - Access: ${locationAccess}`);
 

@@ -609,7 +609,7 @@ const Projects = () => {
         } else {
           // If project has a location, user must have access to that specific location
           // If project has no location, allow access (legacy projects)
-          const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations);
+          const locationAccess = hasLocationAccess(project.location, currentUser.assignedLocations, project.project_shared_locations, currentUser.username);
           console.log('🌍 FILTER: Location access check for', project.project_number, ':', locationAccess);
           console.log('🌍 FILTER: Project location:', project.location, 'User locations:', currentUser.assignedLocations);
           console.log('🌍 FILTER: Shared locations:', project.project_shared_locations);

@@ -21,10 +21,14 @@ export const getDisplayLocation = (location: string): string => {
  * - users with "Rotterdam" can see "Rotterdam (PR)" projects
  * Also checks if the project is shared with any of the user's locations
  */
+// These users only see their exact assigned locations, without the regional extras below
+const STRICT_LOCATION_USERS = ['Alec Werkhoven'];
+
 export const hasLocationAccess = (
   projectLocation: string | undefined,
   userAssignedLocations: string[] | undefined,
-  projectSharedLocations?: Array<{ location: string }>
+  projectSharedLocations?: Array<{ location: string }>,
+  username?: string
 ): boolean => {
   if (!projectLocation || !userAssignedLocations || userAssignedLocations.length === 0) {
     return true;
@@ -33,6 +37,10 @@ export const hasLocationAccess = (
   // Check for exact match with primary location
   if (userAssignedLocations.includes(projectLocation)) {
     return true;
+  }
+
+  if (username && STRICT_LOCATION_USERS.includes(username)) {
+    return hasSharedLocationAccess(userAssignedLocations, projectSharedLocations);
   }
 
   // Backward compatibility: if user has "Leerdam", they can see Leerdam (PM) projects
@@ -81,7 +89,13 @@ export const hasLocationAccess = (
     return true;
   }
 
-  // Check if project is shared with any of the user's locations
+  return hasSharedLocationAccess(userAssignedLocations, projectSharedLocations);
+};
+
+const hasSharedLocationAccess = (
+  userAssignedLocations: string[],
+  projectSharedLocations?: Array<{ location: string }>
+): boolean => {
   if (projectSharedLocations && projectSharedLocations.length > 0) {
     const sharedLocationNames = projectSharedLocations.map(sl => sl.location);
     console.log('🔍 SHARING: Checking shared locations:', sharedLocationNames, 'against user locations:', userAssignedLocations);
