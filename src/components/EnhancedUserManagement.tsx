@@ -77,7 +77,7 @@ const EnhancedUserManagement = () => {
         const mergedUsers: EnhancedUser[] = dbUsers.map((dbUser: any) => {
           const localUser = localById.get(dbUser.id);
           return localUser
-            ? { ...dbUser, ...localUser }
+            ? { ...dbUser, ...localUser, isActive: dbUser.is_active !== false }
             : {
                 ...dbUser,
                 permissions: dbUser.permissions || getDefaultPermissions(dbUser.role || 'standard_user'),

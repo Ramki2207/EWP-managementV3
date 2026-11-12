@@ -1363,10 +1363,13 @@ export const dataService = {
        role: updates.role,
        profile_picture: updates.profilePicture || updates.profile_picture,
       permissions: updates.permissions || {},
-      is_active: updates.isActive !== undefined ? updates.isActive : true,
       assigned_projects: updates.assigned_projects || [],
       assigned_clients: updates.assigned_clients || [],
       last_login: updates.lastLogin || updates.last_login || null
+     }
+
+     if (typeof updates.isActive === 'boolean') {
+       updateData.is_active = updates.isActive;
      }
 
      // Only add assigned_locations if the updates has it
