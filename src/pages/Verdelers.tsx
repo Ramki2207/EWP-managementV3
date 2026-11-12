@@ -4,7 +4,7 @@ import { Search, FolderOpen, Trash2, Server } from 'lucide-react';
 import toast from "react-hot-toast";
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
@@ -86,7 +86,7 @@ const Verdelers = () => {
         const beforeLogistiekFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const verdelerStatus = distributor.status;
-          const isInLevering = verdelerStatus === 'Levering';
+          const isInLevering = getLogistiekVisibleStatuses(currentUser?.username).includes(verdelerStatus);
 
           if (!isInLevering) {
             console.log(`📦 LOGISTIEK FILTER: Hiding distributor ${distributor.distributor_id} (status: ${verdelerStatus}) from logistiek ${currentUser.username} - NOT IN LEVERING`);

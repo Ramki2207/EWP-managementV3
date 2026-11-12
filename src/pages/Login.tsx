@@ -147,7 +147,7 @@ const Login: React.FC = () => {
       }
 
       // Check if user is blocked
-      if (user.isActive === false) {
+      if (user.isActive === false || user.is_active === false) {
         setError(true);
         setErrorMessage('Je account is geblokkeerd. Neem contact op met de beheerder.');
         return;

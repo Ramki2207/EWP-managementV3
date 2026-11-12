@@ -388,3 +388,7 @@ const TESTER_PROJECT_MANAGERS = ['Ricardo'];
 
 export const isTesterProjectManager = (username?: string): boolean =>
   !!username && TESTER_PROJECT_MANAGERS.includes(username);
+
+const LOGISTIEK_TESTEN_VIEWERS = ['Alec Werkhoven'];
+export const getLogistiekVisibleStatuses = (username?: string): string[] =>
+  username && LOGISTIEK_TESTEN_VIEWERS.includes(username) ? ['Levering', 'Testen'] : ['Levering'];

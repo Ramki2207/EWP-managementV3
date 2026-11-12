@@ -31,6 +31,7 @@ import VerlofMeldingen from "./pages/VerlofMeldingen";
 import PDFOptimizer from "./pages/PDFOptimizer";
 import { requestNotificationPermission, subscribeToNotifications, subscribeToTestingNotifications } from "./lib/notifications";
 import { projectLockManager } from "./lib/projectLocks";
+import { supabase } from "./lib/supabase";
 import { TabProvider } from "./contexts/TabContext";
 import { TabBar } from "./components/TabBar";
 import { preloadLogoImage } from "./lib/pdfUtils";
@@ -67,6 +68,23 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       projectLockManager.initialize();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    const userId = localStorage.getItem("currentUserId");
+    if (!isLoggedIn || !userId) return;
+    supabase
+      .from("users")
+      .select("is_active")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error || !data || data.is_active !== false) return;
+        localStorage.removeItem("loggedIn");
+        localStorage.removeItem("currentUserId");
+        localStorage.removeItem("role");
+        window.location.href = "/login";
+      });
+  }, [isLoggedIn, location.pathname]);
 
   return (
     <div className="flex min-h-screen">

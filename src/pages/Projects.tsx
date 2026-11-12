@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
@@ -269,9 +269,10 @@ const Projects = () => {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: Project) => {
           // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
-          const projectIsLevering = project.status === 'Levering';
+          const logistiekStatuses = getLogistiekVisibleStatuses(currentUser?.username);
+          const projectIsLevering = logistiekStatuses.includes(project.status);
           const hasVerdelersInLevering = project.distributors?.some(
-            (dist: any) => dist.status === 'Levering'
+            (dist: any) => logistiekStatuses.includes(dist.status)
           );
 
           const shouldShow = projectIsLevering || hasVerdelersInLevering;

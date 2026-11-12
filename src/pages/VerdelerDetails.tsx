@@ -16,7 +16,7 @@ import { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, getLogistiekVisibleStatuses } from '../types/userRoles';
 
 const VerdelerDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -227,7 +227,7 @@ const VerdelerDetails = () => {
       const distributors = await dataService.getDistributors();
       const foundDistributor = distributors.find((d: any) => d.id === id);
 
-      if (foundDistributor && currentUser?.role === 'logistiek' && foundDistributor.status !== 'Levering') {
+      if (foundDistributor && currentUser?.role === 'logistiek' && !getLogistiekVisibleStatuses(currentUser?.username).includes(foundDistributor.status)) {
         toast.error('Je hebt geen toegang tot deze verdeler');
         navigate('/verdelers');
         return;

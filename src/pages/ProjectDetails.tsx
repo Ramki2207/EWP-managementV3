@@ -22,6 +22,7 @@ import ProjectDocumentationPDF from '../components/ProjectDocumentationPDF';
 import VerdelerLeveringChecklist from '../components/VerdelerLeveringChecklist';
 import ProjectSharingModal from '../components/ProjectSharingModal';
 import CriticalMessageBanner from '../components/CriticalMessageBanner';
+import { getLogistiekVisibleStatuses } from '../types/userRoles';
 
 const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -216,7 +217,7 @@ const ProjectDetails = () => {
       if (foundProject && currentUser?.role === 'logistiek') {
         foundProject = {
           ...foundProject,
-          distributors: foundProject.distributors?.filter((d: any) => d.status === 'Levering') || []
+          distributors: foundProject.distributors?.filter((d: any) => getLogistiekVisibleStatuses(currentUser?.username).includes(d.status)) || []
         };
       }
 

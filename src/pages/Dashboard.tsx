@@ -6,7 +6,7 @@ import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
@@ -155,9 +155,10 @@ const Dashboard = () => {
         const beforeLogistiekFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
-          const projectIsLevering = project.status === 'Levering';
+          const logistiekStatuses = getLogistiekVisibleStatuses(currentUser?.username);
+          const projectIsLevering = logistiekStatuses.includes(project.status);
           const hasVerdelersInLevering = project.distributors?.some(
-            (dist: any) => dist.status === 'Levering'
+            (dist: any) => logistiekStatuses.includes(dist.status)
           );
 
           const shouldShow = projectIsLevering || hasVerdelersInLevering;
@@ -543,9 +544,10 @@ const Dashboard = () => {
         const beforeLogistiekFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           // Check if project status is "Levering" OR if project has any verdelers with status "Levering"
-          const projectIsLevering = project.status === 'Levering';
+          const logistiekStatuses = getLogistiekVisibleStatuses(currentUser?.username);
+          const projectIsLevering = logistiekStatuses.includes(project.status);
           const hasVerdelersInLevering = project.distributors?.some(
-            (dist: any) => dist.status === 'Levering'
+            (dist: any) => logistiekStatuses.includes(dist.status)
           );
 
           const shouldShow = projectIsLevering || hasVerdelersInLevering;
