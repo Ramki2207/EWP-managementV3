@@ -114,11 +114,25 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
       const usernameById: Record<string, string> = {};
       const roleByUsername: Record<string, string> = {};
-      allUsers.forEach(u => { usernameById[u.id] = u.username; roleByUsername[u.username] = u.role; });
+      const locationsByUsername: Record<string, string[]> = {};
+      allUsers.forEach(u => {
+        usernameById[u.id] = u.username;
+        roleByUsername[u.username] = u.role;
+        locationsByUsername[u.username] = u.assigned_locations || [];
+      });
+
+      const getAssigned = (d: any): string | null =>
+        d.toegewezen_monteur && d.toegewezen_monteur !== 'Vrij' ? d.toegewezen_monteur : null;
+
+      const isUtrechtRegionItem = (d: any, location: string | undefined): boolean => {
+        if (location && UTRECHT_REGION_LOCATIONS.includes(location)) return true;
+        const assigned = getAssigned(d);
+        return !!assigned && (locationsByUsername[assigned] || []).some(l => UTRECHT_REGION_LOCATIONS.includes(l));
+      };
 
       const getPlanner = (d: any, location: string | undefined): string | null => {
-        const assigned = d.toegewezen_monteur && d.toegewezen_monteur !== 'Vrij' ? d.toegewezen_monteur : null;
-        if (!location || !UTRECHT_REGION_LOCATIONS.includes(location)) return assigned;
+        const assigned = getAssigned(d);
+        if (!isUtrechtRegionItem(d, location)) return assigned;
         if (d.status === 'Levering') return UTRECHT_LEVERING;
         if (d.status === 'Testen') {
           const assignedCanTest = assigned && getPlanningRole(assigned, roleByUsername) !== 'bouwen';
@@ -128,7 +142,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       };
 
       const getRemainingHours = (d: any, location: string | undefined, actualHours: number): number => {
-        const inRegion = !!location && UTRECHT_REGION_LOCATIONS.includes(location);
+        const inRegion = isUtrechtRegionItem(d, location);
         if (inRegion && d.status === 'Levering') return LEVERING_HOURS;
         if (inRegion && d.status === 'Testen') return d.expected_testen_hours || DEFAULT_TEST_HOURS;
         return Math.max(0, (d.expected_hours || 0) - actualHours);
@@ -183,7 +197,14 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       setVerdelers(planningVerdelers);
 
       // Map overrides, converting daily_hours keys properly
-      const mappedOverrides: PlanningOverride[] = (overridesResult.data || []).map((o: any) => ({
+      // Manual placements made before an item was handed to the tester/delivery person no longer apply
+      const plannerById: Record<string, string> = {};
+      planningVerdelers.forEach(v => {
+        if (v.toegewezen_monteur !== v.assigned_monteur) plannerById[v.id] = v.toegewezen_monteur;
+      });
+      const mappedOverrides: PlanningOverride[] = (overridesResult.data || [])
+        .filter((o: any) => !plannerById[o.distributor_id] || plannerById[o.distributor_id] === o.monteur)
+        .map((o: any) => ({
         id: o.id,
         distributor_id: o.distributor_id,
         monteur: o.monteur,

@@ -76,13 +76,12 @@ export const PLANNING_ROLE_INFO: Record<PlanningRole, { label: string; badge: st
 
 // Explicit roles; anyone not listed falls back to their user role (tester -> testen, logistiek -> levering, else bouwen)
 export const PLANNING_ROLE_OVERRIDES: Record<string, PlanningRole> = {
-  'Zouhair Taha': 'bouwen_testen',
-  'Arjan Struik': 'bouwen_testen',
+  'Arjan Struik': 'bouwen',
   'Ibrahim Abdalla': 'testen',
   'Alec Werkhoven': 'levering',
 };
 
-// For these project locations, Testen work goes to the tester and Levering work to the delivery person
+// Projects at these locations, or monteurs based there, hand Testen work to the tester and Levering work to the delivery person
 export const UTRECHT_REGION_LOCATIONS = ['Leerdam', 'Leerdam (PM)', 'Utrecht'];
 export const UTRECHT_TESTER = 'Ibrahim Abdalla';
 export const UTRECHT_LEVERING = 'Alec Werkhoven';
