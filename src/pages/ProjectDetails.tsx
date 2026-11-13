@@ -280,6 +280,16 @@ const ProjectDetails = () => {
     setEditedProject({ ...project });
   };
 
+  const criticalMessageUpdate = () => {
+    const newMessage = editedProject?.critical_message?.trim() || null;
+    if (newMessage === (project?.critical_message || null)) return {};
+    return {
+      critical_message: newMessage,
+      critical_message_updated_at: newMessage ? new Date().toISOString() : null,
+      critical_message_updated_by: newMessage ? currentUser?.id : null
+    };
+  };
+
   const handleSave = async () => {
     if (!editedProject) return;
 
@@ -320,7 +330,8 @@ const ProjectDetails = () => {
         contactpersoon_achternaam: editedProject.contactpersoon_achternaam,
         contactpersoon_telefoon: editedProject.contactpersoon_telefoon,
         contactpersoon_email: editedProject.contactpersoon_email,
-        created_by: editedProject.created_by
+        created_by: editedProject.created_by,
+        ...criticalMessageUpdate()
       };
 
       await dataService.updateProject(editedProject.id, updateData);
@@ -1068,7 +1079,7 @@ const ProjectDetails = () => {
                   label: "Status",
                   field: "status",
                   type: "select",
-                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor facturatie", "Opgeleverd", "Verloren"]
+                  options: ["", "Intake", "Offerte", "Order", "Werkvoorbereiding", "Productie", "Testen", "Levering", "Gereed voor facturatie", "Opgeleverd", "Verloren", "Vervallen"]
                 },
                 {
                   label: "Aangemaakt door",
@@ -1076,6 +1087,7 @@ const ProjectDetails = () => {
                   type: "user_select"
                 },
                 { label: "Omschrijving", field: "description", type: "textarea", colSpan: 2 },
+                { label: "Kritische melding voor monteur", field: "critical_message", type: "textarea", colSpan: 2 },
                 { label: "Referentie EWP Paneelbouw", field: "referentie_ewp" },
                 { label: "Referentie klant", field: "referentie_klant" },
                 { label: "Afleveradres", field: "aflever_adres", colSpan: 2 },

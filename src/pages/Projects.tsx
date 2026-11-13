@@ -82,7 +82,7 @@ interface Project {
 const Projects = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
-  const { filterMode, isLocationVisible } = useLocationFilter();
+  const { isLocationVisible } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -571,7 +571,7 @@ const Projects = () => {
           currentUser?.username === 'Stefano de Weger' ||
           currentUser?.username === 'Chris Louwrier') {
         if (!isLocationVisible(project.location)) {
-          console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN FILTER MODE: ${filterMode}`);
+          console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN LOCATION FILTER`);
           return false;
         }
       }

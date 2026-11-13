@@ -14,7 +14,8 @@ import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import LogisticsCalendar from '../components/LogisticsCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
-import { useLocationFilter, LocationFilterMode } from '../contexts/LocationFilterContext';
+import { useLocationFilter } from '../contexts/LocationFilterContext';
+import LocationFilterDropdown from '../components/LocationFilterDropdown';
 import { isUsernameMatch } from '../lib/userAliases';
 import AdminDashboard from '../components/AdminDashboard';
 import ProductiePlanning from '../components/AdminDashboard/ProductiePlanning';
@@ -52,7 +53,7 @@ interface Notification {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
-  const { isLocationVisible, filterMode, setFilterMode } = useLocationFilter();
+  const { isLocationVisible, selectedGroups } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -474,10 +475,10 @@ const Dashboard = () => {
   // Separate effect to reload projects when filterMode changes
   useEffect(() => {
     if (currentUser) {
-      console.log('🔄 DASHBOARD: FilterMode changed, reloading projects...', filterMode);
+      console.log('🔄 DASHBOARD: Location filter changed, reloading projects...', selectedGroups);
       loadProjects();
     }
-  }, [filterMode]);
+  }, [selectedGroups]);
 
   const loadProjects = async () => {
     try {
@@ -594,7 +595,7 @@ const Dashboard = () => {
           }
           return true;
         });
-        console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (filterMode: ${filterMode})`);
+        console.log(`📍 LOCATION DASHBOARD FILTER (loadProjects): Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (locations: ${selectedGroups.join(', ') || 'all'})`);
       }
 
       // Skip assignedLocations filter for users who use the location dropdown filter
@@ -987,22 +988,21 @@ const Dashboard = () => {
     currentUser?.username === 'Stefano de Weger' ||
     currentUser?.username === 'Chris Louwrier'
   );
-  console.log('🎯 DASHBOARD RENDER: Filter mode =', filterMode);
 
   return (
     <div className="page-container">
       <Toaster position="top-right" />
 
       {/* Enhanced Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative">
         {/* Animated Background Pattern */}
-        <div className="absolute inset-0 opacity-10 hidden md:block">
+        <div className="absolute inset-0 opacity-10 hidden md:block overflow-hidden">
           <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse"></div>
           <div className="absolute top-0 right-0 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '2s' }}></div>
           <div className="absolute bottom-0 left-1/2 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl animate-pulse" style={{ animationDelay: '4s' }}></div>
         </div>
 
-        <div className="card mb-6 md:mb-8 relative">
+        <div className="card mb-6 md:mb-8 relative z-20">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6">
             {/* Welcome Section */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
@@ -1073,19 +1073,7 @@ const Dashboard = () => {
                       <span className="text-sm text-gray-300">
                         Locatie filter:
                       </span>
-                      <select
-                        value={filterMode}
-                        onChange={(e) => {
-                          setFilterMode(e.target.value as LocationFilterMode);
-                        }}
-                        className="bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="all">Alles</option>
-                        <option value="naaldwijk">Den Haag</option>
-                        <option value="rotterdam">Rotterdam</option>
-                        <option value="leerdam">Utrecht</option>
-                        <option value="arnhem">Arnhem</option>
-                      </select>
+                      <LocationFilterDropdown />
                     </div>
                   )}
                 </div>
@@ -2933,7 +2921,7 @@ const Dashboard = () => {
           <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-xl p-6">
             <h3 className="font-semibold text-purple-400 mb-4">Status Verdeling</h3>
             <div className="space-y-3">
-              {['Intake', 'Offerte', 'Order', 'Testen', 'Levering', 'Gereed voor facturatie', 'Opgeleverd', 'Verloren'].map((status) => {
+              {['Intake', 'Offerte', 'Order', 'Testen', 'Levering', 'Gereed voor facturatie', 'Opgeleverd', 'Verloren', 'Vervallen'].map((status) => {
                 const count = projects.filter(p => p.status?.toLowerCase() === status.toLowerCase()).length;
                 const percentage = projects.length > 0 ? (count / projects.length) * 100 : 0;
                 const colors = {
@@ -2944,7 +2932,8 @@ const Dashboard = () => {
                   'Levering': 'from-teal-500 to-teal-400',
                   'Gereed voor facturatie': 'from-cyan-500 to-cyan-400',
                   'Opgeleverd': 'from-green-500 to-green-400',
-                  'Verloren': 'from-red-500 to-red-400'
+                  'Verloren': 'from-red-500 to-red-400',
+                  'Vervallen': 'from-gray-500 to-gray-400'
                 };
                 
                 return (

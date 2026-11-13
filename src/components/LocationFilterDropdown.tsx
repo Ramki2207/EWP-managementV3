@@ -1,0 +1,72 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
+import { LOCATION_GROUP_OPTIONS, LocationGroup, useLocationFilter } from '../contexts/LocationFilterContext';
+
+const LocationFilterDropdown: React.FC = () => {
+  const { selectedGroups, setSelectedGroups } = useLocationFilter();
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const toggleGroup = (group: LocationGroup) => {
+    setSelectedGroups(
+      selectedGroups.includes(group)
+        ? selectedGroups.filter(g => g !== group)
+        : [...selectedGroups, group]
+    );
+  };
+
+  const summary = selectedGroups.length === 0
+    ? 'Alles'
+    : LOCATION_GROUP_OPTIONS.filter(o => selectedGroups.includes(o.value)).map(o => o.label).join(', ');
+
+  const optionClass = (active: boolean) =>
+    `w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors hover:bg-[#374151] ${active ? 'text-white' : 'text-gray-300'}`;
+
+  const checkbox = (active: boolean) => (
+    <span className={`flex items-center justify-center w-4 h-4 rounded border transition-colors ${active ? 'bg-blue-500 border-blue-500' : 'border-gray-500'}`}>
+      {active && <Check size={12} className="text-white" />}
+    </span>
+  );
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-2 bg-[#2A303C] text-white border border-gray-700 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-[220px]"
+      >
+        <span className="truncate">{summary}</span>
+        <ChevronDown size={14} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-2 w-48 bg-[#1e2530] border border-gray-700 rounded-lg shadow-xl py-1">
+          <button type="button" onClick={() => setSelectedGroups([])} className={optionClass(selectedGroups.length === 0)}>
+            {checkbox(selectedGroups.length === 0)}
+            Alles
+          </button>
+          <div className="border-t border-gray-700 my-1" />
+          {LOCATION_GROUP_OPTIONS.map(option => {
+            const active = selectedGroups.includes(option.value);
+            return (
+              <button key={option.value} type="button" onClick={() => toggleGroup(option.value)} className={optionClass(active)}>
+                {checkbox(active)}
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default LocationFilterDropdown;
