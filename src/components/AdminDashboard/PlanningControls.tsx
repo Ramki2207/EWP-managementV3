@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { ViewMode } from './planningTypes';
+import { ViewMode, PlanningRole, PLANNING_ROLE_ORDER, PLANNING_ROLE_INFO } from './planningTypes';
 
 interface PlanningControlsProps {
   currentDate: Date;
@@ -10,6 +10,7 @@ interface PlanningControlsProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   monteurs: string[];
+  monteurRoles: Record<string, PlanningRole>;
   selectedMonteur: string;
   onMonteurChange: (monteur: string) => void;
 }
@@ -20,6 +21,7 @@ const PlanningControls: React.FC<PlanningControlsProps> = ({
   viewMode,
   onViewModeChange,
   monteurs,
+  monteurRoles,
   selectedMonteur,
   onMonteurChange,
 }) => {
@@ -73,9 +75,17 @@ const PlanningControls: React.FC<PlanningControlsProps> = ({
           className="bg-[#161b24] border border-gray-700/50 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
         >
           <option value="all">Alle Monteurs</option>
-          {monteurs.map(m => (
-            <option key={m} value={m}>{m}</option>
-          ))}
+          {PLANNING_ROLE_ORDER.map(role => {
+            const members = monteurs.filter(m => monteurRoles[m] === role);
+            if (members.length === 0) return null;
+            return (
+              <optgroup key={role} label={PLANNING_ROLE_INFO[role].label}>
+                {members.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </optgroup>
+            );
+          })}
         </select>
 
         <div className="flex items-center gap-1 bg-[#1a1f2b] rounded-lg p-0.5">

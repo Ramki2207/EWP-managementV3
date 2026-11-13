@@ -151,8 +151,8 @@ export function autoSchedule(
         cursor = addDays(cursor, 1);
       }
     } else {
-      // Future deadline: schedule backward from deadline
-      let cursor = addDays(deadline, -1);
+      // Future deadline: schedule backward from deadline (deliveries happen on the deadline day itself)
+      let cursor = verdeler.status === 'Levering' ? new Date(deadline) : addDays(deadline, -1);
       const minDate = addDays(today, -30);
       while (hoursNeeded > 0 && cursor >= minDate) {
         if (!isWeekend(cursor)) {

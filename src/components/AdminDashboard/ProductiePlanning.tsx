@@ -3,7 +3,11 @@ import { startOfWeek, addDays, addWeeks, format, parseISO, differenceInCalendarD
 import { nl } from 'date-fns/locale';
 import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS, LeaveEntry, LeaveUpdate } from './planningTypes';
+import {
+  PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS, LeaveEntry, LeaveUpdate,
+  PlanningRole, PLANNING_ROLE_ORDER, PLANNING_ROLE_INFO, PLANNING_ROLE_OVERRIDES, UTRECHT_REGION_LOCATIONS, UTRECHT_TESTER,
+  UTRECHT_LEVERING, UTRECHT_TEAM, DEFAULT_TEST_HOURS, LEVERING_HOURS,
+} from './planningTypes';
 import { autoSchedule, calculateCapacityUsed, buildDailyHoursFromRange } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import PlanningControls from './PlanningControls';
@@ -31,6 +35,14 @@ const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
 
 const toLocalDate = (value: string) => parseISO(value.split('T')[0]);
 
+const getPlanningRole = (name: string, userRoles: Record<string, string>): PlanningRole => {
+  if (PLANNING_ROLE_OVERRIDES[name]) return PLANNING_ROLE_OVERRIDES[name];
+  const role = userRoles[name];
+  if (role === 'tester') return 'testen';
+  if (role === 'logistiek') return 'levering';
+  return 'bouwen';
+};
+
 const LEAVE_TYPE_LABELS: Record<string, string> = {
   vakantie: 'Vakantie',
   sick: 'Ziek',
@@ -49,7 +61,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [loading, setLoading] = useState(true);
   const [verdelers, setVerdelers] = useState<PlanningVerdeler[]>([]);
   const [overrides, setOverrides] = useState<PlanningOverride[]>([]);
-  const [users, setUsers] = useState<{ id: string; username: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; username: string; role: string }[]>([]);
   const [leaveDates, setLeaveDates] = useState<Record<string, Set<string>>>({});
   const [leaveInfo, setLeaveInfo] = useState<Record<string, string>>({});
   const [leaveEntries, setLeaveEntries] = useState<Record<string, LeaveEntry[]>>({});
@@ -84,7 +96,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           .from('distributors')
           .select(`
             id, distributor_id, kast_naam, toegewezen_monteur,
-            gewenste_lever_datum, expected_hours, status, project_id,
+            gewenste_lever_datum, expected_hours, expected_testen_hours, status, project_id,
             projects!inner (id, project_number, client, expected_delivery_date, location)
           `)
           .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
@@ -101,7 +113,26 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       setUsers(allUsers);
 
       const usernameById: Record<string, string> = {};
-      allUsers.forEach(u => { usernameById[u.id] = u.username; });
+      const roleByUsername: Record<string, string> = {};
+      allUsers.forEach(u => { usernameById[u.id] = u.username; roleByUsername[u.username] = u.role; });
+
+      const getPlanner = (d: any, location: string | undefined): string | null => {
+        const assigned = d.toegewezen_monteur && d.toegewezen_monteur !== 'Vrij' ? d.toegewezen_monteur : null;
+        if (!location || !UTRECHT_REGION_LOCATIONS.includes(location)) return assigned;
+        if (d.status === 'Levering') return UTRECHT_LEVERING;
+        if (d.status === 'Testen') {
+          const assignedCanTest = assigned && getPlanningRole(assigned, roleByUsername) !== 'bouwen';
+          return assignedCanTest ? assigned : UTRECHT_TESTER;
+        }
+        return assigned;
+      };
+
+      const getRemainingHours = (d: any, location: string | undefined, actualHours: number): number => {
+        const inRegion = !!location && UTRECHT_REGION_LOCATIONS.includes(location);
+        if (inRegion && d.status === 'Levering') return LEVERING_HOURS;
+        if (inRegion && d.status === 'Testen') return d.expected_testen_hours || DEFAULT_TEST_HOURS;
+        return Math.max(0, (d.expected_hours || 0) - actualHours);
+      };
 
       const hoursPerDistributor: Record<string, number> = {};
       (workResult.data || []).forEach((entry: any) => {
@@ -115,7 +146,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
       const planningVerdelers: PlanningVerdeler[] = (distResult.data || [])
         .filter((d: any) => {
-          if (!d.toegewezen_monteur || d.toegewezen_monteur === 'Vrij') return false;
+          if (!getPlanner(d, (d.projects as any)?.location)) return false;
           if (usesLocationFilter) {
             const project = d.projects as any;
             if (!isLocationVisible(project?.location)) return false;
@@ -138,12 +169,13 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             project_number: project?.project_number || '',
             project_id: d.project_id,
             client: project?.client || '',
-            toegewezen_monteur: d.toegewezen_monteur,
+            toegewezen_monteur: getPlanner(d, project?.location)!,
+            assigned_monteur: d.toegewezen_monteur || null,
             gewenste_lever_datum: d.gewenste_lever_datum?.split('T')[0] || null,
             project_delivery_date: project?.expected_delivery_date || null,
             expected_hours: expectedHours,
             actual_hours: actualHours,
-            remaining_hours: Math.max(0, expectedHours - actualHours),
+            remaining_hours: getRemainingHours(d, project?.location, actualHours),
             status: d.status,
           };
         });
@@ -228,11 +260,23 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  const monteurRoles = useMemo(() => {
+    const roleByUsername: Record<string, string> = {};
+    users.forEach(u => { roleByUsername[u.username] = u.role; });
+    const roles: Record<string, PlanningRole> = {};
+    const names = new Set<string>(verdelers.map(v => v.toegewezen_monteur));
+    const showUtrechtTeam = !LOCATION_FILTERED_USERS.includes(username) || isLocationVisible('Utrecht');
+    if (showUtrechtTeam) UTRECHT_TEAM.forEach(name => names.add(name));
+    names.forEach(name => { roles[name] = getPlanningRole(name, roleByUsername); });
+    return roles;
+  }, [verdelers, users, username, isLocationVisible]);
+
   const monteurList = useMemo(() => {
-    const set = new Set<string>();
-    verdelers.forEach(v => { if (v.toegewezen_monteur && v.toegewezen_monteur !== 'Vrij') set.add(v.toegewezen_monteur); });
-    return Array.from(set).sort();
-  }, [verdelers]);
+    return Object.keys(monteurRoles).sort((a, b) => {
+      const byRole = PLANNING_ROLE_ORDER.indexOf(monteurRoles[a]) - PLANNING_ROLE_ORDER.indexOf(monteurRoles[b]);
+      return byRole !== 0 ? byRole : a.localeCompare(b);
+    });
+  }, [monteurRoles]);
 
   const filteredMonteurs = useMemo(() => {
     if (selectedMonteur === 'all') return monteurList;
@@ -478,6 +522,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         monteurs={monteurList}
+        monteurRoles={monteurRoles}
         selectedMonteur={selectedMonteur}
         onMonteurChange={setSelectedMonteur}
       />
@@ -496,6 +541,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           <PlanningTimeline
             days={days}
             monteurs={filteredMonteurs}
+            monteurRoles={monteurRoles}
             blocks={filteredBlocks}
             capacityMap={capacityMap}
             leaveDates={leaveDates}
@@ -545,6 +591,18 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           <div className="w-3 h-3 rounded border border-white/20 bg-white/5 ring-1 ring-white/10" />
           <span className="text-[10px] text-gray-400">Handmatig ingepland ●</span>
         </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-4 mt-2">
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider">Rollen:</span>
+        {PLANNING_ROLE_ORDER.map(role => (
+          <div key={role} className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${PLANNING_ROLE_INFO[role].dot}`} />
+            <span className="text-[10px] text-gray-400">{PLANNING_ROLE_INFO[role].label}</span>
+          </div>
+        ))}
+        <span className="text-[10px] text-gray-500">
+          Utrecht: Testen gaat naar {UTRECHT_TESTER}, Levering naar {UTRECHT_LEVERING}
+        </span>
       </div>
 
       {showVerlofModal && (

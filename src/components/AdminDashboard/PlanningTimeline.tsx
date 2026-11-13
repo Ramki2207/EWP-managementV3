@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom';
 import { format, isToday, isWeekend } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { ScheduledBlock, MonteurDayCapacity } from './planningTypes';
+import { ScheduledBlock, MonteurDayCapacity, PlanningRole, PLANNING_ROLE_INFO } from './planningTypes';
 import { AlertTriangle, ThermometerSun, UserX, CheckCircle2, RotateCcw } from 'lucide-react';
 import { ActiveAbsence } from './ProductiePlanning';
 import PlanningDetailModal from './PlanningDetailModal';
@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 interface PlanningTimelineProps {
   days: Date[];
   monteurs: string[];
+  monteurRoles: Record<string, PlanningRole>;
   blocks: ScheduledBlock[];
   capacityMap: Record<string, MonteurDayCapacity>;
   leaveDates: Record<string, Set<string>>;
@@ -85,6 +86,7 @@ const ROW_PADDING = 8;   // top + bottom padding inside the row
 const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   days,
   monteurs,
+  monteurRoles,
   blocks,
   capacityMap,
   leaveDates,
@@ -570,7 +572,10 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
           })}
 
           {/* Monteur rows */}
-          {monteurs.map(monteur => {
+          {monteurs.map((monteur, monteurIdx) => {
+            const role = monteurRoles[monteur] || 'bouwen';
+            const roleInfo = PLANNING_ROLE_INFO[role];
+            const startsSection = monteurIdx === 0 || monteurRoles[monteurs[monteurIdx - 1]] !== role;
             const rowHeight = rowHeightForMonteur(monteur);
             const absence = getAbsenceForMonteur(monteur);
             const totalScheduled = dayStrings.reduce((s, ds) => s + getCapacity(monteur, ds).scheduledHours, 0);
@@ -581,12 +586,26 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
 
             return (
               <React.Fragment key={monteur}>
+                {startsSection && (
+                  <div
+                    className="border-b border-gray-700/40 bg-[#131820] px-3 py-1.5"
+                    style={{ gridColumn: '1 / -1' }}
+                  >
+                    <span className={`sticky left-3 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[10px] font-semibold uppercase tracking-wider ${roleInfo.badge}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${roleInfo.dot}`} />
+                      {roleInfo.label}
+                    </span>
+                  </div>
+                )}
                 {/* Label */}
                 <div
                   className="sticky left-0 z-10 bg-[#1A1F2C] border-b border-r border-gray-700/40 px-3 flex flex-col justify-center"
                   style={{ minHeight: rowHeight }}
                 >
-                  <p className="text-xs font-medium text-white truncate">{monteur}</p>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${roleInfo.dot}`} title={roleInfo.label} />
+                    <p className="text-xs font-medium text-white truncate">{monteur}</p>
+                  </div>
                   {absence ? (
                     <>
                       <div className={`mt-1 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${

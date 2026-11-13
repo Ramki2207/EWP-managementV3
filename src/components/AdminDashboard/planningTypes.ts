@@ -6,6 +6,7 @@ export interface PlanningVerdeler {
   project_id: string;
   client: string;
   toegewezen_monteur: string;
+  assigned_monteur: string | null;
   gewenste_lever_datum: string | null;
   project_delivery_date: string | null;
   expected_hours: number;
@@ -61,6 +62,34 @@ export interface DaySummary {
 export type ViewMode = 'week' | 'twoWeek' | 'month';
 
 export const PLANNING_EDITORS = ['Patrick Herman', 'Stefano de Weger', 'Lysander Koenraadt', 'Chris Louwrier', 'Sylvia Guth', 'Kevin van Veen'];
+
+export type PlanningRole = 'bouwen' | 'bouwen_testen' | 'testen' | 'levering';
+
+export const PLANNING_ROLE_ORDER: PlanningRole[] = ['bouwen', 'bouwen_testen', 'testen', 'levering'];
+
+export const PLANNING_ROLE_INFO: Record<PlanningRole, { label: string; badge: string; dot: string }> = {
+  bouwen:        { label: 'Monteurs - Bouwen',  badge: 'bg-blue-500/15 border-blue-500/30 text-blue-300',          dot: 'bg-blue-400' },
+  bouwen_testen: { label: 'Monteurs - Bouwen & Testen', badge: 'bg-sky-500/15 border-sky-500/30 text-sky-300',     dot: 'bg-sky-400' },
+  testen:        { label: 'Testers',            badge: 'bg-orange-500/15 border-orange-500/30 text-orange-300',    dot: 'bg-orange-400' },
+  levering:      { label: 'Levering',           badge: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300', dot: 'bg-emerald-400' },
+};
+
+// Explicit roles; anyone not listed falls back to their user role (tester -> testen, logistiek -> levering, else bouwen)
+export const PLANNING_ROLE_OVERRIDES: Record<string, PlanningRole> = {
+  'Zouhair Taha': 'bouwen_testen',
+  'Arjan Struik': 'bouwen_testen',
+  'Ibrahim Abdalla': 'testen',
+  'Alec Werkhoven': 'levering',
+};
+
+// For these project locations, Testen work goes to the tester and Levering work to the delivery person
+export const UTRECHT_REGION_LOCATIONS = ['Leerdam', 'Leerdam (PM)', 'Utrecht'];
+export const UTRECHT_TESTER = 'Ibrahim Abdalla';
+export const UTRECHT_LEVERING = 'Alec Werkhoven';
+export const UTRECHT_TEAM = ['Arjan Struik', UTRECHT_TESTER, UTRECHT_LEVERING];
+
+export const DEFAULT_TEST_HOURS = 4;
+export const LEVERING_HOURS = 2;
 
 export type LeaveSource = 'leave_requests' | 'vacation_requests' | 'employee_absences';
 
