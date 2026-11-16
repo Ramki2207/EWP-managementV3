@@ -235,7 +235,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
         const c = ghost.querySelector('[data-ghost-client]') as HTMLElement;
         const info = ghost.querySelector('[data-ghost-info]') as HTMLElement;
         const m = ghost.querySelector('[data-ghost-monteur]') as HTMLElement;
-        if (n) n.textContent = `${block.verdeler.project_number} – ${block.verdeler.kast_naam}`;
+        if (n) n.textContent = [block.verdeler.project_number, block.verdeler.kast_naam, block.verdeler.created_by_name].filter(Boolean).join(' – ');
         if (c) c.textContent = block.verdeler.client;
         if (info) info.textContent = `${block.verdeler.remaining_hours}u · ${block.verdeler.status}`;
         if (m) m.textContent = block.monteur;
@@ -422,6 +422,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
             >
               {block.verdeler.project_number}
               {block.verdeler.kast_naam ? ` – ${block.verdeler.kast_naam}` : ''}
+              {block.verdeler.created_by_name ? ` – ${block.verdeler.created_by_name}` : ''}
               {isManualBlock ? ' ·' : ''}
             </span>
             <span className="truncate leading-tight" style={{ fontSize: 9, color: `${colors.solid}99` }}>

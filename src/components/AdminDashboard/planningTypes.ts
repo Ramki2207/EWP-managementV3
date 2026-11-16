@@ -5,6 +5,7 @@ export interface PlanningVerdeler {
   project_number: string;
   project_id: string;
   client: string;
+  created_by_name: string | null;
   toegewezen_monteur: string;
   assigned_monteur: string | null;
   gewenste_lever_datum: string | null;

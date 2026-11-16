@@ -97,7 +97,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           .select(`
             id, distributor_id, kast_naam, toegewezen_monteur,
             gewenste_lever_datum, expected_hours, expected_testen_hours, status, project_id,
-            projects!inner (id, project_number, client, expected_delivery_date, location)
+            projects!inner (id, project_number, client, expected_delivery_date, location, creator:users!projects_created_by_fkey (username))
           `)
           .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
 
@@ -183,6 +183,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             project_number: project?.project_number || '',
             project_id: d.project_id,
             client: project?.client || '',
+            created_by_name: project?.creator?.username || null,
             toegewezen_monteur: getPlanner(d, project?.location)!,
             assigned_monteur: d.toegewezen_monteur || null,
             gewenste_lever_datum: d.gewenste_lever_datum?.split('T')[0] || null,
