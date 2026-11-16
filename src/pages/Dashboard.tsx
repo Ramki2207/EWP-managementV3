@@ -55,6 +55,19 @@ const Dashboard = () => {
   const { currentUser } = useEnhancedPermissions();
   const { isLocationVisible, selectedGroups } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [creatorNames, setCreatorNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    supabase.from('users').select('id, username').then(({ data, error }) => {
+      if (error) {
+        console.error('Error loading creator names:', error);
+        return;
+      }
+      const names: Record<string, string> = {};
+      (data || []).forEach(u => { names[u.id] = u.username; });
+      setCreatorNames(names);
+    });
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [clientFilter, setClientFilter] = useState('all');
@@ -1800,6 +1813,7 @@ const Dashboard = () => {
                 <th className="table-header text-left">Projectnummer</th>
                 <th className="table-header text-left">Datum</th>
                 <th className="table-header text-left">Klant</th>
+                <th className="table-header text-left">Aangemaakt door</th>
                 <th className="table-header text-left">Locatie</th>
                 <th className="table-header text-left">Status</th>
                 <th className="table-header text-left">Vergrendeling</th>
@@ -1839,6 +1853,9 @@ const Dashboard = () => {
                   </td>
                   <td className="py-4 text-gray-300">
                     {project.client || '-'}
+                  </td>
+                  <td className="py-4 text-gray-300">
+                    {(project.created_by && creatorNames[project.created_by]) || '-'}
                   </td>
                   <td className="py-4 text-gray-300">
                     {project.location || '-'}
