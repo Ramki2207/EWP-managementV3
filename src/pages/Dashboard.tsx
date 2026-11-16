@@ -1614,7 +1614,8 @@ const Dashboard = () => {
       {(effectiveRole === 'admin' ||
         effectiveRole === 'projectleider' ||
         currentUser?.username === 'Zouhair Taha' ||
-        currentUser?.username === 'Ibrahim Abdalla') && showTestReviewWidget && (
+        currentUser?.username === 'Ibrahim Abdalla' ||
+        currentUser?.username === 'Arjan Struik') && showTestReviewWidget && (
         <div className="mb-8">
           <TestReviewNotifications />
         </div>

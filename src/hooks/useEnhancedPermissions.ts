@@ -88,8 +88,8 @@ export const useEnhancedPermissions = () => {
       return true;
     }
 
-    // Special access for Zouhair Taha and Ibrahim Abdalla - montage + tester role
-    if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla') {
+    // Special access for Zouhair Taha, Ibrahim Abdalla and Arjan Struik - montage + tester role
+    if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Arjan Struik') {
       // Grant tester permissions
       if (module === 'projects' && (permission === 'update' || permission === 'read' || permission === 'approve')) {
         console.log(`✅ PERMISSION: ${currentUser.username} - special tester access granted for`, module, permission);
@@ -183,8 +183,8 @@ export const useEnhancedPermissions = () => {
       };
     }
 
-    // Special access for Zouhair Taha and Ibrahim Abdalla - montage + tester role
-    if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla') {
+    // Special access for Zouhair Taha, Ibrahim Abdalla and Arjan Struik - montage + tester role
+    if (currentUser.username === 'Zouhair Taha' || currentUser.username === 'Ibrahim Abdalla' || currentUser.username === 'Arjan Struik') {
       if (module === 'projects') {
         return {
           create: false,
