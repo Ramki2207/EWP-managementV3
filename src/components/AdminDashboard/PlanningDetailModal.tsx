@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, ExternalLink, Clock, Calendar, User, MapPin, AlertTriangle, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, Clock, Calendar, User, UserPlus, MapPin, AlertTriangle, ChevronRight } from 'lucide-react';
 import { format, differenceInCalendarDays, isPast, parseISO } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { supabase } from '../../lib/supabase';
@@ -202,6 +202,12 @@ const PlanningDetailModal: React.FC<PlanningDetailModalProps> = ({ block, monteu
                   label="Locatie"
                   value={projectInfo?.location || '-'}
                   color="text-teal-400"
+                />
+                <InfoCard
+                  icon={<UserPlus size={14} />}
+                  label="Aangemaakt door"
+                  value={block.verdeler.created_by_name || '-'}
+                  color="text-sky-400"
                 />
                 <InfoCard
                   icon={<Calendar size={14} />}
