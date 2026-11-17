@@ -129,6 +129,7 @@ export const dataService = {
             fabrikant,
             profile_photo,
             status,
+            toegewezen_tester,
             created_at,
             toegewezen_monteur,
             gewenste_lever_datum,
@@ -520,6 +521,13 @@ export const dataService = {
       console.error('Network error in updateDistributorStatusByProject:', err);
       throw new Error(`Failed to update distributor statuses: ${getErrorMessage(err)}`);
     }
+  },
+
+  async setDistributorTester(target: { distributorId: string } | { projectId: string }, tester: string | null) {
+    let query = supabase.from('distributors').update({ toegewezen_tester: tester });
+    query = 'distributorId' in target ? query.eq('id', target.distributorId) : query.eq('project_id', target.projectId);
+    const { error } = await query;
+    if (error) throw new Error(`Failed to set tester: ${getErrorMessage(error)}`);
   },
 
   async deleteDistributor(id: string) {

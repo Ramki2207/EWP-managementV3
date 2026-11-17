@@ -237,6 +237,11 @@ const VerdelerPreTestingApproval: React.FC<VerdelerPreTestingApprovalProps> = ({
         data: reviewData
       });
 
+      await dataService.setDistributorTester(
+        { distributorId: distributor.id },
+        approvalData.overallApproval ? currentUser?.username || null : null
+      );
+
       if (approvalData.overallApproval) {
         toast.success('Verdeler goedgekeurd voor testfase!');
         if (onApprove) onApprove();

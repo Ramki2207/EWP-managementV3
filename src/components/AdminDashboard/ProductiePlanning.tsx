@@ -5,7 +5,7 @@ import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList, Truck } 
 import { supabase } from '../../lib/supabase';
 import {
   PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS, LeaveEntry, LeaveUpdate,
-  PlanningRole, PLANNING_ROLE_ORDER, PLANNING_ROLE_INFO, PLANNING_ROLE_OVERRIDES, UTRECHT_REGION_LOCATIONS, UTRECHT_TESTER,
+  PlanningRole, PLANNING_ROLE_ORDER, PLANNING_ROLE_INFO, PLANNING_ROLE_OVERRIDES, UTRECHT_REGION_LOCATIONS,
   UTRECHT_LEVERING, UTRECHT_TEAM, DEFAULT_TEST_HOURS, LEVERING_HOURS,
   Buitenklus, BuitenklusInput, DayMarker, DEFAULT_WORK_DAYS,
 } from './planningTypes';
@@ -102,7 +102,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         supabase
           .from('distributors')
           .select(`
-            id, distributor_id, kast_naam, toegewezen_monteur,
+            id, distributor_id, kast_naam, toegewezen_monteur, toegewezen_tester,
             gewenste_lever_datum, expected_hours, expected_testen_hours, status, project_id,
             projects!inner (id, project_number, client, expected_delivery_date, location, creator:users!projects_created_by_fkey (username))
           `)
@@ -150,13 +150,17 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         return !!assigned && (locationsByUsername[assigned] || []).some(l => UTRECHT_REGION_LOCATIONS.includes(l));
       };
 
+      // Testen items only reach a tester once that tester approved the pre-checklist
       const getPlanner = (d: any, location: string | undefined): string | null => {
         const assigned = getAssigned(d);
+        if (d.status === 'Testen' && d.toegewezen_tester && getPlanningRole(d.toegewezen_tester, roleByUsername) === 'testen') {
+          return d.toegewezen_tester;
+        }
         if (!isUtrechtRegionItem(d, location)) return assigned;
         if (d.status === 'Levering') return UTRECHT_LEVERING;
         if (d.status === 'Testen') {
           const assignedCanTest = assigned && getPlanningRole(assigned, roleByUsername) !== 'bouwen';
-          return assignedCanTest ? assigned : UTRECHT_TESTER;
+          return assignedCanTest ? assigned : null;
         }
         return assigned;
       };
@@ -164,7 +168,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       const getRemainingHours = (d: any, location: string | undefined, actualHours: number): number => {
         const inRegion = isUtrechtRegionItem(d, location);
         if (inRegion && d.status === 'Levering') return LEVERING_HOURS;
-        if (inRegion && d.status === 'Testen') return d.expected_testen_hours || DEFAULT_TEST_HOURS;
+        if ((inRegion || d.toegewezen_tester) && d.status === 'Testen') return d.expected_testen_hours || DEFAULT_TEST_HOURS;
         return Math.max(0, (d.expected_hours || 0) - actualHours);
       };
 
@@ -761,7 +765,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           </div>
         ))}
         <span className="text-[10px] text-gray-500">
-          Utrecht: Testen gaat naar {UTRECHT_TESTER}, Levering naar {UTRECHT_LEVERING}
+          Testen gaat naar de tester die de pre-checklist heeft goedgekeurd. Utrecht: Levering naar {UTRECHT_LEVERING}
         </span>
       </div>
 

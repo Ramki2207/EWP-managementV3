@@ -19,6 +19,7 @@ import LocationFilterDropdown from '../components/LocationFilterDropdown';
 import { isUsernameMatch } from '../lib/userAliases';
 import AdminDashboard from '../components/AdminDashboard';
 import ProductiePlanning from '../components/AdminDashboard/ProductiePlanning';
+import TesterWorkboard from '../components/TesterWorkboard';
 import { PLANNING_EDITORS } from '../components/AdminDashboard/planningTypes';
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid,
@@ -1115,6 +1116,15 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {effectiveRole === 'tester' && !isTesterPM && (
+        <TesterWorkboard
+          pendingApprovals={pendingApprovals}
+          projects={projects}
+          currentUser={currentUser}
+          onChanged={loadData}
+        />
+      )}
+
       {/* Concept Projects Banner */}
         <div className="mx-4 md:mx-8 mb-4 md:mb-6 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -1521,7 +1531,7 @@ const Dashboard = () => {
       )}
 
       {/* Approval Status Alerts - Hidden for Logistiek users */}
-      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && showPreTestingWidget && (
+      {pendingApprovals.length > 0 && currentUser?.role !== 'logistiek' && effectiveRole !== 'tester' && showPreTestingWidget && (
         <div className="card p-6 mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2 bg-orange-500/20 rounded-lg">

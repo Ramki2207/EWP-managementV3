@@ -162,6 +162,11 @@ const VerdelerChecklistWindow: React.FC<VerdelerChecklistWindowProps> = ({
         data: reviewData
       });
 
+      await dataService.setDistributorTester(
+        { distributorId: distributor.id },
+        approvalData.overallApproval ? currentUser?.username || null : null
+      );
+
       if (approvalData.overallApproval) {
         toast.success('Verdeler goedgekeurd voor testfase!');
       } else {

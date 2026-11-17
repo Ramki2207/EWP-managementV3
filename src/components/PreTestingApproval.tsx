@@ -242,6 +242,11 @@ const PreTestingApproval: React.FC<PreTestingApprovalProps> = ({
         data: reviewData
       });
 
+      await dataService.setDistributorTester(
+        { projectId: project.id },
+        approvalData.overallApproval ? currentUser?.username || null : null
+      );
+
       if (approvalData.overallApproval) {
         toast.success('Project goedgekeurd voor testfase!');
         onApprove();
