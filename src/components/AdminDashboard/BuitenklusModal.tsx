@@ -5,6 +5,7 @@ import { supabase, dataService } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { Buitenklus, BuitenklusInput } from './planningTypes';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
+import ClientSearchSelect from '../ClientSearchSelect';
 
 interface PlanningUser {
   id: string;
@@ -66,7 +67,7 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
     const { id: _id, created_by: _createdBy, ...rest } = buitenklus;
     return rest;
   });
-  const [clientNames, setClientNames] = useState<string[]>([]);
+  const [clients, setClients] = useState<{ id: string; name: string; email?: string; phone?: string }[]>([]);
   const [users, setUsers] = useState<PlanningUser[]>([]);
   const [usersStatus, setUsersStatus] = useState<'loading' | 'error' | 'ready'>('loading');
   const { getFilteredLocations } = useLocationFilter();
@@ -102,7 +103,9 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
 
   useEffect(() => {
     dataService.getClients()
-      .then((clients: any[]) => setClientNames((clients || []).map(c => c.name).filter(Boolean).sort()))
+      .then((data: any[]) => setClients((data || [])
+        .filter(c => c?.id && c?.name)
+        .map(c => ({ id: c.id, name: c.name, email: c.email || undefined, phone: c.telefoonnummer || c.phone || undefined }))))
       .catch(err => console.error('Error loading clients:', err));
   }, []);
 
@@ -178,10 +181,12 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
           <Section icon={<MapPin size={13} />} title="Klant & locatie">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Klant" required>
-                <input list="buitenklus-clients" value={form.client} onChange={e => set('client', e.target.value)} placeholder="Zoek of typ een klant" className={inputClass} />
-                <datalist id="buitenklus-clients">
-                  {clientNames.map(name => <option key={name} value={name} />)}
-                </datalist>
+                <ClientSearchSelect
+                  clients={clients}
+                  selectedClientName={form.client}
+                  onSelect={name => set('client', name)}
+                  placeholder="Zoek en selecteer een klant..."
+                />
               </Field>
               <Field label="Projectnummer">
                 <input value={form.project_number} onChange={e => set('project_number', e.target.value)} placeholder="Optioneel" className={inputClass} />
