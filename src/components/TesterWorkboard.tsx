@@ -26,6 +26,7 @@ type ReviewItem =
 interface TesterWorkboardProps {
   pendingApprovals: PendingApproval[];
   pendingProjectApprovals: PendingProjectApproval[];
+  approvalsLoaded: boolean;
   projects: any[];
   currentUser: any;
   onChanged: () => void;
@@ -34,7 +35,7 @@ interface TesterWorkboardProps {
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }) : '';
 
-const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pendingProjectApprovals, projects, currentUser, onChanged }) => {
+const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pendingProjectApprovals, approvalsLoaded, projects, currentUser, onChanged }) => {
   const navigate = useNavigate();
   const [reviewing, setReviewing] = useState<ReviewItem | null>(null);
 
@@ -104,11 +105,17 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pen
             </div>
           </div>
           <span className="min-w-[2rem] text-center px-2.5 py-1 rounded-full text-sm font-semibold bg-amber-500/15 text-amber-300">
-            {submitted.length}
+            {approvalsLoaded ? submitted.length : '–'}
           </span>
         </header>
 
-        {submitted.length === 0 ? (
+        {!approvalsLoaded ? (
+          <div className="space-y-2" aria-busy="true" aria-label="Aanvragen worden geladen">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="h-[68px] rounded-lg border border-amber-500/10 bg-amber-500/5 animate-pulse" />
+            ))}
+          </div>
+        ) : submitted.length === 0 ? (
           <EmptyState text="Geen nieuwe aanvragen. Zodra een monteur een pre-checklist indient, verschijnt die hier." />
         ) : (
           <ul className="space-y-2">

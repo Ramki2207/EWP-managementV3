@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, Plus, LogOut, HelpCircle, FolderOpen, Upload, AlertCircle, CheckCircle2, Clock, Trash2, Filter, Calendar, X, TrendingUp, BarChart3, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
@@ -84,6 +84,8 @@ const Dashboard = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [pendingProjectApprovals, setPendingProjectApprovals] = useState<any[]>([]);
+  const [approvalsLoaded, setApprovalsLoaded] = useState(false);
+  const approvalsRunRef = useRef(0);
   const [conceptProjectCount, setConceptProjectCount] = useState(0);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
@@ -343,118 +345,80 @@ const Dashboard = () => {
   };
 
   const checkPendingApprovals = async (projectList: any[]) => {
-    const approvals = [];
-
-    // Determine if current user can see all approvals
-    const isAdmin = currentUser?.role === 'admin';
+    const runId = ++approvalsRunRef.current;
     const isTester = effectiveRole === 'tester';
-    const canSeeAll = isAdmin || isTester;
+    const canSeeAll = currentUser?.role === 'admin' || isTester;
 
-    console.log('👁️ Pre-Testing Approvals Filter:', {
-      username: currentUser?.username,
-      role: currentUser?.role,
-      effectiveRole,
-      canSeeAll,
-      isAdmin,
-      isTester
+    const inTesting = (status?: string) => status?.toLowerCase() === 'testen';
+    const relevantProjects = projectList.filter((project: any) =>
+      inTesting(project.status) || project.distributors?.some((d: any) => inTesting(d.status))
+    );
+    const distributorIds = relevantProjects.flatMap((project: any) => (project.distributors || []).map((d: any) => d.id));
+
+    let rows: any[];
+    try {
+      rows = distributorIds.length
+        ? await dataService.getTestDataForDistributors(distributorIds, ['verdeler_pre_testing_approval', 'pre_testing_approval'])
+        : [];
+    } catch (error) {
+      console.error('Error loading pre-testing approvals:', error);
+      if (runId === approvalsRunRef.current) setApprovalsLoaded(true);
+      return;
+    }
+
+    // Rows are newest first, so the first match per key is the latest record.
+    const latest = new Map<string, any>();
+    rows.forEach(row => {
+      const key = `${row.distributor_id}:${row.test_type}`;
+      if (!latest.has(key)) latest.set(key, row);
     });
+    const isWaiting = (approvalData: any) => approvalData?.status === 'submitted' && !approvalData.reviewedAt;
 
-    for (const project of projectList) {
-      if (project.distributors?.length > 0) {
-        // Check ALL distributors that are in 'testen' status
-        for (const distributor of project.distributors) {
-          // Only check distributors with status 'testen'
-          if (distributor.status?.toLowerCase() !== 'testen') {
-            continue;
-          }
+    const approvals: any[] = [];
+    const projectApprovals: any[] = [];
 
-          try {
-            const testData = await dataService.getTestData(distributor.id);
-            const approvalRecord = testData?.find((data: any) => data.test_type === 'verdeler_pre_testing_approval');
-
-            if (approvalRecord && approvalRecord.data.approvalData) {
-              const approvalData = approvalRecord.data.approvalData;
-
-              // Only show items that are waiting for review (status = 'submitted' and not yet reviewed)
-              if (approvalData.status === 'submitted' && !approvalData.reviewedAt) {
-                // Filter based on user permissions
-                const submittedBy = approvalData.submittedBy;
-                const isOwnSubmission = submittedBy === currentUser?.username;
-
-                // Show if: user can see all OR it's their own submission
-                if (canSeeAll || isOwnSubmission) {
-                  console.log('✅ Showing approval:', {
-                    project: project.project_number,
-                    distributor: distributor.distributor_id,
-                    submittedBy,
-                    reason: canSeeAll ? 'Can see all' : 'Own submission'
-                  });
-
-                  approvals.push({
-                    project,
-                    distributor,
-                    status: 'submitted',
-                    submittedBy: approvalData.submittedBy,
-                    submittedAt: approvalData.submittedAt
-                  });
-                } else {
-                  console.log('❌ Hiding approval:', {
-                    project: project.project_number,
-                    distributor: distributor.distributor_id,
-                    submittedBy,
-                    currentUser: currentUser?.username
-                  });
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error checking approval for distributor:', distributor.distributor_id, error);
-          }
-        }
-      }
-    }
-
-    console.log(`📋 Total approvals visible: ${approvals.length}`);
-    setPendingApprovals(approvals);
-
-    if (isTester) {
-      setPendingProjectApprovals(await findPendingProjectApprovals(projectList));
-    }
-  };
-
-  const findPendingProjectApprovals = async (projectList: any[]) => {
-    const results: any[] = [];
-    for (const project of projectList) {
+    relevantProjects.forEach((project: any) => {
       const distributors = project.distributors || [];
-      const inTesting = project.status?.toLowerCase() === 'testen' ||
-        distributors.some((d: any) => d.status?.toLowerCase() === 'testen');
-      if (!inTesting) continue;
 
-      let latest: { record: any; holder: any } | null = null;
-      for (const distributor of distributors) {
-        try {
-          const testData = await dataService.getTestData(distributor.id);
-          const record = testData?.find((d: any) => d.test_type === 'pre_testing_approval');
-          if (record && (!latest || new Date(record.created_at) > new Date(latest.record.created_at))) {
-            latest = { record, holder: distributor };
-          }
-        } catch (error) {
-          console.error('Error checking project approval for distributor:', distributor.distributor_id, error);
+      distributors.forEach((distributor: any) => {
+        if (!inTesting(distributor.status)) return;
+        const approvalData = latest.get(`${distributor.id}:verdeler_pre_testing_approval`)?.data?.approvalData;
+        if (!isWaiting(approvalData)) return;
+        if (!canSeeAll && approvalData.submittedBy !== currentUser?.username) return;
+        approvals.push({
+          project,
+          distributor,
+          status: 'submitted',
+          submittedBy: approvalData.submittedBy,
+          submittedAt: approvalData.submittedAt
+        });
+      });
+
+      if (!isTester) return;
+      let newest: { record: any; holder: any } | null = null;
+      distributors.forEach((distributor: any) => {
+        const record = latest.get(`${distributor.id}:pre_testing_approval`);
+        if (record && (!newest || new Date(record.created_at) > new Date(newest.record.created_at))) {
+          newest = { record, holder: distributor };
         }
-      }
-
-      const approvalData = latest?.record.data?.approvalData;
-      if (latest && approvalData?.status === 'submitted' && !approvalData.reviewedAt) {
+      });
+      const projectApproval = newest as { record: any; holder: any } | null;
+      const approvalData = projectApproval?.record.data?.approvalData;
+      if (projectApproval && isWaiting(approvalData)) {
         // The approval form reads its record from the first distributor, so put the holder first.
-        const holder = latest.holder;
-        results.push({
+        const holder = projectApproval.holder;
+        projectApprovals.push({
           project: { ...project, distributors: [holder, ...distributors.filter((d: any) => d.id !== holder.id)] },
           submittedBy: approvalData.submittedBy,
           submittedAt: approvalData.submittedAt
         });
       }
-    }
-    return results;
+    });
+
+    if (runId !== approvalsRunRef.current) return;
+    setPendingApprovals(approvals);
+    setPendingProjectApprovals(projectApprovals);
+    setApprovalsLoaded(true);
   };
 
   const loadConceptCount = async () => {
@@ -1162,6 +1126,7 @@ const Dashboard = () => {
         <TesterWorkboard
           pendingApprovals={pendingApprovals}
           pendingProjectApprovals={pendingProjectApprovals}
+          approvalsLoaded={approvalsLoaded}
           projects={projects}
           currentUser={currentUser}
           onChanged={() => loadData(true)}

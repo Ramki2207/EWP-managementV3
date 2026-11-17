@@ -875,6 +875,24 @@ export const dataService = {
     }
   },
 
+  async getTestDataForDistributors(distributorIds: string[], testTypes: string[]) {
+    const rows: any[] = [];
+    for (let i = 0; i < distributorIds.length; i += 100) {
+      const { data, error } = await supabase
+        .from('test_data')
+        .select('*')
+        .in('distributor_id', distributorIds.slice(i, i + 100))
+        .in('test_type', testTypes)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Database error in getTestDataForDistributors:', error);
+        throw new Error(`Failed to fetch test data: ${getErrorMessage(error)}`);
+      }
+      rows.push(...(data || []));
+    }
+    return rows;
+  },
+
   async createTestData(testData: any) {
     try {
       const { data, error } = await supabase
