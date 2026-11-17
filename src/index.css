@@ -343,3 +343,20 @@ label,
     page-break-inside: avoid;
   }
 }
+@keyframes tester-loading-slide {
+  0% { left: -33%; }
+  100% { left: 100%; }
+}
+
+.tester-loading-bar {
+  animation: tester-loading-slide 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tester-loading-bar {
+    animation: none;
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+}

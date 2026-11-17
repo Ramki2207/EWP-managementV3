@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardCheck, FlaskConical, ChevronRight, Inbox } from 'lucide-react';
+import { ClipboardCheck, FlaskConical, ChevronRight, Inbox, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
@@ -105,12 +105,19 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pen
             </div>
           </div>
           <span className="min-w-[2rem] text-center px-2.5 py-1 rounded-full text-sm font-semibold bg-amber-500/15 text-amber-300">
-            {approvalsLoaded ? submitted.length : '–'}
+            {approvalsLoaded ? submitted.length : <Loader2 size={14} className="inline animate-spin" />}
           </span>
         </header>
 
         {!approvalsLoaded ? (
-          <div className="space-y-2" aria-busy="true" aria-label="Aanvragen worden geladen">
+          <div className="space-y-2" role="status" aria-busy="true">
+            <div className="flex items-center gap-2 text-sm text-amber-200">
+              <Loader2 size={16} className="animate-spin text-amber-400" />
+              Ingediende pre-checklists worden geladen...
+            </div>
+            <div className="relative h-1 mb-3 overflow-hidden rounded-full bg-amber-500/10">
+              <div className="tester-loading-bar absolute inset-y-0 w-1/3 rounded-full bg-amber-400" />
+            </div>
             {[0, 1, 2].map(i => (
               <div key={i} className="h-[68px] rounded-lg border border-amber-500/10 bg-amber-500/5 animate-pulse" />
             ))}
