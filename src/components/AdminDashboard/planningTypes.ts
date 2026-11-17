@@ -109,6 +109,7 @@ export interface Buitenklus {
   id: string;
   client: string;
   project_number: string;
+  project_manager: string;
   location: string;
   contact_person: string;
   contact_phone: string;
@@ -125,11 +126,13 @@ export interface Buitenklus {
 
 export type BuitenklusInput = Omit<Buitenklus, 'id' | 'created_by'>;
 
+export const PROJECT_MANAGERS = ['Stefano de Weger', 'Patrick Herman', 'Kevin van Veen'];
+
 // Non-production days shown in the planning grid; they block capacity like leave does
 export interface DayMarker {
   kind: 'vrij' | 'buitenklus';
   label: string;
-  buitenklusId?: string;
+  buitenklus?: Buitenklus;
 }
 
 export const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];

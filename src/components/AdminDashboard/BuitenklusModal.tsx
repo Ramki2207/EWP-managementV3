@@ -3,7 +3,7 @@ import { X, Truck, Check, Trash2, AlertCircle, MapPin, User, Calendar, Clipboard
 import { addDays, format, parseISO } from 'date-fns';
 import { supabase, dataService } from '../../lib/supabase';
 import toast from 'react-hot-toast';
-import { Buitenklus, BuitenklusInput } from './planningTypes';
+import { Buitenklus, BuitenklusInput, PROJECT_MANAGERS } from './planningTypes';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
 import ClientSearchSelect from '../ClientSearchSelect';
 
@@ -37,7 +37,7 @@ const inputClass =
 const today = format(new Date(), 'yyyy-MM-dd');
 
 const emptyForm = (): BuitenklusInput => ({
-  client: '', project_number: '', location: '', contact_person: '', contact_phone: '',
+  client: '', project_number: '', project_manager: '', location: '', contact_person: '', contact_phone: '',
   monteurs: [], start_date: today, end_date: today, start_time: '07:30', transport: 'Bedrijfsbus',
   description: '', materials: '', notes: '',
 });
@@ -65,7 +65,7 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
   const [form, setForm] = useState<BuitenklusInput>(() => {
     if (!buitenklus) return emptyForm();
     const { id: _id, created_by: _createdBy, ...rest } = buitenklus;
-    return rest;
+    return { ...rest, project_manager: rest.project_manager || '' };
   });
   const [clients, setClients] = useState<{ id: string; name: string; email?: string; phone?: string }[]>([]);
   const [users, setUsers] = useState<PlanningUser[]>([]);
@@ -164,8 +164,8 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
       <div className="bg-[#1A1F2C] border border-gray-700/50 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700/40">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-sky-500/15 rounded-lg">
-              <Truck size={18} className="text-sky-400" />
+            <div className="p-2 bg-yellow-400/15 rounded-lg">
+              <Truck size={18} className="text-yellow-300" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-white">{buitenklus ? 'Buitenklus bewerken' : 'Buitenklus inplannen'}</h2>
@@ -191,11 +191,15 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
               <Field label="Projectnummer">
                 <input value={form.project_number} onChange={e => set('project_number', e.target.value)} placeholder="Optioneel" className={inputClass} />
               </Field>
-              <div className="sm:col-span-2">
-                <Field label="Werklocatie / adres">
+              <Field label="Projectmanager">
+                <select value={form.project_manager} onChange={e => set('project_manager', e.target.value)} className={inputClass}>
+                  <option value="">Kies een projectmanager</option>
+                  {PROJECT_MANAGERS.map(pm => <option key={pm} value={pm}>{pm}</option>)}
+                </select>
+              </Field>
+              <Field label="Werklocatie / adres">
                   <input value={form.location} onChange={e => set('location', e.target.value)} placeholder="Straat, plaats" className={inputClass} />
                 </Field>
-              </div>
               <Field label="Contactpersoon op locatie">
                 <input value={form.contact_person} onChange={e => set('contact_person', e.target.value)} className={inputClass} />
               </Field>
@@ -251,7 +255,7 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByL
                             onClick={() => toggleMonteur(u.username)}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
                               selected
-                                ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
+                                ? 'bg-yellow-400/15 border-yellow-400/50 text-yellow-200'
                                 : 'bg-gray-800/30 border-gray-700/40 text-gray-400 hover:border-gray-600/60 hover:text-gray-200'
                             }`}
                           >

@@ -326,8 +326,14 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         klus.monteurs.forEach(name => {
           markers[`${name}:${dateStr}`] = {
             kind: 'buitenklus',
-            label: `Buitenklus: ${klus.client}${klus.location ? ` - ${klus.location}` : ''}`,
-            buitenklusId: klus.id,
+            label: [
+              `Buitenklus: ${klus.client}`,
+              klus.project_number && `Project: ${klus.project_number}`,
+              klus.location && `Locatie: ${klus.location}`,
+              klus.start_time && `Aanvang: ${klus.start_time.slice(0, 5)}`,
+              klus.project_manager && `Projectmanager: ${klus.project_manager}`,
+            ].filter(Boolean).join('\n'),
+            buitenklus: klus,
           };
         });
       }
@@ -566,8 +572,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     const key = `${monteur}:${date}`;
     const marker = dayMarkers[key];
     if (marker?.kind === 'buitenklus') {
-      const klus = buitenklussen.find(k => k.id === marker.buitenklusId);
-      if (klus) setEditingBuitenklus(klus);
+      if (marker.buitenklus) setEditingBuitenklus(marker.buitenklus);
     } else if (leaveEntries[key]?.length) {
       setEditingLeave({ monteur, date });
     } else if (marker?.kind === 'vrij') {
@@ -602,7 +607,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         </div>
         <button
           onClick={() => setEditingBuitenklus('new')}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/40 transition-all text-xs font-medium"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 hover:bg-yellow-400/20 hover:border-yellow-400/40 transition-all text-xs font-medium"
         >
           <Truck size={14} />
           Buitenklus inplannen
@@ -735,7 +740,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           <span className="text-[10px] text-gray-400">Past niet in planning</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded border border-sky-500/50 bg-sky-500/20" />
+          <div className="w-3 h-3 rounded border border-yellow-400/60 bg-yellow-400/25" />
           <span className="text-[10px] text-gray-400">Buitenklus</span>
         </div>
         <div className="flex items-center gap-1.5">

@@ -709,12 +709,24 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                       )}
 
                       {/* Leave overlay */}
-                      {cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.kind === 'buitenklus' ? (
-                        <div className="absolute inset-0.5 rounded flex items-center justify-center gap-1 pointer-events-none bg-sky-500/15 border border-sky-500/30">
-                          <Truck size={10} className="text-sky-400/80 flex-shrink-0" />
-                          <span className="text-[9px] font-medium text-sky-300/90 truncate">Buitenklus</span>
-                        </div>
-                      ) : cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.kind === 'vrij' && !leaveInfo[`${monteur}:${dateStr}`]?.includes('\n') ? (
+                      {cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.buitenklus ? (() => {
+                        const klus = dayMarkers[`${monteur}:${dateStr}`].buitenklus!;
+                        const subline = [klus.project_number, klus.location].filter(Boolean).join(' · ');
+                        return (
+                          <div className="absolute inset-0.5 rounded-md flex flex-col justify-center gap-0.5 px-1.5 py-1 pointer-events-none overflow-hidden bg-yellow-400/20 border border-yellow-400/60 border-l-[3px] border-l-yellow-400">
+                            <div className="flex items-center gap-1 min-w-0">
+                              <Truck size={10} className="text-yellow-300 flex-shrink-0" />
+                              <span className="text-[10px] font-semibold text-yellow-100 truncate">{klus.client}</span>
+                            </div>
+                            {subline && <span className="text-[9px] text-yellow-200/80 truncate leading-tight">{subline}</span>}
+                            {(klus.start_time || klus.project_manager) && (
+                              <span className="text-[9px] text-yellow-200/60 truncate leading-tight">
+                                {[klus.start_time?.slice(0, 5), klus.project_manager].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })() : cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.kind === 'vrij' && !leaveInfo[`${monteur}:${dateStr}`]?.includes('\n') ? (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-gray-700/25">
                           <span className="text-[9px] font-medium text-gray-500">Vrij</span>
                         </div>
