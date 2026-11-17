@@ -389,7 +389,7 @@ const TESTER_PROJECT_MANAGERS = ['Ricardo'];
 export const isTesterProjectManager = (username?: string): boolean =>
   !!username && TESTER_PROJECT_MANAGERS.includes(username);
 
-const TESTER_LATE_STATUS_VIEWERS = ['Arjan Struik'];
+const TESTER_LATE_STATUS_VIEWERS = ['Arjan Struik', 'Ibrahim Abdalla'];
 const LATE_STATUSES = ['levering', 'gereed voor facturatie', 'gereed'];
 
 export const testerSeesLateStatus = (username: string | undefined, status: string | undefined): boolean =>
