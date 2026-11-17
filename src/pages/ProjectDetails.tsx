@@ -89,6 +89,9 @@ const ProjectDetails = () => {
       setActiveTab('verdelers');
       // Clear the URL parameters after processing
       setSearchParams({});
+    } else if (searchParams.get('tab') === 'verdelers') {
+      setActiveTab('verdelers');
+      setSearchParams({}, { replace: true });
     }
 
     // Cleanup lock on unmount

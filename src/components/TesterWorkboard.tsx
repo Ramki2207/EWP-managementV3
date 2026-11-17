@@ -165,7 +165,7 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pen
             {myVerdelers.map(({ project, distributor }) => (
               <li key={distributor.id}>
                 <button
-                  onClick={() => navigate(`/verdelers/${distributor.id}`)}
+                  onClick={() => navigate(`/project/${project.id}?tab=verdelers`)}
                   className="group w-full text-left p-3 md:p-4 rounded-lg border border-sky-500/20 bg-sky-500/5 hover:bg-sky-500/10 hover:border-sky-500/40 transition-all duration-200"
                 >
                   <div className="flex items-center justify-between gap-3">
