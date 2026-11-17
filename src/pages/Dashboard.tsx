@@ -83,6 +83,7 @@ const Dashboard = () => {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [pendingProjectApprovals, setPendingProjectApprovals] = useState<any[]>([]);
   const [conceptProjectCount, setConceptProjectCount] = useState(0);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
@@ -109,9 +110,9 @@ const Dashboard = () => {
     window.dispatchEvent(new Event('viewAsProjectleiderChanged'));
   };
 
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await dataService.getProjects();
       
       let filteredData = data || [];
@@ -415,6 +416,45 @@ const Dashboard = () => {
 
     console.log(`📋 Total approvals visible: ${approvals.length}`);
     setPendingApprovals(approvals);
+
+    if (isTester) {
+      setPendingProjectApprovals(await findPendingProjectApprovals(projectList));
+    }
+  };
+
+  const findPendingProjectApprovals = async (projectList: any[]) => {
+    const results: any[] = [];
+    for (const project of projectList) {
+      const distributors = project.distributors || [];
+      const inTesting = project.status?.toLowerCase() === 'testen' ||
+        distributors.some((d: any) => d.status?.toLowerCase() === 'testen');
+      if (!inTesting) continue;
+
+      let latest: { record: any; holder: any } | null = null;
+      for (const distributor of distributors) {
+        try {
+          const testData = await dataService.getTestData(distributor.id);
+          const record = testData?.find((d: any) => d.test_type === 'pre_testing_approval');
+          if (record && (!latest || new Date(record.created_at) > new Date(latest.record.created_at))) {
+            latest = { record, holder: distributor };
+          }
+        } catch (error) {
+          console.error('Error checking project approval for distributor:', distributor.distributor_id, error);
+        }
+      }
+
+      const approvalData = latest?.record.data?.approvalData;
+      if (latest && approvalData?.status === 'submitted' && !approvalData.reviewedAt) {
+        // The approval form reads its record from the first distributor, so put the holder first.
+        const holder = latest.holder;
+        results.push({
+          project: { ...project, distributors: [holder, ...distributors.filter((d: any) => d.id !== holder.id)] },
+          submittedBy: approvalData.submittedBy,
+          submittedAt: approvalData.submittedAt
+        });
+      }
+    }
+    return results;
   };
 
   const loadConceptCount = async () => {
@@ -509,7 +549,9 @@ const Dashboard = () => {
       if (effectiveRole === 'tester' && !isTesterPM) {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
-          const hasTestingStatus = project.status?.toLowerCase() === 'testen' || testerSeesLateStatus(currentUser?.username, project.status);
+          const hasTestingStatus = project.status?.toLowerCase() === 'testen' ||
+            project.distributors?.some((dist: any) => dist.status?.toLowerCase() === 'testen') ||
+            testerSeesLateStatus(currentUser?.username, project.status);
 
           if (!hasTestingStatus) {
             console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);
@@ -1119,9 +1161,10 @@ const Dashboard = () => {
       {effectiveRole === 'tester' && !isTesterPM && (
         <TesterWorkboard
           pendingApprovals={pendingApprovals}
+          pendingProjectApprovals={pendingProjectApprovals}
           projects={projects}
           currentUser={currentUser}
-          onChanged={loadData}
+          onChanged={() => loadData(true)}
         />
       )}
 

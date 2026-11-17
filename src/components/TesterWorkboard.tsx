@@ -4,6 +4,7 @@ import { ClipboardCheck, FlaskConical, ChevronRight, Inbox } from 'lucide-react'
 import toast from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
 import VerdelerPreTestingApproval from './VerdelerPreTestingApproval';
+import PreTestingApproval from './PreTestingApproval';
 
 interface PendingApproval {
   project: any;
@@ -12,8 +13,19 @@ interface PendingApproval {
   submittedAt?: string;
 }
 
+interface PendingProjectApproval {
+  project: any;
+  submittedBy?: string;
+  submittedAt?: string;
+}
+
+type ReviewItem =
+  | ({ level: 'verdeler' } & PendingApproval)
+  | ({ level: 'project' } & PendingProjectApproval);
+
 interface TesterWorkboardProps {
   pendingApprovals: PendingApproval[];
+  pendingProjectApprovals: PendingProjectApproval[];
   projects: any[];
   currentUser: any;
   onChanged: () => void;
@@ -22,9 +34,15 @@ interface TesterWorkboardProps {
 const formatDate = (value?: string) =>
   value ? new Date(value).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }) : '';
 
-const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, projects, currentUser, onChanged }) => {
+const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pendingProjectApprovals, projects, currentUser, onChanged }) => {
   const navigate = useNavigate();
-  const [reviewing, setReviewing] = useState<PendingApproval | null>(null);
+  const [reviewing, setReviewing] = useState<ReviewItem | null>(null);
+
+  const submitted = useMemo<ReviewItem[]>(() => [
+    ...pendingProjectApprovals.map(item => ({ level: 'project' as const, ...item })),
+    ...pendingApprovals.map(item => ({ level: 'verdeler' as const, ...item }))
+  ].sort((a, b) => new Date(b.submittedAt || 0).getTime() - new Date(a.submittedAt || 0).getTime()),
+  [pendingApprovals, pendingProjectApprovals]);
 
   const myVerdelers = useMemo(() => {
     const items: { project: any; distributor: any }[] = [];
@@ -44,21 +62,30 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pro
   const handleApprove = async () => {
     if (!reviewing) return;
     try {
-      await dataService.updateDistributor(reviewing.distributor.id, { status: 'Testen' });
+      if (reviewing.level === 'verdeler') {
+        await dataService.updateDistributor(reviewing.distributor.id, { status: 'Testen' });
+      } else if (reviewing.project.status?.toLowerCase() !== 'testen') {
+        await dataService.updateProject(reviewing.project.id, { ...reviewing.project, status: 'Testen' });
+      }
     } catch (error) {
-      console.error('Error setting verdeler to Testen:', error);
+      console.error('Error setting status to Testen:', error);
       toast.error('Status kon niet worden bijgewerkt');
     }
+    if (reviewing.level === 'project') setReviewing(null);
     onChanged();
   };
 
   const handleDecline = async () => {
     if (!reviewing) return;
-    try {
-      await dataService.updateDistributor(reviewing.distributor.id, { status: 'Productie' });
-    } catch (error) {
-      console.error('Error setting verdeler back to Productie:', error);
-      toast.error('Status kon niet worden bijgewerkt');
+    if (reviewing.level === 'verdeler') {
+      try {
+        await dataService.updateDistributor(reviewing.distributor.id, { status: 'Productie' });
+      } catch (error) {
+        console.error('Error setting verdeler back to Productie:', error);
+        toast.error('Status kon niet worden bijgewerkt');
+      }
+    } else {
+      setReviewing(null);
     }
     onChanged();
   };
@@ -77,16 +104,16 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pro
             </div>
           </div>
           <span className="min-w-[2rem] text-center px-2.5 py-1 rounded-full text-sm font-semibold bg-amber-500/15 text-amber-300">
-            {pendingApprovals.length}
+            {submitted.length}
           </span>
         </header>
 
-        {pendingApprovals.length === 0 ? (
+        {submitted.length === 0 ? (
           <EmptyState text="Geen nieuwe aanvragen. Zodra een monteur een pre-checklist indient, verschijnt die hier." />
         ) : (
           <ul className="space-y-2">
-            {pendingApprovals.map(item => (
-              <li key={item.distributor.id}>
+            {submitted.map(item => (
+              <li key={item.level === 'verdeler' ? item.distributor.id : `project-${item.project.id}`}>
                 <button
                   onClick={() => setReviewing(item)}
                   className="group w-full text-left p-3 md:p-4 rounded-lg border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/40 transition-all duration-200"
@@ -94,8 +121,9 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pro
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium text-white truncate">
-                        {item.project.project_number} · {item.distributor.distributor_id}
-                        {item.distributor.kast_naam && <span className="text-gray-400 font-normal"> · {item.distributor.kast_naam}</span>}
+                        {item.project.project_number} · {item.level === 'verdeler' ? item.distributor.distributor_id : 'Heel project'}
+                        {item.level === 'verdeler' && item.distributor.kast_naam && <span className="text-gray-400 font-normal"> · {item.distributor.kast_naam}</span>}
+                        {item.level === 'project' && <span className="text-gray-400 font-normal"> · {item.project.distributors?.length || 0} verdelers</span>}
                       </p>
                       <p className="text-sm text-gray-400 truncate">
                         {item.project.client && `${item.project.client} · `}
@@ -162,7 +190,17 @@ const TesterWorkboard: React.FC<TesterWorkboardProps> = ({ pendingApprovals, pro
         )}
       </section>
 
-      {reviewing && (
+      {reviewing?.level === 'project' && (
+        <PreTestingApproval
+          project={reviewing.project}
+          currentUser={currentUser}
+          onCancel={() => setReviewing(null)}
+          onApprove={handleApprove}
+          onDecline={handleDecline}
+        />
+      )}
+
+      {reviewing?.level === 'verdeler' && (
         <VerdelerPreTestingApproval
           distributor={reviewing.distributor}
           currentUser={currentUser}
