@@ -4,15 +4,18 @@ import { addDays, format, parseISO } from 'date-fns';
 import { supabase, dataService } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { Buitenklus, BuitenklusInput } from './planningTypes';
+import { useLocationFilter } from '../../contexts/LocationFilterContext';
 
 interface PlanningUser {
   id: string;
   username: string;
   role: string;
+  assigned_locations: string[] | null;
 }
 
 interface BuitenklusModalProps {
   buitenklus: Buitenklus | null;
+  filterByLocation: boolean;
   leaveDates: Record<string, Set<string>>;
   onSave: (input: BuitenklusInput) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -57,7 +60,7 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
   </div>
 );
 
-const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, leaveDates, onSave, onDelete, onClose }) => {
+const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, filterByLocation, leaveDates, onSave, onDelete, onClose }) => {
   const [form, setForm] = useState<BuitenklusInput>(() => {
     if (!buitenklus) return emptyForm();
     const { id: _id, created_by: _createdBy, ...rest } = buitenklus;
@@ -66,12 +69,22 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, leaveDate
   const [clientNames, setClientNames] = useState<string[]>([]);
   const [users, setUsers] = useState<PlanningUser[]>([]);
   const [usersStatus, setUsersStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+  const { getFilteredLocations } = useLocationFilter();
+
+  const visibleUsers = useMemo(() => {
+    if (!filterByLocation) return users;
+    const locations = getFilteredLocations();
+    return users.filter(u =>
+      form.monteurs.includes(u.username) ||
+      (u.assigned_locations || []).some(loc => locations.includes(loc))
+    );
+  }, [users, filterByLocation, getFilteredLocations, form.monteurs]);
 
   const loadUsers = async () => {
     setUsersStatus('loading');
     const { data, error } = await supabase
       .from('users')
-      .select('id, username, role')
+      .select('id, username, role, assigned_locations')
       .eq('is_active', true)
       .in('role', ROLE_GROUPS.map(g => g.role));
     if (error) {
@@ -218,7 +231,7 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, leaveDate
           <Section icon={<User size={13} />} title="Monteurs">
             <div className="space-y-3">
               {ROLE_GROUPS.map(group => {
-                const members = users.filter(u => u.role === group.role).sort((a, b) => a.username.localeCompare(b.username));
+                const members = visibleUsers.filter(u => u.role === group.role).sort((a, b) => a.username.localeCompare(b.username));
                 if (members.length === 0) return null;
                 return (
                   <div key={group.role}>
@@ -247,14 +260,14 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, leaveDate
                 );
               })}
               {usersStatus === 'loading' && <p className="text-xs text-gray-500">Monteurs laden...</p>}
-              {(usersStatus === 'error' || (usersStatus === 'ready' && users.length === 0)) && (
+              {(usersStatus === 'error' || (usersStatus === 'ready' && visibleUsers.length === 0)) && (
                 <div className="flex items-center gap-2 text-xs text-red-300">
                   <AlertCircle size={14} className="text-red-400" />
-                  {usersStatus === 'error' ? 'Kon de monteurs niet laden.' : 'Geen monteurs gevonden.'}
+                  {usersStatus === 'error' ? 'Kon de monteurs niet laden.' : 'Geen monteurs gevonden voor de gekozen locaties.'}
                   <button type="button" onClick={loadUsers} className="underline underline-offset-2 hover:text-white">Opnieuw proberen</button>
                 </div>
               )}
-              {usersStatus === 'ready' && users.length > 0 && form.monteurs.length === 0 && (
+              {usersStatus === 'ready' && visibleUsers.length > 0 && form.monteurs.length === 0 && (
                 <p className="text-xs text-gray-500">Kies minimaal één monteur.</p>
               )}
               {leaveConflicts.length > 0 && (
