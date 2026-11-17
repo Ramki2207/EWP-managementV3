@@ -6,7 +6,7 @@ import { supabase, dataService } from '../lib/supabase';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses, testerSeesLateStatus } from '../types/userRoles';
 import ProjectLockBanner from '../components/ProjectLockBanner';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
 import HoursTrafficLight from '../components/HoursTrafficLight';
@@ -150,7 +150,7 @@ const Dashboard = () => {
           const hasDistributorsInTesting = project.distributors?.some(
             (dist: any) => dist.status?.toLowerCase() === 'testen'
           );
-          const shouldShow = projectHasTestingStatus || hasDistributorsInTesting;
+          const shouldShow = projectHasTestingStatus || hasDistributorsInTesting || testerSeesLateStatus(currentUser?.username, project.status);
 
           if (!shouldShow) {
             console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NO TESTING PHASE`);
@@ -508,7 +508,7 @@ const Dashboard = () => {
       if (effectiveRole === 'tester' && !isTesterPM) {
         const beforeRoleFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
-          const hasTestingStatus = project.status?.toLowerCase() === 'testen';
+          const hasTestingStatus = project.status?.toLowerCase() === 'testen' || testerSeesLateStatus(currentUser?.username, project.status);
 
           if (!hasTestingStatus) {
             console.log(`🧪 DASHBOARD TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);

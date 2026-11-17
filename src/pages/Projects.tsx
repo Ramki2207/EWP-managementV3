@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses, testerSeesLateStatus } from '../types/userRoles';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
@@ -553,7 +553,7 @@ const Projects = () => {
         // This will be handled by the async filtering below
         const isProductionStatus = project.status?.toLowerCase() === 'productie';
 
-        if (!isTestingStatus && !isProductionStatus) {
+        if (!isTestingStatus && !isProductionStatus && !testerSeesLateStatus(currentUser.username, project.status)) {
           console.log(`🧪 TESTER FILTER: Hiding project ${project.project_number} (status: ${project.status}) from tester ${currentUser.username} - NOT IN TESTING OR PRODUCTION PHASE`);
           return false;
         }

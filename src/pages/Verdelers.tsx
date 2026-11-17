@@ -4,7 +4,7 @@ import { Search, FolderOpen, Trash2, Server } from 'lucide-react';
 import toast from "react-hot-toast";
 import { dataService } from '../lib/supabase';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses, testerSeesLateStatus } from '../types/userRoles';
 import { hasLocationAccess } from '../lib/locationUtils';
 import { useLocationFilter } from '../contexts/LocationFilterContext';
 import { isUsernameMatch } from '../lib/userAliases';
@@ -68,7 +68,7 @@ const Verdelers = () => {
           const verdelerStatus = distributor.status;
           const hasProjectTestingStatus = projectStatus?.toLowerCase() === 'testen';
           const hasVerdelerTestingStatus = verdelerStatus?.toLowerCase() === 'testen';
-          const shouldShow = hasProjectTestingStatus || hasVerdelerTestingStatus;
+          const shouldShow = hasProjectTestingStatus || hasVerdelerTestingStatus || testerSeesLateStatus(currentUser?.username, projectStatus);
 
           if (!shouldShow) {
             console.log(`🧪 TESTER FILTER: Hiding distributor ${distributor.distributor_id} (project status: ${projectStatus}, verdeler status: ${verdelerStatus}) from tester ${currentUser.username} - NOT IN TESTING PHASE`);

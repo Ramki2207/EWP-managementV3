@@ -389,6 +389,12 @@ const TESTER_PROJECT_MANAGERS = ['Ricardo'];
 export const isTesterProjectManager = (username?: string): boolean =>
   !!username && TESTER_PROJECT_MANAGERS.includes(username);
 
+const TESTER_LATE_STATUS_VIEWERS = ['Arjan Struik'];
+const LATE_STATUSES = ['levering', 'gereed voor facturatie', 'gereed'];
+
+export const testerSeesLateStatus = (username: string | undefined, status: string | undefined): boolean =>
+  !!username && TESTER_LATE_STATUS_VIEWERS.includes(username) && LATE_STATUSES.includes((status || '').toLowerCase());
+
 const LOGISTIEK_TESTEN_VIEWERS = ['Alec Werkhoven'];
 export const getLogistiekVisibleStatuses = (username?: string): string[] =>
   username && LOGISTIEK_TESTEN_VIEWERS.includes(username) ? ['Levering', 'Testen'] : ['Levering'];
