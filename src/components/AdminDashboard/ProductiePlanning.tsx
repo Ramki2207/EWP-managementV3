@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { startOfWeek, addDays, addWeeks, format, parseISO, differenceInCalendarDays } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList } from 'lucide-react';
+import { CalendarRange, RefreshCw, AlertTriangle, Users, ClipboardList, Truck } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import {
   PlanningVerdeler, PlanningOverride, MonteurDayCapacity, ViewMode, ScheduledBlock, PLANNING_EDITORS, LeaveEntry, LeaveUpdate,
   PlanningRole, PLANNING_ROLE_ORDER, PLANNING_ROLE_INFO, PLANNING_ROLE_OVERRIDES, UTRECHT_REGION_LOCATIONS, UTRECHT_TESTER,
   UTRECHT_LEVERING, UTRECHT_TEAM, DEFAULT_TEST_HOURS, LEVERING_HOURS,
+  Buitenklus, BuitenklusInput, DayMarker, DEFAULT_WORK_DAYS,
 } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed, buildDailyHoursFromRange } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
@@ -14,6 +15,8 @@ import PlanningControls from './PlanningControls';
 import PlanningTimeline from './PlanningTimeline';
 import VerlofRegistratieModal from './VerlofRegistratieModal';
 import LeaveEditModal from './LeaveEditModal';
+import BuitenklusModal from './BuitenklusModal';
+import WerkdagenModal from './WerkdagenModal';
 import toast from 'react-hot-toast';
 
 export interface ActiveAbsence {
@@ -69,6 +72,10 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [workHoursMap, setWorkHoursMap] = useState<Record<string, number>>({});
   const [showVerlofModal, setShowVerlofModal] = useState(false);
   const [activeAbsences, setActiveAbsences] = useState<ActiveAbsence[]>([]);
+  const [buitenklussen, setBuitenklussen] = useState<Buitenklus[]>([]);
+  const [workDaysByUser, setWorkDaysByUser] = useState<Record<string, number[]>>({});
+  const [editingBuitenklus, setEditingBuitenklus] = useState<Buitenklus | 'new' | null>(null);
+  const [editingWorkDays, setEditingWorkDays] = useState<string | null>(null);
 
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
@@ -91,7 +98,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [distResult, usersResult, leaveResult, vacationResult, workResult, absenceResult, overridesResult] = await Promise.all([
+      const [distResult, usersResult, leaveResult, vacationResult, workResult, absenceResult, overridesResult, buitenklusResult, scheduleResult] = await Promise.all([
         supabase
           .from('distributors')
           .select(`
@@ -107,10 +114,23 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         supabase.from('work_entries').select('distributor_id, hours').not('hours', 'is', null),
         supabase.from('employee_absences').select('id, user_id, absence_type, start_date, end_date, is_open_ended, notes').eq('is_active', true),
         supabase.from('planning_overrides').select('*'),
+        supabase.from('buitenklussen').select('*').order('start_date'),
+        supabase.from('employee_work_schedules').select('user_id, work_days'),
       ]);
 
       const allUsers = usersResult.data || [];
       setUsers(allUsers);
+
+      if (buitenklusResult.error) console.error('Error loading buitenklussen:', buitenklusResult.error);
+      setBuitenklussen((buitenklusResult.data || []) as Buitenklus[]);
+
+      if (scheduleResult.error) console.error('Error loading work schedules:', scheduleResult.error);
+      const schedules: Record<string, number[]> = {};
+      (scheduleResult.data || []).forEach((s: any) => {
+        const uname = allUsers.find(u => u.id === s.user_id)?.username;
+        if (uname) schedules[uname] = s.work_days || [];
+      });
+      setWorkDaysByUser(schedules);
 
       const usernameById: Record<string, string> = {};
       const roleByUsername: Record<string, string> = {};
@@ -282,6 +302,58 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // Covers the visible range plus a long look-ahead, because auto-scheduling plans work up to future deadlines
+  const dayMarkers = useMemo(() => {
+    const markers: Record<string, DayMarker> = {};
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const windowStart = toLocalDate(rangeStart < todayStr ? rangeStart : todayStr);
+    const windowEnd = addDays(toLocalDate(rangeEnd), 180);
+
+    Object.entries(workDaysByUser).forEach(([name, workDays]) => {
+      if (DEFAULT_WORK_DAYS.every(d => workDays.includes(d))) return;
+      for (let d = windowStart; d <= windowEnd; d = addDays(d, 1)) {
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6 || workDays.includes(dow)) continue;
+        markers[`${name}:${format(d, 'yyyy-MM-dd')}`] = { kind: 'vrij', label: 'Vrije dag (werkt niet op deze dag)' };
+      }
+    });
+
+    buitenklussen.forEach(klus => {
+      for (let d = toLocalDate(klus.start_date); d <= toLocalDate(klus.end_date); d = addDays(d, 1)) {
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) continue;
+        const dateStr = format(d, 'yyyy-MM-dd');
+        klus.monteurs.forEach(name => {
+          markers[`${name}:${dateStr}`] = {
+            kind: 'buitenklus',
+            label: `Buitenklus: ${klus.client}${klus.location ? ` - ${klus.location}` : ''}`,
+            buitenklusId: klus.id,
+          };
+        });
+      }
+    });
+    return markers;
+  }, [workDaysByUser, buitenklussen, rangeStart, rangeEnd]);
+
+  const blockedDates = useMemo(() => {
+    const blocked: Record<string, Set<string>> = {};
+    Object.entries(leaveDates).forEach(([name, dates]) => { blocked[name] = new Set(dates); });
+    Object.keys(dayMarkers).forEach(key => {
+      const sep = key.lastIndexOf(':');
+      const name = key.slice(0, sep);
+      (blocked[name] ||= new Set()).add(key.slice(sep + 1));
+    });
+    return blocked;
+  }, [leaveDates, dayMarkers]);
+
+  const dayInfo = useMemo(() => {
+    const info: Record<string, string> = { ...leaveInfo };
+    Object.entries(dayMarkers).forEach(([key, marker]) => {
+      info[key] = info[key] ? `${marker.label}\n${info[key]}` : marker.label;
+    });
+    return info;
+  }, [leaveInfo, dayMarkers]);
+
   const monteurRoles = useMemo(() => {
     const roleByUsername: Record<string, string> = {};
     users.forEach(u => { roleByUsername[u.username] = u.role; });
@@ -289,9 +361,12 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     const names = new Set<string>(verdelers.map(v => v.toegewezen_monteur));
     const showUtrechtTeam = !LOCATION_FILTERED_USERS.includes(username) || isLocationVisible('Utrecht');
     if (showUtrechtTeam) UTRECHT_TEAM.forEach(name => names.add(name));
+    buitenklussen
+      .filter(k => k.end_date >= rangeStart && k.start_date <= rangeEnd)
+      .forEach(k => k.monteurs.forEach(name => names.add(name)));
     names.forEach(name => { roles[name] = getPlanningRole(name, roleByUsername); });
     return roles;
-  }, [verdelers, users, username, isLocationVisible]);
+  }, [verdelers, users, username, isLocationVisible, buitenklussen, rangeStart, rangeEnd]);
 
   const monteurList = useMemo(() => {
     return Object.keys(monteurRoles).sort((a, b) => {
@@ -306,8 +381,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   }, [monteurList, selectedMonteur]);
 
   const scheduledBlocks = useMemo(() => {
-    return autoSchedule(verdelers, leaveDates, rangeStart, rangeEnd, overrides);
-  }, [verdelers, leaveDates, rangeStart, rangeEnd, overrides]);
+    return autoSchedule(verdelers, blockedDates, rangeStart, rangeEnd, overrides);
+  }, [verdelers, blockedDates, rangeStart, rangeEnd, overrides]);
 
   const filteredBlocks = useMemo(() => {
     if (selectedMonteur === 'all') return scheduledBlocks;
@@ -320,7 +395,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     const dayStrings = days.map(d => format(d, 'yyyy-MM-dd'));
 
     filteredMonteurs.forEach(monteur => {
-      const monteurLeave = leaveDates[monteur] || new Set();
+      const monteurLeave = blockedDates[monteur] || new Set();
       dayStrings.forEach(dateStr => {
         const key = `${monteur}:${dateStr}`;
         const day = toLocalDate(dateStr);
@@ -337,7 +412,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       });
     });
     return map;
-  }, [filteredMonteurs, days, scheduledBlocks, leaveDates]);
+  }, [filteredMonteurs, days, scheduledBlocks, blockedDates]);
 
   const stats = useMemo(() => {
     const unscheduled = verdelers.filter(v =>
@@ -372,7 +447,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     newEndDate: string,
     newMonteur: string
   ) => {
-    const monteurLeave = leaveDates[newMonteur] || new Set();
+    const monteurLeave = blockedDates[newMonteur] || new Set();
     const dailyHours = buildDailyHoursFromRange(newStartDate, newEndDate, block.verdeler.remaining_hours, monteurLeave);
 
     if (block.overrideId) {
@@ -401,7 +476,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       if (error) { console.error('planning_overrides insert error:', error); throw new Error(error.message); }
     }
     await loadData();
-  }, [leaveDates, username, loadData]);
+  }, [blockedDates, username, loadData]);
 
   const handleBlockMove = useCallback(async (
     block: ScheduledBlock,
@@ -459,6 +534,49 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     await loadData();
   }, [loadData]);
 
+  const handleBuitenklusSave = useCallback(async (input: BuitenklusInput) => {
+    const result = editingBuitenklus && editingBuitenklus !== 'new'
+      ? await supabase.from('buitenklussen').update({ ...input, updated_at: new Date().toISOString() }).eq('id', editingBuitenklus.id)
+      : await supabase.from('buitenklussen').insert({ ...input, created_by: username });
+    if (result.error) { console.error('buitenklus save error:', result.error); throw new Error(result.error.message); }
+    await loadData();
+  }, [editingBuitenklus, username, loadData]);
+
+  const handleBuitenklusDelete = useCallback(async () => {
+    if (!editingBuitenklus || editingBuitenklus === 'new') return;
+    const { error } = await supabase.from('buitenklussen').delete().eq('id', editingBuitenklus.id);
+    if (error) { console.error('buitenklus delete error:', error); throw new Error(error.message); }
+    await loadData();
+  }, [editingBuitenklus, loadData]);
+
+  const handleWorkDaysSave = useCallback(async (monteur: string, workDays: number[]) => {
+    const user = users.find(u => u.username === monteur);
+    if (!user) throw new Error(`Geen gebruiker gevonden voor ${monteur}`);
+    const { error } = await supabase.from('employee_work_schedules').upsert({
+      user_id: user.id,
+      work_days: workDays,
+      updated_by: username,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) { console.error('work schedule save error:', error); throw new Error(error.message); }
+    await loadData();
+  }, [users, username, loadData]);
+
+  const handleDayClick = useCallback((monteur: string, date: string) => {
+    const key = `${monteur}:${date}`;
+    const marker = dayMarkers[key];
+    if (marker?.kind === 'buitenklus') {
+      const klus = buitenklussen.find(k => k.id === marker.buitenklusId);
+      if (klus) setEditingBuitenklus(klus);
+    } else if (leaveEntries[key]?.length) {
+      setEditingLeave({ monteur, date });
+    } else if (marker?.kind === 'vrij') {
+      setEditingWorkDays(monteur);
+    } else {
+      toast.error('Geen verlof gevonden voor deze dag');
+    }
+  }, [dayMarkers, buitenklussen, leaveEntries]);
+
   const handleLeaveDelete = useCallback(async (entry: LeaveEntry) => {
     const result = entry.source === 'employee_absences'
       ? await supabase
@@ -482,6 +600,13 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             Sleep een blok om te verplaatsen, trek aan de randen om te verlengen, of klik op een blok om datums en monteur aan te passen
           </p>
         </div>
+        <button
+          onClick={() => setEditingBuitenklus('new')}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 hover:border-sky-500/40 transition-all text-xs font-medium"
+        >
+          <Truck size={14} />
+          Buitenklus inplannen
+        </button>
         <button
           onClick={() => setShowVerlofModal(true)}
           className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/40 transition-all text-xs font-medium"
@@ -567,11 +692,11 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
             blocks={filteredBlocks}
             capacityMap={capacityMap}
             leaveDates={leaveDates}
-            leaveInfo={leaveInfo}
-            onLeaveClick={(monteur, date) => {
-              if (leaveEntries[`${monteur}:${date}`]?.length) setEditingLeave({ monteur, date });
-              else toast.error('Geen verlof gevonden voor deze dag');
-            }}
+            leaveInfo={dayInfo}
+            dayMarkers={dayMarkers}
+            onLeaveClick={handleDayClick}
+            onMonteurClick={setEditingWorkDays}
+            workDaysByMonteur={workDaysByUser}
             allMonteurs={monteurList}
             activeAbsences={activeAbsences}
             onResolveAbsence={async (absenceId) => {
@@ -610,6 +735,14 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           <span className="text-[10px] text-gray-400">Past niet in planning</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-sky-500/50 bg-sky-500/20" />
+          <span className="text-[10px] text-gray-400">Buitenklus</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-gray-600/50 bg-gray-700/40" />
+          <span className="text-[10px] text-gray-400">Vrije dag</span>
+        </div>
+        <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-white/20 bg-white/5 ring-1 ring-white/10" />
           <span className="text-[10px] text-gray-400">Handmatig ingepland ●</span>
         </div>
@@ -634,6 +767,26 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
           users={users}
           currentUsername={username}
           currentUserId={userId}
+        />
+      )}
+
+      {editingBuitenklus && (
+        <BuitenklusModal
+          buitenklus={editingBuitenklus === 'new' ? null : editingBuitenklus}
+          users={users}
+          leaveDates={leaveDates}
+          onSave={handleBuitenklusSave}
+          onDelete={editingBuitenklus === 'new' ? undefined : handleBuitenklusDelete}
+          onClose={() => setEditingBuitenklus(null)}
+        />
+      )}
+
+      {editingWorkDays && (
+        <WerkdagenModal
+          monteur={editingWorkDays}
+          workDays={workDaysByUser[editingWorkDays] || DEFAULT_WORK_DAYS}
+          onSave={days => handleWorkDaysSave(editingWorkDays, days)}
+          onClose={() => setEditingWorkDays(null)}
         />
       )}
 

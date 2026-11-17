@@ -77,7 +77,7 @@ export const PLANNING_ROLE_INFO: Record<PlanningRole, { label: string; badge: st
 
 // Explicit roles; anyone not listed falls back to their user role (tester -> testen, logistiek -> levering, else bouwen)
 export const PLANNING_ROLE_OVERRIDES: Record<string, PlanningRole> = {
-  'Arjan Struik': 'bouwen',
+  'Arjan Struik': 'testen',
   'Ibrahim Abdalla': 'testen',
   'Alec Werkhoven': 'levering',
 };
@@ -104,6 +104,43 @@ export interface LeaveEntry {
   end_date: string | null;
   is_open_ended?: boolean;
 }
+
+export interface Buitenklus {
+  id: string;
+  client: string;
+  project_number: string;
+  location: string;
+  contact_person: string;
+  contact_phone: string;
+  monteurs: string[];
+  start_date: string;
+  end_date: string;
+  start_time: string;
+  transport: string;
+  description: string;
+  materials: string;
+  notes: string;
+  created_by: string;
+}
+
+export type BuitenklusInput = Omit<Buitenklus, 'id' | 'created_by'>;
+
+// Non-production days shown in the planning grid; they block capacity like leave does
+export interface DayMarker {
+  kind: 'vrij' | 'buitenklus';
+  label: string;
+  buitenklusId?: string;
+}
+
+export const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];
+
+export const WEEKDAYS: { iso: number; short: string; long: string }[] = [
+  { iso: 1, short: 'Ma', long: 'Maandag' },
+  { iso: 2, short: 'Di', long: 'Dinsdag' },
+  { iso: 3, short: 'Wo', long: 'Woensdag' },
+  { iso: 4, short: 'Do', long: 'Donderdag' },
+  { iso: 5, short: 'Vr', long: 'Vrijdag' },
+];
 
 export interface LeaveUpdate {
   start_date: string;

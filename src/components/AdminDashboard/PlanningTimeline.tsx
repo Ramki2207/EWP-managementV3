@@ -2,8 +2,8 @@ import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom';
 import { format, isToday, isWeekend } from 'date-fns';
 import { nl } from 'date-fns/locale';
-import { ScheduledBlock, MonteurDayCapacity, PlanningRole, PLANNING_ROLE_INFO } from './planningTypes';
-import { AlertTriangle, ThermometerSun, UserX, CheckCircle2, RotateCcw } from 'lucide-react';
+import { ScheduledBlock, MonteurDayCapacity, PlanningRole, PLANNING_ROLE_INFO, DayMarker, WEEKDAYS, DEFAULT_WORK_DAYS } from './planningTypes';
+import { AlertTriangle, ThermometerSun, UserX, CheckCircle2, RotateCcw, Truck } from 'lucide-react';
 import { ActiveAbsence } from './ProductiePlanning';
 import PlanningDetailModal from './PlanningDetailModal';
 import toast from 'react-hot-toast';
@@ -17,6 +17,9 @@ interface PlanningTimelineProps {
   leaveDates: Record<string, Set<string>>;
   leaveInfo?: Record<string, string>;
   onLeaveClick?: (monteur: string, date: string) => void;
+  dayMarkers?: Record<string, DayMarker>;
+  onMonteurClick?: (monteur: string) => void;
+  workDaysByMonteur?: Record<string, number[]>;
   allMonteurs?: string[];
   activeAbsences?: ActiveAbsence[];
   onResolveAbsence?: (absenceId: string) => Promise<void>;
@@ -92,6 +95,9 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   leaveDates,
   leaveInfo = {},
   onLeaveClick,
+  dayMarkers = {},
+  onMonteurClick,
+  workDaysByMonteur = {},
   allMonteurs = [],
   activeAbsences = [],
   onResolveAbsence,
@@ -603,10 +609,20 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                   className="sticky left-0 z-10 bg-[#1A1F2C] border-b border-r border-gray-700/40 px-3 flex flex-col justify-center"
                   style={{ minHeight: rowHeight }}
                 >
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => onMonteurClick?.(monteur)}
+                    title="Werkdagen instellen"
+                    className="flex items-center gap-1.5 min-w-0 text-left group/name"
+                  >
                     <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${roleInfo.dot}`} title={roleInfo.label} />
-                    <p className="text-xs font-medium text-white truncate">{monteur}</p>
-                  </div>
+                    <p className="text-xs font-medium text-white truncate group-hover/name:text-blue-300 group-hover/name:underline underline-offset-2 transition-colors">{monteur}</p>
+                  </button>
+                  {workDaysByMonteur[monteur] && !DEFAULT_WORK_DAYS.every(d => workDaysByMonteur[monteur].includes(d)) && (
+                    <p className="text-[9px] text-gray-500 mt-0.5 truncate">
+                      Werkt: {WEEKDAYS.filter(d => workDaysByMonteur[monteur].includes(d.iso)).map(d => d.short).join(', ') || 'geen dagen'}
+                    </p>
+                  )}
                   {absence ? (
                     <>
                       <div className={`mt-1 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold ${
@@ -693,7 +709,16 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
                       )}
 
                       {/* Leave overlay */}
-                      {cap.isOnLeave && !weekend && (
+                      {cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.kind === 'buitenklus' ? (
+                        <div className="absolute inset-0.5 rounded flex items-center justify-center gap-1 pointer-events-none bg-sky-500/15 border border-sky-500/30">
+                          <Truck size={10} className="text-sky-400/80 flex-shrink-0" />
+                          <span className="text-[9px] font-medium text-sky-300/90 truncate">Buitenklus</span>
+                        </div>
+                      ) : cap.isOnLeave && !weekend && dayMarkers[`${monteur}:${dateStr}`]?.kind === 'vrij' && !leaveInfo[`${monteur}:${dateStr}`]?.includes('\n') ? (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-gray-700/25">
+                          <span className="text-[9px] font-medium text-gray-500">Vrij</span>
+                        </div>
+                      ) : cap.isOnLeave && !weekend && (
                         <div className={`absolute inset-0 flex items-center justify-center pointer-events-none ${
                           absence?.absence_type === 'ziek' ? 'bg-red-500/6' : 'bg-amber-500/5'
                         }`}>
