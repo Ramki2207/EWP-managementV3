@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { X, Truck, Check, Trash2, AlertCircle, MapPin, User, Calendar, ClipboardList } from 'lucide-react';
 import { addDays, format, parseISO } from 'date-fns';
-import { dataService } from '../../lib/supabase';
+import { supabase, dataService } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { Buitenklus, BuitenklusInput } from './planningTypes';
 
@@ -13,7 +13,6 @@ interface PlanningUser {
 
 interface BuitenklusModalProps {
   buitenklus: Buitenklus | null;
-  users: PlanningUser[];
   leaveDates: Record<string, Set<string>>;
   onSave: (input: BuitenklusInput) => Promise<void>;
   onDelete?: () => Promise<void>;
@@ -58,13 +57,33 @@ const Section: React.FC<{ icon: React.ReactNode; title: string; children: React.
   </div>
 );
 
-const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, users, leaveDates, onSave, onDelete, onClose }) => {
+const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, leaveDates, onSave, onDelete, onClose }) => {
   const [form, setForm] = useState<BuitenklusInput>(() => {
     if (!buitenklus) return emptyForm();
     const { id: _id, created_by: _createdBy, ...rest } = buitenklus;
     return rest;
   });
   const [clientNames, setClientNames] = useState<string[]>([]);
+  const [users, setUsers] = useState<PlanningUser[]>([]);
+  const [usersStatus, setUsersStatus] = useState<'loading' | 'error' | 'ready'>('loading');
+
+  const loadUsers = async () => {
+    setUsersStatus('loading');
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, username, role')
+      .eq('is_active', true)
+      .in('role', ROLE_GROUPS.map(g => g.role));
+    if (error) {
+      console.error('Error loading monteurs:', error);
+      setUsersStatus('error');
+      return;
+    }
+    setUsers(data || []);
+    setUsersStatus('ready');
+  };
+
+  useEffect(() => { loadUsers(); }, []);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -227,7 +246,15 @@ const BuitenklusModal: React.FC<BuitenklusModalProps> = ({ buitenklus, users, le
                   </div>
                 );
               })}
-              {form.monteurs.length === 0 && (
+              {usersStatus === 'loading' && <p className="text-xs text-gray-500">Monteurs laden...</p>}
+              {(usersStatus === 'error' || (usersStatus === 'ready' && users.length === 0)) && (
+                <div className="flex items-center gap-2 text-xs text-red-300">
+                  <AlertCircle size={14} className="text-red-400" />
+                  {usersStatus === 'error' ? 'Kon de monteurs niet laden.' : 'Geen monteurs gevonden.'}
+                  <button type="button" onClick={loadUsers} className="underline underline-offset-2 hover:text-white">Opnieuw proberen</button>
+                </div>
+              )}
+              {usersStatus === 'ready' && users.length > 0 && form.monteurs.length === 0 && (
                 <p className="text-xs text-gray-500">Kies minimaal één monteur.</p>
               )}
               {leaveConflicts.length > 0 && (

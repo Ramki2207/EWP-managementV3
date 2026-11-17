@@ -773,7 +773,6 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       {editingBuitenklus && (
         <BuitenklusModal
           buitenklus={editingBuitenklus === 'new' ? null : editingBuitenklus}
-          users={users}
           leaveDates={leaveDates}
           onSave={handleBuitenklusSave}
           onDelete={editingBuitenklus === 'new' ? undefined : handleBuitenklusDelete}
