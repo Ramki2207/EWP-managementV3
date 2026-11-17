@@ -86,6 +86,8 @@ const Dashboard = () => {
   const [pendingProjectApprovals, setPendingProjectApprovals] = useState<any[]>([]);
   const [approvalsLoaded, setApprovalsLoaded] = useState(false);
   const approvalsRunRef = useRef(0);
+  // Only the most recent project load may update the list, so an older unfiltered response can't overwrite a filtered one.
+  const projectsRunRef = useRef(0);
   const [conceptProjectCount, setConceptProjectCount] = useState(0);
   const [selectedUserWorkload, setSelectedUserWorkload] = useState<any>(null);
   const [viewAsRole, setViewAsRole] = useState<string>(() => {
@@ -113,9 +115,11 @@ const Dashboard = () => {
   };
 
   const loadData = async (silent = false) => {
+    const runId = ++projectsRunRef.current;
     try {
       if (!silent) setLoading(true);
       const data = await dataService.getProjects();
+      if (runId !== projectsRunRef.current) return;
       
       let filteredData = data || [];
 
@@ -270,6 +274,7 @@ const Dashboard = () => {
         console.log(`🌍 DASHBOARD: User ${currentUser?.username} has no location restrictions`);
       }
       
+      if (runId !== projectsRunRef.current) return;
       setProjects(filteredData);
       
       // Check for pending approvals
@@ -278,7 +283,7 @@ const Dashboard = () => {
       console.error('Error loading dashboard data:', error);
       toast.error('Er is een fout opgetreden bij het laden van de dashboard gegevens');
     } finally {
-      setLoading(false);
+      if (runId === projectsRunRef.current) setLoading(false);
     }
   };
 
@@ -433,8 +438,6 @@ const Dashboard = () => {
   };
 
 
-  // Get current user ID from localStorage
-  const userId = localStorage.getItem('currentUserId');
 
   useEffect(() => {
     console.log('🚀 DASHBOARD: Component mounting, setting up subscriptions...');
@@ -445,18 +448,16 @@ const Dashboard = () => {
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const user = users.find((u: any) => u.id === currentUserId);
       if (user) {
-    // Load data after we have user info
-    if (currentUser || userId) {
-      loadData();
-    }
         setUsername(user.username);
         setProfilePicture(user.profilePicture || '');
         console.log('👤 DASHBOARD: Current user set:', user.username, user.id);
       }
     }
 
-    // Load data
-    loadProjects();
+    // Wait for the logged-in user so their role and location filters apply to the project list
+    if (currentUser) {
+      loadData();
+    }
     loadConceptCount();
     fetchNotifications();
 
@@ -499,9 +500,11 @@ const Dashboard = () => {
   }, [selectedGroups]);
 
   const loadProjects = async () => {
+    const runId = ++projectsRunRef.current;
     try {
       setLoading(true);
       const data = await dataService.getProjects();
+      if (runId !== projectsRunRef.current) return;
       
       // Apply location filtering based on user's assigned locations
       let filteredProjects = data || [];
@@ -657,12 +660,13 @@ const Dashboard = () => {
         }
       }
       
+      if (runId !== projectsRunRef.current) return;
       setProjects(filteredProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
      toast.error(error.message || 'Er is een fout opgetreden bij het laden van de projecten');
     } finally {
-      setLoading(false);
+      if (runId === projectsRunRef.current) setLoading(false);
     }
   };
 
