@@ -1249,7 +1249,7 @@ export default function UrenstaatVerlof() {
                                       </select>
                                     </div>
                                   ) : (
-                                    <span className="text-white text-center block">{rawVal || '-'}</span>
+                                    <span className="text-white text-center block">{numVal ? realHoursToNotation(notationToRealHours(numVal)) : '-'}</span>
                                   )}
                                 </td>
                                 );

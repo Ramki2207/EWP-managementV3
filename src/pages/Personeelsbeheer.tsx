@@ -17,48 +17,24 @@ interface DayEvent {
   hours?: number;
 }
 
-const WEEK_29_YEAR = 2025;
-const WEEK_29_NUMBER = 29;
-
-const isWeek29OrLater = (weekNumber: number, year: number): boolean => {
-  if (year > WEEK_29_YEAR) return true;
-  if (year === WEEK_29_YEAR && weekNumber >= WEEK_29_NUMBER) return true;
-  return false;
+// Weekstaat values use H.MM notation: the decimals are minutes (1.30 = 1 hour 30 minutes), not a fraction of an hour.
+const notationToRealHours = (val: any): number => {
+  if (val === '' || val === null || val === undefined) return 0;
+  const num = typeof val === 'number' ? val : parseFloat(val.toString());
+  if (isNaN(num) || num === 0) return 0;
+  const hours = Math.floor(num);
+  const minutePart = Math.round((num - hours) * 100);
+  return hours * 60 + minutePart;
 };
 
-const minutesToNotation = (totalMinutes: number): number => {
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  return hours + (mins / 100);
+const formatNotation = (minuteVal: number): string => {
+  const total = Math.round(minuteVal);
+  const hours = Math.floor(total / 60);
+  const mins = total % 60;
+  return `${hours}:${mins.toString().padStart(2, '0')}`;
 };
 
 export default function Personeelsbeheer() {
-  const notationToRealHours = (val: any, weekstaat?: any): number => {
-    const weekNumber = weekstaat?.week_number ?? selectedWeekstaat?.week_number ?? 0;
-    const year = weekstaat?.year ?? selectedWeekstaat?.year ?? WEEK_29_YEAR;
-    if (val === '' || val === null || val === undefined || val === 0) return 0;
-    const num = typeof val === 'number' ? val : parseFloat(val.toString());
-    if (isNaN(num) || num === 0) return 0;
-
-    if (isWeek29OrLater(weekNumber, year)) {
-      return num * 60;
-    }
-
-    const hours = Math.floor(num);
-    const minutePart = Math.round((num - hours) * 100);
-    return hours * 60 + minutePart;
-  };
-
-  const formatNotation = (minuteVal: number, weekstaat?: any): string => {
-    const weekNumber = weekstaat?.week_number ?? selectedWeekstaat?.week_number ?? 0;
-    const year = weekstaat?.year ?? selectedWeekstaat?.year ?? WEEK_29_YEAR;
-
-    if (isWeek29OrLater(weekNumber, year)) {
-      return (minuteVal / 60).toFixed(2);
-    }
-
-    return minutesToNotation(minuteVal).toFixed(2);
-  };
 
 
 
@@ -476,13 +452,13 @@ export default function Personeelsbeheer() {
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_code}</td>
         <td style="padding:6px;border:1px solid #ddd;">${e.activity_description}</td>
         <td style="padding:6px;border:1px solid #ddd;">${e.workorder_number || '-'}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.monday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.tuesday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.wednesday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.thursday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.friday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.saturday || 0}</td>
-        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${e.sunday || 0}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.monday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.tuesday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.wednesday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.thursday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.friday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.saturday))}</td>
+        <td style="padding:6px;border:1px solid #ddd;text-align:center;">${formatNotation(notationToRealHours(e.sunday))}</td>
         <td style="padding:6px;border:1px solid #ddd;text-align:center;font-weight:bold;">${rowTotal}</td>
       </tr>`;
     }).join('');
@@ -1560,8 +1536,8 @@ export default function Personeelsbeheer() {
                     const totalHours = allWeekstaatEntries
                       .filter(e => e.weekstaat_id === weekstaat.id)
                       .reduce((sum, e) =>
-                        sum + notationToRealHours(e.monday, weekstaat) + notationToRealHours(e.tuesday, weekstaat) + notationToRealHours(e.wednesday, weekstaat) +
-                        notationToRealHours(e.thursday, weekstaat) + notationToRealHours(e.friday, weekstaat) + notationToRealHours(e.saturday, weekstaat) + notationToRealHours(e.sunday, weekstaat), 0
+                        sum + notationToRealHours(e.monday) + notationToRealHours(e.tuesday) + notationToRealHours(e.wednesday) +
+                        notationToRealHours(e.thursday) + notationToRealHours(e.friday) + notationToRealHours(e.saturday) + notationToRealHours(e.sunday), 0
                       );
 
                     return (
@@ -1591,7 +1567,7 @@ export default function Personeelsbeheer() {
                           </span>
                         </td>
                         <td className="p-3 text-white font-medium">
-                          {totalHours > 0 ? `${formatNotation(totalHours, weekstaat)}u` : '-'}
+                          {totalHours > 0 ? `${formatNotation(totalHours)}u` : '-'}
                         </td>
                       </tr>
                     );
@@ -1919,13 +1895,13 @@ export default function Personeelsbeheer() {
                                             <td className="p-2 text-white">{entry.activity_description}</td>
                                             <td className="p-2 text-white">{entry.project_number || '-'}</td>
                                             <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.monday ? Number(entry.monday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.tuesday ? Number(entry.tuesday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.wednesday ? Number(entry.wednesday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.thursday ? Number(entry.thursday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
-                                            <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.monday ? formatNotation(notationToRealHours(entry.monday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.tuesday ? formatNotation(notationToRealHours(entry.tuesday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.wednesday ? formatNotation(notationToRealHours(entry.wednesday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.thursday ? formatNotation(notationToRealHours(entry.thursday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.friday ? formatNotation(notationToRealHours(entry.friday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.saturday ? formatNotation(notationToRealHours(entry.saturday)) : '-'}</td>
+                                            <td className="p-2 text-center text-white">{entry.sunday ? formatNotation(notationToRealHours(entry.sunday)) : '-'}</td>
                                             <td className="p-2 text-center text-white font-semibold">{formatNotation(rowTotal)}</td>
                                           </tr>
                                         );
@@ -2003,13 +1979,13 @@ export default function Personeelsbeheer() {
                               <td className="p-2 text-white">{entry.activity_description}</td>
                               <td className="p-2 text-white">{entry.project_number || '-'}</td>
                               <td className="p-2 text-white">{entry.workorder_number || '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.monday ? Number(entry.monday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.tuesday ? Number(entry.tuesday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.wednesday ? Number(entry.wednesday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.thursday ? Number(entry.thursday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.friday ? Number(entry.friday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.saturday ? Number(entry.saturday).toFixed(2) : '-'}</td>
-                              <td className="p-2 text-center text-white">{entry.sunday ? Number(entry.sunday).toFixed(2) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.monday ? formatNotation(notationToRealHours(entry.monday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.tuesday ? formatNotation(notationToRealHours(entry.tuesday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.wednesday ? formatNotation(notationToRealHours(entry.wednesday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.thursday ? formatNotation(notationToRealHours(entry.thursday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.friday ? formatNotation(notationToRealHours(entry.friday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.saturday ? formatNotation(notationToRealHours(entry.saturday)) : '-'}</td>
+                              <td className="p-2 text-center text-white">{entry.sunday ? formatNotation(notationToRealHours(entry.sunday)) : '-'}</td>
                               <td className="p-2 text-center text-purple-400 font-semibold">{formatNotation(rowTotal)}</td>
                             </tr>
                           );

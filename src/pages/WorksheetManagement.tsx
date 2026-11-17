@@ -276,13 +276,13 @@ export default function WorksheetManagement() {
                       </div>
                     </td>
                     <td className="p-2">{entry.workorder_number || '-'}</td>
-                    <td className="p-2">{entry.monday || '-'}</td>
-                    <td className="p-2">{entry.tuesday || '-'}</td>
-                    <td className="p-2">{entry.wednesday || '-'}</td>
-                    <td className="p-2">{entry.thursday || '-'}</td>
-                    <td className="p-2">{entry.friday || '-'}</td>
-                    <td className="p-2">{entry.saturday || '-'}</td>
-                    <td className="p-2">{entry.sunday || '-'}</td>
+                    <td className="p-2">{entry.monday ? minutesToNotation(notationToMinutes(entry.monday)) : '-'}</td>
+                    <td className="p-2">{entry.tuesday ? minutesToNotation(notationToMinutes(entry.tuesday)) : '-'}</td>
+                    <td className="p-2">{entry.wednesday ? minutesToNotation(notationToMinutes(entry.wednesday)) : '-'}</td>
+                    <td className="p-2">{entry.thursday ? minutesToNotation(notationToMinutes(entry.thursday)) : '-'}</td>
+                    <td className="p-2">{entry.friday ? minutesToNotation(notationToMinutes(entry.friday)) : '-'}</td>
+                    <td className="p-2">{entry.saturday ? minutesToNotation(notationToMinutes(entry.saturday)) : '-'}</td>
+                    <td className="p-2">{entry.sunday ? minutesToNotation(notationToMinutes(entry.sunday)) : '-'}</td>
                     <td className="p-2">{entry.overtime_start_time || '-'}</td>
                   </tr>
                 ))}
