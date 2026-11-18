@@ -433,15 +433,17 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
     return cleanValue ? `${cleanValue} ${unit}` : '';
   };
 
-  const generateDistributorId = () => {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const newId = `VD${randomNum}`;
-
-    const exists = verdelers.some(v => v.distributorId === newId);
-    if (exists) {
-      generateDistributorId();
-    } else {
+  const generateDistributorId = async () => {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const newId = `VD${Math.floor(1000 + Math.random() * 9000)}`;
+      if (verdelers.some(v => v.distributorId === newId)) continue;
+      try {
+        if ((await dataService.findExistingDistributorIds([newId])).has(newId)) continue;
+      } catch (error) {
+        console.error('Could not check verdeler number, it will be re-checked on save:', error);
+      }
       setVerdelerData(prev => ({ ...prev, distributorId: newId }));
+      return;
     }
   };
 

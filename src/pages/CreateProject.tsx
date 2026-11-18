@@ -151,102 +151,131 @@ const CreateProject = () => {
     setCurrentStep(currentStep - 1);
   };
 
+  const buildDistributorData = (verdeler: any, projectId: string, distributorId: string) => ({
+    distributorId,
+    projectId,
+    kastNaam: verdeler.kastNaam,
+    toegewezenMonteur: verdeler.toegewezenMonteur,
+    systeem: verdeler.systeem,
+    voeding: verdeler.voeding,
+    stuurspanning: verdeler.stuurspanning,
+    kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde,
+    ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde,
+    bouwjaar: verdeler.bouwjaar,
+    keuringDatum: verdeler.keuringDatum,
+    getestDoor: verdeler.getestDoor,
+    unInV: verdeler.unInV,
+    inInA: verdeler.inInA,
+    ikThInKA1s: verdeler.ikThInKA1s,
+    ikDynInKA: verdeler.ikDynInKA,
+    freqInHz: verdeler.freqInHz,
+    typeNrHs: verdeler.typeNrHs,
+    fabrikant: verdeler.fabrikant,
+    profilePhoto: verdeler.profilePhoto,
+    status: verdeler.status,
+    expectedHours: verdeler.expectedHours || verdeler.expected_hours,
+    gewensteLeverDatum: verdeler.deliveryDate || verdeler.gewenste_lever_datum
+  });
+
+  // Verdeler numbers are random, so they can clash with verdelers of other projects; swap any taken number for a free one before saving.
+  const resolveVerdelerIds = async (verdelers: any[]): Promise<string[]> => {
+    const taken = await dataService.findExistingDistributorIds(verdelers.map(v => v.distributorId));
+    const used = new Set<string>();
+    const finalIds: string[] = [];
+    for (const verdeler of verdelers) {
+      let id = verdeler.distributorId;
+      let attempts = 0;
+      while (taken.has(id) || used.has(id)) {
+        if (++attempts > 50) throw new Error('Kon geen vrij verdelernummer vinden');
+        id = `VD${Math.floor(1000 + Math.random() * 9000)}`;
+        if (!used.has(id) && (await dataService.findExistingDistributorIds([id])).has(id)) taken.add(id);
+      }
+      used.add(id);
+      finalIds.push(id);
+    }
+    return finalIds;
+  };
+
+  // Saves every verdeler or throws; returns original number -> saved number for verdelers that got a new number.
+  const saveVerdelers = async (projectId: string, verdelers: any[]): Promise<Record<string, string>> => {
+    const renamed: Record<string, string> = {};
+    if (verdelers.length === 0) return renamed;
+
+    const finalIds = await resolveVerdelerIds(verdelers);
+    for (let i = 0; i < verdelers.length; i++) {
+      const verdeler = verdelers[i];
+      setSaveProgress(`Verdeler ${i + 1}/${verdelers.length} opslaan (${verdeler.kastNaam})...`);
+      const created = await dataService.createDistributor(buildDistributorData(verdeler, projectId, finalIds[i]));
+      if (created?.distributor_id && created.distributor_id !== verdeler.distributorId && !renamed[verdeler.distributorId]) {
+        renamed[verdeler.distributorId] = created.distributor_id;
+      }
+    }
+
+    const saved = await dataService.getDistributorsByProject(projectId);
+    if (!saved || saved.length !== verdelers.length) {
+      throw new Error(`Slechts ${saved?.length ?? 0} van ${verdelers.length} verdelers opgeslagen`);
+    }
+    return renamed;
+  };
+
+  const findIncompleteVerdeler = (verdelers: any[]) =>
+    verdelers.find(v => !v.distributorId?.trim() || !v.kastNaam?.trim());
+
+  const rollbackProject = async (projectId: string): Promise<boolean> => {
+    try {
+      await dataService.deleteProject(projectId);
+      return true;
+    } catch (err) {
+      console.error('Rollback of partially saved project failed:', err);
+      return false;
+    }
+  };
+
+  const notifyRenamedVerdelers = (renamed: Record<string, string>) => {
+    const entries = Object.entries(renamed);
+    if (entries.length === 0) return;
+    toast(`Let op: ${entries.map(([from, to]) => `${from} is nu ${to}`).join(', ')} (nummer was al in gebruik bij een ander project).`, { duration: 10000 });
+  };
+
   const handleSaveProject = async () => {
     if (saving) return;
+    const verdelers = projectData.verdelers || [];
+    const incomplete = findIncompleteVerdeler(verdelers);
+    if (incomplete) {
+      toast.error(`Verdeler ${incomplete.kastNaam || incomplete.distributorId || 'zonder naam'} mist een verdelernummer of kastnaam. Vul dit aan voordat je opslaat.`);
+      return;
+    }
+
     let savedProject: any = null;
+    let renamedVerdelers: Record<string, string> = {};
+    setSaving(true);
     try {
-      setSaving(true);
       setSaveProgress('Project aanmaken...');
-
       savedProject = await dataService.createProject(projectData);
-      const failedVerdelers: string[] = [];
-      const renamedVerdelers: Record<string, string> = {};
+      renamedVerdelers = await saveVerdelers(savedProject.id, verdelers);
+    } catch (error) {
+      console.error('Error saving project:', error);
+      const rolledBack = savedProject ? await rollbackProject(savedProject.id) : true;
+      toast.error(
+        rolledBack
+          ? 'Het project is NIET opgeslagen omdat niet alle verdelers konden worden opgeslagen. Al je gegevens staan nog in het formulier, probeer het opnieuw.'
+          : 'Opslaan is mislukt en het project kon niet volledig worden teruggedraaid. Je gegevens staan nog in het formulier; controleer de projectenlijst voordat je opnieuw opslaat.',
+        { duration: 12000 }
+      );
+      setSaving(false);
+      setSaveProgress('');
+      return;
+    }
 
-      // Create distributors if any
-      if (projectData.verdelers && projectData.verdelers.length > 0) {
-        console.log('🚀 SAVE: Starting to save verdelers...');
-        console.log('🚀 SAVE: Number of verdelers to save:', projectData.verdelers.length);
-        
-        for (const verdeler of projectData.verdelers) {
-          console.log('🔍 SAVE: Processing verdeler:', verdeler);
-          console.log('🔍 SAVE: Verdeler distributorId:', verdeler.distributorId);
-          console.log('🔍 SAVE: Verdeler kastNaam:', verdeler.kastNaam);
-          console.log('🔍 SAVE: Full verdeler object:', JSON.stringify(verdeler, null, 2));
-          
-          const distributorData = {
-            distributorId: verdeler.distributorId,
-            projectId: savedProject.id,
-            kastNaam: verdeler.kastNaam,
-            toegewezenMonteur: verdeler.toegewezenMonteur,
-            systeem: verdeler.systeem,
-            voeding: verdeler.voeding,
-            stuurspanning: verdeler.stuurspanning,
-            kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde,
-            ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde,
-            bouwjaar: verdeler.bouwjaar,
-            keuringDatum: verdeler.keuringDatum,
-            getestDoor: verdeler.getestDoor,
-            unInV: verdeler.unInV,
-            inInA: verdeler.inInA,
-            ikThInKA1s: verdeler.ikThInKA1s,
-            ikDynInKA: verdeler.ikDynInKA,
-            freqInHz: verdeler.freqInHz,
-            typeNrHs: verdeler.typeNrHs,
-            fabrikant: verdeler.fabrikant,
-            profilePhoto: verdeler.profilePhoto,
-            status: verdeler.status,
-            expectedHours: verdeler.expectedHours || verdeler.expected_hours,
-            gewensteLeverDatum: verdeler.deliveryDate || verdeler.gewenste_lever_datum
-          };
-
-          console.log('🔍 SAVE: Mapped distributor data:', distributorData);
-          console.log('🔍 SAVE: Critical field check:');
-          console.log('  - distributorId (mapped):', distributorData.distributorId);
-          console.log('  - kastNaam (mapped):', distributorData.kastNaam);
-          console.log('  - projectId (mapped):', distributorData.projectId);
-          
-          // Verify the data has the required fields
-          if (!distributorData.distributorId) {
-            console.error('❌ CRITICAL: Missing distributorId for verdeler:', verdeler);
-            console.error('❌ Original verdeler data:', JSON.stringify(verdeler, null, 2));
-            console.error('❌ Mapped distributorData:', JSON.stringify(distributorData, null, 2));
-            toast.error(`Verdeler ID ontbreekt voor verdeler ${verdeler.kastNaam || 'onbekend'}`);
-            continue;
-          }
-          
-          if (!distributorData.kastNaam) {
-            console.error('❌ CRITICAL: Missing kastNaam for verdeler:', verdeler);
-            console.error('❌ Original verdeler data:', JSON.stringify(verdeler, null, 2));
-            console.error('❌ Mapped distributorData:', JSON.stringify(distributorData, null, 2));
-            toast.error(`Kastnaam ontbreekt voor verdeler ${verdeler.distributorId}`);
-            continue;
-          }
-          
-          setSaveProgress(`Verdeler ${verdeler.distributorId} opslaan...`);
-          try {
-            const created = await dataService.createDistributor(distributorData);
-            if (created?.distributor_id && created.distributor_id !== verdeler.distributorId) {
-              renamedVerdelers[verdeler.distributorId] = created.distributor_id;
-            }
-            console.log('✅ SAVE: Distributor saved successfully');
-          } catch (err) {
-            console.error('❌ SAVE: Failed to save verdeler', verdeler.distributorId, err);
-            failedVerdelers.push(verdeler.kastNaam || verdeler.distributorId);
-          }
-        }
-        
-        console.log('🎉 SAVE: All verdelers processed');
-      }
-
+    try {
       const failedDocuments = await saveTempDocuments(savedProject.id, renamedVerdelers);
 
-      if (failedVerdelers.length > 0) {
-        toast.error(`Project aangemaakt, maar ${failedVerdelers.length} verdeler(s) konden niet worden opgeslagen: ${failedVerdelers.join(', ')}. Voeg deze opnieuw toe in het project.`, { duration: 10000 });
-      } else if (failedDocuments.length > 0) {
+      if (failedDocuments.length > 0) {
         toast.error(`Project aangemaakt, maar ${failedDocuments.length} document(en) konden niet worden opgeslagen: ${failedDocuments.join(', ')}. Upload deze opnieuw in het project.`, { duration: 8000 });
       } else {
-        toast.success('Project succesvol aangemaakt!');
+        toast.success(`Project succesvol aangemaakt met ${verdelers.length} verdeler(s)!`);
       }
+      notifyRenamedVerdelers(renamedVerdelers);
 
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
@@ -260,16 +289,12 @@ const CreateProject = () => {
         navigate('/projects');
       }
     } catch (error) {
-      console.error('Error saving project:', error);
-      if (savedProject) {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
-        setHasDraft(false);
-        toast.error('Het project is aangemaakt, maar niet alles kon worden opgeslagen. Controleer de verdelers en documenten in het project.', { duration: 8000 });
-        navigate(`/project/${savedProject.id}`);
-      } else {
-        toast.error('Er is een fout opgetreden bij het opslaan van het project');
-      }
+      console.error('Error saving project documents:', error);
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
+      setHasDraft(false);
+      toast.error('Het project en alle verdelers zijn opgeslagen, maar de documenten niet. Upload deze opnieuw in het project.', { duration: 8000 });
+      navigate(`/project/${savedProject.id}`);
     } finally {
       setSaving(false);
       setSaveProgress('');
@@ -452,101 +477,37 @@ const CreateProject = () => {
       toast.error('Vul eerst projectgegevens in (locatie, klant of projectnummer)');
       return;
     }
+    const verdelers = projectData.verdelers || [];
+    const incomplete = findIncompleteVerdeler(verdelers);
+    if (incomplete) {
+      toast.error(`Verdeler ${incomplete.kastNaam || incomplete.distributorId || 'zonder naam'} mist een verdelernummer of kastnaam. Vul dit aan voordat je opslaat.`);
+      return;
+    }
 
     try {
       setSaving(true);
 
-      const conceptProject = {
-        ...projectData,
-        status: 'Concept'
-      };
-
-      const savedProject = await dataService.createProject(conceptProject);
-
-      if (projectData.verdelers && projectData.verdelers.length > 0) {
-        for (const verdeler of projectData.verdelers) {
-          if (!verdeler.distributorId || !verdeler.kastNaam) continue;
-
-          const distributorData = {
-            distributorId: verdeler.distributorId,
-            projectId: savedProject.id,
-            kastNaam: verdeler.kastNaam,
-            toegewezenMonteur: verdeler.toegewezenMonteur,
-            systeem: verdeler.systeem,
-            voeding: verdeler.voeding,
-            stuurspanning: verdeler.stuurspanning,
-            kaWaarde: verdeler.kaWaarde || verdeler.ka_waarde,
-            ipWaarde: verdeler.ipWaarde || verdeler.ip_waarde,
-            bouwjaar: verdeler.bouwjaar,
-            keuringDatum: verdeler.keuringDatum,
-            getestDoor: verdeler.getestDoor,
-            unInV: verdeler.unInV,
-            inInA: verdeler.inInA,
-            ikThInKA1s: verdeler.ikThInKA1s,
-            ikDynInKA: verdeler.ikDynInKA,
-            freqInHz: verdeler.freqInHz,
-            typeNrHs: verdeler.typeNrHs,
-            fabrikant: verdeler.fabrikant,
-            profilePhoto: verdeler.profilePhoto,
-            status: verdeler.status,
-            expectedHours: verdeler.expectedHours || verdeler.expected_hours,
-            gewensteLeverDatum: verdeler.deliveryDate || verdeler.gewenste_lever_datum
-          };
-
-          try {
-            await dataService.createDistributor(distributorData);
-          } catch (err) {
-            console.error('Error saving distributor in concept:', err);
-          }
-        }
+      const savedProject = await dataService.createProject({ ...projectData, status: 'Concept' });
+      let renamedVerdelers: Record<string, string>;
+      try {
+        renamedVerdelers = await saveVerdelers(savedProject.id, verdelers);
+      } catch (error) {
+        const rolledBack = await rollbackProject(savedProject.id);
+        console.error('Error saving verdelers in concept:', error);
+        toast.error(
+          rolledBack
+            ? 'Het concept is NIET opgeslagen omdat niet alle verdelers konden worden opgeslagen. Al je gegevens staan nog in het formulier, probeer het opnieuw.'
+            : 'Opslaan is mislukt en het concept kon niet volledig worden teruggedraaid. Je gegevens staan nog in het formulier; controleer de projectenlijst voordat je opnieuw opslaat.',
+          { duration: 12000 }
+        );
+        return;
       }
 
-      if (Object.keys(tempDocuments).length > 0) {
-        const createdDistributors = await dataService.getDistributorsByProject(savedProject.id);
-
-        for (const [key, docs] of Object.entries(tempDocuments)) {
-          const firstDashIndex = key.indexOf('-');
-          const distributorId = key.substring(0, firstDashIndex);
-          const folder = key.substring(firstDashIndex + 1);
-
-          if (distributorId === 'project') {
-            for (const doc of docs) {
-              try {
-                await dataService.createDocument({
-                  projectId: savedProject.id,
-                  distributorId: null,
-                  folder: folder,
-                  name: doc.name,
-                  type: doc.type,
-                  size: doc.size,
-                  content: doc.content
-                });
-              } catch (error) {
-                console.error('Error saving project-level document:', error);
-              }
-            }
-          } else {
-            const dbDistributor = createdDistributors.find((d: any) => d.distributor_id === distributorId);
-            if (dbDistributor) {
-              for (const doc of docs) {
-                try {
-                  await dataService.createDocument({
-                    projectId: savedProject.id,
-                    distributorId: dbDistributor.id,
-                    folder: folder,
-                    name: doc.name,
-                    type: doc.type,
-                    size: doc.size,
-                    content: doc.content
-                  });
-                } catch (error) {
-                  console.error('Error saving distributor document:', error);
-                }
-              }
-            }
-          }
-        }
+      const failedDocuments = await saveTempDocuments(savedProject.id, renamedVerdelers);
+      if (failedDocuments.length > 0) {
+        toast.error(`Concept opgeslagen, maar ${failedDocuments.length} document(en) konden niet worden opgeslagen: ${failedDocuments.join(', ')}.`, { duration: 8000 });
       }
+      notifyRenamedVerdelers(renamedVerdelers);
 
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_TIMESTAMP_KEY);
@@ -560,6 +521,7 @@ const CreateProject = () => {
       toast.error('Er is een fout opgetreden bij het opslaan als concept');
     } finally {
       setSaving(false);
+      setSaveProgress('');
     }
   };
 

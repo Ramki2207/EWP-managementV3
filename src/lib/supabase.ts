@@ -316,6 +316,19 @@ export const dataService = {
     }
   },
 
+  async findExistingDistributorIds(ids: string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    const { data, error } = await supabase
+      .from('distributors')
+      .select('distributor_id')
+      .in('distributor_id', ids);
+    if (error) {
+      console.error('Database error in findExistingDistributorIds:', error);
+      throw new Error(`Failed to check verdeler numbers: ${getErrorMessage(error)}`);
+    }
+    return new Set((data || []).map((d: any) => d.distributor_id));
+  },
+
   async createDistributor(distributor: any) {
     try {
       console.log('createDistributor called with:', distributor);
