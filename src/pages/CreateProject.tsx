@@ -159,6 +159,8 @@ const CreateProject = () => {
       setSaveProgress('Project aanmaken...');
 
       savedProject = await dataService.createProject(projectData);
+      const failedVerdelers: string[] = [];
+      const renamedVerdelers: Record<string, string> = {};
 
       // Create distributors if any
       if (projectData.verdelers && projectData.verdelers.length > 0) {
@@ -221,16 +223,26 @@ const CreateProject = () => {
           }
           
           setSaveProgress(`Verdeler ${verdeler.distributorId} opslaan...`);
-          await dataService.createDistributor(distributorData);
-          console.log('✅ SAVE: Distributor saved successfully');
+          try {
+            const created = await dataService.createDistributor(distributorData);
+            if (created?.distributor_id && created.distributor_id !== verdeler.distributorId) {
+              renamedVerdelers[verdeler.distributorId] = created.distributor_id;
+            }
+            console.log('✅ SAVE: Distributor saved successfully');
+          } catch (err) {
+            console.error('❌ SAVE: Failed to save verdeler', verdeler.distributorId, err);
+            failedVerdelers.push(verdeler.kastNaam || verdeler.distributorId);
+          }
         }
         
         console.log('🎉 SAVE: All verdelers processed');
       }
 
-      const failedDocuments = await saveTempDocuments(savedProject.id);
+      const failedDocuments = await saveTempDocuments(savedProject.id, renamedVerdelers);
 
-      if (failedDocuments.length > 0) {
+      if (failedVerdelers.length > 0) {
+        toast.error(`Project aangemaakt, maar ${failedVerdelers.length} verdeler(s) konden niet worden opgeslagen: ${failedVerdelers.join(', ')}. Voeg deze opnieuw toe in het project.`, { duration: 10000 });
+      } else if (failedDocuments.length > 0) {
         toast.error(`Project aangemaakt, maar ${failedDocuments.length} document(en) konden niet worden opgeslagen: ${failedDocuments.join(', ')}. Upload deze opnieuw in het project.`, { duration: 8000 });
       } else {
         toast.success('Project succesvol aangemaakt!');
@@ -264,7 +276,7 @@ const CreateProject = () => {
     }
   };
 
-  const saveTempDocuments = async (projectId: string): Promise<string[]> => {
+  const saveTempDocuments = async (projectId: string, renamedVerdelers: Record<string, string> = {}): Promise<string[]> => {
     const entries = Object.entries(tempDocuments).filter(([, docs]) => docs.length > 0);
     if (entries.length === 0) return [];
 
@@ -278,7 +290,7 @@ const CreateProject = () => {
       const folder = key.substring(firstDashIndex + 1);
       const dbDistributorId = distributorKey === 'project'
         ? null
-        : createdDistributors.find((d: any) => d.distributor_id === distributorKey)?.id;
+        : createdDistributors.find((d: any) => d.distributor_id === (renamedVerdelers[distributorKey] || distributorKey))?.id;
       if (dbDistributorId === undefined) continue;
       docs.forEach(doc => jobs.push({ doc, distributorId: dbDistributorId, folder }));
     }

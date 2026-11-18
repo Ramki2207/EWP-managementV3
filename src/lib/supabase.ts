@@ -418,12 +418,24 @@ export const dataService = {
         throw new Error('project_id is required but missing');
       }
 
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('distributors')
         .insert([dbData])
         .select()
         .single();
-      
+
+      // Verdeler numbers are random 4-digit IDs, so a number can already be taken by another project; pick a free one.
+      for (let attempt = 0; attempt < 10 && error?.code === '23505' && error.message?.includes('distributor_id'); attempt++) {
+        const candidate = `VD${Math.floor(1000 + Math.random() * 9000)}`;
+        console.warn(`⚠️ distributor_id ${dbData.distributor_id} already exists, retrying with ${candidate}`);
+        dbData.distributor_id = candidate;
+        ({ data, error } = await supabase
+          .from('distributors')
+          .insert([dbData])
+          .select()
+          .single());
+      }
+
       if (error) {
         console.error('Database error in createDistributor:', error);
         console.error('Failed to insert data:', dbData);
