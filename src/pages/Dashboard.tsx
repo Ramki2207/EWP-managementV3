@@ -1493,8 +1493,7 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Dave Moret: Monteur Assignment Calendar */}
-      {currentUser?.username === 'Dave Moret' && (
+      {['Dave Moret', 'Kevin Rombout'].includes(currentUser?.username || '') && (
         <div className="mb-8">
           <MonteurAssignmentCalendar />
         </div>
