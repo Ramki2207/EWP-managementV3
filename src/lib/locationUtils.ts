@@ -29,7 +29,7 @@ const UTRECHT_CONTACT: CompanyContact = {
 const DEN_HAAG_CONTACT: CompanyContact = {
   name: 'EWP Paneelbouw Den Haag',
   address: 'Ambachtstraat 6-D, 2671 CN Naaldwijk',
-  phone: '0174 625 816',
+  phone: '085-0477750',
 };
 
 const ROTTERDAM_CONTACT: CompanyContact = {
