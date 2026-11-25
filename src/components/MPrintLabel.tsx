@@ -4,14 +4,17 @@ import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import ewpLogo from '../assets/log-zwart.png';
+import { getCompanyContact } from '../lib/locationUtils';
 
 interface MPrintLabelProps {
   verdeler: any;
   projectNumber: string;
   logo: string;
+  projectLocation?: string;
 }
 
-const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo }) => {
+const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo, projectLocation }) => {
+  const contact = getCompanyContact(projectLocation);
   const labelRef = useRef<HTMLDivElement>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string>('');
   const [showSerialDialog, setShowSerialDialog] = useState(false);
@@ -208,9 +211,9 @@ const MPrintLabel: React.FC<MPrintLabelProps> = ({ verdeler, projectNumber, logo
               lineHeight: '1.5',
               color: '#000000'
             }}>
-              <div style={{ fontWeight: 'bold', fontSize: '22px', marginBottom: '4px', color: '#000000' }}>EWP Paneelbouw Utrecht</div>
-              <div style={{ color: '#000000' }}>Gildenstraat 28, 4143 HS Leerdam</div>
-              <div style={{ color: '#000000' }}>Tel: 085-0477750</div>
+              <div style={{ fontWeight: 'bold', fontSize: '22px', marginBottom: '4px', color: '#000000' }}>{contact.name}</div>
+              <div style={{ color: '#000000' }}>{contact.address}</div>
+              <div style={{ color: '#000000' }}>Tel: {contact.phone}</div>
               <div style={{ color: '#000000' }}>info@ewp-paneelbouw.nl</div>
               <div style={{ color: '#000000' }}>www.ewp-paneelbouw.nl</div>
             </div>

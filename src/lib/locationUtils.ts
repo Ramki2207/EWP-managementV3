@@ -14,6 +14,29 @@ export const getDisplayLocation = (location: string): string => {
   return locationMap[location] || location;
 };
 
+export interface CompanyContact {
+  name: string;
+  address: string;
+  phone: string;
+}
+
+const UTRECHT_CONTACT: CompanyContact = {
+  name: 'EWP Paneelbouw Utrecht',
+  address: 'Gildenstraat 28, 4143 HS Leerdam',
+  phone: '085-0477750',
+};
+
+const DEN_HAAG_CONTACT: CompanyContact = {
+  name: 'EWP Paneelbouw Den Haag',
+  address: 'Ambachtstraat 6-D, 2671 CN Naaldwijk',
+  phone: '0174 625 816',
+};
+
+const DEN_HAAG_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Den Haag'];
+
+export const getCompanyContact = (location: string | undefined): CompanyContact =>
+  location && DEN_HAAG_LOCATIONS.includes(location) ? DEN_HAAG_CONTACT : UTRECHT_CONTACT;
+
 /**
  * Checks if a user has access to a project based on location.
  * Handles backward compatibility:

@@ -2043,6 +2043,7 @@ const VerdelersStep: React.FC<VerdelersStepProps> = ({
                       verdeler={selectedVerdeler}
                       projectNumber={projectData.project_number || projectData.projectNumber}
                       logo={ewpLogo}
+                      projectLocation={projectData.location}
                     />
                     {currentUser?.username === 'Radjesh' && (
                       <VerdelerInformatiePDF
