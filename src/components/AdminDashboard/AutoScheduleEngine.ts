@@ -136,7 +136,8 @@ export function autoSchedule(
     const isOverdueItem = today > deadline;
     let cannotFit = false;
 
-    const scheduleForwardFromToday = () => {
+    if (isOverdueItem) {
+      // Overdue: schedule forward from today
       let cursor = new Date(today);
       const maxDate = addDays(today, 60);
       while (hoursNeeded > 0 && cursor <= maxDate) {
@@ -147,7 +148,7 @@ export function autoSchedule(
             const available = HOURS_PER_DAY - used;
             if (available > 0) {
               const allocate = Math.min(hoursNeeded, available);
-              dailyHours[dateStr] = (dailyHours[dateStr] || 0) + allocate;
+              dailyHours[dateStr] = allocate;
               addUsed(monteur, dateStr, allocate);
               hoursNeeded -= allocate;
             }
@@ -155,14 +156,11 @@ export function autoSchedule(
         }
         cursor = addDays(cursor, 1);
       }
-    };
-
-    if (isOverdueItem) {
-      scheduleForwardFromToday();
     } else {
-      // Future deadline: schedule backward from deadline (deliveries happen on the deadline day itself), never into the past
+      // Future deadline: schedule backward from deadline (deliveries happen on the deadline day itself)
       let cursor = verdeler.status === 'Levering' ? new Date(deadline) : addDays(deadline, -1);
-      while (hoursNeeded > 0 && cursor >= today) {
+      const minDate = addDays(deadline, -365);
+      while (hoursNeeded > 0 && cursor >= minDate) {
         if (!isWeekend(cursor)) {
           const dateStr = toDateStr(cursor);
           if (!monteurLeave.has(dateStr)) {
@@ -177,10 +175,6 @@ export function autoSchedule(
           }
         }
         cursor = addDays(cursor, -1);
-      }
-      if (hoursNeeded > 0) {
-        cannotFit = true;
-        scheduleForwardFromToday();
       }
     }
 

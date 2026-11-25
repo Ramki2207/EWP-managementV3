@@ -39,7 +39,6 @@ export interface ScheduledBlock {
   cannotFit: boolean;
   overrideId?: string;
   isManual?: boolean;
-  isWorked?: boolean;
 }
 
 export interface MonteurDayCapacity {

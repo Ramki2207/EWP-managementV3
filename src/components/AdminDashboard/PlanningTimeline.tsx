@@ -35,7 +35,6 @@ const STATUS_COLORS: Record<string, { bg: string; border: string; text: string; 
   'Levering':          { bg: 'bg-emerald-500/20', border: 'border-emerald-500/40', text: 'text-emerald-100', solid: '#10b981', ghostBg: 'rgba(16,185,129,0.25)',   barBg: 'rgba(16,185,129,0.22)' },
 };
 const DEFAULT_COLOR = { bg: 'bg-gray-500/20', border: 'border-gray-500/40', text: 'text-gray-200', solid: '#6b7280', ghostBg: 'rgba(107,114,128,0.25)', barBg: 'rgba(107,114,128,0.22)' };
-const WORKED_COLOR = { bg: 'bg-slate-400/20', border: 'border-slate-400/40', text: 'text-slate-200', solid: '#94a3b8', ghostBg: 'rgba(148,163,184,0.2)', barBg: 'rgba(148,163,184,0.14)' };
 
 type DragMode = 'move' | 'resize-left' | 'resize-right';
 
@@ -338,11 +337,9 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
   const renderSpanningBlocks = (monteur: string, rowHeight: number) => {
     const mb = blocks.filter(b => b.monteur === monteur);
     const lanes = laneMap.get(monteur) || new Map<string, number>();
-    const canDragAny = !!(onBlockMove || onBlockResize);
+    const canDrag = !!(onBlockMove || onBlockResize);
 
     return mb.map(block => {
-      const isWorked = !!block.isWorked;
-      const canDrag = canDragAny && !isWorked;
       const startColIdx = dayStrings.indexOf(block.startDate);
       const endColIdx = dayStrings.indexOf(block.endDate);
 
@@ -365,7 +362,7 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
       const colSpan = colEnd - colStart + 1;
 
       const lane = lanes.get(block.verdeler.id) ?? 0;
-      const colors = isWorked ? WORKED_COLOR : STATUS_COLORS[block.verdeler.status] || DEFAULT_COLOR;
+      const colors = STATUS_COLORS[block.verdeler.status] || DEFAULT_COLOR;
 
       const isHovered = hoveredBlock === block.verdeler.id && !isDragging;
       const isSaving = savingBlock === block.verdeler.id;
@@ -401,14 +398,13 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
             background: isHovered
               ? `linear-gradient(135deg, ${colors.solid}40, ${colors.solid}28)`
               : colors.barBg,
-            border: `1px ${isWorked ? 'dashed' : 'solid'} ${colors.solid}${isHovered ? 'cc' : '60'}`,
+            border: `1px solid ${colors.solid}${isHovered ? 'cc' : '60'}`,
             boxShadow: isHovered ? `0 2px 12px ${colors.solid}30` : block.isManual ? `inset 0 0 0 1px ${colors.solid}30` : 'none',
             transition: 'opacity 0.15s, box-shadow 0.1s',
             pointerEvents: isSaving ? 'none' : 'auto',
-            cursor: isWorked ? 'default' : canDrag ? 'grab' : 'pointer',
+            cursor: canDrag ? 'grab' : 'pointer',
           }}
-          title={isWorked ? `Gewerkt (geboekte uren): ${totalHours}u` : undefined}
-          onClick={() => { if (!isDragging && !isWorked) setSelectedBlock(block); }}
+          onClick={() => { if (!isDragging) setSelectedBlock(block); }}
           onMouseEnter={() => { if (!isDragging) setHoveredBlock(block.verdeler.id); }}
           onMouseLeave={() => setHoveredBlock(null)}
           onMouseDown={canDrag ? (e) => startDrag(e, block, 'move', firstVisibleDay) : undefined}
@@ -435,8 +431,8 @@ const PlanningTimeline: React.FC<PlanningTimelineProps> = ({
               {block.verdeler.created_by_name ? ` – ${block.verdeler.created_by_name}` : ''}
               {isManualBlock ? ' ·' : ''}
             </span>
-            <span className="truncate leading-tight" style={{ fontSize: 9, color: isWorked ? '#cbd5e1' : `${colors.solid}99` }}>
-              {isWorked ? 'Gewerkt · ' : ''}{block.verdeler.client} · {totalHours}u
+            <span className="truncate leading-tight" style={{ fontSize: 9, color: `${colors.solid}99` }}>
+              {block.verdeler.client} · {totalHours}u
             </span>
           </div>
 
