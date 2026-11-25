@@ -32,10 +32,20 @@ const DEN_HAAG_CONTACT: CompanyContact = {
   phone: '0174 625 816',
 };
 
-const DEN_HAAG_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Den Haag'];
+const ROTTERDAM_CONTACT: CompanyContact = {
+  name: 'EWP Paneelbouw Rotterdam',
+  address: 'Schaapherderweg 17M, 2988 CK Ridderkerk',
+  phone: '085 047 7750',
+};
 
-export const getCompanyContact = (location: string | undefined): CompanyContact =>
-  location && DEN_HAAG_LOCATIONS.includes(location) ? DEN_HAAG_CONTACT : UTRECHT_CONTACT;
+const DEN_HAAG_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Den Haag'];
+const ROTTERDAM_LOCATIONS = ['Rotterdam', 'Rotterdam (2P)', 'Rotterdam (PR)'];
+
+export const getCompanyContact = (location: string | undefined): CompanyContact => {
+  if (location && DEN_HAAG_LOCATIONS.includes(location)) return DEN_HAAG_CONTACT;
+  if (location && ROTTERDAM_LOCATIONS.includes(location)) return ROTTERDAM_CONTACT;
+  return UTRECHT_CONTACT;
+};
 
 /**
  * Checks if a user has access to a project based on location.
