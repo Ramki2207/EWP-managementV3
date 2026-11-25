@@ -2,7 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { LOCATION_GROUP_OPTIONS, LocationGroup, useLocationFilter } from '../contexts/LocationFilterContext';
 
-const LocationFilterDropdown: React.FC = () => {
+interface LocationFilterDropdownProps {
+  allowedGroups?: LocationGroup[];
+}
+
+const LocationFilterDropdown: React.FC<LocationFilterDropdownProps> = ({ allowedGroups }) => {
   const { selectedGroups, setSelectedGroups } = useLocationFilter();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<LocationGroup[]>(selectedGroups);
@@ -31,7 +35,12 @@ const LocationFilterDropdown: React.FC = () => {
     setOpen(false);
   };
 
+  const options = allowedGroups
+    ? LOCATION_GROUP_OPTIONS.filter(o => allowedGroups.includes(o.value))
+    : LOCATION_GROUP_OPTIONS;
+
   const hasChanges =
+    (!allowedGroups || draft.length > 0) &&
     draft.length !== selectedGroups.length || draft.some(g => !selectedGroups.includes(g));
 
   const summary = selectedGroups.length === 0
@@ -59,12 +68,16 @@ const LocationFilterDropdown: React.FC = () => {
       </button>
       {open && (
         <div className="absolute z-50 mt-2 w-52 bg-[#1e2530] border border-gray-700 rounded-lg shadow-xl py-1">
-          <button type="button" onClick={() => setDraft([])} className={optionClass(draft.length === 0)}>
-            {checkbox(draft.length === 0)}
-            Alles
-          </button>
-          <div className="border-t border-gray-700 my-1" />
-          {LOCATION_GROUP_OPTIONS.map(option => {
+          {!allowedGroups && (
+            <>
+              <button type="button" onClick={() => setDraft([])} className={optionClass(draft.length === 0)}>
+                {checkbox(draft.length === 0)}
+                Alles
+              </button>
+              <div className="border-t border-gray-700 my-1" />
+            </>
+          )}
+          {options.map(option => {
             const active = draft.includes(option.value);
             return (
               <button key={option.value} type="button" onClick={() => toggleGroup(option.value)} className={optionClass(active)}>

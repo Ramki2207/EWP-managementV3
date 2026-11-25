@@ -19,7 +19,7 @@ interface VerlofRegistratieModalProps {
   currentUserId: string;
 }
 
-const LEERDAM_LOCATIONS = ['Leerdam', 'Leerdam (PM)'];
+const LEERDAM_LOCATIONS = ['Leerdam', 'Leerdam (PM)', 'Utrecht', 'Arnhem', 'Service'];
 const NAALDWIJK_LOCATIONS = ['Naaldwijk', 'Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam'];
 const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
 
@@ -42,7 +42,7 @@ const VerlofRegistratieModal: React.FC<VerlofRegistratieModalProps> = ({
     const isLocationFiltered = LOCATION_FILTERED_USERS.includes(currentUsername);
     if (!isLocationFiltered) return users.filter(u => u.role === 'montage' || u.role === 'tester');
 
-    const isLeerdam = currentUsername === 'Patrick Herman' || currentUsername === 'Stefano de Weger';
+    const isLeerdam = currentUsername === 'Patrick Herman' || currentUsername === 'Stefano de Weger' || currentUsername === 'Kevin van Veen';
     const allowedLocations = isLeerdam ? LEERDAM_LOCATIONS : NAALDWIJK_LOCATIONS;
 
     return users

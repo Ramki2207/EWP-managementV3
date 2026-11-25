@@ -64,7 +64,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [loading, setLoading] = useState(true);
   const [verdelers, setVerdelers] = useState<PlanningVerdeler[]>([]);
   const [overrides, setOverrides] = useState<PlanningOverride[]>([]);
-  const [users, setUsers] = useState<{ id: string; username: string; role: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; username: string; role: string; assigned_locations: string[] | null }[]>([]);
   const [leaveDates, setLeaveDates] = useState<Record<string, Set<string>>>({});
   const [leaveInfo, setLeaveInfo] = useState<Record<string, string>>({});
   const [leaveEntries, setLeaveEntries] = useState<Record<string, LeaveEntry[]>>({});
@@ -366,14 +366,23 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
 
   const monteurRoles = useMemo(() => {
     const roleByUsername: Record<string, string> = {};
-    users.forEach(u => { roleByUsername[u.username] = u.role; });
+    const locationsByUsername: Record<string, string[]> = {};
+    users.forEach(u => {
+      roleByUsername[u.username] = u.role;
+      locationsByUsername[u.username] = u.assigned_locations || [];
+    });
+    const usesLocationFilter = LOCATION_FILTERED_USERS.includes(username);
+    const isPersonVisible = (name: string) => {
+      const locations = locationsByUsername[name] || [];
+      return !usesLocationFilter || locations.length === 0 || locations.some(l => isLocationVisible(l));
+    };
     const roles: Record<string, PlanningRole> = {};
     const names = new Set<string>(verdelers.map(v => v.toegewezen_monteur));
-    const showUtrechtTeam = !LOCATION_FILTERED_USERS.includes(username) || isLocationVisible('Utrecht');
+    const showUtrechtTeam = !usesLocationFilter || isLocationVisible('Utrecht');
     if (showUtrechtTeam) UTRECHT_TEAM.forEach(name => names.add(name));
     buitenklussen
       .filter(k => k.end_date >= rangeStart && k.start_date <= rangeEnd)
-      .forEach(k => k.monteurs.forEach(name => names.add(name)));
+      .forEach(k => k.monteurs.filter(isPersonVisible).forEach(name => names.add(name)));
     names.forEach(name => { roles[name] = getPlanningRole(name, roleByUsername); });
     return roles;
   }, [verdelers, users, username, isLocationVisible, buitenklussen, rangeStart, rangeEnd]);

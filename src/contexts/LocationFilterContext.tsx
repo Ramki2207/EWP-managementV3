@@ -16,6 +16,11 @@ const GROUP_LOCATIONS: Record<LocationGroup, string[]> = {
   arnhem: ['Arnhem'],
 };
 
+// Users limited to these groups cannot choose "Alles" or other regions
+export const RESTRICTED_LOCATION_GROUPS: Record<string, LocationGroup[]> = {
+  'Kevin van Veen': ['leerdam', 'arnhem'],
+};
+
 const ALL_LOCATIONS = ['Naaldwijk (PD)', 'Naaldwijk (PW)', 'Rotterdam', 'Leerdam', 'Leerdam (PM)', 'Den Haag', 'Rotterdam (2P)', 'Rotterdam (PR)', 'Utrecht', 'Arnhem', 'Service'];
 
 const STORAGE_KEY = 'location_filter_preference';

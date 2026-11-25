@@ -14,7 +14,7 @@ import TestReviewNotifications from '../components/TestReviewNotifications';
 import MonteurAssignmentCalendar from '../components/MonteurAssignmentCalendar';
 import LogisticsCalendar from '../components/LogisticsCalendar';
 import { hasLocationAccess } from '../lib/locationUtils';
-import { useLocationFilter } from '../contexts/LocationFilterContext';
+import { RESTRICTED_LOCATION_GROUPS, useLocationFilter } from '../contexts/LocationFilterContext';
 import LocationFilterDropdown from '../components/LocationFilterDropdown';
 import { isUsernameMatch } from '../lib/userAliases';
 import AdminDashboard from '../components/AdminDashboard';
@@ -54,7 +54,7 @@ interface Notification {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { currentUser } = useEnhancedPermissions();
-  const { isLocationVisible, selectedGroups } = useLocationFilter();
+  const { isLocationVisible, selectedGroups, setSelectedGroups } = useLocationFilter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [creatorNames, setCreatorNames] = useState<Record<string, string>>({});
 
@@ -490,6 +490,14 @@ const Dashboard = () => {
       loadAgendaProjects();
     }
   }, [currentUser, selectedMonth]);
+
+  useEffect(() => {
+    const allowed = currentUser ? RESTRICTED_LOCATION_GROUPS[currentUser.username] : undefined;
+    if (!allowed) return;
+    const kept = selectedGroups.filter(g => allowed.includes(g));
+    if (kept.length === 0) setSelectedGroups(allowed);
+    else if (kept.length !== selectedGroups.length) setSelectedGroups(kept);
+  }, [currentUser, selectedGroups, setSelectedGroups]);
 
   // Separate effect to reload projects when filterMode changes
   useEffect(() => {
@@ -1088,16 +1096,16 @@ const Dashboard = () => {
                     </div>
                   )}
 
-                  {/* Location Filter for Lysander, Patrick Herman, and Stefano de Weger */}
                   {(currentUser?.username === 'Lysander Koenraadt' ||
                     currentUser?.username === 'Patrick Herman' ||
                     currentUser?.username === 'Stefano de Weger' ||
-                    currentUser?.username === 'Chris Louwrier') && (
+                    currentUser?.username === 'Chris Louwrier' ||
+                    currentUser?.username === 'Kevin van Veen') && (
                     <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
                       <span className="text-sm text-gray-300">
                         Locatie filter:
                       </span>
-                      <LocationFilterDropdown />
+                      <LocationFilterDropdown allowedGroups={RESTRICTED_LOCATION_GROUPS[currentUser.username]} />
                     </div>
                   )}
                 </div>
