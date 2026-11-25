@@ -76,6 +76,8 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
   const [workDaysByUser, setWorkDaysByUser] = useState<Record<string, number[]>>({});
   const [editingBuitenklus, setEditingBuitenklus] = useState<Buitenklus | 'new' | null>(null);
   const [editingWorkDays, setEditingWorkDays] = useState<string | null>(null);
+  const [workedEntries, setWorkedEntries] = useState<any[]>([]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
 
@@ -301,10 +303,79 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       console.error('Error loading planning data:', err);
     } finally {
       setLoading(false);
+      setReloadKey(k => k + 1);
     }
   }, [username, isLocationVisible]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Past days show what people actually booked instead of a plan
+  useEffect(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    if (rangeStart >= todayStr) { setWorkedEntries([]); return; }
+    let cancelled = false;
+    supabase
+      .from('work_entries')
+      .select('distributor_id, worker_id, date, hours, distributors (id, distributor_id, kast_naam, status, project_id, projects (project_number, client, location))')
+      .gte('date', rangeStart)
+      .lte('date', rangeEnd)
+      .lt('date', todayStr)
+      .not('hours', 'is', null)
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) { console.error('Error loading worked hours:', error); setWorkedEntries([]); return; }
+        setWorkedEntries(data || []);
+      });
+    return () => { cancelled = true; };
+  }, [rangeStart, rangeEnd, reloadKey]);
+
+  const workedBlocks = useMemo(() => {
+    const usernameById: Record<string, string> = {};
+    users.forEach(u => { usernameById[u.id] = u.username; });
+    const usesLocationFilter = LOCATION_FILTERED_USERS.includes(username);
+    const byKey: Record<string, ScheduledBlock> = {};
+    workedEntries.forEach((e: any) => {
+      const monteur = usernameById[e.worker_id];
+      const dist = e.distributors;
+      const hours = Number(e.hours);
+      if (!monteur || !dist || !e.date || !(hours > 0)) return;
+      const project = dist.projects;
+      if (usesLocationFilter && !isLocationVisible(project?.location)) return;
+      const date = String(e.date).split('T')[0];
+      const key = `worked:${monteur}:${dist.id}`;
+      const block = byKey[key] ||= {
+        verdeler: {
+          id: key,
+          distributor_id: dist.distributor_id,
+          kast_naam: dist.kast_naam || dist.distributor_id || 'Naamloos',
+          project_number: project?.project_number || '',
+          project_id: dist.project_id,
+          client: project?.client || '',
+          created_by_name: null,
+          toegewezen_monteur: monteur,
+          assigned_monteur: monteur,
+          gewenste_lever_datum: null,
+          project_delivery_date: null,
+          expected_hours: 0,
+          actual_hours: 0,
+          remaining_hours: 0,
+          status: dist.status,
+        },
+        monteur,
+        startDate: date,
+        endDate: date,
+        dailyHours: {},
+        isAutoScheduled: false,
+        isOverdue: false,
+        cannotFit: false,
+        isWorked: true,
+      };
+      block.dailyHours[date] = (block.dailyHours[date] || 0) + hours;
+      if (date < block.startDate) block.startDate = date;
+      if (date > block.endDate) block.endDate = date;
+    });
+    return Object.values(byKey);
+  }, [workedEntries, users, username, isLocationVisible]);
 
   // Covers the visible range plus a long look-ahead, because auto-scheduling plans work up to future deadlines
   const dayMarkers = useMemo(() => {
@@ -403,14 +474,16 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     return autoSchedule(verdelers, blockedDates, rangeStart, rangeEnd, overrides);
   }, [verdelers, blockedDates, rangeStart, rangeEnd, overrides]);
 
+  const displayBlocks = useMemo(() => [...workedBlocks, ...scheduledBlocks], [workedBlocks, scheduledBlocks]);
+
   const filteredBlocks = useMemo(() => {
-    if (selectedMonteur === 'all') return scheduledBlocks;
-    return scheduledBlocks.filter(b => b.monteur === selectedMonteur);
-  }, [scheduledBlocks, selectedMonteur]);
+    if (selectedMonteur === 'all') return displayBlocks;
+    return displayBlocks.filter(b => b.monteur === selectedMonteur);
+  }, [displayBlocks, selectedMonteur]);
 
   const capacityMap = useMemo(() => {
     const map: Record<string, MonteurDayCapacity> = {};
-    const used = calculateCapacityUsed(scheduledBlocks);
+    const used = calculateCapacityUsed(displayBlocks);
     const dayStrings = days.map(d => format(d, 'yyyy-MM-dd'));
 
     filteredMonteurs.forEach(monteur => {
@@ -431,7 +504,7 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       });
     });
     return map;
-  }, [filteredMonteurs, days, scheduledBlocks, blockedDates]);
+  }, [filteredMonteurs, days, displayBlocks, blockedDates]);
 
   const stats = useMemo(() => {
     const unscheduled = verdelers.filter(v =>
@@ -751,6 +824,10 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-dashed border-gray-500/50 bg-gray-500/20" />
           <span className="text-[10px] text-gray-400">Past niet in planning</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-dashed border-slate-400/60 bg-slate-400/20" />
+          <span className="text-[10px] text-gray-400">Gewerkt (geboekte uren)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-yellow-400/60 bg-yellow-400/25" />
