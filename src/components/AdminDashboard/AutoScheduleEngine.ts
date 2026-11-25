@@ -8,7 +8,15 @@ function isWeekend(date: Date): boolean {
 }
 
 function toDateStr(date: Date): string {
-  return date.toISOString().split('T')[0];
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${m}-${d}`;
+}
+
+// Parse 'yyyy-MM-dd' as a local date; new Date('yyyy-MM-dd') is UTC and shifts the day outside UTC
+function parseLocalDate(value: string): Date {
+  const [y, m, d] = value.split('T')[0].split('-').map(Number);
+  return new Date(y, m - 1, d);
 }
 
 function addDays(date: Date, days: number): Date {
@@ -29,8 +37,8 @@ export function buildDailyHoursFromRange(
 ): Record<string, number> {
   const dailyHours: Record<string, number> = {};
   let remaining = totalHours;
-  let cursor = new Date(startDate);
-  const end = new Date(endDate);
+  let cursor = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
 
   while (cursor <= end && remaining > 0) {
     if (!isWeekend(cursor)) {
@@ -68,8 +76,7 @@ export function autoSchedule(
     const verdeler = verdelers.find(v => v.id === override.distributor_id);
     if (!verdeler) continue;
     const deadline = getDeadline(verdeler);
-    const deadlineDate = deadline ? new Date(deadline) : null;
-    deadlineDate?.setHours(0, 0, 0, 0);
+    const deadlineDate = deadline ? parseLocalDate(deadline) : null;
 
     overrideBlocks.push({
       verdeler,
@@ -121,8 +128,7 @@ export function autoSchedule(
   const autoBlocks: ScheduledBlock[] = [];
 
   for (const verdeler of schedulable) {
-    const deadline = new Date(getDeadline(verdeler)!);
-    deadline.setHours(0, 0, 0, 0);
+    const deadline = parseLocalDate(getDeadline(verdeler)!);
     const monteur = verdeler.toegewezen_monteur;
     let hoursNeeded = verdeler.remaining_hours;
     const dailyHours: Record<string, number> = {};
@@ -130,8 +136,7 @@ export function autoSchedule(
     const isOverdueItem = today > deadline;
     let cannotFit = false;
 
-    if (isOverdueItem) {
-      // Overdue: schedule forward from today so work appears in the current week
+    const scheduleForwardFromToday = () => {
       let cursor = new Date(today);
       const maxDate = addDays(today, 60);
       while (hoursNeeded > 0 && cursor <= maxDate) {
@@ -142,7 +147,7 @@ export function autoSchedule(
             const available = HOURS_PER_DAY - used;
             if (available > 0) {
               const allocate = Math.min(hoursNeeded, available);
-              dailyHours[dateStr] = allocate;
+              dailyHours[dateStr] = (dailyHours[dateStr] || 0) + allocate;
               addUsed(monteur, dateStr, allocate);
               hoursNeeded -= allocate;
             }
@@ -150,11 +155,14 @@ export function autoSchedule(
         }
         cursor = addDays(cursor, 1);
       }
+    };
+
+    if (isOverdueItem) {
+      scheduleForwardFromToday();
     } else {
-      // Future deadline: schedule backward from deadline (deliveries happen on the deadline day itself)
+      // Future deadline: schedule backward from deadline (deliveries happen on the deadline day itself), never into the past
       let cursor = verdeler.status === 'Levering' ? new Date(deadline) : addDays(deadline, -1);
-      const minDate = addDays(today, -30);
-      while (hoursNeeded > 0 && cursor >= minDate) {
+      while (hoursNeeded > 0 && cursor >= today) {
         if (!isWeekend(cursor)) {
           const dateStr = toDateStr(cursor);
           if (!monteurLeave.has(dateStr)) {
@@ -169,6 +177,10 @@ export function autoSchedule(
           }
         }
         cursor = addDays(cursor, -1);
+      }
+      if (hoursNeeded > 0) {
+        cannotFit = true;
+        scheduleForwardFromToday();
       }
     }
 
