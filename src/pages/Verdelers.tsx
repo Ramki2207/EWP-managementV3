@@ -103,7 +103,7 @@ const Verdelers = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth') {
         const beforeFilter = filteredDistributors.length;
         filteredDistributors = filteredDistributors.filter((distributor: any) => {
           const projectLocation = distributor.projects?.location;
@@ -121,7 +121,7 @@ const Verdelers = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations && Array.isArray(currentUser.assignedLocations) && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
