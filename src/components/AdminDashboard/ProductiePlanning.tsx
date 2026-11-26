@@ -35,6 +35,9 @@ interface ProductiePlanningProps {
 }
 
 const LOCATION_FILTERED_USERS = PLANNING_EDITORS;
+const PLANNING_STAFF_ROLES = ['montage', 'tester', 'logistiek'];
+// Shared accounts, not people to plan
+const PLANNING_EXCLUDED_USERS = ['Magazijn'];
 
 const toLocalDate = (value: string) => parseISO(value.split('T')[0]);
 
@@ -377,9 +380,15 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
       return !usesLocationFilter || locations.length === 0 || locations.some(l => isLocationVisible(l));
     };
     const roles: Record<string, PlanningRole> = {};
-    const names = new Set<string>(verdelers.map(v => v.toegewezen_monteur));
+    const names = new Set<string>(verdelers.map(v => v.toegewezen_monteur).filter(isPersonVisible));
     const showUtrechtTeam = !usesLocationFilter || isLocationVisible('Utrecht');
     if (showUtrechtTeam) UTRECHT_TEAM.forEach(name => names.add(name));
+    if (usesLocationFilter) {
+      users
+        .filter(u => PLANNING_STAFF_ROLES.includes(u.role) && !PLANNING_EXCLUDED_USERS.includes(u.username))
+        .filter(u => (u.assigned_locations || []).some(l => isLocationVisible(l)))
+        .forEach(u => names.add(u.username));
+    }
     buitenklussen
       .filter(k => k.end_date >= rangeStart && k.start_date <= rangeEnd)
       .forEach(k => k.monteurs.filter(isPersonVisible).forEach(name => names.add(name)));
