@@ -257,7 +257,7 @@ const ProjectDocumentationPDF: React.FC<ProjectDocumentationPDFProps> = ({ proje
         { label: 'Verwachte leverdatum:', value: project.expected_delivery_date
           ? new Date(project.expected_delivery_date).toLocaleDateString('nl-NL')
           : '-', boldValue: false },
-        { label: 'Voorcalculatorische uren:', value: verdelerHours > 0 ? `${verdelerHours} uur` : '-', boldValue: false }
+        { label: 'Bouw uren:', value: verdelerHours > 0 ? `${verdelerHours} uur` : '-', boldValue: false }
       ];
 
       for (const field of fields) {

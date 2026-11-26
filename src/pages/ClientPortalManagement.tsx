@@ -60,7 +60,7 @@ const ClientPortalManagement = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
         const projects = await dataService.getProjects();
         const projectLocationMap = projects.reduce((acc: any, project: any) => {
           acc[project.id] = project.location;
@@ -106,7 +106,7 @@ const ClientPortalManagement = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
       if (!usesDropdownFilter && currentUser?.role === 'projectleider' && currentUser?.assignedLocations?.length > 0) {
         const projects = await dataService.getProjects();
@@ -273,7 +273,7 @@ const ClientPortalManagement = () => {
     const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                  currentUser?.username === 'Patrick Herman' ||
                                  currentUser?.username === 'Stefano de Weger' ||
-                                 currentUser?.username === 'Chris Louwrier';
+                                 currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
     if (!usesDropdownFilter2 && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
       const hasAllLocations =

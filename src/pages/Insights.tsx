@@ -96,7 +96,7 @@ const Insights = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
         const beforeProjectFilter = projectsData?.length || 0;
         projectsData = projectsData?.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -126,7 +126,7 @@ const Insights = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
       if (!usesDropdownFilter && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
         const hasAllLocations =

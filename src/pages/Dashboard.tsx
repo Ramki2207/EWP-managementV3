@@ -233,7 +233,7 @@ const Dashboard = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
         const beforeFilter = filteredData.length;
         filteredData = filteredData.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -250,7 +250,7 @@ const Dashboard = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         if (currentUser.assignedLocations.length < AVAILABLE_LOCATIONS.length) {
@@ -617,7 +617,7 @@ const Dashboard = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
         const beforeFilter = filteredProjects.length;
         filteredProjects = filteredProjects.filter((project: any) => {
           if (!isLocationVisible(project.location)) {
@@ -633,7 +633,7 @@ const Dashboard = () => {
       const usesDropdownFilter2 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
                                    currentUser?.username === 'Stefano de Weger' ||
-                                   currentUser?.username === 'Chris Louwrier';
+                                   currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
       if (!usesDropdownFilter2 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
@@ -783,7 +783,7 @@ const Dashboard = () => {
       const usesDropdownFilter3 = currentUser?.username === 'Lysander Koenraadt' ||
                                    currentUser?.username === 'Patrick Herman' ||
                                    currentUser?.username === 'Stefano de Weger' ||
-                                   currentUser?.username === 'Chris Louwrier';
+                                   currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
 
       if (!usesDropdownFilter3 && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // If user doesn't have access to all locations, filter by assigned locations
@@ -1100,7 +1100,8 @@ const Dashboard = () => {
                     currentUser?.username === 'Patrick Herman' ||
                     currentUser?.username === 'Stefano de Weger' ||
                     currentUser?.username === 'Chris Louwrier' ||
-                    currentUser?.username === 'Kevin van Veen') && (
+                    currentUser?.username === 'Kevin van Veen' ||
+                    currentUser?.username === 'Kevin Rombout') && (
                     <div className="flex items-center gap-3 bg-blue-900/20 px-4 py-2 rounded-lg border border-blue-800/30">
                       <span className="text-sm text-gray-300">
                         Locatie filter:

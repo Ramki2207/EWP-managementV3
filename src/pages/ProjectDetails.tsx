@@ -814,7 +814,7 @@ const ProjectDetails = () => {
                   <span>Delen</span>
                 </button>
               )}
-              {['Dave Moret', 'Ronald', 'Radjesh'].includes(currentUser?.username || '') && (
+              {['Dave Moret', 'Ronald', 'Radjesh', 'Kevin Rombout'].includes(currentUser?.username || '') && (
                 <button
                   onClick={() => setShowDocumentationPDF(true)}
                   className="btn-secondary flex items-center space-x-2"
