@@ -578,7 +578,7 @@ const Projects = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth') {
         if (!isLocationVisible(project.location)) {
           console.log(`📍 LOCATION FILTER: Hiding project ${project.project_number} (location: ${project.location}) - NOT IN LOCATION FILTER`);
           return false;
@@ -593,7 +593,7 @@ const Projects = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth';
 
       if (!isAnnemieke && !usesDropdownFilter && currentUser?.assignedLocations && currentUser.assignedLocations.length > 0) {
         // Debug user's location data

@@ -65,7 +65,7 @@ const Clients = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth') {
         const beforeFilter = data?.length || 0;
         data = data?.filter((client: any) => {
           if (!isLocationVisible(client.location)) {
@@ -82,7 +82,7 @@ const Clients = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth';
 
       if (!usesDropdownFilter && currentUser?.assignedLocations?.length > 0) {
         const beforeFilter = data?.length || 0;

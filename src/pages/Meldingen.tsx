@@ -135,7 +135,7 @@ const Meldingen = () => {
       if (currentUser?.username === 'Lysander Koenraadt' ||
           currentUser?.username === 'Patrick Herman' ||
           currentUser?.username === 'Stefano de Weger' ||
-          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
+          currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth') {
         const beforeFilter = enrichedNotifications.length;
         enrichedNotifications = enrichedNotifications.filter((notification: any) => {
           if (!isLocationVisible(notification.location)) {
@@ -152,7 +152,7 @@ const Meldingen = () => {
       const usesDropdownFilter = currentUser?.username === 'Lysander Koenraadt' ||
                                   currentUser?.username === 'Patrick Herman' ||
                                   currentUser?.username === 'Stefano de Weger' ||
-                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout';
+                                  currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth';
 
       if (!usesDropdownFilter && currentUser && currentUser.role !== 'admin' && currentUser.assignedLocations && currentUser.assignedLocations.length > 0) {
         const hasAllLocations =

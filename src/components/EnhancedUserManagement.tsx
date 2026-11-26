@@ -469,7 +469,7 @@ const EnhancedUserManagement = () => {
 
     // Lysander's location filter
     if (currentUser?.username === 'Lysander Koenraadt' ||
-        currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout') {
+        currentUser?.username === 'Chris Louwrier' || currentUser?.username === 'Kevin Rombout' || currentUser?.username === 'Sylvia Guth') {
       const lysanderFilteredLocations = getFilteredLocations();
       const userLocations = user.assignedLocations || [];
 
