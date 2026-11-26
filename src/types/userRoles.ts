@@ -398,3 +398,7 @@ export const testerSeesLateStatus = (username: string | undefined, status: strin
 const LOGISTIEK_TESTEN_VIEWERS = ['Alec Werkhoven'];
 export const getLogistiekVisibleStatuses = (username?: string): string[] =>
   username && LOGISTIEK_TESTEN_VIEWERS.includes(username) ? ['Levering', 'Testen'] : ['Levering'];
+
+const PROJECT_ARCHIVE_USERS = ['Kevin Rombout'];
+export const canArchiveProjects = (username?: string): boolean =>
+  !!username && PROJECT_ARCHIVE_USERS.includes(username);

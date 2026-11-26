@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X } from 'lucide-react';
+import { Search, Plus, FolderOpen, Trash2, Upload, Filter, Calendar, X, Archive } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { dataService } from '../lib/supabase';
-import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses, testerSeesLateStatus } from '../types/userRoles';
+import { AVAILABLE_LOCATIONS, isTesterProjectManager, getLogistiekVisibleStatuses, testerSeesLateStatus, canArchiveProjects } from '../types/userRoles';
 import { ProjectLock, projectLockManager } from '../lib/projectLocks';
 import ProjectLockStatus from '../components/ProjectLockStatus';
 import ProjectDeleteConfirmation from '../components/ProjectDeleteConfirmation';
@@ -77,6 +77,7 @@ interface Project {
   location?: string;
   expected_delivery_date?: string;
   distributors?: any[];
+  afgerond_at?: string | null;
 }
 
 const Projects = () => {
@@ -100,6 +101,10 @@ const Projects = () => {
   const [pendingApprovalProjects, setPendingApprovalProjects] = useState<Set<string>>(new Set());
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<any[]>([]);
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+  const [showAfrondenConfirm, setShowAfrondenConfirm] = useState(false);
+  const [isAfronden, setIsAfronden] = useState(false);
+  const canArchive = canArchiveProjects(currentUser?.username);
 
   // Load saved filters from localStorage on mount
   const location = useLocation();
@@ -302,6 +307,10 @@ const Projects = () => {
           return shouldShow;
         });
         console.log(`👤 PROJECTS PROJECTLEIDER FILTER: Filtered ${beforeFilter} projects down to ${filteredProjects.length} for ${currentUser.username} (only own projects)`);
+      }
+
+      if (canArchiveProjects(currentUser?.username)) {
+        filteredProjects = filteredProjects.filter((project: Project) => !project.afgerond_at);
       }
 
       setProjects(filteredProjects);
@@ -669,6 +678,44 @@ const Projects = () => {
 
   const filteredProjects = applyFilters(projects);
 
+  const allVisibleSelected = filteredProjects.length > 0 && filteredProjects.every(p => selectedProjectIds.has(p.id));
+
+  const toggleProjectSelection = (projectId: string) => {
+    setSelectedProjectIds(prev => {
+      const next = new Set(prev);
+      if (next.has(projectId)) next.delete(projectId);
+      else next.add(projectId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllVisible = () => {
+    setSelectedProjectIds(prev => {
+      const next = new Set(prev);
+      if (allVisibleSelected) filteredProjects.forEach(p => next.delete(p.id));
+      else filteredProjects.forEach(p => next.add(p.id));
+      return next;
+    });
+  };
+
+  const handleConfirmAfronden = async () => {
+    if (!currentUser?.id || selectedProjectIds.size === 0) return;
+    const ids = Array.from(selectedProjectIds);
+    try {
+      setIsAfronden(true);
+      await dataService.afrondenProjects(ids, currentUser.id);
+      setProjects(prev => prev.filter(p => !selectedProjectIds.has(p.id)));
+      setSelectedProjectIds(new Set());
+      setShowAfrondenConfirm(false);
+      toast.success(`${ids.length} project${ids.length !== 1 ? 'en' : ''} afgerond en verplaatst naar Historie`);
+    } catch (error) {
+      console.error('Error afronden projects:', error);
+      toast.error('Afronden is mislukt. Probeer het opnieuw.');
+    } finally {
+      setIsAfronden(false);
+    }
+  };
+
   const getUniqueClients = () => {
     const clients = [...new Set(projects.map(p => p.client).filter(Boolean))];
     return clients.sort();
@@ -787,6 +834,15 @@ const Projects = () => {
             <p className="text-gray-400 text-sm md:text-base">Beheer al je projecten op één plek</p>
           </div>
           <div className="button-group w-full md:w-auto">
+            {canArchive && selectedProjectIds.size > 0 && (
+              <button
+                onClick={() => setShowAfrondenConfirm(true)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium transition-colors"
+              >
+                <Archive size={16} />
+                <span>Afronden ({selectedProjectIds.size})</span>
+              </button>
+            )}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`btn-secondary flex items-center space-x-2 ${
@@ -1098,6 +1154,17 @@ const Projects = () => {
           <table className="table-wrapper">
             <thead>
               <tr className="border-b border-gray-700">
+                {canArchive && (
+                  <th className="table-header text-left w-10">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 accent-green-500 cursor-pointer"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAllVisible}
+                      title="Alles selecteren"
+                    />
+                  </th>
+                )}
                 <th className="table-header text-left">Projectnummer</th>
                 <th className="table-header text-left">Datum</th>
                 <th className="table-header text-left">Klant</th>
@@ -1130,6 +1197,16 @@ const Projects = () => {
                     }
                   }}
                 >
+                  {canArchive && (
+                    <td className="table-cell w-10" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-green-500 cursor-pointer"
+                        checked={selectedProjectIds.has(project.id)}
+                        onChange={() => toggleProjectSelection(project.id)}
+                      />
+                    </td>
+                  )}
                   <td className="table-cell">
                     <div className="flex items-center space-x-2">
                       <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
@@ -1264,6 +1341,43 @@ const Projects = () => {
           onCancel={handleCancelDelete}
           isDeleting={isDeleting}
         />
+      )}
+
+      {showAfrondenConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !isAfronden && setShowAfrondenConfirm(false)}>
+          <div className="bg-[#1E2530] border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <Archive size={20} className="text-green-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Projecten afronden</h3>
+            </div>
+            <p className="text-gray-300 text-sm mb-3">
+              Je staat op het punt {selectedProjectIds.size} project{selectedProjectIds.size !== 1 ? 'en' : ''} af te ronden. Het project en alle verdelers krijgen de status <strong className="text-green-400">Opgeleverd</strong> en worden verplaatst naar Historie.
+            </p>
+            <div className="max-h-40 overflow-y-auto bg-[#2A303C] rounded-lg p-3 mb-6 text-sm text-gray-300 space-y-1">
+              {projects.filter(p => selectedProjectIds.has(p.id)).map(p => (
+                <div key={p.id} className="flex justify-between gap-2">
+                  <span className="text-blue-400 font-medium">{p.project_number}</span>
+                  <span className="truncate text-gray-400">{p.client || '-'}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button className="btn-secondary" onClick={() => setShowAfrondenConfirm(false)} disabled={isAfronden}>
+                Annuleren
+              </button>
+              <button
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-green-600 hover:bg-green-500 text-white font-medium transition-colors disabled:opacity-50"
+                onClick={handleConfirmAfronden}
+                disabled={isAfronden}
+              >
+                <Archive size={16} />
+                <span>{isAfronden ? 'Bezig...' : 'Afronden'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Pre-Testing Approval Modal */}

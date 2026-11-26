@@ -11,6 +11,7 @@ import {
 } from './planningTypes';
 import { autoSchedule, calculateCapacityUsed, buildDailyHoursFromRange } from './AutoScheduleEngine';
 import { useLocationFilter } from '../../contexts/LocationFilterContext';
+import { canArchiveProjects } from '../../types/userRoles';
 import PlanningControls from './PlanningControls';
 import PlanningTimeline from './PlanningTimeline';
 import VerlofRegistratieModal from './VerlofRegistratieModal';
@@ -102,14 +103,17 @@ const ProductiePlanning: React.FC<ProductiePlanningProps> = ({ userId, username 
     setLoading(true);
     try {
       const [distResult, usersResult, leaveResult, vacationResult, workResult, absenceResult, overridesResult, buitenklusResult, scheduleResult] = await Promise.all([
-        supabase
-          .from('distributors')
-          .select(`
-            id, distributor_id, kast_naam, toegewezen_monteur, toegewezen_tester,
-            gewenste_lever_datum, expected_hours, expected_testen_hours, status, project_id,
-            projects!inner (id, project_number, client, expected_delivery_date, location, creator:users!projects_created_by_fkey (username))
-          `)
-          .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']),
+        (() => {
+          const query = supabase
+            .from('distributors')
+            .select(`
+              id, distributor_id, kast_naam, toegewezen_monteur, toegewezen_tester,
+              gewenste_lever_datum, expected_hours, expected_testen_hours, status, project_id,
+              projects!inner (id, project_number, client, expected_delivery_date, location, creator:users!projects_created_by_fkey (username))
+            `)
+            .in('status', ['Werkvoorbereiding', 'Productie', 'Testen', 'Levering']);
+          return canArchiveProjects(username) ? query.is('projects.afgerond_at', null) : query;
+        })(),
 
         supabase.from('users').select('id, username, role, is_active, assigned_locations').eq('is_active', true),
         supabase.from('leave_requests').select('id, user_id, start_date, end_date, leave_type, description').eq('status', 'approved'),

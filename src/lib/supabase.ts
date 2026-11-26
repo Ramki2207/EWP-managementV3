@@ -244,6 +244,38 @@ export const dataService = {
     }
   },
 
+  async afrondenProjects(projectIds: string[], userId: string) {
+    if (projectIds.length === 0) return;
+
+    const { error: distError } = await supabase
+      .from('distributors')
+      .update({ status: 'Opgeleverd' })
+      .in('project_id', projectIds);
+    if (distError) {
+      throw new Error(`Failed to update verdelers: ${getErrorMessage(distError)}`);
+    }
+
+    const { error: projectError } = await supabase
+      .from('projects')
+      .update({ status: 'Opgeleverd', afgerond_at: new Date().toISOString(), afgerond_by: userId })
+      .in('id', projectIds);
+    if (projectError) {
+      throw new Error(`Failed to update projects: ${getErrorMessage(projectError)}`);
+    }
+  },
+
+  async getAfgerondeProjects() {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('id, project_number, client, location, status, description, afgerond_at, afgerond_by, distributors (id), project_shared_locations (location)')
+      .not('afgerond_at', 'is', null)
+      .order('afgerond_at', { ascending: false });
+    if (error) {
+      throw new Error(`Failed to fetch afgeronde projecten: ${getErrorMessage(error)}`);
+    }
+    return data || [];
+  },
+
   async deleteProject(id: string) {
     try {
       // Note: Due to CASCADE constraints in the database, 

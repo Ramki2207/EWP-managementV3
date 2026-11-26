@@ -23,6 +23,7 @@ import Loader from "./components/Loader";
 import PermissionRoute from "./components/PermissionRoute";
 import { useEnhancedPermissions } from "./hooks/useEnhancedPermissions";
 import Help from "./pages/Help";
+import Historie from "./pages/Historie";
 import ClientPortal from "./pages/ClientPortal";
 import ClientPortalManagement from "./pages/ClientPortalManagement";
 import UrenstaatVerlof from "./pages/UrenstaatVerlof";
@@ -135,6 +136,7 @@ const App = () => {
             <Route path="/meldingen" element={<PermissionRoute><Meldingen /></PermissionRoute>} />
             <Route path="/verlof-meldingen" element={<PermissionRoute><VerlofMeldingen /></PermissionRoute>} />
             <Route path="/help" element={<PermissionRoute><Help /></PermissionRoute>} />
+            <Route path="/historie" element={<PermissionRoute><Historie /></PermissionRoute>} />
             <Route path="/urenstaat-verlof" element={<PermissionRoute><UrenstaatVerlof /></PermissionRoute>} />
             <Route path="/personeelsbeheer" element={<PermissionRoute requiredPermission={{ module: 'worksheets', permission: 'read' }}><Personeelsbeheer /></PermissionRoute>} />
             <Route path="/pdf-optimizer" element={<PermissionRoute requiredPermission={{ module: 'gebruikers', permission: 'write' }}><PDFOptimizer /></PermissionRoute>} />

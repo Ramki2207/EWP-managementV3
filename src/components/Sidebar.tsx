@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FolderOpen, Users, Bell, Upload, LayoutDashboard, CircleUser as UserCircle, HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe, Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus, Zap } from 'lucide-react';
+import { FolderOpen, Users, Bell, Upload, LayoutDashboard, CircleUser as UserCircle, HelpCircle, Server, Building, BarChart, Menu, X, Key, Globe, Calendar, Crown, Package, Truck, Wrench, DollarSign, FileText, ClipboardList, Plus, Zap, Archive } from 'lucide-react';
 import { useEnhancedPermissions } from '../hooks/useEnhancedPermissions';
-import { SystemModule } from '../types/userRoles';
+import { SystemModule, canArchiveProjects } from '../types/userRoles';
 import { useTabContext } from '../contexts/TabContext';
 import { supabase } from '../lib/supabase';
 import ewpLogo from '../assets/ewp-logo.png';
@@ -26,6 +26,7 @@ const navItems = [
 
 const bottomNavItems = [
   { path: '/account', icon: UserCircle, label: 'Mijn account', module: 'account' as SystemModule },
+  { path: '/historie', icon: Archive, label: 'Historie', module: undefined, archiveOnly: true },
   { path: '/pdf-optimizer', icon: Zap, label: 'PDF Optimizer', module: 'gebruikers' as SystemModule, adminOnly: true },
   { path: '/help', icon: HelpCircle, label: 'Help', module: undefined },
 ];
@@ -244,6 +245,7 @@ const Sidebar = () => {
             const isActive = location.pathname === item.path;
 
             if (item.adminOnly && currentUser?.role !== 'admin') return null;
+            if (item.archiveOnly && !canArchiveProjects(currentUser?.username)) return null;
             if (!hasModuleAccess(item.module)) return null;
 
             return (
