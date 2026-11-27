@@ -150,29 +150,39 @@ interface WeekstaatWithEntries {
   entries: WeekstaatEntry[];
 }
 
-const SYNTESS_CODE_MAP: Record<string, { urensoort: string; tarief: string; tariefsoort: string }> = {
-  '01': { urensoort: '01', tarief: 'F001', tariefsoort: '' },
-  '02': { urensoort: '01', tarief: 'F002', tariefsoort: '' },
-  '04': { urensoort: '01', tarief: 'F002', tariefsoort: '' },
-  '05': { urensoort: '01', tarief: 'F004', tariefsoort: '' },
-  '06': { urensoort: '01', tarief: 'F003', tariefsoort: 'NUL' },
-  '07': { urensoort: '01', tarief: 'F008', tariefsoort: '' },
-  '08': { urensoort: '01', tarief: 'F006', tariefsoort: '' },
-  '09': { urensoort: '10', tarief: 'F005', tariefsoort: 'STD' },
-  '10': { urensoort: '01', tarief: 'F009', tariefsoort: '' },
-  '11': { urensoort: '10', tarief: 'F001', tariefsoort: 'STD' },
-  '12': { urensoort: '10', tarief: 'F001', tariefsoort: 'STD' },
-  '13': { urensoort: '10', tarief: 'F001', tariefsoort: '' },
-  '14': { urensoort: '10', tarief: 'F005', tariefsoort: 'STD' },
-  '15': { urensoort: '01', tarief: 'F010', tariefsoort: '' },
-  '21': { urensoort: '10', tarief: 'F003', tariefsoort: '' },
-  '22': { urensoort: '10', tarief: 'F003', tariefsoort: '' },
-  '25': { urensoort: '10', tarief: 'F003', tariefsoort: '' },
-  '30': { urensoort: '10', tarief: 'F003', tariefsoort: 'STD' },
-  '35': { urensoort: '10', tarief: 'F003', tariefsoort: 'STD' },
-  '50': { urensoort: '01', tarief: 'F003', tariefsoort: 'NUL' },
-  '60': { urensoort: '01', tarief: 'F001', tariefsoort: '' },
-  '70': { urensoort: '01', tarief: 'F001', tariefsoort: '' },
+// ksoort 5510 = direct project hours, 5550 = indirect/absence hours.
+interface SyntessCode { omschrijving: string; ksoort: string; tariefCode: string; tariefsoort: string }
+
+const SYNTESS_CODE_MAP: Record<string, SyntessCode> = {
+  '01': { omschrijving: 'Arbeid Intern < 630A (bouwtijd)', ksoort: '5510', tariefCode: 'F001', tariefsoort: 'STD' },
+  '02': { omschrijving: 'Arbeid int. > 630A < 1000A', ksoort: '5510', tariefCode: 'F002', tariefsoort: 'STD' },
+  '04': { omschrijving: 'Arbeid int. > 1000A', ksoort: '5510', tariefCode: 'F002', tariefsoort: 'STD' },
+  '05': { omschrijving: 'Leerling Stagiair', ksoort: '5510', tariefCode: 'F004', tariefsoort: 'STD' },
+  '06': { omschrijving: 'Arbeid ZZP / inleners', ksoort: '5510', tariefCode: 'F003', tariefsoort: 'NUL' },
+  '07': { omschrijving: 'Arbeid Extern laag', ksoort: '5510', tariefCode: 'F008', tariefsoort: 'STD' },
+  '08': { omschrijving: 'Arbeid Extern Hoog', ksoort: '5510', tariefCode: 'F006', tariefsoort: 'STD' },
+  '09': { omschrijving: 'Intern Transport', ksoort: '5550', tariefCode: 'F005', tariefsoort: 'STD' },
+  '10': { omschrijving: 'Uurtarief intercompany', ksoort: '5510', tariefCode: 'F009', tariefsoort: 'STD' },
+  '11': { omschrijving: 'Algemene werkzaamheden', ksoort: '5550', tariefCode: 'F001', tariefsoort: 'STD' },
+  '12': { omschrijving: 'Opruim werkzaamheden', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '13': { omschrijving: 'Kantoor', ksoort: '5550', tariefCode: 'F001', tariefsoort: 'STD' },
+  '14': { omschrijving: 'Intern transport Projecten', ksoort: '5550', tariefCode: 'F005', tariefsoort: 'STD' },
+  '15': { omschrijving: 'Arbeid Werk Leren BBL', ksoort: '5510', tariefCode: 'F010', tariefsoort: 'STD' },
+  '21': { omschrijving: 'Verlof (onbetaald)', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '22': { omschrijving: 'Verlof (betaald)', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '25': { omschrijving: 'Nationale Feestdagen', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '30': { omschrijving: 'Dokter/tandarts/ziekenhuis', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '35': { omschrijving: 'Ziek', ksoort: '5550', tariefCode: 'F003', tariefsoort: 'STD' },
+  '50': { omschrijving: 'Arbeid extern laag / ZZP inlener', ksoort: '5510', tariefCode: 'F003', tariefsoort: 'NUL' },
+  '60': { omschrijving: 'Test werkzaamheden', ksoort: '5510', tariefCode: 'F001', tariefsoort: 'STD' },
+  '70': { omschrijving: 'Tekenwerkzaamheden', ksoort: '5510', tariefCode: 'F001', tariefsoort: 'STD' },
+};
+
+// Timer bookings use codes outside the weekstaat list: production on a kast (code = project number) and testing (108).
+const resolveSyntessTaak = (activityCode: string): string => {
+  if (SYNTESS_CODE_MAP[activityCode]) return activityCode;
+  if (activityCode === '108') return '60';
+  return '01';
 };
 
 const WEEK_29_YEAR = 2025;
@@ -211,30 +221,24 @@ const getDateOfWeek = (week: number, year: number, dayOffset: number): Date => {
   return ISOweekStart;
 };
 
-const SYNTESS_COLUMNS = [
-  { wch: 10 },  // Aantal
-  { wch: 10 },  // Bedrag
-  { wch: 18 },  // Besteksparagraaf
-  { wch: 12 },  // Datum
-  { wch: 15 },  // Kostenplaats
-  { wch: 12 },  // Kostensoort
-  { wch: 22 },  // Medewerker
-  { wch: 40 },  // Omschrijving
-  { wch: 15 },  // Project
-  { wch: 10 },  // Taak
-  { wch: 10 },  // Tarief
-  { wch: 12 },  // Tariefsoort
-  { wch: 15 },  // Werkbon
-  { wch: 18 },  // Werkbonparagraaf
-  { wch: 15 },  // Referentie
+const SYNTESS_HEADERS = [
+  'Type', 'Datum', 'Dag', 'Taak', 'Taak omschrijving', 'Tarief', 'Begintijd', 'Eindtijd',
+  'Aantal', 'Omschrijving', 'Tariefsoort', 'Bedrag', 'KSoort', 'Project', 'Bestekparagraaf',
+  'Werkbon', 'Werkbonparagraaf', 'Opbrengst', 'Taak tarief code', 'KPlaats',
 ];
 
-const formatSyntessName = (fullName: string): string => {
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length < 2) return fullName;
-  const firstInitial = parts[0].charAt(0).toUpperCase();
-  const lastName = parts.slice(1).join('');
-  return `${firstInitial}.${lastName}`;
+const SYNTESS_COLUMN_WIDTHS = [
+  6, 12, 5, 6, 34, 8, 10, 10, 8, 34, 11, 8, 8, 12, 16, 10, 18, 10, 16, 8,
+].map(wch => ({ wch }));
+
+const PROJECT_NUMBER_PATTERN = /^\d?[A-Z]{1,2}\d{5,6}$/;
+
+const findProjectNumber = (...candidates: (string | undefined)[]): string => {
+  for (const candidate of candidates) {
+    const normalized = (candidate || '').replace(/\s+/g, '').toUpperCase();
+    if (PROJECT_NUMBER_PATTERN.test(normalized)) return normalized;
+  }
+  return '';
 };
 
 // Production bookings store "<projectnummer> - <kastnaam>" in workorder_number with the project number as activity_code.
@@ -242,16 +246,15 @@ const splitProjectAndKast = (entry: WeekstaatEntry): { project: string; kastnaam
   const workorder = (entry.workorder_number || '').trim();
   const prefix = `${entry.activity_code} - `;
   if (entry.activity_code && workorder.startsWith(prefix)) {
-    return { project: entry.activity_code, kastnaam: workorder.slice(prefix.length).trim() };
+    return { project: findProjectNumber(entry.activity_code), kastnaam: workorder.slice(prefix.length).trim() };
   }
-  return { project: entry.project_number || entry.workorder_number || '', kastnaam: '' };
+  return { project: findProjectNumber(entry.project_number, entry.workorder_number), kastnaam: '' };
 };
 
 const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
-  const rows: any[] = [];
+  const rows: { sortKey: number; values: (string | number)[] }[] = [];
 
   weekstaten.forEach(weekstaat => {
-    const medewerker = formatSyntessName(weekstaat.username);
     weekstaat.entries.forEach(entry => {
       const days = [
         { hours: entry.monday, offset: 0 },
@@ -268,56 +271,62 @@ const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
         if (realHours > 0) {
           const date = getDateOfWeek(weekstaat.week_number, weekstaat.year, day.offset);
           const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
-          const codeInfo = SYNTESS_CODE_MAP[entry.activity_code] || { urensoort: '01', tarief: 'F001', tariefsoort: '' };
-          const { project, kastnaam } = splitProjectAndKast(entry);
+          const taak = resolveSyntessTaak(entry.activity_code);
+          const code = SYNTESS_CODE_MAP[taak];
+          const isProjectHours = code.ksoort === '5510';
+          const { project, kastnaam } = isProjectHours ? splitProjectAndKast(entry) : { project: '', kastnaam: '' };
+          // Syntess day numbering: Sunday = 1, Monday = 2 ... Saturday = 7.
+          const dag = day.offset === 6 ? 1 : day.offset + 2;
 
           rows.push({
-            'Aantal': parseFloat(realHours.toFixed(2)),
-            'Bedrag': '',
-            'Besteksparagraaf': kastnaam,
-            'Datum': formattedDate,
-            'Kostenplaats': '',
-            'Kostensoort': codeInfo.urensoort,
-            'Medewerker': medewerker,
-            'Omschrijving': entry.activity_description,
-            'Project': project,
-            'Taak': codeInfo.tarief,
-            'Tarief': '',
-            'Tariefsoort': codeInfo.tariefsoort,
-            'Werkbon': '',
-            'Werkbonparagraaf': '',
-            'Referentie': '',
+            sortKey: date.getTime(),
+            values: [
+              'A', formattedDate, dag, taak, code.omschrijving, '', '', '',
+              parseFloat(realHours.toFixed(2)), code.omschrijving, code.tariefsoort, '', code.ksoort,
+              project, project ? (kastnaam || '1') : '',
+              '', '', 'Nee', code.tariefCode, '',
+            ],
           });
         }
       });
     });
   });
 
-  return rows;
+  return rows.sort((a, b) => a.sortKey - b.sortKey).map(row => row.values);
+};
+
+const downloadSyntessFile = (weekstaten: WeekstaatWithEntries[], filename: string) => {
+  const ws = XLSX.utils.aoa_to_sheet([SYNTESS_HEADERS, ...buildSyntessRows(weekstaten)]);
+  ws['!cols'] = SYNTESS_COLUMN_WIDTHS;
+
+  const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+  const aantalColumn = SYNTESS_HEADERS.indexOf('Aantal');
+  for (let r = 1; r <= range.e.r; r++) {
+    const cell = ws[XLSX.utils.encode_cell({ r, c: aantalColumn })];
+    if (cell) cell.z = '0.00';
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Urenstaat');
+  XLSX.writeFile(wb, filename);
 };
 
 export const exportWeekstaatToSyntess = (weekstaat: WeekstaatWithEntries) => {
-  const rows = buildSyntessRows([weekstaat]);
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = SYNTESS_COLUMNS;
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Syntess');
-
-  const filename = `Syntess_${weekstaat.username}_Week${weekstaat.week_number}_${weekstaat.year}.xlsx`;
-  XLSX.writeFile(wb, filename);
+  downloadSyntessFile(
+    [weekstaat],
+    `Syntess_${weekstaat.username}_Week${weekstaat.week_number}_${weekstaat.year}.xlsx`
+  );
 };
 
+// The Syntess template has no employee column, so each employee gets their own file.
 export const exportMultipleWeekstatenToSyntess = (weekstaten: WeekstaatWithEntries[]) => {
-  const rows = buildSyntessRows(weekstaten);
+  const byEmployee = new Map<string, WeekstaatWithEntries[]>();
+  weekstaten.forEach(weekstaat => {
+    byEmployee.set(weekstaat.username, [...(byEmployee.get(weekstaat.username) || []), weekstaat]);
+  });
 
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = SYNTESS_COLUMNS;
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Syntess');
-
-  const filename = `Syntess_Export_${new Date().toISOString().split('T')[0]}.xlsx`;
-  XLSX.writeFile(wb, filename);
+  const date = new Date().toISOString().split('T')[0];
+  byEmployee.forEach((employeeWeekstaten, username) => {
+    downloadSyntessFile(employeeWeekstaten, `Syntess_${username}_${date}.xlsx`);
+  });
 };
