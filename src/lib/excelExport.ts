@@ -237,6 +237,16 @@ const formatSyntessName = (fullName: string): string => {
   return `${firstInitial}.${lastName}`;
 };
 
+// Production bookings store "<projectnummer> - <kastnaam>" in workorder_number with the project number as activity_code.
+const splitProjectAndKast = (entry: WeekstaatEntry): { project: string; kastnaam: string } => {
+  const workorder = (entry.workorder_number || '').trim();
+  const prefix = `${entry.activity_code} - `;
+  if (entry.activity_code && workorder.startsWith(prefix)) {
+    return { project: entry.activity_code, kastnaam: workorder.slice(prefix.length).trim() };
+  }
+  return { project: entry.project_number || entry.workorder_number || '', kastnaam: '' };
+};
+
 const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
   const rows: any[] = [];
 
@@ -259,17 +269,18 @@ const buildSyntessRows = (weekstaten: WeekstaatWithEntries[]) => {
           const date = getDateOfWeek(weekstaat.week_number, weekstaat.year, day.offset);
           const formattedDate = `${date.getDate().toString().padStart(2, '0')}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getFullYear()}`;
           const codeInfo = SYNTESS_CODE_MAP[entry.activity_code] || { urensoort: '01', tarief: 'F001', tariefsoort: '' };
+          const { project, kastnaam } = splitProjectAndKast(entry);
 
           rows.push({
             'Aantal': parseFloat(realHours.toFixed(2)),
             'Bedrag': '',
-            'Besteksparagraaf': '',
+            'Besteksparagraaf': kastnaam,
             'Datum': formattedDate,
             'Kostenplaats': '',
             'Kostensoort': codeInfo.urensoort,
             'Medewerker': medewerker,
             'Omschrijving': entry.activity_description,
-            'Project': entry.project_number || entry.workorder_number || '',
+            'Project': project,
             'Taak': codeInfo.tarief,
             'Tarief': '',
             'Tariefsoort': codeInfo.tariefsoort,

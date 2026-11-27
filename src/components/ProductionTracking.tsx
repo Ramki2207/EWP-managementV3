@@ -160,6 +160,7 @@ const ProductionTracking: React.FC<ProductionTrackingProps> = ({ project }) => {
         .select('*')
         .eq('weekstaat_id', weekstaatId)
         .eq('activity_code', activityCode)
+        .eq('workorder_number', `${projectNumber} - ${distributorName}`)
         .maybeSingle();
 
       if (existingEntry) {
